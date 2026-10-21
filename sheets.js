@@ -81,22 +81,23 @@ async function thSheets(path) {
   }
   return response.json();
 }
-async function thValues(range) {
-  const result = await thSheets('/values/' + encodeURIComponent(range) + '?valueRenderOption=FORMATTED_VALUE');
+async function thValues(range, valueRenderOption = "FORMATTED_VALUE") {
+  const result = await thSheets('/values/' + encodeURIComponent(range) + '?valueRenderOption=' + valueRenderOption);
   return result.values || [];
 }
 async function thFleetData() {
-  const [fr, mr, pr, notes, ownership, rr] = await Promise.all([
+  const [fr, mr, pr, notes, ownership, rr, readings] = await Promise.all([
     thValues("'Fleet List'!A1:I100"),
     thValues("'Mileage-2025.10.16'!A1:K"),
     thValues("'Portal Asset Profiles'!A1:Y1000"),
     thValues("'Portal Asset Profiles'!AA1:AB1000"),
     thValues("'Portal Asset Profiles'!AC1:AC1000"),
-    thValues("'Vehicle Registry'!A1:G100")
+    thValues("'Vehicle Registry'!A1:G100"),
+    thValues("'Mileage-2025.10.16'!E5:K", "UNFORMATTED_VALUE")
   ]);
   const activeFleet = fr.slice(1).map(r => ({year:r[0],make:r[1],model:r[2],status:r[3]})).filter(v => v.year || v.make || v.model);
   const inactiveFleet = fr.slice(1).map(r => ({year:r[5],make:r[6],model:r[7],status:r[8]})).filter(v => v.year || v.make || v.model);
-  const vehicles = mr.slice(4).map((r,i)=>({...r,__row:i+5})).filter(r => r[1] && Number(r[2]) >= 1900 && Number(r[2]) <= 2100).map(r => ({
+  const vehicles = mr.slice(4).map((r,i)=>({...r,...Object.fromEntries((readings[i]||[]).map((value,j)=>[j+4,value])),__row:i+5})).filter(r => r[1] && Number(r[2]) >= 1900 && Number(r[2]) <= 2100).map(r => ({
     sheetRow:r.__row,
     name:r[1],year:r[2],serviceStart:r[3],startMileage:r[4],currentMileage:r[5],addedMileage:r[6],
     daysDriven:r[7],monthsDriven:r[8],monthlyEstimate:r[9],annualEstimate:r[10]

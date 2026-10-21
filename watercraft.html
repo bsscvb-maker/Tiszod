@@ -339,7 +339,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 .mileage-dialog{width:min(440px,calc(100% - 28px));padding:26px;border:1px solid #688ab9;border-radius:12px;background:#142236;color:#f3f7ff;box-shadow:0 24px 65px #0009}
 .mileage-dialog::backdrop{background:#020713b8}
 .mileage-dialog h2{margin:0 0 6px}.mileage-dialog p{margin:0 0 18px;color:#c6d9ee}
-.mileage-dialog label{display:grid;gap:8px;font-weight:700}.mileage-dialog input{width:100%;padding:12px;border:1px solid #7da8df;border-radius:6px;background:#0e1f35;color:#fff;font:inherit}
+.mileage-dialog label{display:grid;gap:8px;font-weight:700}.mileage-dialog input,.mileage-dialog select{width:100%;padding:12px;border:1px solid #7da8df;border-radius:6px;background:#0e1f35;color:#fff;font:inherit}
 .mileage-dialog .mileage-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.mileage-dialog button{padding:10px 14px;border:1px solid #7da8df;border-radius:6px;background:#315d99;color:white;font-weight:800;cursor:pointer}.mileage-dialog button[type=button]{background:#26394f}
 .mileage-dialog [role=status]{min-height:22px;margin:12px 0 0;color:#ffb5b5}
 #assetGrid button:focus-visible,#assetPhoto img:focus-visible{outline:3px solid #b5d5ff;outline-offset:3px}
@@ -400,7 +400,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <dialog id="addVehicleDialog" class="add-vehicle-dialog" aria-labelledby="addVehicleTitle"><form id="addVehicleForm"><div class="add-vehicle-head"><h2 id="addVehicleTitle">Add a vehicle</h2><button type="button" id="closeAddVehicle" aria-label="Close">×</button></div><div class="add-vehicle-fields"><label>Year <input name="year" type="number" min="1900" max="2100" required></label><label>Make <input name="make" required maxlength="100"></label><label>Model <input name="model" required maxlength="120"></label><label>Section <select name="category" id="newVehicleCategory" required></select></label><label>Status <select name="status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Sold">Sold</option><option value="Managed">Managed</option></select></label><label>Engine <input name="engine" maxlength="100"></label><label>VIN / serial number <input name="vin" maxlength="100"></label><label>Tag / plate <input name="tag" maxlength="50"></label><label>Color <input name="color" maxlength="80"></label></div><p id="addVehicleStatus" role="status"></p><div class="add-vehicle-actions"><button type="button" id="cancelAddVehicle">Cancel</button><button type="submit" id="saveVehicle">Save vehicle</button></div></form></dialog>
 <dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
-<dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Miles to add<input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
+<dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script>
 function renderFleetPage(D,PORTAL) {
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -554,9 +554,15 @@ function renderRecommended(a){
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
- const name=clean(a.make+' '+a.model), year=String(a.year);
- const byAlias=Object.entries(alias).find(([k])=>name.startsWith(k));
- return mileage.find(m=>String(m.year)===year&&(byAlias&&clean(m.name).includes(clean(byAlias[1]))||name.includes(clean(m.name))||clean(m.name).includes(clean(a.make))&&name.includes(clean(m.name).slice(0,6))))||null;
+ const name=clean(a.make+' '+a.model),year=String(a.year),byAlias=Object.entries(alias).find(([k])=>name.startsWith(k));
+ const matches=mileage.filter(m=>String(m.year)===year).map(m=>{
+  const key=clean(m.name);let score=0;
+  if(key&&key===name)score=10000+key.length;
+  else if(byAlias&&key===clean(byAlias[1]))score=5000+key.length;
+  else if(key&&name.includes(key))score=1000+key.length;
+  return {m,score};
+ }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.m.sheetRow-a.m.sheetRow);
+ return matches[0]?.m||null;
 }
 function cardNumber(value){const n=Number(String(value??'').replace(/,/g,'').trim());return value!==undefined&&value!==null&&String(value).trim()!==''&&Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:1}):null}
 function cardEngine(a){return a.engine&&clean(a.engine)!=='na'?a.engine:'Not recorded'}
@@ -621,12 +627,12 @@ function renderCategory(){
  document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
  document.getElementById('statusFilters').innerHTML=['active','inactive','managed','sold','all'].map(s=>'<button type="button" class="filter-chip '+(status===s?'active':'')+'" data-status="'+s+'">'+s[0].toUpperCase()+s.slice(1)+' · '+(s==='all'?items.length:items.filter(a=>clean(a.status)===s).length)+'</button>').join('');
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
-  const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?.addedMileage),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
+  const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const photo=a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
   const photoClass=String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=a.photoObjectUrl||a.photoFileId||a.photo?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
-  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong><span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span><span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(added===null?'—':added)+'</b></span><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Add '+(hours?'hours':'miles')+' to '+esc(title)+'">Add '+(hours?'hours':'miles')+'</button></div>';
+  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong><span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span><span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(added===null?'—':added)+'</b></span><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
  }).join(''):'<div class="asset-note">No items match these filters.</div>';
  const loadCardPhoto=a=>{
   assetPhoto(a).then(src=>{
@@ -757,18 +763,27 @@ document.getElementById('assetGrid').addEventListener('change',async e=>{
  catch(error){input.value=prior;const message=document.createElement('span');message.className='card-status-error';message.setAttribute('role','alert');message.textContent=error.message||'Could not save status.';input.parentElement.append(message)}
  finally{input.disabled=false}
 });
-document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview);if(a)previewPhoto(a,a.photoObjectUrl||a.photo);return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Add '+unit;document.querySelector('#mileageForm label').firstChild.textContent=(hours?'Hours':'Miles')+' to add';document.getElementById('saveMileage').textContent='Add '+unit;document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset){renderAsset();openDueReminder(asset)}}).catch(()=>{});});
+document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview);if(a)previewPhoto(a,a.photoObjectUrl||a.photo);return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset){renderAsset();openDueReminder(asset)}}).catch(()=>{});});
 let mileageTarget=null;
+ document.querySelector('#mileageForm [name="mode"]').addEventListener('change',e=>{
+  const hours=usesHours(mileageTarget),adding=e.target.value==='add';
+  document.getElementById('mileageInputLabel').textContent=adding?(hours?'Hours to add':'Miles traveled to add'):(hours?'Current hour reading':'Current odometer reading');
+  document.getElementById('saveMileage').textContent=adding?(hours?'Add hours':'Add miles'):'Save current reading';
+  document.querySelector('#mileageForm [name="mileage"]').value=adding?'':mileageFor(mileageTarget)?.currentMileage??'';
+ });
 document.getElementById('cancelMileage').addEventListener('click',()=>document.getElementById('mileageDialog').close());
 document.getElementById('mileageForm').addEventListener('submit',async e=>{
  e.preventDefault();const a=mileageTarget,form=e.currentTarget,button=document.getElementById('saveMileage'),message=document.getElementById('mileageMessage');if(!a)return;
- const added=Number(form.elements.mileage.value);if(!Number.isFinite(added)||added<=0){message.textContent='Enter the '+(usesHours(a)?'hours':'miles')+' to add.';return}
- button.disabled=true;message.textContent='Saving added '+(usesHours(a)?'hours':'miles')+'…';
+ const adding=form.elements.mode.value==='add',entered=Number(form.elements.mileage.value);if(form.elements.mileage.value.trim()===''||!Number.isFinite(entered)||entered<0||(adding&&entered===0)){message.textContent='Enter a valid '+(adding?'amount to add.':'current reading.');return}
+ button.disabled=true;message.textContent='Saving reading…';
  try{
   let m=mileageFor(a);
   const current=Number(String(m?.currentMileage??a.reportOdometer??0).replace(/,/g,''));
   if(!Number.isFinite(current)||current<0)throw new Error('The current reading needs to be corrected before adding to it.');
-  const value=Number((current+added).toFixed(3));
+  const value=Number((adding?current+entered:entered).toFixed(3));
+  const start=Number(m?.startMileage??a.reportOdometer??0);
+  if(!Number.isFinite(start)||value<start)throw new Error('Current reading cannot be lower than the starting reading ('+start+').');
+  if(adding&&!confirm('Add '+entered+' '+(usesHours(a)?'hours':'miles')+' to '+current+'? New total: '+value+'. To enter an odometer reading, cancel and choose Current odometer / hour reading.'))return;
   if(m){await thWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value)}
   else{
    const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
@@ -782,6 +797,8 @@ document.getElementById('mileageForm').addEventListener('submit',async e=>{
    await thWriteCell('Mileage-2025.10.16','K'+row,'=J'+row+'*12');
   }
   const rows=await thValues("'Mileage-2025.10.16'!B"+m.sheetRow+':K'+m.sheetRow),r=rows[0]||[];
+   const numeric=await thValues("'Mileage-2025.10.16'!E"+m.sheetRow+':K'+m.sheetRow,'UNFORMATTED_VALUE');
+   (numeric[0]||[]).forEach((value,i)=>r[i+3]=value);
   Object.assign(m,{name:r[0]||m.name,year:r[1]||m.year,serviceStart:r[2]||m.serviceStart,startMileage:r[3]??m.startMileage,currentMileage:r[4]??value,addedMileage:r[5]??(value-Number(String(m.startMileage||value).replace(/,/g,''))),daysDriven:r[6]??m.daysDriven,monthsDriven:r[7]??m.monthsDriven,monthlyEstimate:r[8]??m.monthlyEstimate,annualEstimate:r[9]??m.annualEstimate});
   renderCategory();if(asset===a)renderAsset('mileage');document.getElementById('mileageDialog').close();
  }catch(error){message.textContent=error.message}
@@ -1068,4 +1085,4 @@ document.getElementById('backCategory').addEventListener('click',()=>{renderCate
 }
 
 window.thStart = async () => renderFleetPage(await thFleetData(), new URL('./',location.href).href);
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=8"></script><script src="sheets.js?v=18"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=8"></script><script src="sheets.js?v=19"></script></body></html>
