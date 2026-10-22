@@ -118,7 +118,7 @@ function syncPersonalBank_(actor) {
     const checked = {};
     ['checking','savings'].forEach(function(mask) {
       const a = balances.accounts.find(function(x) { return x.account_id === map[mask]; });
-      if (!a || !a.balances || typeof a.balances.current !== 'number' || typeof a.balances.available !== 'number' || a.balances.iso_currency_code !== 'USD') throw new Error('PersonalBank did not supply complete USD balances for ' + mask + '.');
+      if (!a || !a.balances || typeof a.balances.current !== 'number' || a.balances.iso_currency_code !== 'USD') throw new Error('PersonalBank did not supply complete USD balances for ' + mask + '.');
       checked[mask] = a.balances;
     });
     const originalCursor = p.getProperty('PLAID_TRANSACTIONS_CURSOR') || '';
@@ -161,7 +161,7 @@ function syncPersonalBank_(actor) {
       const title=kind==='checking'?'Personal Finance Settings':'Capital One Savings Settings';
       const settings=book.getSheetByName(title);
       if(!settings) throw new Error('Open the '+kind+' page first to initialize its settings.');
-      settings.getRange('A2:B3').setValues([['Bank available balance',checked[kind].available],['Bank current balance',checked[kind].current]]);
+      settings.getRange('A2:B3').setValues([['Bank available balance',typeof checked[kind].available==='number'?checked[kind].available:''],['Bank current balance',checked[kind].current]]);
       settings.getRange('A7:B10').setValues([['Last successful bank sync',now],['Bank source','Plaid'],['Bank transaction update status',batch.updateStatus],['Bank sync schedule','3:30 AM America/New_York']]);
     });
     const result = {ok:true,lastSuccess:now,transactions:allRows.filter(function(row) {return row[5]!=='Removed';}).length,transactionUpdateStatus:batch.updateStatus};
