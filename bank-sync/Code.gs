@@ -207,7 +207,7 @@ function verifyPortalUser_(token) {
 }
 
 function registerPortalEndpoint() {
-  const url=ScriptApp.getService().getUrl();
+  const url='https://script.google.com/macros/s/AKfycbwICkA31zhxfvsdxRd8xADAopEPecrWLRGzu3fCYOyZw9D2N5yRE8_94k1IIAgtgvDu/exec';
   if(!url)throw new Error('Deploy the authenticated web app first.');
   const book=SpreadsheetApp.openById(TISZOD_BOOK_ID);
   ['Personal Finance Settings','Capital One Savings Settings'].forEach(function(name){
