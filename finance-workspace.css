@@ -2,3 +2,22 @@ body[data-th-page="finance"] .th-page-content{background:#0b0c0e;padding:28px 30
 
 body[data-th-page="finance"] .finance-actions #finance-admin{order:0}
 body[data-th-page="finance"] .finance-sync-status{order:10}
+
+body[data-th-page="finance"] .account-status{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:18px;padding:16px 18px;border:1px solid #adc0d9;border-radius:10px;background:#eef3f9}
+body[data-th-page="finance"] .account-status.matched{background:#e7f4eb;border-color:#79b894;color:#175b33}
+body[data-th-page="finance"] .account-status.review{background:#fff3e2;border-color:#dbb67b;color:#68420e}
+body[data-th-page="finance"] .account-status div{display:grid;gap:5px}
+body[data-th-page="finance"] .account-status span{font-size:13px}
+body[data-th-page="finance"] .account-status button,body[data-th-page="finance"] .dashboard-review button{border:1px solid #adc0d9;background:#fff;color:#203f68;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
+body[data-th-page="finance"] .snapshot-tile.positive:not(.negative){color:#175b33}
+body[data-th-page="finance"] .snapshot .dashboard-note{font-size:12px;line-height:1.5;margin:9px 0 0;padding:0;color:#526771}
+body[data-th-page="finance"] .dashboard-review{margin-top:24px;border:1px solid #cad8dc;border-radius:10px;padding:16px 18px;background:#fff}
+body[data-th-page="finance"] .dashboard-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+body[data-th-page="finance"] .snapshot .dashboard-review h3{margin:0}
+body[data-th-page="finance"] .dashboard-review ul{padding:0;margin:12px 0 0;list-style:none}
+body[data-th-page="finance"] .dashboard-review li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid #e0e7ec}
+body[data-th-page="finance"] .dashboard-review li div{display:grid;gap:4px}
+body[data-th-page="finance"] .dashboard-review li span{font-size:12px;color:#526771}
+body[data-th-page="finance"] .dashboard-review .negative{color:#9d1731}
+body[data-th-page="finance"] .dashboard-review .positive{color:#175b33}
+@media(max-width:650px){body[data-th-page="finance"] .account-status{align-items:flex-start;flex-direction:column}body[data-th-page="finance"] .dashboard-review-head{align-items:flex-start;flex-direction:column}}
