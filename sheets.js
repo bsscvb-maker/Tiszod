@@ -48,7 +48,7 @@ function thSignIn() {
   }
   thTokenClient ||= google.accounts.oauth2.initTokenClient({
     client_id: TH_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file'+(document.body.dataset.thPage==='finance'?' https://www.googleapis.com/auth/userinfo.email':''),
     callback: async response => {
       if (!response.access_token) {
         thStatus(response.error || 'Sign-in did not finish. Please try again.');
