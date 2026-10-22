@@ -21,3 +21,11 @@ body[data-th-page="finance"] .dashboard-review li span{font-size:12px;color:#526
 body[data-th-page="finance"] .dashboard-review .negative{color:#9d1731}
 body[data-th-page="finance"] .dashboard-review .positive{color:#175b33}
 @media(max-width:650px){body[data-th-page="finance"] .account-status{align-items:flex-start;flex-direction:column}body[data-th-page="finance"] .dashboard-review-head{align-items:flex-start;flex-direction:column}}
+
+body[data-th-page="finance"] .control-reference{margin-top:20px;padding:18px 20px;border:1px solid #adc0d9;border-radius:10px;background:#edf2f8;color:#203855}
+body[data-th-page="finance"] .control-reference h3{font-size:13px;margin:0 0 10px}
+body[data-th-page="finance"] .control-reference p{font-size:13px;line-height:1.5;margin:10px 0;color:#526771}
+body[data-th-page="finance"] .control-reference>div{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
+body[data-th-page="finance"] .control-reference small{color:#526771}
+body[data-th-page="finance"] .control-box strong{overflow-wrap:anywhere}
+body[data-th-page="finance"] .control-action{display:flex;gap:10px}
