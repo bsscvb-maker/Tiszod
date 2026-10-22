@@ -101,10 +101,10 @@ async function finInit(){
  if(JSON.stringify((ledger.values?.[0]||[]).slice(11,15))!==JSON.stringify(expectedHeaders))await finRequest(finRange('L1:O1')+'?valueInputOption=RAW','PUT',{values:[expectedHeaders]});const savedOrder=String(settings.values?.[2]?.[1]||'').split(',');finTabOrder=[...new Set(savedOrder.filter(id=>FIN_TABS.some(([key])=>key===id))),...FIN_TABS.map(([id])=>id).filter(id=>!savedOrder.includes(id))];finHiddenTabs=new Set(String(settings.values?.[3]?.[1]||'').split(',').filter(id=>FIN_TABS.some(([key])=>key===id)));finSavedOrder=[...finTabOrder];finSavedHidden=[...finHiddenTabs];if(finHiddenTabs.has(finTab))finTab=finTabOrder.find(id=>!finHiddenTabs.has(id))||'';finBankBalance=settings.values?.[0]?.[1]!==undefined&&settings.values?.[0]?.[1]!==''?num(settings.values[0][1]):null;finBankCurrent=settings.values?.[1]?.[1]!==undefined&&settings.values?.[1]?.[1]!==''?num(settings.values[1][1]):null;
  const referenceSettings=Object.fromEntries(settings.values||[]);
  finBankSyncAt=String(referenceSettings['Last successful bank sync']||'');finCurrentEditAt=String(referenceSettings['Manual current balance updated']||'');
- const reference=referenceSettings['Available balance reference'];
- finAvailableRef=reference===undefined?finBankBalance:reference===''?null:num(reference);finAvailableRefAt=String(referenceSettings['Available balance reference updated']||'');
+ const hasReference=Object.prototype.hasOwnProperty.call(referenceSettings,'Available balance reference'),reference=referenceSettings['Available balance reference'];
+ finAvailableRef=!hasReference?finBankBalance:reference===undefined||reference===''?null:num(reference);finAvailableRefAt=String(referenceSettings['Available balance reference updated']||'');
  // Preserve an existing reference separately from balance fields overwritten by bank sync.
- if(reference===undefined&&finBankBalance!==null)await finRequest(finSettings('A15:B16')+'?valueInputOption=RAW','PUT',{values:[['Available balance reference',finBankBalance],['Available balance reference updated','']]});
+ if(!hasReference&&finBankBalance!==null)await finRequest(finSettings('A15:B16')+'?valueInputOption=RAW','PUT',{values:[['Available balance reference',finBankBalance],['Available balance reference updated','']]});
  await finLoad({values:(ledger.values||[]).slice(1)});
  const connection=$('th-connection');if(connection){connection.textContent='Private workbook connected';connection.classList.add('connected');}
  // Vehicle suggestions are only needed by the editor; do not delay the dashboard.
