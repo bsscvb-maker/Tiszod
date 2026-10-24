@@ -615,6 +615,12 @@ function assetPhoto(a){
  return a.photoLoading;
 }
 function show(view){if(view==='menuView')renderGarageStats();for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
+// Navigation restores display state without replaying data-changing actions.
+window.thViewAdapter={
+ capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
+ restore:s=>{category=s.category;status=s.status;asset=assets.find(a=>a.id===s.asset)||null;if(s.view==='categoryView')renderCategory();if(s.view==='assetView'&&asset)renderAsset(s.assetTab);show(s.view);}
+};
+
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 function renderCategory(){
  photoObserver?.disconnect();
