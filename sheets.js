@@ -133,6 +133,26 @@ async function thWriteCell(sheet, cell, value) {
     throw new Error(response.status===401?'Your sign-in expired. Sign out and sign in again.':(detail.error?.message||'Could not save the change.'));
   }
 }
+// Send related cell/range updates in one request instead of one per cell.
+async function thWriteRanges(updates) {
+  if (!updates.length) return;
+  if (!thToken) throw new Error('Sign in again to save changes.');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  try {
+    const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values:batchUpdate',{
+      method:'POST',signal:controller.signal,
+      headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
+      body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates.map(({sheet,range,values})=>({range:"'"+sheet.replace(/'/g,"''")+"'!"+range,majorDimension:'ROWS',values}))})
+    });
+    if (!response.ok) {
+      const detail=await response.json().catch(()=>({}));
+      throw new Error(response.status===401?'Your sign-in expired. Sign out and sign in again.':(detail.error?.message||'Could not save the updates.'));
+    }
+  } catch(error) {
+    if(error.name==='AbortError')throw new Error('The workbook took too long to respond. Refresh and check the saved service before trying again.');
+    throw error;
+  } finally {clearTimeout(timer)}
+}
 async function thAppendRow(sheet, values) {
   if (sheet === 'Mileage-2025.10.16') {
     // This sheet has other tables below the mileage register. Sheets' :append
