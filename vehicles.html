@@ -1097,7 +1097,8 @@ function updateWorkItemCosts(){
  const form=document.getElementById('workEntryForm'),container=document.getElementById('workItemCosts');if(!container||workMode!=='service')return;
  const previous=new Map(Array.from(container.querySelectorAll('[data-new-item-cost]'),x=>[x.dataset.newItemCost,x.value]));
  const selected=new FormData(form).getAll('tasks').map(Number),items=(scheduleFor(workTarget)?.tasks||[]).filter(t=>selected.includes(t.sheetRow)).map(t=>({key:String(t.sheetRow),name:t.task}));
- if(form.elements.item.value.trim())items.push({key:'other',name:form.elements.item.value.trim()});
+ const otherWork=form.querySelector('[name="item"]')?.value.trim()||'';
+ if(otherWork)items.push({key:'other',name:otherWork});
  container.innerHTML=items.length?'<h3>Individual item costs</h3><p>Enter a cost for each item if known. Leave blank when only the visit total is known.</p>'+items.map(x=>'<label>'+esc(x.name)+'<input type="number" min="0" step="0.01" data-new-item-cost="'+x.key+'" aria-label="Cost for '+esc(x.name)+'" value="'+esc(previous.get(x.key)||'')+'" placeholder="Not allocated"></label>').join(''):'';
 }
 document.getElementById('workEntryForm').addEventListener('change',e=>{if(e.target.name==='tasks'||e.target.name==='item')updateWorkItemCosts()});
