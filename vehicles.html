@@ -187,6 +187,7 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 #assetMaintenance input{min-width:100px;width:100%;padding:8px;background:#172940;color:#f3f7ff;border:1px solid #526b8c;border-radius:4px}
 #assetMaintenance .notes-cell input{min-width:220px}
 #addService{margin:15px 0;padding:10px 14px;border:1px solid #638ac0;border-radius:5px;background:#244a7b;color:white;font-weight:700}
+.work-dialog{width:min(850px,95vw);max-height:90vh;overflow:auto;background:#162940;color:#f3f7ff;border:1px solid #7698c5;border-radius:10px;padding:24px}.work-dialog::backdrop{background:rgba(0,0,0,.7)}.work-dialog input,.work-dialog textarea{width:100%;padding:10px;background:#0d1e33;color:#fff;border:1px solid #6684aa;border-radius:4px;font:inherit}.work-dialog .work-check{display:flex;align-items:center;gap:10px;padding:8px;font-size:15px}.work-dialog input[type=checkbox],#assetRecommended input[type=checkbox]{width:20px;height:20px;accent-color:#6ba5ee}.work-dialog fieldset{max-height:240px;overflow:auto;border:1px solid #6381a8}.work-dialog label{min-width:0;display:grid;gap:6px}.work-dialog .complete-wide{grid-column:1/-1}.work-dialog .complete-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}.work-dialog button,#assetRecommended .complete-actions button{padding:11px 16px;background:#28568c;color:white;border:1px solid #729ccc;border-radius:5px;font:inherit}.work-dialog #workEntryStatus{white-space:pre-wrap}.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:600px){.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -398,7 +399,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 </main></div>
 </div></div></div>
 <dialog id="addVehicleDialog" class="add-vehicle-dialog" aria-labelledby="addVehicleTitle"><form id="addVehicleForm"><div class="add-vehicle-head"><h2 id="addVehicleTitle">Add a vehicle</h2><button type="button" id="closeAddVehicle" aria-label="Close">×</button></div><div class="add-vehicle-fields"><label>Year <input name="year" type="number" min="1900" max="2100" required></label><label>Make <input name="make" required maxlength="100"></label><label>Model <input name="model" required maxlength="120"></label><label>Section <select name="category" id="newVehicleCategory" required></select></label><label>Status <select name="status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Sold">Sold</option><option value="Managed">Managed</option></select></label><label>Engine <input name="engine" maxlength="100"></label><label>VIN / serial number <input name="vin" maxlength="100"></label><label>Tag / plate <input name="tag" maxlength="50"></label><label>Color <input name="color" maxlength="80"></label></div><p id="addVehicleStatus" role="status"></p><div class="add-vehicle-actions"><button type="button" id="cancelAddVehicle">Cancel</button><button type="submit" id="saveVehicle">Save vehicle</button></div></form></dialog>
-<dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
+<dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueComplete">Complete tasks</button> <button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
 <dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script>
@@ -534,23 +535,23 @@ const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','
 function serviceAssetKey(a){const name=clean(a.make+' '+a.model),legacy=Object.entries(serviceKeys).find(([prefix])=>name.startsWith(prefix))?.[1];return legacy||(a.reportId&&String(a.reportId).startsWith('PDF-')?'report-'+String(a.reportId).slice(4):'')||(a.profileRow?'profile-'+a.profileRow:'item-'+clean(a.year+' '+a.make+' '+a.model))}
 function serviceFor(a){const key=serviceAssetKey(a);return services.filter(s=>clean(s.asset)===clean(key))}
 const scheduleKeys=[[/trek.*7200/, 'trek7200'],[/harley.*(ultra|flhtcui)/,'harleydavidsonultra'],[/lifetime.*spitfire/,'lifetimespitfire'],[/keystone.*bullet/,'keystonebullet'],[/stirling|westbrook.*trailer/,'stirling'],[/makdaddy.*legend/,'makdaddylegend'],[/harley.*(roadglide|fltrk)/,'harleydavidsonroad'],[/ram.*3500/,'ram3500'],[/coleman.*(b200|8200)/,'colemanb200'],[/volpam.*sp03/,'volpamsp03'],[/coolster.*3050/,'coolster3050'],[/ford.*f150/,'fordf150'],[/xpro.*jaguar/,'xprojaguar'],[/ford.*mustang/,'fordmustang'],[/toyota.*4runner/,'toyota4runner'],[/chrysler.*aspen/,'chrysleraspen'],[/honda.*civic/,'hondacivic'],[/husqvarna.*122hd4[5s]/,'husqvarna122hd4s'],[/echo.*pb2520/,'echopb2520'],[/dewalt.*aircompressor/,'dewaltaircompressor'],[/dewalt.*dxpw3425|dewalt.*pressurewasher/,'dewaltdxpw3425'],[/craftsman.*18.*chainsaw/,'craftsman18inchchainsaw'],[/craftsman.*10.*polesaw/,'craftsman10polesaw'],[/husqvarna.*yth24k48/,'husqvarnayth24k48'],[/cubcadet.*kohler/,'cubcadetkohler'],[/husqvarna.*330lx|husqvarna.*weedeater/,'husqvarna330lx'],[/stihl.*fs56/,'stihlfs56']];
-function scheduleFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return entry?schedules[entry[1]]:null}
+function scheduleFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return schedules[entry?entry[1]:serviceAssetKey(a)]||null}
 function renderRecommended(a){
  const panel=document.getElementById('assetRecommended'),schedule=scheduleFor(a);
- if(!['active','managed'].includes(clean(a.status))||!schedule){panel.innerHTML='';return}
+ if(!['active','managed'].includes(clean(a.status)) ){panel.innerHTML='';return}
  const today=new Date();today.setHours(0,0,0,0);
  const soon=new Date(today);soon.setDate(soon.getDate()+60);
  const groups=[[],[],[]];
- for(const task of schedule.tasks){
+ for(const task of schedule?.tasks||[]){
   const due=task.nextDate?new Date(task.nextDate+' 12:00:00'):null;
   const bucket=due&&!Number.isNaN(due.getTime())?(due<today?0:due<=soon?1:2):2;
   groups[bucket].push({task,due});
  }
  for(const group of groups)group.sort((a,b)=>(a.due?.getTime()??Infinity)-(b.due?.getTime()??Infinity)||a.task.task.localeCompare(b.task.task));
- const titles=['Dates passed in report','Coming up in 60 days','Later or no date listed'];
- const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td>'+esc(task.task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+esc(task.nextDate||'No date listed')+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button></td></tr>').join('')+'</tbody></table></div></section>':'').join('');
+ const titles=['Past due dates','Coming up in 60 days','Later or no date listed'];
+ const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+(task.notes?'<small style="display:block;white-space:normal">'+esc(task.notes)+'</small>':'')+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+esc(task.nextDate||'No date listed')+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button></td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2021'?'<p class="recommend-warning">The report lists this truck as a 2021 Ram 3500; the vehicle record lists a different year. Verify its schedule before using these dates.</p>':'';
- panel.innerHTML='<p class="recommend-intro">Complete service schedule imported from the September 24, 2026 report, grouped by due date. These dates and readings are from that report; mileage or hours may make an item due sooner. Completed work is saved in the Service Log.</p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected">Complete selected items</button><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Select all items completed during one visit, then choose Complete selected items. New to-dos appear here alongside your imported schedule. Mileage or hours may make an item due sooner.</p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
@@ -654,7 +655,7 @@ function renderCategory(){
 function renderAsset(tab='details'){
  const hours=usesHours(asset);
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
- const recommended=['active','managed'].includes(clean(asset.status))&&(!serviceLoaded||Boolean(scheduleFor(asset)));
+ const recommended=['active','managed'].includes(clean(asset.status));
  document.querySelector('[data-asset-tab="recommended"]').hidden=!recommended;
  if(tab==='recommended'&&!recommended)tab='details';
  editing=false;
@@ -694,7 +695,7 @@ function renderAsset(tab='details'){
  else{
   const entries=serviceFor(asset).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)||b.sheetRow-a.sheetRow);
   renderRecommended(asset);
-  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><div class="table-wrap"><table><thead><tr><th>Date</th><th>Service item</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Notes</th></tr></thead><tbody>'+entries.map(e=>'<tr>'+[['date','C'],['item','D'],['odometer','E'],['notes','G']].map(([key,col])=>'<td class="'+(key==='notes'?'notes-cell':'')+'"><input data-service-row="'+e.sheetRow+'" data-service-col="'+col+'" aria-label="'+(key==='odometer'&&hours?'hours':esc(key))+'" value="'+esc(e[key]||'')+'" readonly></td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><div class="table-wrap"><table><thead><tr><th>Date</th><th>Service item</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Cost ($)</th><th>Notes</th></tr></thead><tbody>'+entries.map(e=>'<tr>'+[['date','C'],['item','D'],['odometer','E'],['cost','F'],['notes','G']].map(([key,col])=>'<td class="'+(key==='notes'?'notes-cell':'')+'"><input data-service-row="'+e.sheetRow+'" data-service-col="'+col+'" aria-label="'+(key==='odometer'&&hours?'hours':esc(key))+'" value="'+esc(e[key]||'')+'" readonly></td>').join('')+'</tr>').join('')+'</tbody></table></div>';
  }
  for(const b of document.querySelectorAll('[data-asset-tab]'))b.classList.toggle('active',b.dataset.assetTab===tab);
  for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended']])document.getElementById(id).hidden=name!==tab;
@@ -741,6 +742,7 @@ document.getElementById('applyReport').addEventListener('click',()=>{appliedRepo
 document.getElementById('exportReport').addEventListener('click',()=>{const {columns,rows}=reportData(),csv=[columns,...rows].map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='vehicle-'+appliedReport.type+'-report.csv';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
 document.getElementById('printReport').addEventListener('click',()=>window.print());
 document.getElementById('dueClose').addEventListener('click',()=>document.getElementById('dueDialog').close());
+document.getElementById('dueComplete').addEventListener('click',()=>{if(!asset)return;document.getElementById('dueDialog').close();openWorkDialog('service');});
 document.getElementById('dueSchedule').addEventListener('click',()=>{document.getElementById('dueDialog').close();if(!document.querySelector('[data-asset-tab="recommended"]').hidden)renderAsset('recommended')});
 document.getElementById('homeLink').href=PORTAL;
 document.getElementById('allLink').href=PORTAL+'finance.html';
@@ -1012,21 +1014,68 @@ document.getElementById('assetMileage').addEventListener('submit',async e=>{
 });
 document.getElementById('assetMaintenance').addEventListener('change',async e=>{
  const input=e.target.closest('[data-service-row]');if(!input||!editing)return;
+ if(input.dataset.serviceCol==='E'){try{checkedReading(input.value)}catch(error){document.getElementById('assetEditStatus').textContent=error.message;return}}
  input.disabled=true;
- try{await thWriteCell('Portal Service History',input.dataset.serviceCol+input.dataset.serviceRow,input.value);const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)entry[{C:'date',D:'item',E:'odometer',G:'notes'}[input.dataset.serviceCol]]=input.value;document.getElementById('assetEditStatus').textContent='Service entry saved.'}
- catch(error){const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)input.value=entry[{C:'date',D:'item',E:'odometer',G:'notes'}[input.dataset.serviceCol]]||'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
+ try{await thWriteCell('Portal Service History',input.dataset.serviceCol+input.dataset.serviceRow,input.value);const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry){entry[{C:'date',D:'item',E:'odometer',F:'cost',G:'notes'}[input.dataset.serviceCol]]=input.value;if(input.dataset.serviceCol==='E')await syncServiceReading(asset,input.value,entry.date)}document.getElementById('assetEditStatus').textContent='Service entry saved.'}
+ catch(error){const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)input.value=entry[{C:'date',D:'item',E:'odometer',F:'cost',G:'notes'}[input.dataset.serviceCol]]||'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
  finally{input.disabled=false}
 });
-document.getElementById('assetMaintenance').addEventListener('click',async e=>{
- if(e.target.id!=='addService'||!asset)return;
- const button=e.target;button.disabled=true;
+document.getElementById('assetMaintenance').addEventListener('click',e=>{
+ if(e.target.id==='addService'&&asset)openWorkDialog('service');
+});
+function localServiceDate(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function checkedReading(value){if(String(value).trim()==='')return null;const n=Number(String(value).replace(/,/g,''));if(!Number.isFinite(n)||n<0)throw new Error('Enter a valid nonnegative mileage or hour reading.');return n}
+async function syncServiceReading(a,value,date){
+ const n=checkedReading(value);if(n===null)return;
+ let m=mileageFor(a);const old=checkedReading(m?.currentMileage??a.reportOdometer??'');
+ // Historical service must never roll back the current odometer.
+ if(old!==null&&n<=old)return;
+ if(m){await thWriteCell('Mileage-2025.10.16','F'+m.sheetRow,n);m.currentMileage=n;m.addedMileage=n-Number(String(m.startMileage).replace(/,/g,''))}
+ else{
+  const start=checkedReading(a.reportOdometer??'')??0;
+  const row=await thAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date||localServiceDate(),Math.min(start,n),n,'','','','','']);
+  m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date||localServiceDate(),startMileage:Math.min(start,n),currentMileage:n,addedMileage:n-Math.min(start,n)};mileage.push(m);
+  for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await thWriteCell('Mileage-2025.10.16',col+row,formula);
+ }
+ renderCategory();renderGarageStats();
+}
+const workDialog=document.createElement('dialog');workDialog.className='work-dialog';
+workDialog.innerHTML='<form id="workEntryForm"><h2 id="workEntryTitle"></h2><p id="workVehicleName"></p><div id="workEntryFields" class="complete-grid"></div><div class="complete-actions"><button type="submit">Save</button><button type="button" id="cancelWorkEntry">Cancel</button></div><p role="status" id="workEntryStatus"></p></form>';
+document.body.append(workDialog);
+workDialog.querySelector('#cancelWorkEntry').onclick=()=>workDialog.close();
+let workTarget=null,workMode='service';
+function openWorkDialog(mode,selected=[]){
+ workTarget=asset;workMode=mode;const tasks=scheduleFor(asset)?.tasks||[],todo=mode==='todo';
+ document.getElementById('workEntryTitle').textContent=todo?'Add service to-do':'Record completed service';
+ document.getElementById('workVehicleName').textContent=[asset.year,asset.make,asset.model].join(' ');
+ const field=(label,name,type='text',value='',required=false)=>'<label>'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'></label>';
+ document.getElementById('workEntryFields').innerHTML=(todo?'': '<fieldset class="complete-wide"><legend>Check everything already completed during this visit</legend>'+tasks.map(t=>'<label class="work-check"><input type="checkbox" name="tasks" value="'+t.sheetRow+'" '+(selected.includes(t.sheetRow)?'checked':'')+'>'+esc(t.task)+'</label>').join('')+'</fieldset>')+field(todo?'Service / repair needed':'Other work completed','item','text','',todo)+field(todo?'Date added':'Completed date','date','date',localServiceDate(),true)+field(usesHours(asset)?'Current hours':'Odometer reading','reading','number',mileageFor(asset)?.currentMileage??asset.reportOdometer??'',!todo)+(todo?field('Due date','nextDate','date')+field(usesHours(asset)?'Due at hours':'Due at mileage','nextReading','number')+field('Repeat interval (e.g. 6 months or 5,000 miles; blank for one-time)','interval')+field('Priority','priority','text','Normal'):'')+field(todo?'Estimated cost ($)':'Total visit cost ($)','cost','number')+field('Shop / person doing the work','provider')+'<label class="complete-wide">Notes / symptoms / parts needed<textarea name="notes" rows="3"></textarea></label>';
+ document.getElementById('workEntryStatus').textContent='';workDialog.querySelector('[type=submit]').disabled=false;workDialog.showModal();(workDialog.querySelector('[name=tasks]')||workDialog.querySelector('[name=item]'))?.focus();
+}
+document.getElementById('workEntryForm').addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.target,a=workTarget,data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]'),message=document.getElementById('workEntryStatus');
+ const selected=new FormData(form).getAll('tasks').map(Number),tasks=(scheduleFor(a)?.tasks||[]).filter(t=>selected.includes(t.sheetRow));
+ if(workMode==='service'&&!tasks.length&&!data.item.trim()){message.textContent='Select at least one service item or describe the work completed.';return}
+ button.disabled=true;message.textContent='Saving…';let saved=false;
  try{
-  await ensureProfileRow(asset);const serviceAsset=serviceAssetKey(asset),today=new Date().toISOString().slice(0,10);
-  const row=await thAppendRow('Portal Service History',[serviceAsset,'',today,'New service','','','']);
-  services.push({asset:serviceAsset,id:'',date:today,item:'New service',odometer:'',cost:'',notes:'',sheetRow:row});
-  renderAsset('maintenance');document.getElementById('assetEditStatus').textContent='Service entry added. Edit its details below.';
- }catch(error){document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
- finally{button.disabled=false}
+  checkedReading(data.reading);if(data.nextReading)checkedReading(data.nextReading);
+  await ensureProfileRow(a);
+  const notes=[workMode==='todo'&&'Added: '+data.date,data.provider&&'Shop / person: '+data.provider,workMode==='todo'&&data.priority&&'Priority: '+data.priority,workMode==='todo'&&data.cost&&'Estimated cost: $'+data.cost,data.notes].filter(Boolean).join(' · ');
+  if(workMode==='todo'){
+   const match=scheduleKeys.find(([pattern])=>pattern.test(clean([a.make,a.model,a.name].filter(Boolean).join(' ')))),key=match?match[1]:serviceAssetKey(a),name=[a.year,a.make,a.model].join(' ');
+   const row=await thAppendRow('Portal Service Schedules',[key,name,data.item.trim(),data.interval,'','',data.nextDate,data.nextReading,notes]);saved=true;
+   (schedules[key]||={sourceName:name,tasks:[]}).tasks.push({sheetRow:row,task:data.item.trim(),interval:data.interval,lastDate:'',lastReading:'',nextDate:data.nextDate,nextReading:data.nextReading,notes});
+  }else{
+   const item=[...tasks.map(t=>t.task),data.item.trim()].filter(Boolean).join('; '),key=serviceAssetKey(a);
+   const row=await thAppendRow('Portal Service History',[key,'',data.date,item,data.reading,data.cost,notes]);saved=true;
+   services.push({sheetRow:row,asset:key,id:'',date:data.date,item,odometer:data.reading,cost:data.cost,notes});
+   for(const task of tasks){const next=nextScheduleValues(task,data.date,data.reading);for(const [col,value] of [['E',data.date],['F',data.reading],['G',next.nextDate],['H',next.nextReading]])await thWriteCell('Portal Service Schedules',col+task.sheetRow,value);Object.assign(task,{lastDate:data.date,lastReading:data.reading,...next})}
+  }
+  await syncServiceReading(a,data.reading,data.date);
+  workDialog.close();if(asset===a)renderAsset(workMode==='todo'?'recommended':'maintenance');
+  document.getElementById('assetEditStatus').textContent=workMode==='todo'?'Service to-do saved.':'Completed work saved. Main mileage updated.';
+ }catch(error){message.textContent=error.message+(saved?' The entry was saved, but a follow-up update failed. Close this window and check the record before adding it again.':'');button.disabled=saved}
+ finally{if(!saved)button.disabled=false}
 });
 function nextScheduleValues(task,date,reading){
  const interval=task.interval||'';
@@ -1039,38 +1088,14 @@ function nextScheduleValues(task,date,reading){
  return {nextDate,nextReading};
 }
 document.getElementById('assetRecommended').addEventListener('click',e=>{
+ if(!asset)return;
+ if(e.target.id==='addScheduledTask'){openWorkDialog('todo');return}
  const button=e.target.closest('[data-complete-row]');
- if(e.target.id==='cancelComplete'){document.getElementById('completePanel').hidden=true;return}
- if(!button||!asset)return;
- const task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(button.dataset.completeRow));if(!task)return;
- const panel=document.getElementById('completePanel'),today=new Date(),date=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
- const reading=mileageFor(asset)?.currentMileage||asset.reportOdometer||'';
- const next=nextScheduleValues(task,date,reading);
- panel.hidden=false;
- panel.innerHTML='<h3>Complete: '+esc(task.task)+'</h3><p>Frequency: '+esc(task.interval||'Not recorded')+'. Confirm the work and the next due date or reading before saving.</p><form id="completeServiceForm" data-schedule-row="'+task.sheetRow+'"><div class="complete-grid"><label>Completed date<input name="date" type="date" value="'+date+'" required></label><label>'+esc(usesHours(asset)?'Hours':'Odometer')+'<input name="reading" inputmode="decimal" value="'+esc(reading)+'" placeholder="Optional"></label><label>Next due date<input name="nextDate" type="date" value="'+esc(next.nextDate)+'"></label><label>'+esc(usesHours(asset)?'Next due hours':'Next due mileage')+'<input name="nextReading" inputmode="decimal" value="'+esc(next.nextReading)+'" placeholder="Optional"></label><label class="complete-wide">Notes<textarea name="notes" rows="2" placeholder="What was done? Parts used?"></textarea></label></div><div class="complete-actions"><button type="submit">Save completed service</button><button id="cancelComplete" type="button">Cancel</button><span class="complete-message" role="status"></span></div></form>';
- panel.scrollIntoView({block:'nearest',behavior:'smooth'});
-});
-document.getElementById('assetRecommended').addEventListener('change',e=>{
- const input=e.target;if(!['date','reading'].includes(input.name))return;
- const form=input.closest('#completeServiceForm'),task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(form?.dataset.scheduleRow));if(!task)return;
- const next=nextScheduleValues(task,form.elements.date.value,form.elements.reading.value);
- if(!form.elements.nextDate.dataset.custom)form.elements.nextDate.value=next.nextDate;
- if(!form.elements.nextReading.dataset.custom)form.elements.nextReading.value=next.nextReading;
-});
-document.getElementById('assetRecommended').addEventListener('input',e=>{if(['nextDate','nextReading'].includes(e.target.name))e.target.dataset.custom='true'});
-document.getElementById('assetRecommended').addEventListener('submit',async e=>{
- if(e.target.id!=='completeServiceForm'||!asset)return;
- e.preventDefault();const form=e.target,button=form.querySelector('[type=submit]'),message=form.querySelector('.complete-message'),task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(form.dataset.scheduleRow));if(!task)return;
- const data=Object.fromEntries(new FormData(form));button.disabled=true;message.textContent='Saving completed service…';
- try{
-  await ensureProfileRow(asset);const serviceAsset=serviceAssetKey(asset);
-  const row=await thAppendRow('Portal Service History',[serviceAsset,'',data.date,task.task,data.reading,'',data.notes]);
-  services.push({asset:serviceAsset,id:'',date:data.date,item:task.task,odometer:data.reading,cost:'',notes:data.notes,sheetRow:row});
-  button.disabled=true;message.textContent='Saved to Service Log. Updating schedule…';
-  for(const [column,value] of [['E',data.date],['F',data.reading],['G',data.nextDate],['H',data.nextReading]])await thWriteCell('Portal Service Schedules',column+task.sheetRow,value);
-  Object.assign(task,{lastDate:data.date,lastReading:data.reading,nextDate:data.nextDate,nextReading:data.nextReading});
-  renderAsset('recommended');const newPanel=document.getElementById('completePanel');newPanel.hidden=false;newPanel.innerHTML='<p role="status">Completed service saved to Service Log and the schedule updated.</p>';
- }catch(error){message.textContent=error.message+' Check the Service Log before trying again.';button.disabled=true}
+ if(button){openWorkDialog('service',[Number(button.dataset.completeRow)]);return}
+ if(e.target.id==='completeSelected'){
+  const selected=Array.from(document.querySelectorAll('[data-select-service]:checked'),x=>Number(x.dataset.selectService));
+  openWorkDialog('service',selected);
+ }
 });
 document.getElementById('assetPhotoInput').addEventListener('change',async e=>{
  const file=e.target.files?.[0];if(!file||!asset)return;const current=asset;
@@ -1085,4 +1110,4 @@ document.getElementById('backCategory').addEventListener('click',()=>{renderCate
 }
 
 window.thStart = async () => renderFleetPage(await thFleetData(), new URL('./',location.href).href);
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=8"></script><script src="sheets.js?v=19"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=8"></script><script src="sheets.js?v=20"></script></body></html>

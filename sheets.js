@@ -109,13 +109,13 @@ async function thFleetData() {
 async function thFleetServiceData() {
   const [sr, sch] = await Promise.all([
     thValues("'Portal Service History'!A1:G5000"),
-    thValues("'Portal Service Schedules'!A1:I400")
+    thValues("'Portal Service Schedules'!A1:I5000")
   ]);
   const services = sr.slice(1).map((r,i)=>({...r,__row:i+2})).filter(r => r[0] && r[3]).map(r => ({sheetRow:r.__row,asset:r[0],id:r[1],date:r[2],item:r[3],odometer:r[4],cost:r[5],notes:r[6]}));
   const schedules={};
   for(const [index,r] of sch.slice(1).entries())if(r[0]&&r[2]){
     const entry=schedules[r[0]]||={sourceName:r[1],tasks:[]};
-    entry.tasks.push({sheetRow:index+2,task:r[2],interval:r[3]||'',lastDate:r[4]||'',lastReading:r[5]||'',nextDate:r[6]||'',nextReading:r[7]||''});
+    entry.tasks.push({sheetRow:index+2,task:r[2],interval:r[3]||'',lastDate:r[4]||'',lastReading:r[5]||'',nextDate:r[6]||'',nextReading:r[7]||'',notes:r[8]||''});
     schedules[r[0]]=entry;
   }
   return {services,schedules};
@@ -147,7 +147,7 @@ async function thAppendRow(sheet, values) {
     if (!response.ok) {const detail=await response.json().catch(()=>({}));throw new Error(detail.error?.message||'Could not add a mileage record.')}
     return row;
   }
-  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','FreeBirds':'A:P','Portal Asset Profiles':'A:AC'};
+  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC'};
   const range="'"+sheet.replace(/'/g,"''")+"'!"+(appendRanges[sheet]||'A:Z');
   const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{
     method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
