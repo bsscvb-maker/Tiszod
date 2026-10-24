@@ -188,6 +188,7 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 #assetMaintenance .notes-cell input{min-width:220px}
 #addService{margin:15px 0;padding:10px 14px;border:1px solid #638ac0;border-radius:5px;background:#244a7b;color:white;font-weight:700}
 .work-dialog{width:min(850px,95vw);max-height:90vh;overflow:auto;background:#162940;color:#f3f7ff;border:1px solid #7698c5;border-radius:10px;padding:24px}.work-dialog::backdrop{background:rgba(0,0,0,.7)}.work-dialog input,.work-dialog textarea{width:100%;padding:10px;background:#0d1e33;color:#fff;border:1px solid #6684aa;border-radius:4px;font:inherit}.work-dialog .work-check{display:flex;align-items:center;gap:10px;padding:8px;font-size:15px}.work-dialog input[type=checkbox],#assetRecommended input[type=checkbox]{width:20px;height:20px;accent-color:#6ba5ee}.work-dialog fieldset{max-height:240px;overflow:auto;border:1px solid #6381a8}.work-dialog label{min-width:0;display:grid;gap:6px}.work-dialog .complete-wide{grid-column:1/-1}.work-dialog .complete-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}.work-dialog button,#assetRecommended .complete-actions button{padding:11px 16px;background:#28568c;color:white;border:1px solid #729ccc;border-radius:5px;font:inherit}.work-dialog #workEntryStatus{white-space:pre-wrap}.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:600px){.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:1fr}}
+[data-history-search]{cursor:pointer}.service-entry-open{border:0;background:transparent;color:#a9ceff;font:700 17px Arial;cursor:pointer;text-align:left;padding:8px 0}.service-item-preview{font-size:14px;white-space:normal;line-height:1.8}.service-detail-table{min-width:950px}.service-detail-table td{white-space:normal;vertical-align:top}.service-detail-table td:first-child{min-width:240px}.service-detail-table input{min-width:100px}#workItemCosts label{margin:10px 0}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -695,7 +696,8 @@ function renderAsset(tab='details'){
  else{
   const entries=serviceFor(asset).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)||b.sheetRow-a.sheetRow);
   renderRecommended(asset);
-  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><div class="table-wrap"><table><thead><tr><th>Date</th><th>Service item</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Cost ($)</th><th>Notes</th></tr></thead><tbody>'+entries.map(e=>'<tr>'+[['date','C'],['item','D'],['odometer','E'],['cost','F'],['notes','G']].map(([key,col])=>'<td class="'+(key==='notes'?'notes-cell':'')+'"><input data-service-row="'+e.sheetRow+'" data-service-col="'+col+'" aria-label="'+(key==='odometer'&&hours?'hours':esc(key))+'" value="'+esc(e[key]||'')+'" readonly></td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><p>Click an entry to view, edit, or delete its individual service items.</p><label>Find service <input id="serviceHistorySearch" type="search" placeholder="Search heater core, oil change…"></label><div class="table-wrap"><table><thead><tr><th>Date</th><th>Work completed</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Visit total ($)</th></tr></thead><tbody>'+entries.map(e=>{const parts=serviceItemization(e);return '<tr data-open-service="'+e.sheetRow+'" data-history-search="'+esc(parts.map(x=>x.name).join(' ').toLowerCase())+'"><td>'+esc(e.date||'Not recorded')+'</td><td><button type="button" class="service-entry-open" data-open-service="'+e.sheetRow+'">'+esc(parts.length===1?parts[0].name:parts.length+' service items completed')+'</button><div class="service-item-preview">'+parts.map(x=>'<div>'+esc(x.name)+'</div>').join('')+'</div></td><td>'+esc(e.odometer??'')+'</td><td>'+esc(e.cost??'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+
  }
  for(const b of document.querySelectorAll('[data-asset-tab]'))b.classList.toggle('active',b.dataset.assetTab===tab);
  for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended']])document.getElementById(id).hidden=name!==tab;
@@ -1022,6 +1024,44 @@ document.getElementById('assetMaintenance').addEventListener('change',async e=>{
 });
 document.getElementById('assetMaintenance').addEventListener('click',e=>{
  if(e.target.id==='addService'&&asset)openWorkDialog('service');
+ const open=e.target.closest('[data-open-service]');if(open){const entry=services.find(x=>x.sheetRow===Number(open.dataset.openService));if(entry)openServiceEntry(entry)}
+});
+function serviceItemization(entry){
+ try{const detail=JSON.parse(entry.id);if(detail.tiszodService===1&&Array.isArray(detail.items)&&detail.items.length)return detail.items.map(x=>({name:String(x.name||''),cost:x.cost??'',notes:String(x.notes||'')}))}catch{}
+ const names=String(entry.item||'Service').split(';').map(x=>x.trim()).filter(Boolean);
+ return names.map(name=>({name,cost:names.length===1?(entry.cost??''):'',notes:''}));
+}
+document.getElementById('assetMaintenance').addEventListener('input',e=>{if(e.target.id==='serviceHistorySearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-history-search]').forEach(row=>row.hidden=!row.dataset.historySearch.includes(q))}});
+const entryDialog=document.createElement('dialog');entryDialog.className='work-dialog';entryDialog.setAttribute('aria-label','Service entry details');document.body.append(entryDialog);
+let detailEntry=null,detailAsset=null;
+function openServiceEntry(entry){
+ detailEntry=entry;detailAsset=asset;const items=serviceItemization(entry);
+ entryDialog.innerHTML='<form id="serviceDetailForm"><h2>Service entry · '+esc(entry.date)+'</h2><p>'+items.length+' individual service item'+(items.length===1?'':'s')+'. Each item shares this visit’s date and reading. Blank item costs mean the visit total has not been allocated.</p><div class="complete-grid"><label>Service date<input name="date" required value="'+esc(entry.date||'')+'"></label><label>'+esc(usesHours(asset)?'Hours':'Odometer')+'<input name="reading" type="number" min="0" step="any" value="'+esc(entry.odometer??'')+'"></label><label>Visit total ($)<input name="total" type="number" min="0" step="0.01" value="'+esc(String(entry.cost??'').replace(/[$,]/g,''))+'"></label><label class="complete-wide">Visit notes / shop<textarea name="notes">'+esc(entry.notes||'')+'</textarea></label></div><div class="table-wrap"><table class="service-detail-table"><thead><tr><th>Individual service item</th><th>Date</th><th>Reading</th><th>Item cost ($)</th><th>Notes</th><th></th></tr></thead><tbody>'+items.map((x,i)=>'<tr data-detail-item><td><input data-detail-name aria-label="Service item '+(i+1)+'" value="'+esc(x.name)+'" required></td><td data-detail-date>'+esc(entry.date)+'</td><td data-detail-reading>'+esc(entry.odometer??'')+'</td><td><input data-detail-cost aria-label="Item cost '+(i+1)+'" type="number" min="0" step="0.01" placeholder="Not allocated" value="'+esc(String(x.cost).replace(/[$,]/g,''))+'"></td><td><input data-detail-notes aria-label="Item notes '+(i+1)+'" value="'+esc(x.notes)+'"></td><td><button type="button" data-remove-detail>Remove item</button></td></tr>').join('')+'</tbody></table></div><p role="status" id="serviceDetailStatus"></p><div class="complete-actions"><button type="submit">Save changes</button><button type="button" id="deleteServiceEntry">Delete entry</button><button type="button" id="closeServiceEntry">Close</button></div></form>';
+ entryDialog.showModal();
+}
+entryDialog.addEventListener('input',e=>{if(e.target.name==='date'||e.target.name==='reading'){entryDialog.querySelectorAll(e.target.name==='date'?'[data-detail-date]':'[data-detail-reading]').forEach(x=>x.textContent=e.target.value)}});
+entryDialog.addEventListener('click',async e=>{
+ if(e.target.id==='closeServiceEntry'){entryDialog.close();return}
+ if(e.target.closest('[data-remove-detail]')){if(entryDialog.querySelectorAll('[data-detail-item]').length===1){document.getElementById('serviceDetailStatus').textContent='Use Delete entry to remove the last item.';return}e.target.closest('[data-detail-item]').remove();return}
+ if(e.target.id!=='deleteServiceEntry')return;
+ if(!confirm('Delete this service entry and all of its items? Mileage and the service schedule will stay as they are.'))return;
+ const entry=detailEntry;entryDialog.querySelectorAll('button').forEach(b=>b.disabled=true);
+ try{await thWriteRanges([{sheet:'Portal Service History',range:'A'+entry.sheetRow+':G'+entry.sheetRow,values:[['','','','','','','']]}]);services.splice(services.indexOf(entry),1);entryDialog.close();if(asset===detailAsset)renderAsset('maintenance')}
+ catch(error){document.getElementById('serviceDetailStatus').textContent=error.message}
+ finally{entryDialog.querySelectorAll('button').forEach(b=>b.disabled=false)}
+});
+entryDialog.addEventListener('submit',async e=>{
+ e.preventDefault();const entry=detailEntry,a=detailAsset,form=e.target,data=Object.fromEntries(new FormData(form)),message=document.getElementById('serviceDetailStatus');
+ const items=Array.from(entryDialog.querySelectorAll('[data-detail-item]'),row=>({name:row.querySelector('[data-detail-name]').value.trim(),cost:row.querySelector('[data-detail-cost]').value,notes:row.querySelector('[data-detail-notes]').value}));
+ entryDialog.querySelectorAll('button').forEach(b=>b.disabled=true);message.textContent='Saving itemized service…';
+ try{
+  checkedReading(data.reading);
+  const id=JSON.stringify({tiszodService:1,items}),item=items.map(x=>x.name).join('; ');
+  await thWriteRanges([{sheet:'Portal Service History',range:'B'+entry.sheetRow+':G'+entry.sheetRow,values:[[id,data.date,item,data.reading,data.total,data.notes]]}]);
+  Object.assign(entry,{id,date:data.date,item,odometer:data.reading,cost:data.total,notes:data.notes});await syncServiceReading(a,data.reading,data.date);
+  entryDialog.close();if(asset===a)renderAsset('maintenance');
+ }catch(error){message.textContent=error.message}
+ finally{entryDialog.querySelectorAll('button').forEach(b=>b.disabled=false)}
 });
 function localServiceDate(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function checkedReading(value){if(String(value).trim()==='')return null;const n=Number(String(value).replace(/,/g,''));if(!Number.isFinite(n)||n<0)throw new Error('Enter a valid nonnegative mileage or hour reading.');return n}
@@ -1050,8 +1090,17 @@ function openWorkDialog(mode,selected=[]){
  document.getElementById('workVehicleName').textContent=[asset.year,asset.make,asset.model].join(' ');
  const field=(label,name,type='text',value='',required=false)=>'<label>'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'></label>';
  document.getElementById('workEntryFields').innerHTML=(todo?'': '<fieldset class="complete-wide"><legend>Check everything already completed during this visit</legend>'+tasks.map(t=>'<label class="work-check"><input type="checkbox" name="tasks" value="'+t.sheetRow+'" '+(selected.includes(t.sheetRow)?'checked':'')+'>'+esc(t.task)+'</label>').join('')+'</fieldset>')+field(todo?'Service / repair needed':'Other work completed','item','text','',todo)+field(todo?'Date added':'Completed date','date','date',localServiceDate(),true)+field(usesHours(asset)?'Current hours':'Odometer reading','reading','number',mileageFor(asset)?.currentMileage??asset.reportOdometer??'',!todo)+(todo?field('Due date','nextDate','date')+field(usesHours(asset)?'Due at hours':'Due at mileage','nextReading','number')+field('Repeat interval (e.g. 6 months or 5,000 miles; blank for one-time)','interval')+field('Priority','priority','text','Normal'):'')+field(todo?'Estimated cost ($)':'Total visit cost ($)','cost','number')+field('Shop / person doing the work','provider')+'<label class="complete-wide">Notes / symptoms / parts needed<textarea name="notes" rows="3"></textarea></label>';
+ const itemCosts=document.createElement('div');itemCosts.id='workItemCosts';itemCosts.className='complete-wide';document.getElementById('workEntryFields').append(itemCosts);updateWorkItemCosts();
  document.getElementById('workEntryStatus').textContent='';workDialog.querySelector('[type=submit]').disabled=false;workDialog.showModal();(workDialog.querySelector('[name=tasks]')||workDialog.querySelector('[name=item]'))?.focus();
 }
+function updateWorkItemCosts(){
+ const form=document.getElementById('workEntryForm'),container=document.getElementById('workItemCosts');if(!container||workMode!=='service')return;
+ const previous=new Map(Array.from(container.querySelectorAll('[data-new-item-cost]'),x=>[x.dataset.newItemCost,x.value]));
+ const selected=new FormData(form).getAll('tasks').map(Number),items=(scheduleFor(workTarget)?.tasks||[]).filter(t=>selected.includes(t.sheetRow)).map(t=>({key:String(t.sheetRow),name:t.task}));
+ if(form.elements.item.value.trim())items.push({key:'other',name:form.elements.item.value.trim()});
+ container.innerHTML=items.length?'<h3>Individual item costs</h3><p>Enter a cost for each item if known. Leave blank when only the visit total is known.</p>'+items.map(x=>'<label>'+esc(x.name)+'<input type="number" min="0" step="0.01" data-new-item-cost="'+x.key+'" aria-label="Cost for '+esc(x.name)+'" value="'+esc(previous.get(x.key)||'')+'" placeholder="Not allocated"></label>').join(''):'';
+}
+document.getElementById('workEntryForm').addEventListener('change',e=>{if(e.target.name==='tasks'||e.target.name==='item')updateWorkItemCosts()});
 document.getElementById('workEntryForm').addEventListener('submit',async e=>{
  e.preventDefault();const form=e.target,a=workTarget,data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]'),message=document.getElementById('workEntryStatus');
  const selected=new FormData(form).getAll('tasks').map(Number),tasks=(scheduleFor(a)?.tasks||[]).filter(t=>selected.includes(t.sheetRow));
@@ -1068,8 +1117,13 @@ document.getElementById('workEntryForm').addEventListener('submit',async e=>{
    (schedules[key]||={sourceName:name,tasks:[]}).tasks.push({sheetRow:row,task:data.item.trim(),interval:data.interval,lastDate:'',lastReading:'',nextDate:data.nextDate,nextReading:data.nextReading,notes});
   }else{
    const item=[...tasks.map(t=>t.task),data.item.trim()].filter(Boolean).join('; '),key=serviceAssetKey(a);
-   const row=await thAppendRow('Portal Service History',[key,'',data.date,item,data.reading,data.cost,notes]);saved=true;
-   services.push({sheetRow:row,asset:key,id:'',date:data.date,item,odometer:data.reading,cost:data.cost,notes});
+   const costFor=key=>document.querySelector('[data-new-item-cost="'+key+'"]')?.value||'';
+   const items=tasks.map(t=>({name:t.task,cost:costFor(t.sheetRow),notes:''}));if(data.item.trim())items.push({name:data.item.trim(),cost:costFor('other'),notes:''});
+   const total=data.cost!==''?data.cost:items.some(x=>x.cost!=='')?String(items.reduce((sum,x)=>sum+Number(x.cost||0),0)):'';
+   if(items.length===1&&items[0].cost===''&&total!=='')items[0].cost=total;
+   const id=JSON.stringify({tiszodService:1,items});
+   const row=await thAppendRow('Portal Service History',[key,id,data.date,item,data.reading,total,notes]);saved=true;
+   services.push({sheetRow:row,asset:key,id,date:data.date,item,odometer:data.reading,cost:total,notes});
    if(tasks.length){
     message.textContent='Service recorded. Updating '+tasks.length+' scheduled item'+(tasks.length===1?'':'s')+'…';
     const updates=tasks.map(task=>({task,next:nextScheduleValues(task,data.date,data.reading)}));
