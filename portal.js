@@ -120,6 +120,7 @@
   addEventListener('pageshow',()=>{if(ready)update();});
   document.addEventListener('click',e=>{
     if(!ready||restoring||e.target.closest('.th-browser-controls'))return;
+    if(e.target.closest('#backReports,#backDashboard,#backCategory')&&current()?.index>0){e.preventDefault();e.stopImmediatePropagation();history.back();return;}
     const link=e.target.closest('a[href]');
     if(link&&!link.target&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){const url=new URL(link.href);if(url.origin===location.origin&&url.pathname.startsWith(new URL('./',location.href).pathname)&&!url.hash){replace();sessionStorage.setItem(key,(current()?.index||0)+1);}}
     const control=e.target.closest('[data-tab],[data-fin-open],[data-asset-tab],[data-category],[data-open-asset],[data-filter],.pet-tabs [role="tab"],.card[data-row],#openVehicles,#openReports,[data-report-link],#backReports,#backDashboard,#backCategory,#close');
