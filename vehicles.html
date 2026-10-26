@@ -390,11 +390,11 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <div class="asset-header"><div class="kicker" id="assetCategory"></div><h2 id="assetTitle"></h2><span id="assetStatus"></span><button type="button" class="add-vehicle-button" id="addDetailVehicleButton">+ Add vehicle</button></div>
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete vehicle</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
-<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button></div>
+<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button></div>
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
-<section class="asset-tab-panel" id="assetRecommended" hidden></section>
+<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" src="mustang-fuel.html" style="width:100%;height:1050px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
 </div>
 <footer class="foot"><span>TisZod · VEHICLES</span><span>PRIVATE SHEET CONNECTION</span></footer>
 </main></div>
@@ -661,6 +661,9 @@ function renderCategory(){
 }
 function renderAsset(tab='details'){
  const hours=usesHours(asset);
+ const isMustang=String(asset.year)==='2004'&&clean(asset.make+' '+asset.model).includes('fordmustang');
+ document.getElementById('mustangFuelTab').hidden=!isMustang;
+ if(tab==='fuel'&&!isMustang)tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
  document.querySelector('[data-asset-tab="recommended"]').hidden=!recommended;
@@ -706,7 +709,7 @@ function renderAsset(tab='details'){
 
  }
  for(const b of document.querySelectorAll('[data-asset-tab]'))b.classList.toggle('active',b.dataset.assetTab===tab);
- for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended']])document.getElementById(id).hidden=name!==tab;
+ for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended'],['fuel','assetFuel']])document.getElementById(id).hidden=name!==tab;
 }
 function dueState(a,task,windowDays=60){
  const today=new Date();today.setHours(0,0,0,0);const date=task.nextDate?new Date(task.nextDate+'T12:00:00'):null;
