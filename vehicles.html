@@ -394,7 +394,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
-<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" src="mustang-fuel.html" style="width:100%;height:1050px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
+<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" src="mustang-fuel.html" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
 </div>
 <footer class="foot"><span>TisZod · VEHICLES</span><span>PRIVATE SHEET CONNECTION</span></footer>
 </main></div>
@@ -667,7 +667,8 @@ function renderAsset(tab='details'){
  const isF150=String(asset.year)==='1977'&&clean(asset.make+' '+asset.model).includes('fordf150');
  const isRam3500=String(asset.year)==='2022'&&clean(asset.make+' '+asset.model).includes('ram3500');
  document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide||isUltra||isF150||isRam3500);
- document.getElementById('fuelFrame').src=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
+ const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
+ document.getElementById('fuelFrame').src=fuelPage+'?v=20261026-year-selector-2';
  if(tab==='fuel'&&!(isMustang||isRoadGlide||isUltra||isF150||isRam3500))tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
