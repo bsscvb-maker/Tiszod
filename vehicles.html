@@ -768,7 +768,7 @@ document.getElementById('allLink').href=PORTAL+'finance.html';
 document.getElementById('updated').textContent=D.asOf||'latest';
 
 renderCategories();
-document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='active';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
+document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='all';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
 document.getElementById('statusFilters').addEventListener('click',e=>{const b=e.target.closest('[data-status]');if(!b)return;status=b.dataset.status;renderCategory()});
 document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory()});
 document.getElementById('vehicleSearch').addEventListener('input',e=>{vehicleQuery=e.target.value;renderCategory()});
