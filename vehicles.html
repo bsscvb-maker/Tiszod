@@ -511,6 +511,8 @@ function listedCategory(a){const n=clean(a.make+' '+a.model);
 }
 const assets=primary.concat(extras);
 for(const [i,item] of listed.entries())if(!deletedProfiles.some(p=>sameListedAsset(p,item))&&!assets.some(a=>sameListedAsset(a,item)))assets.push({...item,status:item.status||'Active',category:listedCategory(item),id:'f'+i});
+// Correct legacy category values for known vehicles before section filtering.
+for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
 document.querySelector('.th-app-topbar strong').textContent=workspaceTitle;
 document.querySelectorAll('.th-sidebar [href$=".html"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')===(workspace==='vehicles'?'vehicles.html':workspace+'.html')));
