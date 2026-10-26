@@ -663,9 +663,10 @@ function renderAsset(tab='details'){
  const hours=usesHours(asset);
  const isMustang=String(asset.year)==='2004'&&clean(asset.make+' '+asset.model).includes('fordmustang');
  const isRoadGlide=String(asset.year)==='2023'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&clean(asset.make+' '+asset.model).includes('roadglide');
- document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide);
- document.getElementById('fuelFrame').src=isRoadGlide?'road-glide-fuel.html':'mustang-fuel.html';
- if(tab==='fuel'&&!(isMustang||isRoadGlide))tab='details';
+ const isUltra=String(asset.year)==='2000'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&(/flhtcui|ultraclassic|electraglide/.test(clean(asset.make+' '+asset.model)));
+ document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide||isUltra);
+ document.getElementById('fuelFrame').src=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':'mustang-fuel.html';
+ if(tab==='fuel'&&!(isMustang||isRoadGlide||isUltra))tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
  document.querySelector('[data-asset-tab="recommended"]').hidden=!recommended;
