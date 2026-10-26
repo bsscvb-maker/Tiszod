@@ -665,9 +665,10 @@ function renderAsset(tab='details'){
  const isRoadGlide=String(asset.year)==='2023'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&clean(asset.make+' '+asset.model).includes('roadglide');
  const isUltra=String(asset.year)==='2000'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&(/flhtcui|ultraclassic|electraglide/.test(clean(asset.make+' '+asset.model)));
  const isF150=String(asset.year)==='1977'&&clean(asset.make+' '+asset.model).includes('fordf150');
- document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide||isUltra||isF150);
- document.getElementById('fuelFrame').src=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':'mustang-fuel.html';
- if(tab==='fuel'&&!(isMustang||isRoadGlide||isUltra||isF150))tab='details';
+ const isRam3500=String(asset.year)==='2022'&&clean(asset.make+' '+asset.model).includes('ram3500');
+ document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide||isUltra||isF150||isRam3500);
+ document.getElementById('fuelFrame').src=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
+ if(tab==='fuel'&&!(isMustang||isRoadGlide||isUltra||isF150||isRam3500))tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
  document.querySelector('[data-asset-tab="recommended"]').hidden=!recommended;
