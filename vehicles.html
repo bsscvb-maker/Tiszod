@@ -663,11 +663,12 @@ function renderCategory(){
 }
 function renderAsset(tab='details'){
  const hours=usesHours(asset);
- const isMustang=String(asset.year)==='2004'&&clean(asset.make+' '+asset.model).includes('fordmustang');
- const isRoadGlide=String(asset.year)==='2023'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&clean(asset.make+' '+asset.model).includes('roadglide');
- const isUltra=String(asset.year)==='2000'&&clean(asset.make+' '+asset.model).includes('harleydavidson')&&(/flhtcui|ultraclassic|electraglide/.test(clean(asset.make+' '+asset.model)));
- const isF150=String(asset.year)==='1977'&&clean(asset.make+' '+asset.model).includes('fordf150');
- const isRam3500=String(asset.year)==='2022'&&clean(asset.make+' '+asset.model).includes('ram3500');
+ const fuelName=clean([asset.make,asset.model,asset.name].filter(Boolean).join(' '));
+ const isMustang=/mustang/.test(fuelName)&&String(asset.year)==='2004';
+ const isRoadGlide=/roadglide|fltrk/.test(fuelName)&&String(asset.year)==='2023';
+ const isUltra=/ultraclassic|electraglide|flhtcui/.test(fuelName)&&String(asset.year)==='2000';
+ const isF150=/f150|f100|fseries/.test(fuelName)&&String(asset.year)==='1977';
+ const isRam3500=/ram3500|3500.*ram|ram.*3500/.test(fuelName)&&String(asset.year)==='2022';
  document.getElementById('mustangFuelTab').hidden=!(isMustang||isRoadGlide||isUltra||isF150||isRam3500);
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
  document.getElementById('fuelFrame').src=fuelPage+'?v=20261026-year-selector-2';
