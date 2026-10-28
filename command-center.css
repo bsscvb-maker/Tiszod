@@ -11,3 +11,10 @@ body[data-th-page] .th-module-card .th-module-art{height:165px!important;backgro
 /* Two useful facts below every top-level metric. */
 .pc-kpi-facts{align-self:stretch;text-align:left;margin:5px 0 0;padding:14px 0 0 17px;border-top:1px solid #ffffff18;color:#c4d3e8;font-size:12px;line-height:1.55;list-style:disc;display:grid;gap:8px}.pc-kpi-facts li{padding-left:3px}.pc-kpi-facts li::marker{color:#7ee1ad}.pc-kpi>small{min-height:34px}
 body[data-th-page] .th-module-card .th-module-art{background-color:#101a29!important;overflow:hidden}.th-module-art:after{inset:0!important;width:auto!important;height:auto!important;border-radius:0!important;background:linear-gradient(180deg,#0d172612 15%,#101a2966 58%,#101a29 100%)!important;opacity:1!important}.pc-art-caption{text-shadow:0 1px 5px #000}
+
+/* Keep the full crest in its own space between the title and portal health. */
+.pc-hero{display:grid;grid-template-columns:minmax(0,1fr) clamp(200px,17vw,280px) auto;align-items:center;gap:24px;padding:24px 30px;background:radial-gradient(ellipse at 65% 45%,#213a5a,#0b1727 72%);background-repeat:no-repeat}
+.pc-hero::before{content:'';display:block;grid-column:2;grid-row:1;width:100%;height:250px;background:url('tiszod-crest.svg') center/contain no-repeat;filter:drop-shadow(0 10px 20px #0006)}
+.pc-copy{grid-column:1;grid-row:1;min-width:0}.pc-health{grid-column:3;grid-row:1;min-width:0;max-width:320px}.pc-copy h1{font-size:clamp(30px,2.8vw,46px)}
+@media(max-width:1400px){.pc-hero{grid-template-columns:minmax(0,1fr) 240px;gap:20px}.pc-copy{grid-column:1;grid-row:1}.pc-health{grid-column:1;grid-row:2;justify-self:start}.pc-hero::before{grid-column:2;grid-row:1 / span 2;height:270px}}
+@media(max-width:650px){.pc-hero{grid-template-columns:minmax(0,1fr);padding:25px 20px;gap:20px}.pc-copy{grid-column:1;grid-row:1}.pc-hero::before{grid-column:1;grid-row:2;height:230px;max-width:280px;justify-self:center}.pc-health{grid-column:1;grid-row:3;justify-self:stretch;max-width:none}}
