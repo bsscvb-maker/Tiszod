@@ -7,7 +7,8 @@ window.blackMildCodes = [
   { added: '2026-10-16', code: 'BN53-539N-FK9T', source: 'Photo', status: 'Unredeemed' },
   { added: '2026-10-16', code: '62S9-77N2-6ZXR', source: 'Photo', status: 'Unredeemed' },
   { added: '2026-10-23', code: '4K9-CVX-SSX-VT4', source: 'Photo', status: 'Submitted' },
-  { added: '2026-10-23', code: 'X9H-F7F-269-Z65', source: 'Photo', status: 'Submitted' }
+  { added: '2026-10-23', code: 'X9H-F7F-269-Z65', source: 'Photo', status: 'Submitted' },
+  { added: '2026-10-28', code: 'CZ6-870-N7T-JMZ', source: 'Photo', status: 'Unredeemed' }
 ];
 
 // This worksheet uses its bundled code list, not the Google Sheet API. The
