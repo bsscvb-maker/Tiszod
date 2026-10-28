@@ -130,3 +130,28 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const result=await start(...args);if(window.thViewAdapter&&!current()?.view?.workspace)replace();else if(current()?.view)restore(current().view);return result;};
 })();
+
+/* Unified personal portal presentation. Moves existing elements; never copies club records. */
+(() => {
+ const nav=document.querySelector('.th-sidebar nav');
+ if(nav){
+  const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
+  const order=[['Main',['./']],['Modules',['plan-tracker.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html']],['System',['admin.html']]];
+  const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
+  nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
+ }
+ const header=document.querySelector('.th-app-topbar');
+ if(header&&nav){const search=document.createElement('div');search.className='th-module-search';const input=document.createElement('input');input.type='search';input.placeholder='Search modules…';input.setAttribute('aria-label','Search TisZod modules');const results=document.createElement('div');results.className='th-search-results';results.hidden=true;search.append(input,results);header.insertBefore(search,header.querySelector('.th-account')||null);input.oninput=()=>{results.replaceChildren();const q=input.value.trim().toLowerCase();if(!q){results.hidden=true;return}for(const a of nav.querySelectorAll('a'))if(a.textContent.toLowerCase().includes(q)){const link=document.createElement('a');link.href=a.getAttribute('href');link.textContent=a.textContent.trim();results.append(link)}if(!results.children.length){const p=document.createElement('p');p.textContent='No matching modules';results.append(p)}results.hidden=false};input.onkeydown=e=>{if(e.key==='Escape'){results.hidden=true;input.blur()}};document.addEventListener('click',e=>{if(!search.contains(e.target))results.hidden=true})}
+ if(document.body.dataset.thPage!=='home')return;
+ const main=document.querySelector('main.dashboard'),grid=main?.querySelector('.workspaces');if(!main||!grid)return;
+ const heading=main.querySelector('.dash-heading');heading?.querySelector('h1')?.replaceChildren(document.createTextNode('Personal Command Center'));
+ const h2=grid.querySelector('h2');if(h2)h2.textContent='Modules';
+ grid.classList.add('th-module-grid');grid.setAttribute('aria-label','Personal modules');
+ const modulePaths=['plan-tracker.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','admin.html'];
+ for(const path of ['plan-tracker.html','black-mild.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=path==='plan-tracker.html'?'Plan Tracker':'Black & Mild';small.textContent=path==='plan-tracker.html'?'Your tasks, priorities, and next steps':'Your Black & Mild records';body.append(strong,small);a.append(icon,body);grid.append(a)}
+ const cards=[...grid.querySelectorAll('a.workspace')];cards.sort((a,b)=>modulePaths.indexOf(a.getAttribute('href'))-modulePaths.indexOf(b.getAttribute('href'))).forEach(a=>{a.classList.add('th-module-card');const icon=a.querySelector('.workspace-icon'),body=[...a.children].find(c=>c.querySelector('strong'));const art=document.createElement('span');art.className='th-module-art';if(icon)art.append(icon);if(body)body.classList.add('th-module-body');a.prepend(art);grid.append(a)});
+ const title=document.createElement('div');title.className='th-module-heading';const label=document.createElement('h2');label.textContent='Modules';title.append(label);
+ const stats=main.querySelector('.stats');if(stats)heading?.after(stats);stats?.after(title,grid);
+ const lower=document.createElement('div');lower.className='th-lower-dashboard';const taskPanel=main.querySelector('[aria-label="Plan dashboard"]'),attention=main.querySelector('#attention');if(attention)lower.append(attention);if(taskPanel)lower.append(taskPanel);grid.after(lower);
+ const old=main.querySelector('.dash-grid');if(old&&!old.children.length)old.remove();
+})();
