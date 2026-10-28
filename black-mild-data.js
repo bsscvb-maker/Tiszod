@@ -1,9 +1,9 @@
 window.blackMildCodes = [
   { added: '2026-09-29', code: '76V-LC6-L3R-KMV', source: 'Photo', status: 'Submitted' },
-  { added: '2026-09-29', code: '43JJ-STGF-6R52', source: 'Photo', status: 'Unredeemed' },
+  { added: '2026-09-29', code: '43J-J8T-GFG-R52', source: 'Photo', status: 'Submitted' },
   { added: '2026-09-29', code: '3L2-49H-MMJ-97B', source: 'Photo', status: 'Submitted' },
   { added: '2026-09-29', code: 'L6PR-HJJ9-LVCV', source: 'Photo', status: 'Unredeemed' },
-  { added: '2026-09-29', code: 'F7GH-K2WC-8M97', source: 'Photo', status: 'Unredeemed' },
+  { added: '2026-09-29', code: 'F7G-HK2-VC8-M97', source: 'Photo', status: 'Submitted' },
   { added: '2026-10-16', code: 'BN53-539N-FK9T', source: 'Photo', status: 'Unredeemed' },
   { added: '2026-10-16', code: '62S9-77N2-6ZXR', source: 'Photo', status: 'Unredeemed' },
   { added: '2026-10-23', code: '4K9-CVX-SSX-VT4', source: 'Photo', status: 'Submitted' },
