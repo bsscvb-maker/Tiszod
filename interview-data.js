@@ -1,26 +1,78 @@
 window.INTERVIEW_ANSWERS = [
   {
+    "id": "years",
+    "q": "How many years have you worked in pharmaceuticals?",
+    "keys": [
+      "how many years",
+      "how long in pharma",
+      "years of experience",
+      "pharmaceutical business",
+      "pharmaceutical industry",
+      "pharma experience",
+      "life sciences experience",
+      "career length"
+    ],
+    "cues": [
+      "More than 20 years",
+      "Pharmaceutical and life sciences technology"
+    ],
+    "paras": [
+      "I have more than 20 years of experience in pharmaceutical and life sciences technology, including program management, IT service delivery, and enterprise technology initiatives."
+    ],
+    "note": "A factual question needs a direct answer. Pause here and let the recruiter ask for more detail."
+  },
+  {
+    "id": "users",
+    "q": "How many users did your programs support?",
+    "keys": [
+      "how many users",
+      "number of users",
+      "user population",
+      "people supported",
+      "size of environment",
+      "scale of programs",
+      "14000"
+    ],
+    "cues": [
+      "Approximately 14,000 users",
+      "Enterprise scale"
+    ],
+    "paras": [
+      "My experience includes enterprise initiatives supporting approximately 14,000 users. That involved coordinating across business teams, IT, vendors, and compliance while keeping the impact on users in view."
+    ],
+    "note": "Use “approximately 14,000” to describe the environment; distinguish the overall population from the scope of an individual project."
+  },
+  {
     "id": "intro",
-    "q": "Tell me about yourself",
+    "q": "Tell me about yourself and your career",
     "keys": [
       "tell me about yourself",
       "walk me through your background",
       "resume",
       "career",
-      "experience background"
+      "experience background",
+      "tell me a little bit about yourself",
+      "tell me about yourself and your career",
+      "walk me through your resume",
+      "summarize your background",
+      "career summary",
+      "professional background",
+      "introduce yourself"
     ],
     "cues": [
       "20+ years in pharma technology",
-      "Programs supporting ~14,000 users",
-      "Bring structure and ownership"
+      "Service delivery → program leadership",
+      "~14,000 users • enterprise programs",
+      "Bring teams together and deliver"
     ],
     "paras": [
-      "I’ve spent more than 20 years working in pharmaceutical and life sciences technology, with experience across program management, service delivery, and enterprise technology initiatives.",
-      "A lot of my work has involved bringing together business teams, IT, vendors, and compliance to accomplish a shared objective. My experience includes initiatives supporting approximately 14,000 users, so I understand the importance of planning carefully, communicating clearly, and keeping the business operating while changes are delivered.",
-      "I’ve worked on Windows modernization, Salesforce iPad lifecycle programs, and improvements to field support and service delivery. My strength is bringing structure to complicated work: making priorities clear, establishing ownership, identifying risks, and keeping stakeholders informed.",
-      "What interests me about this role is bringing that pharma and delivery experience into a growing organization while continuing to develop my hands-on experience with AI."
+      "I’ve spent more than 20 years in pharmaceutical and life sciences technology, with a career that has grown from IT service delivery and support leadership into project and program management.",
+      "Most recently at AbbVie, my work included enterprise technology initiatives supporting approximately 14,000 users. My experience includes Windows modernization, Salesforce iPad lifecycle programs, integration work, and improvements to field support and service delivery.",
+      "Across those programs, I’ve worked with business teams, IT, vendors, finance, and compliance. My focus has been keeping the work organized, making responsibilities clear, managing risks and dependencies, and giving leadership useful information to make decisions.",
+      "What I bring is an understanding of both program delivery and the people who depend on the technology. I’m comfortable bringing different teams together, working through issues, and keeping the business outcome in view.",
+      "For my next role, I’m looking to bring that experience into a position where I can take ownership of complex programs, build strong stakeholder relationships, and help the organization grow. That’s what interested me in having this conversation."
     ],
-    "note": ""
+    "note": "Opening answer: pause after the final sentence and let the recruiter choose what to explore. Keep one specific program story ready for a follow-up."
   },
   {
     "id": "why",
