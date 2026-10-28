@@ -18,7 +18,7 @@
     link.className = 'th-nav-link' + (current ? ' active' : '');
     link.href = 'plan-tracker.html';
     if (current) link.setAttribute('aria-current', 'page');
-    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true">✓</span>Plan Tracker';
+    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true">✓</span>Task Tracker';
     const system = [...nav.querySelectorAll('.th-nav-label')].find(el => el.textContent.trim() === 'System');
     const workspaceLabel=[...nav.querySelectorAll(".th-nav-label")].find(el=>el.textContent.trim()==="Workspaces");
     nav.insertBefore(link, workspaceLabel || system || null);
@@ -36,7 +36,7 @@
   // Keep navigation order and icon spacing consistent on every page.
   if (nav) {
     const plan=nav.querySelector('[href="plan-tracker.html"]');
-    if(plan)plan.innerHTML='<span class="th-nav-icon th-plan-icon" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="#25477D"/><rect x="8" y="7" width="17" height="21" rx="3" fill="#142A49" stroke="#D5E8FF" stroke-width="1.5"/><rect x="12" y="4" width="9" height="6" rx="2" fill="#8CC9FF"/><path d="m11 16 2 2 4-4M19 16h3M11 23h11" stroke="#DAEEFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Plan Tracker</span>';
+    if(plan)plan.innerHTML='<span class="th-nav-icon th-plan-icon" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="#25477D"/><rect x="8" y="7" width="17" height="21" rx="3" fill="#142A49" stroke="#D5E8FF" stroke-width="1.5"/><rect x="12" y="4" width="9" height="6" rx="2" fill="#8CC9FF"/><path d="m11 16 2 2 4-4M19 16h3M11 23h11" stroke="#DAEEFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Task Tracker</span>';
     const bm=nav.querySelector('[href="black-mild.html"]');
     if(bm)bm.innerHTML='<span class="th-nav-icon th-bm-icon" aria-hidden="true">B&amp;M</span><span>Black &amp; Mild</span>';
     const groups=[
@@ -156,7 +156,7 @@
  const h2=grid.querySelector('h2');if(h2)h2.textContent='Modules';
  grid.classList.add('th-module-grid');grid.setAttribute('aria-label','Personal modules');
  const modulePaths=['plan-tracker.html','interview.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','admin.html'];
- for(const path of ['plan-tracker.html','black-mild.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=path==='plan-tracker.html'?'Plan Tracker':'Black & Mild';small.textContent=path==='plan-tracker.html'?'Your tasks, priorities, and next steps':'Your Black & Mild records';body.append(strong,small);a.append(icon,body);grid.append(a)}
+ for(const path of ['plan-tracker.html','black-mild.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=path==='plan-tracker.html'?'Task Tracker':'Black & Mild';small.textContent=path==='plan-tracker.html'?'Your tasks, priorities, and next steps':'Your Black & Mild records';body.append(strong,small);a.append(icon,body);grid.append(a)}
  const cards=[...grid.querySelectorAll('a.workspace')];cards.sort((a,b)=>modulePaths.indexOf(a.getAttribute('href'))-modulePaths.indexOf(b.getAttribute('href'))).forEach(a=>{a.classList.add('th-module-card');const icon=a.querySelector('.workspace-icon'),body=[...a.children].find(c=>c.querySelector('strong'));const art=document.createElement('span');art.className='th-module-art';if(icon)art.append(icon);if(body)body.classList.add('th-module-body');a.prepend(art);grid.append(a)});
  const title=document.createElement('div');title.className='th-module-heading';const label=document.createElement('h2');label.textContent='Modules';title.append(label);
  const stats=main.querySelector('.stats');if(stats)heading?.after(stats);stats?.after(title,grid);
