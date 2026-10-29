@@ -87,4 +87,6 @@
   window.addEventListener('pagehide',()=>recognition.abort());
  }
  window.addEventListener('pagehide',stopTimer);select(current);
+
+ window.thViewAdapter={capture:()=>({current,size,focus:document.body.classList.contains('interview-focus')}),restore:s=>{if(s?.current)select(s.current);size=s?.size||22;el('answerText').style.fontSize=size+'px';setFocus(!!s?.focus)}};
 })();

@@ -79,11 +79,14 @@ $('delete').onclick=async()=>{if(editing&&confirm('Delete this task?\n\n'+editin
 // The parent portal owns Back/Forward; task data is never rolled back with a view.
 window.portalTaskNavigation={
  capture:()=>({view,scope,projectFilter,metricStatus,calendarDate:calendarDate.toISOString(),search:$('search').value,priority:$('priority').value}),
- restore:s=>{view='list';scope=s.scope==='mine'?'all':s.scope;projectFilter=s.projectFilter;metricStatus=s.metricStatus;calendarDate=new Date(s.calendarDate);$('search').value=s.search;$('priority').value=s.priority;render()},
+ restore:s=>{view=s.view||'list';scope=s.scope||'all';projectFilter=s.projectFilter;metricStatus=s.metricStatus;calendarDate=new Date(s.calendarDate);$('search').value=s.search;$('priority').value=s.priority;render()},
  refresh:()=>load(),
  closeDialog:()=>{if(!$('editor').open)return false;if(!busy)$('editor').close();return true}
 };
-document.addEventListener('click',event=>{if(!event.target.closest('[data-view],[data-scope],.project,.calendar-head button'))return;try{if(window.parent!==window){window.parent.portalNavigation?.before();setTimeout(()=>window.parent.portalNavigation?.after(),0)}}catch{}},true);
+document.addEventListener('click',event=>{if(!event.target.closest('[data-view],[data-scope],.project,.metric,.calendar-head button'))return;try{if(window.parent!==window){window.parent.portalNavigation?.before();setTimeout(()=>window.parent.portalNavigation?.after(),0)}}catch{}},true);
+
+document.addEventListener('change',event=>{if(!['search','priority'].includes(event.target.id))return;try{if(window.parent!==window){window.parent.portalNavigation?.before(true);setTimeout(()=>window.parent.portalNavigation?.after(),0)}}catch{}},true);
+document.addEventListener('input',event=>{if(event.target.id!=='search')return;try{if(window.parent!==window){window.parent.portalNavigation?.before(true);setTimeout(()=>window.parent.portalNavigation?.after(),0)}}catch{}},true);
 
 let noteTaskId=null,noteSaving=false,noteEditIndex=null,noteOriginal='';
 function noteStamp(at){return new Date(at).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'})}

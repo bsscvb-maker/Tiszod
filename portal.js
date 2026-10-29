@@ -110,6 +110,7 @@
     if(typeof finTab!=='undefined'){s.finance=finTab;s.financeFilter=finFilter;}
     if(window.thViewAdapter)s.workspace=window.thViewAdapter.capture();
     if(window.thReaderAdapter)s.reader=window.thReaderAdapter.capture();
+    try{const frame=document.querySelector('iframe[src*="tracker-tasks"]');if(frame?.contentWindow?.portalTaskNavigation)s.tasks=frame.contentWindow.portalTaskNavigation.capture()}catch{}
     s.pet=document.querySelector('.pet-tabs [aria-selected="true"]')?.id;
     if(typeof currentItem!=='undefined')s.pair=document.getElementById('overlay')?.classList.contains('open')?currentItem?.row:null;
     if(typeof taskFilter!=='undefined')s.taskFilter=taskFilter;
@@ -125,6 +126,7 @@
       setControls(s.controls);
       if(s.workspace&&window.thViewAdapter)window.thViewAdapter.restore(s.workspace);
       if(window.thReaderAdapter)window.thReaderAdapter.restore(s.reader);
+      try{if(s.tasks)document.querySelector('iframe[src*="tracker-tasks"]')?.contentWindow?.portalTaskNavigation?.restore(s.tasks)}catch{}
       if(s.pet)document.getElementById(s.pet)?.click();
       if('pair'in s&&typeof currentItem!=='undefined'){const item=items.find(x=>x.row===s.pair);if(item)openItem(item,false);else document.getElementById('overlay')?.classList.remove('open');}
       if(s.taskFilter!==undefined)document.querySelector('[data-filter="'+CSS.escape(s.taskFilter)+'"]')?.click();
@@ -141,7 +143,7 @@
   addEventListener('pagehide',()=>{if(ready&&!restoring)replace()});
   window.navigation?.addEventListener('currententrychange',update);
   let inputTimer;
-  document.addEventListener('change',e=>{if(!ready||restoring||!viewControls().includes(e.target))return;const before=current()?.view;queueMicrotask(()=>record(before||capture()))},true);
+  document.addEventListener('change',e=>{if(!ready||restoring||!viewControls().includes(e.target))return;const before=current()?.view;setTimeout(()=>{if(!restoring)record(before||capture())},0)},true);
   document.addEventListener('input',e=>{if(!ready||restoring||!viewControls().includes(e.target))return;clearTimeout(inputTimer);const before=current()?.view;inputTimer=setTimeout(()=>record(before||capture()),450)},true);
   addEventListener('pageshow',()=>{if(ready)update();});
   document.addEventListener('click',e=>{
@@ -151,9 +153,13 @@
     const link=e.target.closest('a[href]');
     if(link&&!link.target&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){const url=new URL(link.href);if(url.origin===location.origin&&url.pathname.startsWith(new URL('./',location.href).pathname)&&!url.hash){replace();sessionStorage.setItem(key,(current()?.index||0)+1);}}
     if(e.target.closest('form,#th-auth,.th-module-search,.sidebar-order-open,.sidebar-drag-handle'))return;
-    const before=capture();queueMicrotask(()=>record(before));
+    const before=capture();setTimeout(()=>{if(!restoring)record(before)},0);
   },true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  // Embedded tracker sends view snapshots, never task mutations.
+  let frameBefore=null;
+  window.portalNavigation={before:(fromChange=false)=>{if(ready&&!restoring)frameBefore=fromChange?(current()?.view||capture()):capture()},after:()=>{if(!ready||restoring||!frameBefore)return;const before=frameBefore;frameBefore=null;record(before)}};
+  function connectFrame(){const frame=document.querySelector('iframe[src*="tracker-tasks"]');if(!frame)return;frame.addEventListener('load',()=>{if(current()?.view?.tasks)restore(current().view);else if(ready)replace()})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{init();connectFrame()},{once:true});else{init();connectFrame();}
   const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const saved=dataReady?capture():current()?.view;const result=await start(...args);dataReady=true;ready=true;if(saved)restore(saved);replace();return result;};
 })();
 
