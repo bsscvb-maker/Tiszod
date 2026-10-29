@@ -1,3 +1,15 @@
+/* Shared activity indicator: counts overlapping loads and saves, including failures. */
+(()=>{
+ const active=new Map();let sequence=0,settle=null;
+ const style=document.createElement('style');style.textContent=`.th-connection::before{vertical-align:middle;transition:width .16s,height .16s}html.th-page-working .th-connection::before{width:15px;height:15px;background:radial-gradient(circle at 32% 28%,#e8fff9 0%,#8bf5d1 18%,#23bf91 45%,#08745a 78%);box-shadow:0 0 0 2px #79edcb26,0 0 12px #4ce6b84d;border:2px solid #8bf5d133;border-top-color:#d8fff3;border-right-color:#60edc2;box-sizing:border-box;animation:th-orb-spin .85s linear infinite}.th-activity-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes th-orb-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){html.th-page-working .th-connection::before{animation:none}}@media(max-width:800px){html.th-page-working .th-account .th-connection{display:inline-flex!important;align-items:center;font-size:0;padding:7px!important}html.th-page-working .th-account .th-connection::before{margin:0}}`;document.head.append(style);
+ const announcement=document.createElement('span');announcement.className='th-activity-announcement';announcement.setAttribute('role','status');announcement.setAttribute('aria-live','polite');document.body.append(announcement);
+ function update(){const working=active.size>0;document.documentElement.classList.toggle('th-page-working',working);const area=document.querySelector('.th-app-main');if(area)area.setAttribute('aria-busy',String(working));const badge=document.querySelector('#th-connection,#connectionStatus');const label=working?([...active.values()].includes('Saving')?'Saving…':'Loading…'):'Page ready';if(badge){if(working){if(!badge.dataset.idleTitle)badge.dataset.idleTitle=badge.getAttribute('title')||'';badge.title=label;badge.setAttribute('aria-label',label+' '+badge.textContent);}else{badge.title=badge.dataset.idleTitle||'';delete badge.dataset.idleTitle;badge.removeAttribute('aria-label')}}if(announcement.textContent!==label)announcement.textContent=label;}
+ function begin(label='Loading'){clearTimeout(settle);const id=++sequence;active.set(id,label);update();let ended=false;return()=>{if(ended)return;ended=true;active.delete(id);if(active.size)update();else settle=setTimeout(update,220)}}
+ window.thActivity={begin};
+ const originalFetch=window.fetch;window.fetch=async function(input,options){const method=String(options?.method||input?.method||'GET').toUpperCase(),done=begin(['GET','HEAD'].includes(method)?'Loading':'Saving');try{return await originalFetch.call(this,input,options)}finally{done()}};
+ const start=window.thStart;if(typeof start==='function')window.thStart=async function(...args){const done=begin();try{return await start.apply(this,args)}finally{done()}};
+})();
+
 /* Shared account controls and workbook connection state. */
 (() => {
   const nav = document.querySelector('.th-sidebar nav');
