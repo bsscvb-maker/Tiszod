@@ -144,7 +144,7 @@ async function thWriteCell(sheet, cell, value) {
   }
 }
 // Send related cell/range updates in one request instead of one per cell.
-async function thWriteRanges(updates) {
+async function thWriteRanges(updates, valueInputOption = 'USER_ENTERED') {
   if (!updates.length) return;
   if (!thToken) throw new Error('Sign in again to save changes.');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
@@ -152,7 +152,7 @@ async function thWriteRanges(updates) {
     const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values:batchUpdate',{
       method:'POST',signal:controller.signal,
       headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
-      body:JSON.stringify({valueInputOption:'USER_ENTERED',data:updates.map(({sheet,range,values})=>({range:"'"+sheet.replace(/'/g,"''")+"'!"+range,majorDimension:'ROWS',values}))})
+      body:JSON.stringify({valueInputOption,data:updates.map(({sheet,range,values})=>({range:"'"+sheet.replace(/'/g,"''")+"'!"+range,majorDimension:'ROWS',values}))})
     });
     if (!response.ok) {
       const detail=await response.json().catch(()=>({}));
@@ -163,7 +163,7 @@ async function thWriteRanges(updates) {
     throw error;
   } finally {clearTimeout(timer)}
 }
-async function thAppendRow(sheet, values) {
+async function thAppendRow(sheet, values, valueInputOption = 'USER_ENTERED') {
   if (sheet === 'Mileage-2025.10.16') {
     // This sheet has other tables below the mileage register. Sheets' :append
     // finds the last of those tables and shifts a new entry into its columns.
@@ -179,7 +179,7 @@ async function thAppendRow(sheet, values) {
   }
   const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC'};
   const range="'"+sheet.replace(/'/g,"''")+"'!"+(appendRanges[sheet]||'A:Z');
-  const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',{
+  const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+':append?valueInputOption='+encodeURIComponent(valueInputOption)+'&insertDataOption=INSERT_ROWS',{
     method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
     body:JSON.stringify({values:[values]})
   });
