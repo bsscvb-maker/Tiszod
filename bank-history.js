@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
  const $=id=>document.getElementById(id),bank=document.body.dataset.bankHistory;
- const config=bank==='way2go'?{title:'Way2Go Transactions',sheet:'Portal Way2Go History',limit:1000,defaultSource:'W2Go - July.pdf'}:bank==='dollar'?{title:'Dollar Bank Transactions',sheet:'Portal Dollar Bank History',limit:8500,defaultSource:'dollar 2021-2025.xlsx'}:{title:'Capital One 360 Transactions',sheet:'Portal Capital One History',limit:500,defaultSource:'Capital One.csv'};
+ const config=bank==='way2go'?{title:'Way2Go',sheet:'Portal Way2Go History',limit:1000,defaultSource:'W2Go - July.pdf'}:bank==='dollar'?{title:'Dollar Bank',sheet:'Portal Dollar Bank History',limit:8500,defaultSource:'dollar 2021-2025.xlsx'}:{title:'Capital One 360',sheet:'Portal Capital One History',limit:500,defaultSource:'Capital One.csv'};
  let rows=[],filtered=[],page=1;const pageSize=100;
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const numeric=x=>x===''||x==null?null:Number(x),money=x=>x==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(x);
