@@ -37,7 +37,7 @@ function thStatus(message) {
   document.getElementById('th-sign-in').hidden = loading;
   const authMessage = document.getElementById('th-auth-message');
   if (loading) {
-    authMessage.innerHTML = '<span class="th-wait-label">Please wait</span><span class="th-wait-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+    authMessage.textContent = 'Please wait';
     authMessage.setAttribute('aria-label', 'Please wait. Signing you in.');
   } else {
     authMessage.textContent = message;
