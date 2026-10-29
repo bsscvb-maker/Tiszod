@@ -3,26 +3,30 @@
 const TH_SHEET_ID = '1uC1tKyX4DnBKXH-4pIz8tm3zAvxdWr6ecrxrwUS9Hts';
 const TH_CLIENT_ID = '881518334290-kimg628u5oriddlrqoq6vb619m8gn13s.apps.googleusercontent.com';
 let thToken = '';
+let thExpiresAt=0;
+const TH_REQUIRED_SCOPES=['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive.file','https://www.googleapis.com/auth/drive.readonly'];
+let thNeedsDriveConsent=false;
+const thHasScopes=s=>TH_REQUIRED_SCOPES.every(scope=>String(s||'').split(/\s+/).includes(scope));
 let thTokenClient;
 const TH_SESSION_KEY = 'thbudget-session-photos-v1';
 try {
-  const saved = JSON.parse(localStorage.getItem(TH_SESSION_KEY) || sessionStorage.getItem(TH_SESSION_KEY) || 'null');
-  if (saved?.expiresAt > Date.now() + 30000) thToken = saved.token;
-  else { localStorage.removeItem(TH_SESSION_KEY); sessionStorage.removeItem(TH_SESSION_KEY); }
-} catch (_) { localStorage.removeItem(TH_SESSION_KEY); sessionStorage.removeItem(TH_SESSION_KEY); }
+  const candidates=[localStorage.getItem(TH_SESSION_KEY),sessionStorage.getItem(TH_SESSION_KEY)].map(value=>{try{return JSON.parse(value||'null')}catch{return null}}).filter(Boolean);
+  const saved=candidates.filter(s=>s.expiresAt>Date.now()+30000&&thHasScopes(s.scope)).sort((a,b)=>b.expiresAt-a.expiresAt)[0];
+  if(saved){thToken=saved.token;thExpiresAt=saved.expiresAt;}
+  else {thNeedsDriveConsent=candidates.some(s=>s.expiresAt>Date.now()+30000&&!thHasScopes(s.scope));localStorage.removeItem(TH_SESSION_KEY);sessionStorage.removeItem(TH_SESSION_KEY);}
+} catch (_) {localStorage.removeItem(TH_SESSION_KEY);sessionStorage.removeItem(TH_SESSION_KEY);}
+
 
 function thClearSession() {
   thToken = '';
+  thExpiresAt=0;
   localStorage.removeItem(TH_SESSION_KEY);
   sessionStorage.removeItem(TH_SESSION_KEY);
 }
 
 function thSignOut() {
-  const token = thToken;
+  // Sign out of the portal without revoking the user's Google consent grant.
   thClearSession();
-  if (token && window.google?.accounts?.oauth2?.revoke) {
-    google.accounts.oauth2.revoke(token, () => {});
-  }
   location.reload();
 }
 
@@ -40,7 +44,7 @@ function thStatus(message) {
     authMessage.removeAttribute('aria-label');
   }
 }
-function thAuthorized() { return Boolean(thToken); }
+function thAuthorized() { return Boolean(thToken)&&thExpiresAt>Date.now()+5000; }
 function thSignIn() {
   if (!window.google?.accounts?.oauth2) {
     thStatus('Google sign-in is still loading. Please try again.');
@@ -48,25 +52,31 @@ function thSignIn() {
   }
   thTokenClient ||= google.accounts.oauth2.initTokenClient({
     client_id: TH_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file'+(document.body.dataset.thPage==='finance'?' https://www.googleapis.com/auth/userinfo.email':''),
+    scope: TH_REQUIRED_SCOPES.join(' ')+' https://www.googleapis.com/auth/userinfo.email',
+    include_granted_scopes: true,
     callback: async response => {
       if (!response.access_token) {
         thStatus(response.error || 'Sign-in did not finish. Please try again.');
         return;
       }
+      if(!google.accounts.oauth2.hasGrantedAllScopes(response,...TH_REQUIRED_SCOPES)){thStatus('Approve workbook and Drive access together to connect the portal, books, and pictures.');return;}
       thToken = response.access_token;
-      const session = JSON.stringify({token:thToken,expiresAt:Date.now()+Math.min(Number(response.expires_in)||3600,3600)*1000});
+      thExpiresAt=Date.now()+Math.max(0,Number(response.expires_in)||3600)*1000;
+      thNeedsDriveConsent=false;
+      const session = JSON.stringify({token:thToken,expiresAt:thExpiresAt,scope:response.scope});
       localStorage.setItem(TH_SESSION_KEY, session);
       sessionStorage.setItem(TH_SESSION_KEY, session);
       thStatus('Opening your private workbook…');
       try {
         await window.thStart();
         document.getElementById('th-auth').hidden = true;
+        window.dispatchEvent(new Event('tiszod-drive-books-connected'));
       } catch (error) {
         if (error.status === 401) thClearSession();
         thStatus(error.message);
       }
-    }
+    },
+    error_callback:()=>thStatus('Sign-in was not completed. Use Sign in with Google to try again.')
   });
   thTokenClient.requestAccessToken({prompt: ''});
 }
@@ -177,11 +187,18 @@ async function thAppendRow(sheet, values) {
   const result=await response.json();
   return Number(result.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1])||0;
 }
+async function thDriveFetch(fileId,options={}) {
+  if(!thAuthorized()){const error=new Error('Your portal session expired. Sign in to the portal again to reconnect Drive.');error.status=401;throw error;}
+  const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?alt=media',{...options,headers:{...(options.headers||{}),Authorization:'Bearer '+thToken}});
+  if(response.status===401){thClearSession();const error=new Error('Your portal session expired. Sign in to the portal again to reconnect Drive.');error.status=401;throw error;}
+  return response;
+}
 async function thPhotoObjectUrl(fileId) {
-  const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(fileId)+'?alt=media',{headers:{Authorization:'Bearer '+thToken}});
-  if(!response.ok)throw new Error('Photo could not be loaded from Google Drive.');
+  const response=await thDriveFetch(fileId);
+  if(!response.ok)throw new Error('This Google account cannot open that picture.');
   return URL.createObjectURL(await response.blob());
 }
+
 async function thUploadFreebirdPhoto(file, row) {
   if (!thToken) throw new Error('Sign in again to add a picture.');
   if (!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP picture.');
@@ -253,3 +270,13 @@ if (thToken) {
     document.documentElement.classList.remove('th-session-pending');
   });
 }
+
+if(thNeedsDriveConsent)thStatus('Sign in once to connect Google Drive, books, and pictures with your portal session.');
+// Keep the same portal session across tabs; signing out clears every tab.
+addEventListener('storage',event=>{
+ if(event.key!==TH_SESSION_KEY)return;
+ let saved;try{saved=JSON.parse(event.newValue||'null')}catch{}
+ if(saved?.expiresAt>Date.now()+30000&&thHasScopes(saved.scope)){thToken=saved.token;thExpiresAt=saved.expiresAt;sessionStorage.setItem(TH_SESSION_KEY,event.newValue);window.dispatchEvent(new Event('tiszod-drive-books-connected'));}
+ else {thClearSession();document.getElementById('th-auth').hidden=false;document.documentElement.classList.remove('th-session-pending');thStatus('Sign in to reconnect your portal and Google Drive.');}
+});
+if(thNeedsDriveConsent)document.documentElement.classList.remove('th-session-pending');

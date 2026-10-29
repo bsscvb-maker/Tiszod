@@ -1,6 +1,6 @@
 /* Private EPUB reader. Book bytes stay in the browser. */
 (()=>{'use strict';
-let readerName='',readerUrl='';let book,rendition,activeId='',generation=0,size=110,driveReadToken='';
+let readerName='',readerUrl='';let book,rendition,activeId='',generation=0,size=110;
 const dlg=document.createElement('dialog');dlg.id='book-reader';
 dlg.innerHTML='<header><h2 id="reader-title">Book reader</h2><button id="reader-close" aria-label="Close reader">✕</button></header><nav aria-label="Reading controls"><button id="reader-prev">← Previous</button><button id="reader-next">Next →</button><label>Chapter <select id="reader-chapters"><option>Loading…</option></select></label><button id="reader-smaller" aria-label="Smaller text">A−</button><button id="reader-larger" aria-label="Larger text">A+</button></nav><p id="reader-status" role="status" aria-live="polite"></p><div id="reader-help" hidden><button id="reader-connect">Connect Google Drive</button> <a id="reader-download" target="_blank" rel="noopener noreferrer">Download from Drive</a><label> or choose a downloaded EPUB <input id="reader-file" type="file" accept=".epub,application/epub+zip"></label></div><div id="reader-pages"></div>';
 document.body.append(dlg);
@@ -22,14 +22,15 @@ async function display(bytes,run){
  try{await rendition.display(saved||undefined)}catch{await rendition.display()}
  $('reader-help').hidden=true;
 }
-async function fetchBook(token,run){
+async function fetchBook(run){
  status('Loading your book…');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),60000);
- try{const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(activeId)+'?alt=media',{headers:{Authorization:'Bearer '+token},signal:controller.signal});if(!r.ok){if([401,403,404].includes(r.status))throw Error('Connect Google Drive with the account that owns this book, or download it and choose the EPUB below.');throw Error('Google Drive could not load this book. Please retry.')}const bytes=await r.arrayBuffer();if(run===generation)await display(bytes,run)}
+ try{const r=await thDriveFetch(activeId,{signal:controller.signal});if(!r.ok){if([401,403,404].includes(r.status))throw Error('The signed-in portal account cannot open this book. Check its Drive permissions or choose a downloaded EPUB below.');throw Error('Google Drive could not load this book. Please retry.')}const bytes=await r.arrayBuffer();if(run===generation)await display(bytes,run)}
  finally{clearTimeout(timer)}
 }
 function fail(e){status(e.name==='AbortError'?'The download timed out. Please try again.':e.message);$('reader-help').hidden=false}
-window.thReadBook=async(id,name,url)=>{generation++;dispose();activeId=id;readerName=name;readerUrl=url;$('reader-title').textContent=name;$('reader-download').href=url;$('reader-help').hidden=true;$('reader-chapters').replaceChildren();if(!dlg.open)dlg.showModal();const run=generation;try{await fetchBook(driveReadToken||(typeof thToken==='string'?thToken:''),run)}catch(e){if(run===generation)fail(e)}};
-$('reader-connect').onclick=()=>{if(!window.google?.accounts?.oauth2){status('Google sign-in is still loading. Try again.');return}const run=generation;google.accounts.oauth2.initTokenClient({client_id:TH_CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.readonly',callback:async r=>{if(run!==generation||!dlg.open)return;if(!r.access_token){status('Drive connection was not completed. You can still choose a downloaded EPUB.');return}driveReadToken=r.access_token;window.dispatchEvent(new Event('tiszod-drive-books-connected'));try{await fetchBook(r.access_token,run)}catch(e){if(run===generation)fail(e)}},error_callback:()=>status('Drive sign-in was closed. Try again or choose a downloaded EPUB.')}).requestAccessToken({prompt:''})};
+window.thReadBook=async(id,name,url)=>{generation++;dispose();activeId=id;readerName=name;readerUrl=url;$('reader-title').textContent=name;$('reader-download').href=url;$('reader-help').hidden=true;$('reader-chapters').replaceChildren();if(!dlg.open)dlg.showModal();const run=generation;try{await fetchBook(run)}catch(e){if(run===generation)fail(e)}};
+$('reader-connect').textContent='Sign in to portal';
+$('reader-connect').onclick=()=>{dlg.close();thSignIn()};
 $('reader-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const run=++generation;status('Opening EPUB…');try{await display(await f.arrayBuffer(),run)}catch(e){fail(e)}e.target.value=''};
 $('reader-close').onclick=()=>dlg.close();
 window.thReaderAdapter={capture:()=>dlg.open?{id:activeId,name:readerName,url:readerUrl}:null,restore:s=>{if(!s){if(dlg.open)dlg.close()}else if(!dlg.open||s.id!==activeId)window.thReadBook(s.id,s.name,s.url)}};dlg.addEventListener('close',()=>{generation++;dispose()});
@@ -46,8 +47,8 @@ window.thBookCover=async id=>{
  if(coverUrls.has(id))return coverUrls.get(id);
  if(coverPending.has(id))return coverPending.get(id);
  const task=(async()=>{
- const token=driveReadToken||(typeof thToken==='string'?thToken:'');if(!token)return null;
- const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?alt=media',{headers:{Authorization:'Bearer '+token}});
+ if(typeof thDriveFetch!=='function'||!thAuthorized())return null;
+ const r=await thDriveFetch(id);
  if(!r.ok)return null;await libraries();const zip=await JSZip.loadAsync(await r.arrayBuffer());
  const container=zip.file('META-INF/container.xml');if(!container)return null;
  const parser=new DOMParser(),xml=parser.parseFromString(await container.async('text'),'application/xml');
