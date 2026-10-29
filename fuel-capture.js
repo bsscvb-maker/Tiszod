@@ -1,12 +1,12 @@
 (()=>{'use strict';
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const dialog=document.createElement('dialog');dialog.id='fuelCapture';dialog.setAttribute('aria-labelledby','fuelCaptureTitle');
- dialog.innerHTML=`<form id="fuelCaptureForm"><header><div><small>VEHICLES / LOG FUEL</small><h2 id="fuelCaptureTitle">One fill-up. Everything updated.</h2></div><button type="button" id="fuelClose" aria-label="Close fuel entry">✕</button></header>
- <div class="fuel-body"><label>Vehicle<select name="vehicle" required></select></label><p id="fuelCurrent" class="fuel-muted"></p>
- <div class="fuel-photos"><section><h3>1. Fuel receipt</h3><label class="fuel-photo-pick">＋ Add receipt photo<input id="fuelReceiptFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelReceiptFile">Take photo</button><img id="fuelReceiptPreview" hidden alt="Receipt preview"><p id="fuelReceiptStatus" class="fuel-muted"></p></section>
- <section><h3>2. Odometer</h3><label class="fuel-photo-pick">＋ Add mileage photo<input id="fuelOdoFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelOdoFile">Take photo</button><img id="fuelOdoPreview" hidden alt="Odometer preview"><p id="fuelOdoStatus" class="fuel-muted"></p></section></div>
+ dialog.innerHTML=`<form id="fuelCaptureForm"><header><div><small>VEHICLES / LOG FUEL</small><h2 id="fuelCaptureTitle">Fuel log</h2></div><button type="button" id="fuelClose" aria-label="Close fuel entry">✕</button></header>
+ <div class="fuel-body"><section class="fuel-vehicle"><label>Active vehicle<select name="vehicle" required></select></label><p id="fuelCurrent" class="fuel-muted"></p></section><div class="fuel-workspace"><section class="fuel-evidence"><div class="fuel-section-title"><span>01</span><div><h3>Photos</h3><p class="fuel-muted">Upload a receipt and mileage photo to read the details.</p></div></div>
+ <div class="fuel-photos"><section><h3>Fuel receipt</h3><label class="fuel-photo-pick">＋ Add receipt photo<input id="fuelReceiptFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelReceiptFile">Take photo</button><img id="fuelReceiptPreview" hidden alt="Receipt preview"><p id="fuelReceiptStatus" class="fuel-muted"></p></section>
+ <section><h3>Odometer</h3><label class="fuel-photo-pick">＋ Add mileage photo<input id="fuelOdoFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelOdoFile">Take photo</button><img id="fuelOdoPreview" hidden alt="Odometer preview"><p id="fuelOdoStatus" class="fuel-muted"></p></section></div>
  <p class="fuel-review-note">Review the numbers before saving. You can also enter them yourself if a photo is hard to read.</p>
- <h3>3. Review & save</h3><div class="fuel-fields">
+ </section><section class="fuel-details"><div class="fuel-section-title"><span>02</span><div><h3>Fill-up details</h3><p class="fuel-muted">Check the numbers, then save your fill-up.</p></div></div><div class="fuel-fields">
  <label>Date<input type="date" name="date" required></label><label>Odometer (miles)<input type="number" name="odo" step=".1" min="0" inputmode="decimal" required></label>
  <label>Gallons<input type="number" name="gallons" step=".001" min=".001" inputmode="decimal" required></label><label>Price per gallon ($)<input type="number" name="price" step=".001" min=".001" inputmode="decimal" required></label>
  <label>Total paid ($)<input type="number" name="total" step=".01" min=".01" inputmode="decimal" required></label><label>Full tank?<select name="full"><option value="unknown">Choose / not sure</option><option value="yes">Yes — filled the tank</option><option value="no">No — partial fill</option></select></label>
@@ -17,7 +17,7 @@
  <section class="fuel-match"><h3>Finance transaction</h3><p class="fuel-muted" id="fuelMatchHint">Checking for a matching transaction…</p><select id="fuelTransactionMatch" aria-label="Finance transaction to link"></select></section>
  <label class="fuel-confirm"><input type="checkbox" name="reviewed" required> I checked the vehicle, date, mileage, fuel amount, and payment account.</label>
  <p class="fuel-muted">One save updates mileage, fuel history, and Finance. New expenses stay Pending in Reconciliation until they clear.</p>
- <p id="fuelSaveStatus" role="status" aria-live="polite"></p></div><footer><button type="button" id="fuelCancel">Cancel</button><button type="submit" id="fuelSave">Save Everything</button></footer></form>`;
+ <p id="fuelSaveStatus" role="status" aria-live="polite"></p></section></div></div><footer><button type="button" id="fuelCancel">Cancel</button><button type="submit" id="fuelSave">Save fill-up</button></footer></form>`;
  document.body.append(dialog);
  const form=dialog.querySelector('form'),$=id=>document.getElementById(id),field=n=>form.elements[n];
  let vehicles=[],onSaved=null,currentEntry=null,tx=[],busy=false,reading=0,files={},links={},previews={},ocrLoader,readGeneration={receipt:0,odo:0},financeLoaded=false;
@@ -36,15 +36,15 @@
  async function open(options={}){
   if(busy||dialog.open)return;
   vehicles=options.vehicles||vehicles;onSaved=options.onSaved||onSaved;
-  if(!vehicles.length)return alert('No vehicles are available. Open a vehicle first.');
+  if(!vehicles.length)return alert('No active vehicles are available for fuel logging. Mark a vehicle Active in Vehicles first.');
+  if(options.entry&&!vehicles.some(v=>v.key===options.entry.vehicle))return alert('Fuel entries can only be edited for an active vehicle.');
   delete dialog.dataset.uncertain;form.reset();tx=[];financeLoaded=false;files={};links={};readGeneration.receipt++;readGeneration.odo++;
   for(const url of Object.values(previews))URL.revokeObjectURL(url);previews={};
   currentEntry=options.entry?{...options.entry,editing:true}:{id:'fuel-'+FuelCore.uuid()};
   for(const kind of ['Receipt','Odo']){$('fuel'+kind+'Preview').hidden=true;$('fuel'+kind+'Status').textContent='';}
   $('fuelSaveStatus').textContent='';$('fuelSave').disabled=true;
   field('vehicle').innerHTML=vehicles.map(v=>'<option value="'+esc(v.key)+'">'+esc(v.name)+'</option>').join('');
-  let remembered;try{remembered=localStorage.getItem('tiszod-last-fuel-vehicle');}catch{}
-  const chosen=options.selected||currentEntry.vehicle||remembered;if(vehicles.some(v=>v.key===chosen))field('vehicle').value=chosen;
+  const chosen=options.selected||currentEntry.vehicle||vehicles[0]?.key;if(vehicles.some(v=>v.key===chosen))field('vehicle').value=chosen;
   field('vehicle').disabled=!!options.entry;
   field('date').value=localDate();
   let rememberedAccount;try{rememberedAccount=localStorage.getItem('tiszod-last-fuel-account');}catch{}if(rememberedAccount)field('account').value=rememberedAccount;
@@ -104,3 +104,4 @@
  };
  window.TisFuel={open,escape:esc};
 })();
+
