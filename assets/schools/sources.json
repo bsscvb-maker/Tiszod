@@ -1,0 +1,27 @@
+{
+  "trinity": {
+    "imageSource": "https://images.squarespace-cdn.com/content/v1/67b8cf282910fe7afb51e1d6/fd9fe75b-b4f2-47e9-8638-da67834355cc/IMG_9829-HDR.jpg?format=1000w",
+    "pageSource": "https://www.tlcnorfolk.com/",
+    "caption": "Trinity Lutheran church campus, Norfolk"
+  },
+  "lake-taylor": {
+    "imageSource": "https://cf.cdn.uplynk.com/ause1/slices/3a3/dbe20997a7104511baed3a1f2e443baf/3a310601b932488b96e6ba67667828df/poster_ec553e4b10794cb381159278881f5c48.jpg",
+    "pageSource": "https://www.wtkr.com/news/in-the-community/norfolk/norfolks-lake-taylor-high-could-be-turned-into-career-and-technology-education-school",
+    "caption": "Lake Taylor Senior High School entrance"
+  },
+  "odu": {
+    "imageSource": "https://online.odu.edu/sites/default/files/2021-01/education-building-us-news.jpg",
+    "pageSource": "https://online.odu.edu/about-us/main-campus",
+    "caption": "Old Dominion University Education Building"
+  },
+  "computer-training": {
+    "imageSource": "https://images.crexi.com/lease-assets/389034/7f5299bf3e494e139a61e43a01d66167_3000x2000_resize.jpg",
+    "pageSource": "https://www.crexi.com/lease/properties/389034/georgia-3100-breckinridge-blvd-bldg-office",
+    "caption": "Representative glass-front professional office"
+  },
+  "tcc": {
+    "imageSource": "https://www.tcc.edu/wp-content/uploads/2019/05/campuses-chesapeake_1-1.jpg",
+    "pageSource": "https://www.tcc.edu/about-tcc/locations/",
+    "caption": "Tidewater Community College Chesapeake campus"
+  }
+}

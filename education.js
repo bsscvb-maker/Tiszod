@@ -25,7 +25,18 @@ function preview(d){
  return '<span class="record-placeholder">'+esc(d.category||'Document')+'</span>';
 }
 function card(r){const d=r.data,u=safe(d.url),epub=/\.epub$/i.test(d.name||'');return '<article data-file-id="'+esc(r.id)+'" class="education-card visual-record">'+(u&&!d.deleted?'<a '+(epub?'data-read-book="'+esc(r.id)+'" ':'')+'class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+(d.category==='Books'?'<p class="book-tags">'+esc(bookInfo(d).kind)+' · '+esc(bookInfo(d).genre)+(bookInfo(d).suggested?' (suggested)':'')+'</p>':'')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
-function groupCard(label,count,attribute,value){return '<button class="education-card person-record" '+attribute+'="'+esc(value)+'"><span class="person-avatar" aria-hidden="true">'+esc(isEducation?'▤':label.charAt(0))+'</span><h3>'+esc(label)+'</h3><p>'+count+' '+(count===1?'document':'documents')+'</p></button>'}
+const schoolPhotos=[
+ ['Trinity Lutheran','trinity','Trinity Lutheran church campus, Norfolk'],
+ ['Lake Taylor','lake-taylor','Lake Taylor Senior High School entrance'],
+ ['Old Dominion','odu','Old Dominion University Education Building'],
+ ['Computer Training','computer-training','Representative office storefront'],
+ ['Tidewater Community','tcc','TCC · Chesapeake campus']
+];
+function groupCard(label,count,attribute,value){
+ const photo=selectedCategory==='School'&&attribute==='data-folder'&&schoolPhotos.find(([match])=>label.includes(match));
+ const image=photo?'<img class="school-building" src="assets/schools/'+photo[1]+'.jpg" alt="'+esc(photo[2])+'" loading="lazy" width="1000" height="560"><span class="school-card-caption">'+esc(photo[2])+'</span>':'<span class="person-avatar" aria-hidden="true">'+esc(isEducation?'▤':label.charAt(0))+'</span>';
+ return '<button class="education-card person-record'+(photo?' school-record':'')+'" '+attribute+'="'+esc(value)+'">'+image+'<span class="school-card-label"><h3>'+esc(label)+'</h3><p>'+count+' '+(count===1?'document':'documents')+'</p></span></button>';
+}
 
 const genreOptions=['Action & Adventure','Mystery & Crime','Thriller & Suspense','Fantasy','Science Fiction','Horror','Romance','Literary & Classics','Young Adult','Biography & Memoir','History & Politics','Science & Nature','Business & Money','Self-Help & Psychology','Religion & Spirituality','Humor','Home & Reference','Uncategorized'];
 function bookInfo(d){
