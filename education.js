@@ -17,13 +17,14 @@ function title(d){
  return n;
 }
 function preview(d){
+ if(/\.epub$/i.test(d.name||''))return '<div class="book-jacket" data-book-cover="'+esc(d.url.match(/\/d\/([^/]+)/)?.[1]||'')+'"><span class="book-jacket-title">'+esc(title(d))+'</span><small>EPUB · Read book</small></div>';
  let u;try{u=new URL(safe(d.url))}catch{return '<span class="record-placeholder">Document</span>'}
  const folder=u.pathname.includes('/folders/'),id=u.pathname.match(/\/d\/([^/]+)/)?.[1];
  if(folder)return '<span class="record-placeholder">▤<small>Archive folder</small></span>';
  if(id&&['drive.google.com','docs.google.com'].includes(u.hostname))return '<iframe class="record-preview" src="https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview" title="'+esc(title(d))+' preview" loading="lazy" tabindex="-1" referrerpolicy="no-referrer"></iframe>';
  return '<span class="record-placeholder">'+esc(d.category||'Document')+'</span>';
 }
-function card(r){const d=r.data,u=safe(d.url);return '<article class="education-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
+function card(r){const d=r.data,u=safe(d.url),epub=/\.epub$/i.test(d.name||'');return '<article class="education-card visual-record">'+(u&&!d.deleted?'<a '+(epub?'data-read-book="'+esc(r.id)+'" ':'')+'class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
 function groupCard(label,count,attribute,value){return '<button class="education-card person-record" '+attribute+'="'+esc(value)+'"><span class="person-avatar" aria-hidden="true">'+esc(isEducation?'▤':label.charAt(0))+'</span><h3>'+esc(label)+'</h3><p>'+count+' '+(count===1?'document':'documents')+'</p></button>'}
 function render(){
  const q=$('education-search').value.trim().toLowerCase(),person=$('education-person').value,category=$('education-category').value,deleted=$('education-view').value==='deleted';
@@ -45,6 +46,7 @@ function render(){
  grid.innerHTML=html+shown.sort((a,b)=>title(a.data).localeCompare(title(b.data))).slice((recordPage-1)*18,recordPage*18).map(card).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>')+(pages>1?'<div class="record-breadcrumb"><button data-record-page="-1" '+(recordPage===1?'disabled':'')+'>← Previous</button><span>Page '+recordPage+' of '+pages+'</span><button data-record-page="1" '+(recordPage===pages?'disabled':'')+'>Next →</button></div>':'');
 }
 document.querySelector('.education').addEventListener('click',e=>{
+ const link=e.target.closest('[data-read-book]');if(link){e.preventDefault();const r=records.find(r=>r.id===link.dataset.readBook);const id=r?.data.url.match(/\/d\/([^/]+)/)?.[1];if(id&&window.thReadBook)window.thReadBook(id,title(r.data),r.data.url);return;}
  const b=e.target.closest('button');if(!b)return;
  if(b.dataset.person){selectedPerson=b.dataset.person;recordPage=1;render()}
  if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
@@ -59,4 +61,13 @@ for(const id of ['education-search','education-person','education-category','edu
 
 for(const id of ['education-prev','education-next','education-page','education-folder']){const el=document.getElementById(id);if(el)el.hidden=true;}document.querySelector('label:has(#education-folder)')?.setAttribute('hidden','');
 for(const id of ['education-person','education-category','education-view'])$(id).addEventListener('change',()=>{selectedPerson='';selectedCategory='';selectedFolder='';recordPage=1;render()});
+
+const jacketStyle=document.createElement('style');jacketStyle.textContent='.book-jacket{height:270px;background:linear-gradient(120deg,#17394c,#31635b);color:#fff;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:28px 24px;box-sizing:border-box;text-align:center;border-left:12px solid #0003;position:relative}.book-jacket-title{font:700 23px/1.4 Georgia,serif;overflow:hidden;max-height:190px}.book-jacket img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#10202c}.book-jacket small{color:#e0ebef}';document.head.append(jacketStyle);
+let coverBusy=0;const coverQueue=[];
+async function pumpCovers(){if(coverBusy>=3||!coverQueue.length||!window.thBookCover)return;const el=coverQueue.shift();if(!el.isConnected){pumpCovers();return}coverBusy++;try{const url=await window.thBookCover(el.dataset.bookCover);if(url&&el.isConnected){const img=document.createElement('img');img.src=url;img.alt=el.querySelector('.book-jacket-title')?.textContent+' — book cover';el.replaceChildren(img)}}catch{}finally{coverBusy--;pumpCovers()}}
+const coverObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){coverObserver.unobserve(entry.target);coverQueue.push(entry.target);pumpCovers()}},{rootMargin:'150px'});
+function observeCovers(){document.querySelectorAll('[data-book-cover]').forEach(el=>{if(!el.dataset.observed){el.dataset.observed='true';coverObserver.observe(el)}})}
+new MutationObserver(observeCovers).observe($('education-grid'),{childList:true,subtree:true});
+window.addEventListener('tiszod-drive-books-connected',()=>{document.querySelectorAll('[data-book-cover]').forEach(el=>{if(!el.querySelector('img')){coverQueue.push(el);pumpCovers()}})});
+
 })();
