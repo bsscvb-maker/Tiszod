@@ -134,4 +134,4 @@ function groupView(g){const x=themes[g];if(!x)return home();document.getElementB
 function route(){const path=decodeURIComponent(location.hash.slice(1));activeFilter='';if(!path||path==='home'){home();return}if(path==='all'){home();document.getElementById('directory').scrollIntoView({behavior:'smooth'});return}if(path.startsWith('group/')){groupView(path.slice(6));return}if(path.startsWith('section/')){viewItem(path.slice(8));return}home();}
 window.thStart=async()=>{await thSheets('?fields=spreadsheetId');route()};if(INITIAL_SECTION)location.hash='#section/'+INITIAL_SECTION;nav();window.addEventListener('hashchange',route);route();
 })();
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-back-timing-5"></script><script src="sheets.js?v=20261029-shared-drive-1"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-admin-menu-setup"></script><script src="sheets.js?v=20261029-shared-drive-1"></script></body></html>
