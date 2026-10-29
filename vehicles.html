@@ -807,7 +807,14 @@ async function openReport(type='due'){
  show('reportsView');renderReport();
  try{await loadServiceDetails();renderReport()}catch(e){document.getElementById('reportSummary').textContent='Could not load service records: '+e.message}
 }
-document.getElementById('openReports').addEventListener('click',()=>openReport());
+// Restore this optional toolbar action if an older or restored page layout lacks it.
+let reportsButton=document.getElementById('openReports');
+if(!reportsButton){
+ reportsButton=document.createElement('button');
+ reportsButton.type='button';reportsButton.id='openReports';reportsButton.className='garage-open';reportsButton.textContent='Reports';
+ (document.querySelector('#categoryView .section-title')||document.getElementById('categoryView')).append(reportsButton);
+}
+reportsButton.onclick=()=>openReport();
 document.getElementById('reportShortcuts').addEventListener('click',e=>{const link=e.target.closest('[data-report-link]');if(link)openReport(link.dataset.reportLink)});
 document.getElementById('backReports').addEventListener('click',()=>show('menuView'));
 document.getElementById('reportType').addEventListener('change',()=>{document.getElementById('reportWindowLabel').hidden=document.getElementById('reportType').value!=='due'});
