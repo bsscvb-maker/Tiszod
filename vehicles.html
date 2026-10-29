@@ -299,6 +299,16 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 #menuView .report-shortcuts button{min-height:45px;padding:11px 12px;font:700 13px/1.4 Arial,Helvetica,sans-serif;border-radius:6px;background:#102036;border-color:#344e70}
 @media(max-width:1100px){#menuView .garage-menu{grid-template-columns:1fr}#menuView .garage-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:520px){#menuView .garage-panel{padding:16px}#menuView .garage-primary-actions{flex-direction:column}#menuView .garage-primary-actions button{flex:auto}#menuView .garage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#menuView .garage-highlights,#menuView .report-shortcuts{grid-template-columns:1fr}}
+</style><style>
+.vehicle-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.vehicle-workspace-actions button{min-height:40px;margin:0;padding:9px 16px;border:1px solid #6382ad;border-radius:6px;background:#223d60;color:#f4f8ff;font:700 14px/1.4 Arial,Helvetica,sans-serif;cursor:pointer}
+.vehicle-workspace-actions button:hover{background:#305c96}
+#categoryView .section-title{align-items:center}
+#categoryView .document-hub-button:not(.vehicle-workspace-actions button){display:none}
+#categoryView .vehicle-filter-bar{padding:16px;background:#122237;border:1px solid #344e70;border-radius:9px}
+#categoryView .vehicle-filter-bar label{min-width:145px}
+#categoryView #assetGrid{gap:14px}
+@media(min-width:1000px){#categoryView #assetGrid .card-photo{width:35%;height:145px}#categoryView #assetGrid .asset-card{min-height:240px;padding-top:48px}}
 </style></head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>
@@ -654,7 +664,7 @@ function assetPhoto(a){
  a.photoLoading ||= thPhotoObjectUrl(a.photoFileId).then(url=>(a.photoObjectUrl=url)).finally(()=>{a.photoLoading=null});
  return a.photoLoading;
 }
-function show(view){if(view==='menuView')renderGarageStats();for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
+function show(view){if(view==='menuView'){view='categoryView';if(!category)category='All Vehicles';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
 // Navigation restores display state without replaying data-changing actions.
 window.thViewAdapter={
  capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
@@ -1245,6 +1255,20 @@ const openFuel=()=>TisFuel.open(window.tiszodFuelOptions());
 document.getElementById('openFuelCapture').onclick=openFuel;
 document.getElementById('logAssetFuel').onclick=openFuel;
 document.getElementById('backDashboard').addEventListener('click',()=>show('menuView'));
+
+/* Open the working vehicle list directly, with a single compact action bar. */
+const quickActions=document.createElement('div');quickActions.className='vehicle-workspace-actions';
+for(const el of [document.getElementById('openFuelCapture'),document.querySelector('#menuView .document-hub-button'),document.getElementById('openReports')].filter(Boolean))quickActions.append(el);
+document.getElementById('openReports').textContent='Reports';
+document.getElementById('openFuelCapture').textContent='Fuel log';
+document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
+const workspaceDocs=quickActions.querySelector('.document-hub-button');
+if(workspaceDocs)workspaceDocs.textContent='Documents';
+document.getElementById('backDashboard').hidden=true;
+document.querySelector('#categoryView .kicker').textContent='Your garage';
+document.querySelector('#categoryView .section-title p').textContent='Find a vehicle, update mileage, or open its records.';
+category='All Vehicles';status='active';renderCategory();show('categoryView');
+
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
 
