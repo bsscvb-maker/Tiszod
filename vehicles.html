@@ -321,8 +321,12 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 #assetGrid .card-status.repo:before{background:#ff8254;box-shadow:0 0 0 2px #ff825422}
 #assetGrid .card-copy .card-vin{font-size:12px;overflow-wrap:anywhere}
 #assetGrid .card-vin b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:all;letter-spacing:.02em}
-#statusFilters [data-status="totaled"]{border-color:#e88bff;color:#f0b2ff}
-#statusFilters [data-status="repo"]{border-color:#ff8254;color:#ffac8e}
+#statusFilters [data-status="totaled"]{background:#f2dcfa;border-color:#a14bb9;color:#59216b}
+#statusFilters [data-status="totaled"]:hover{background:#e9c5f5}
+#statusFilters [data-status="totaled"].active{background:#75358c;border-color:#e88bff;color:#fff}
+#statusFilters [data-status="repo"]{background:#ffe1d3;border-color:#c65d32;color:#792a0e}
+#statusFilters [data-status="repo"]:hover{background:#ffd0b9}
+#statusFilters [data-status="repo"].active{background:#9b3e1c;border-color:#ff8254;color:#fff}
 #assetGrid .card-status.managed:before{background:#79c7f1;box-shadow:0 0 0 2px #79c7f122}
 #assetGrid .card-status select{border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;outline:none}
 #assetGrid .card-status select option{background:#152b49;color:#fff}
