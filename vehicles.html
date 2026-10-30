@@ -428,7 +428,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <button type="button" class="back-link" id="backDashboard">Back</button>
 <div class="section-title"><div><div class="kicker">Category</div><h2 id="categoryTitle"></h2><p>Choose an item to view its details, mileage, maintenance, and service recommendations.</p></div><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
 <div class="vehicle-filter-bar"><label class="vehicle-search">Search vehicles<input id="vehicleSearch" type="search" placeholder="Year, make, model, VIN, plate…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by vehicle status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label></div>
-<label class="year-sort" for="yearSort">Year order <select id="yearSort"><option value="oldest">Oldest to newest</option><option value="newest">Newest to oldest</option></select></label>
+<label class="year-sort" for="yearSort">Year order <select id="yearSort"><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label>
 <p id="vehicleResults" class="vehicle-results" role="status"></p>
 <div class="asset-grid" id="assetGrid"></div>
 </div>
@@ -655,7 +655,7 @@ function specRecord(a){
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
  return {type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
-let category='',asset=null,status='active',yearOrder='oldest',editing=false,vehicleQuery='',missingFilter='all';
+let category='',asset=null,status='active',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
 const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true});
 let photoObserver;
@@ -674,7 +674,8 @@ window.thViewAdapter={
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 function renderCategory(){
  photoObserver?.disconnect();
- const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
+ const statusPriority=a=>clean(a.status)==='active'?0:clean(a.status)==='managed'?1:2;
+ const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const priority=statusPriority(a)-statusPriority(b);if(priority)return priority;const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
