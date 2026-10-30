@@ -62,6 +62,8 @@ function thStatus(message) {
   const loading = message === 'Opening your private workbook…';
   const auth = document.getElementById('th-auth');
   auth.classList.toggle('th-auth-loading', loading);
+  auth.setAttribute('aria-busy', String(loading));
+  if(loading){auth.hidden=false;document.documentElement.classList.remove('th-session-pending');}
   document.getElementById('th-sign-in').hidden = loading;
   const authMessage = document.getElementById('th-auth-message');
   if (loading) {
@@ -71,6 +73,14 @@ function thStatus(message) {
     authMessage.textContent = message;
     authMessage.removeAttribute('aria-label');
   }
+}
+async function thLoadWorkspace(){
+ thStatus('Opening your private workbook…');
+ // Paint the loading logo before starting workbook rendering on desktop and Safari.
+ await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ await window.thStart();
+ await new Promise(resolve=>requestAnimationFrame(resolve));
+ document.getElementById('th-auth').setAttribute('aria-busy','false');
 }
 function thAuthorized() { return Boolean(thToken)&&thExpiresAt>Date.now()+5000; }
 function thSignIn() {
@@ -96,7 +106,7 @@ function thSignIn() {
       sessionStorage.setItem(TH_SESSION_KEY, session);
       thStatus('Opening your private workbook…');
       try {
-        await window.thStart();
+        await thLoadWorkspace();
         document.getElementById('th-auth').hidden = true;
         window.dispatchEvent(new Event('tiszod-drive-books-connected'));
       } catch (error) {
@@ -286,11 +296,8 @@ async function thTab(position) {
 }
 document.getElementById('th-sign-in').addEventListener('click', thSignIn);
 if (thToken) {
-  // A valid saved session can load each workspace behind its own page content.
-  // Reserve the sign-in overlay for a new login or an actual access error.
-  document.getElementById('th-auth').hidden = true;
-  document.documentElement.classList.remove('th-session-pending');
-  Promise.resolve().then(() => window.thStart()).then(() => {
+  thStatus('Opening your private workbook…');
+  Promise.resolve().then(() => thLoadWorkspace()).then(() => {
     document.getElementById('th-auth').hidden = true;
   }).catch(error => {
     if(thRecoverStartup(error))return;
