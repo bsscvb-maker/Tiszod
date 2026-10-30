@@ -30,6 +30,34 @@ function thSignOut() {
   location.reload();
 }
 
+
+const TH_STARTUP_RELEASE='20261030-startup-recovery-2';
+function thRecoverStartup(error){
+ // A rendering failure is not a Google authentication failure.
+ if(error?.status===401)return false;
+ const url=new URL(location.href);
+ if(url.searchParams.get('portal_update')!==TH_STARTUP_RELEASE){
+  url.searchParams.set('portal_update',TH_STARTUP_RELEASE);
+  thStatus('Updating the portal…');
+  location.replace(url.href);
+  return true;
+ }
+ document.getElementById('th-auth').hidden=true;
+ document.documentElement.classList.remove('th-session-pending');
+ let panel=document.getElementById('th-workspace-error');
+ if(!panel){
+  panel=document.createElement('section');panel.id='th-workspace-error';panel.setAttribute('role','alert');
+  panel.style.cssText='margin:20px;padding:20px;border:1px solid #6382ad;border-radius:10px;background:#152943;color:#f4f8ff;overflow-wrap:anywhere';
+  const title=document.createElement('h2');title.textContent='This page could not finish opening';
+  const message=document.createElement('p');message.textContent='Your Google sign-in is connected. You can open another module from the menu, or reload this page.';
+  const detail=document.createElement('p');detail.textContent=String(error?.message||error||'Page startup error');
+  const retry=document.createElement('button');retry.type='button';retry.textContent='Reload page';retry.onclick=()=>{const u=new URL(location.href);u.searchParams.set('retry',Date.now().toString());location.replace(u.href)};
+  panel.append(title,message,detail,retry);
+  (document.querySelector('.th-app-main')||document.querySelector('main')||document.body).prepend(panel);
+ }
+ return true;
+}
+
 function thStatus(message) {
   const loading = message === 'Opening your private workbook…';
   const auth = document.getElementById('th-auth');
@@ -72,6 +100,7 @@ function thSignIn() {
         document.getElementById('th-auth').hidden = true;
         window.dispatchEvent(new Event('tiszod-drive-books-connected'));
       } catch (error) {
+        if(thRecoverStartup(error))return;
         if (error.status === 401) thClearSession();
         thStatus(error.message);
       }
@@ -264,6 +293,7 @@ if (thToken) {
   Promise.resolve().then(() => window.thStart()).then(() => {
     document.getElementById('th-auth').hidden = true;
   }).catch(error => {
+    if(thRecoverStartup(error))return;
     if (error.status === 401) thClearSession();
     thStatus(error.message);
     document.getElementById('th-auth').hidden = false;
