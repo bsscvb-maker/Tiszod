@@ -26,3 +26,9 @@
 #th-auth .th-wait-dots{display:none}
 @keyframes th-auth-logo-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#th-auth.th-auth-loading .th-auth-logo{animation:none}}
+
+/* Keep long startup messages within the phone viewport. */
+#th-auth#th-auth{box-sizing:border-box;min-width:0;overflow:auto}
+#th-auth#th-auth .th-auth-card{min-width:0;max-width:calc(100vw - 32px)}
+#th-auth #th-auth-message{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:520px){#th-auth#th-auth{padding:16px}#th-auth#th-auth .th-auth-card{padding:24px 20px}#th-auth .th-auth-logo{width:150px;height:150px}}
