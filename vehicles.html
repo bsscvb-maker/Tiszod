@@ -657,7 +657,7 @@ function specRecord(a){
 }
 let category='',asset=null,status='active',yearOrder='oldest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
-const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset});
+const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true});
 let photoObserver;
 function assetPhoto(a){
  if(a.photoObjectUrl)return Promise.resolve(a.photoObjectUrl);
@@ -1271,10 +1271,10 @@ document.getElementById('openReports').textContent='Reports';
 document.getElementById('openFuelCapture').textContent='Fuel log';
 
 const workspaceDocs=quickActions.querySelector('.document-hub-button');
-if(workspaceDocs)workspaceDocs.textContent='Documents';
+if(workspaceDocs)workspaceDocs.textContent='Needs filing';
 document.getElementById('backDashboard').hidden=true;
 document.querySelector('#categoryView .kicker').textContent='Your garage';
-document.querySelector('#categoryView .section-title p').textContent='Find a vehicle, update mileage, or open its records.';
+document.querySelector('#categoryView .section-title p').remove();
 category='All Vehicles';status='active';renderCategory();show('categoryView');
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
@@ -1293,6 +1293,6 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261029-fuel1"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261029-docs1"></script><script src="sheets.js?v=20261030-startup-recovery-2"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261029-fuel1"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261030-filing-shortcut"></script><script src="sheets.js?v=20261030-startup-recovery-2"></script></body></html>
 
 
