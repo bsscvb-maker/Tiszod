@@ -61,6 +61,7 @@ function thRecoverStartup(error){
 function thStatus(message) {
   const loading = message === 'Opening your private workbook…';
   const auth = document.getElementById('th-auth');
+  if(!document.getElementById('th-login-spin-style')){const style=document.createElement('style');style.id='th-login-spin-style';style.textContent="\n/* The requested loading animation stays active even when system motion is reduced. */\n#th-auth#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite!important;animation-play-state:running!important;transform-origin:center}\n@keyframes th-auth-logo-spin{to{transform:rotate(360deg)}}";document.head.append(style);}
   auth.classList.toggle('th-auth-loading', loading);
   auth.setAttribute('aria-busy', String(loading));
   if(loading){auth.hidden=false;document.documentElement.classList.remove('th-session-pending');}
