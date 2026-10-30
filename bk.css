@@ -4,3 +4,24 @@
 
 /* Document-first workspace */
 .bk-case-banner{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 25px;background:#193554;border:1px solid #4d739a;border-radius:12px;margin-bottom:20px}.bk-case-banner h2{margin:5px 0;font-size:23px}.bk-case-banner small{font-size:11px;letter-spacing:.12em;color:#9cc9f5}.bk-case-banner p{margin:5px 0;color:#b9cce1}.bk-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}.bk-quick button{text-align:left;padding:20px;background:#152b44}.bk-quick strong,.bk-quick small{display:block}.bk-quick strong{font-size:17px}.bk-quick small{font-size:13px;font-weight:400;color:#b6cbe2;margin-top:8px}.bk-document-list{display:grid;gap:10px}.bk-document{display:flex;align-items:center;gap:18px;padding:20px;background:#12243b;border:1px solid #345272;border-radius:10px}.bk-file-icon{font-size:29px;color:#9ac9f7;background:#203e60;padding:10px 16px;border-radius:8px}.bk-file-info{flex:1;min-width:0}.bk-file-info h3{font-size:16px;margin:4px 0 7px;overflow-wrap:anywhere}.bk-file-info>small{color:#9fc3e5}.bk-file-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}.bk a.bk-open-file{background:#326aa3;color:white;text-decoration:none;font-weight:650;padding:10px 16px;border-radius:7px}.bk-file-actions button{background:transparent;font-size:12px}.bk-panel .bk-folders{grid-template-columns:repeat(2,minmax(0,1fr))}.bk-case-switch{padding:12px 16px;background:#102239;border-radius:8px}.bk-hero h1{font-size:30px}.bk-tabs{gap:6px}.bk-tabs button{padding:10px 13px}.bk button.bk-year-card{min-height:150px}.bk-year-card strong{font-size:32px}.bk-document:hover{border-color:#6490bd}@media(max-width:1000px){.bk-quick{grid-template-columns:repeat(2,minmax(0,1fr))}.bk-file-actions{flex-direction:column;align-items:stretch}}@media(max-width:600px){.bk-document{flex-wrap:wrap;padding:16px;gap:12px}.bk-file-icon{display:none}.bk-file-info{flex-basis:100%}.bk-file-actions{flex-direction:row;width:100%}.bk-case-banner{flex-direction:column;align-items:flex-start}.bk-panel .bk-folders{grid-template-columns:1fr}.bk-hero h1{font-size:25px}.bk-quick button{padding:15px}}
+
+/* Give creditor controls and category summaries their own breathing room. */
+.bk-creditor-actions{align-items:center;gap:10px;margin:22px 0 26px;padding-bottom:22px;border-bottom:1px solid #304b70}
+.bk button.bk-creditor-metric{text-align:left;background:#111f35;border-color:#304b70;padding:20px;transition:background .15s,border-color .15s}
+.bk button.bk-creditor-metric:hover{background:#192f4e;border-color:#83b7ed}
+.bk-creditor-metric small{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:#98caff;font-size:12px;font-weight:500}
+.bk-creditor-metric small span{font-size:16px;color:inherit}
+.bk-breakdown{width:min(720px,calc(100vw - 40px));box-sizing:border-box;padding:26px}
+.bk-breakdown-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.bk-breakdown-head h2{font-size:23px;margin:4px 0 20px}
+.bk-breakdown-head p{margin:0}.bk-breakdown-head button{flex:none}
+.bk-breakdown-total{padding:20px;border:1px solid #42648a;background:#172f4e;border-radius:10px;margin-bottom:22px}
+.bk-breakdown-total span,.bk-breakdown-total strong,.bk-breakdown-total small{display:block}
+.bk-breakdown-total strong{font-size:32px;margin:4px 0}.bk-breakdown-total small{color:#b8cce7}
+.bk-breakdown-account{display:flex;justify-content:space-between;gap:22px;padding:17px 0;border-bottom:1px solid #304b70}
+.bk-breakdown-account>div{min-width:0}.bk-breakdown-account h3{font-size:15px;margin:0 0 6px;overflow-wrap:anywhere}
+.bk-breakdown-account p{font-size:13px;line-height:1.5;color:#b8cce7;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 6px}
+.bk-breakdown-account small{color:#9db6d5}.bk-breakdown-account>strong{white-space:nowrap;font-size:16px}
+.bk-breakdown-sum{display:flex;justify-content:space-between;gap:15px;padding:20px 0;font-size:17px;font-weight:700}
+@media(max-width:550px){.bk-creditor-actions{margin:18px 0 22px;padding-bottom:18px}.bk-breakdown{padding:18px}.bk-breakdown-account{flex-wrap:wrap;gap:8px}.bk-breakdown-account>div{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.bk button.bk-creditor-metric{transition:none}}
