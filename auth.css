@@ -32,3 +32,6 @@
 #th-auth#th-auth .th-auth-card{min-width:0;max-width:calc(100vw - 32px)}
 #th-auth #th-auth-message{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:520px){#th-auth#th-auth{padding:16px}#th-auth#th-auth .th-auth-card{padding:24px 20px}#th-auth .th-auth-logo{width:150px;height:150px}}
+
+/* The requested loading animation stays active even when system motion is reduced. */
+#th-auth#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite!important;animation-play-state:running!important;transform-origin:center}
