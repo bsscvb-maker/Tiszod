@@ -35,3 +35,6 @@
 
 /* The requested loading animation stays active even when system motion is reduced. */
 #th-auth#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite!important;animation-play-state:running!important;transform-origin:center}
+
+/* Do not flash sign-in while a saved session is being restored. */
+#th-auth:not(.th-auth-ready){visibility:hidden}
