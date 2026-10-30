@@ -295,10 +295,12 @@ async function thTab(position) {
   const rows = await thValues("'" + sheet.title.replace(/'/g,"''") + "'!A1:T300");
   return {title:sheet.title,rows,rowCount:sheet.gridProperties.rowCount,columnCount:Math.min(sheet.gridProperties.columnCount,20)};
 }
+document.getElementById('th-auth').classList.add('th-auth-ready');
 document.getElementById('th-sign-in').addEventListener('click', thSignIn);
 if (thToken) {
-  thStatus('Opening your private workbook…');
-  Promise.resolve().then(() => thLoadWorkspace()).then(() => {
+  document.getElementById('th-auth').hidden=true;
+  document.documentElement.classList.remove('th-session-pending');
+  Promise.resolve().then(() => window.thStart()).then(() => {
     document.getElementById('th-auth').hidden = true;
   }).catch(error => {
     if(thRecoverStartup(error))return;
