@@ -265,7 +265,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 .add-vehicle-button{border:1px solid #79aaff;border-radius:9px;background:#315d99;color:white;padding:11px 18px;font-size:17px;font-weight:800;cursor:pointer;white-space:nowrap}.add-vehicle-button:hover{background:#3d74ba}.add-vehicle-dialog{width:min(650px,calc(100% - 28px));max-height:90vh;overflow:auto;border:1px solid #688ab9;border-radius:14px;background:#142236;color:#f2f7ff;padding:26px;box-shadow:0 25px 70px #000b}.add-vehicle-dialog::backdrop{background:#020713bd}.add-vehicle-head,.add-vehicle-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.add-vehicle-head h2{margin:0 0 20px;font-size:28px}.add-vehicle-head button{border:0;background:transparent;color:white;font-size:28px;cursor:pointer}.add-vehicle-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.add-vehicle-fields label{display:grid;gap:6px;color:#d5e4fb;font-size:14px;font-weight:700}.add-vehicle-fields input,.add-vehicle-fields select{min-width:0;width:100%;padding:11px;border:1px solid #688ab9;border-radius:7px;background:#0e1b2d;color:white;font-size:16px}.add-vehicle-fields input:focus-visible,.add-vehicle-fields select:focus-visible{outline:3px solid #8ac5ff}.add-vehicle-actions{justify-content:flex-end;margin-top:14px}.add-vehicle-actions button{padding:10px 16px;border:1px solid #688ab9;border-radius:7px;background:#244a7b;color:white;font-weight:800;cursor:pointer}.add-vehicle-actions button:disabled{opacity:.6}.add-vehicle-dialog [role=status]{min-height:20px;color:#ffbcbd}@media(max-width:600px){.add-vehicle-fields{grid-template-columns:1fr}.add-vehicle-dialog{padding:18px}#dashboardView .section-title{align-items:flex-start;flex-wrap:wrap}}
 #assetView .asset-header .add-vehicle-button{display:block;margin-top:14px}
 </style>
-<link rel="stylesheet" href="auth.css?v=5"><style>html.th-session-pending #th-auth{display:none!important}</style><script>try{const saved=JSON.parse(localStorage.getItem('thbudget-session-photos-v1')||sessionStorage.getItem('thbudget-session-photos-v1')||'null');if(saved?.expiresAt>Date.now()+30000){document.documentElement.classList.add('th-session-pending');setTimeout(()=>document.documentElement.classList.remove('th-session-pending'),15000)}}catch(_){}</script><link rel="icon" type="image/svg+xml" href="tiszod-crest.svg?v=1"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="fuel-capture.css?v=20261029-desktop2"><link rel="stylesheet" href="vehicle-documents.css?v=20261029-docs1"><style>
+<link rel="stylesheet" href="auth.css?v=20261030-mobile-recovery"><style>html.th-session-pending #th-auth{display:none!important}</style><script>try{const saved=JSON.parse(localStorage.getItem('thbudget-session-photos-v1')||sessionStorage.getItem('thbudget-session-photos-v1')||'null');if(saved?.expiresAt>Date.now()+30000){document.documentElement.classList.add('th-session-pending');setTimeout(()=>document.documentElement.classList.remove('th-session-pending'),15000)}}catch(_){}</script><link rel="icon" type="image/svg+xml" href="tiszod-crest.svg?v=1"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="fuel-capture.css?v=20261029-desktop2"><link rel="stylesheet" href="vehicle-documents.css?v=20261029-docs1"><style>
 /* Align profile status and actions with the portal controls. */
 #assetView .asset-header-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}
 #assetView .asset-header-actions #assetStatus{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #5d7694;border-radius:6px;background:#152b49;color:#e0eafb;font-size:13px;font-weight:750;line-height:1.3}
@@ -1279,7 +1279,19 @@ category='All Vehicles';status='active';renderCategory();show('categoryView');
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
 
-window.thStart = async () => renderFleetPage(await thFleetData(), new URL('./',location.href).href);
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261029-fuel1"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261029-docs1"></script><script src="sheets.js?v=20261029-documents-1"></script></body></html>
+// Rebuild from intact markup on retries; prior rendering may have moved controls.
+const thFleetTemplates=Array.from(document.querySelectorAll('.workspace-view'),node=>node.cloneNode(true));
+let thFleetStarting=null;
+window.thStart=()=>{
+ if(thFleetStarting)return thFleetStarting;
+ thFleetStarting=(async()=>{
+  const data=await thFleetData();
+  for(const template of thFleetTemplates){const current=document.getElementById(template.id);if(current)current.replaceWith(template.cloneNode(true));}
+  document.querySelectorAll('body > .work-dialog, body > .vehicle-documents').forEach(node=>node.remove());
+  return renderFleetPage(data,new URL('./',location.href).href);
+ })().finally(()=>{thFleetStarting=null});
+ return thFleetStarting;
+};
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261029-fuel1"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261029-docs1"></script><script src="sheets.js?v=20261030-startup-recovery-2"></script></body></html>
 
 
