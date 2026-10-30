@@ -1265,10 +1265,11 @@ document.getElementById('backDashboard').addEventListener('click',()=>show('menu
 
 /* Open the working vehicle list directly, with a single compact action bar. */
 const quickActions=document.createElement('div');quickActions.className='vehicle-workspace-actions';
+document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
 for(const el of [document.getElementById('openFuelCapture'),document.querySelector('#menuView .document-hub-button'),document.getElementById('openReports')].filter(Boolean))quickActions.append(el);
 document.getElementById('openReports').textContent='Reports';
 document.getElementById('openFuelCapture').textContent='Fuel log';
-document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
+
 const workspaceDocs=quickActions.querySelector('.document-hub-button');
 if(workspaceDocs)workspaceDocs.textContent='Documents';
 document.getElementById('backDashboard').hidden=true;
