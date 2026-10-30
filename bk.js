@@ -62,58 +62,95 @@
  }else{const type=section==='Creditors'?'Creditor':section==='Tasks'?'Task':section==='Documents'?'Document':section==='Financial references'?'Financial reference':'Note';panel.innerHTML=(section==='Documents'?folderControls():'')+(section==='Financial references'?`<div class="bk-finance">${[['finance.html','Finance','Your original financial records'],['dollar-bank-transactions.html','Dollar Bank','Historical register and bank export'],['capital-one-transactions.html','Capital One 360','Bank transaction history'],['way2go-transactions.html','Way2Go','Card statement history'],['credit-report.html','Credit Report','Bureau reports and review notes']].map(([url,title,desc])=>`<a href="${url}"><strong>${title} ↗</strong><small>${desc}</small></a>`).join('')}</div><p class="bk-muted">These links open the original financial records. Add project references below for specific transactions or accounts; include their record ID in Related record.</p>`:'')+`<div class="bk-toolbar"><label>Search<input id="bk-search" type="search" placeholder="Search titles, notes, related records…"></label><label>Show<select id="bk-filter"><option value="active">Active records</option><option value="all">All records</option><option value="archived">Archived records</option></select></label><button class="primary" data-add="${type}">+ ${type}</button>${section==='Notes & questions'?'<button data-add="Question">+ Question</button>':''}</div><div id="bk-list"></div>`;if(section==='Documents')$('bk-search').placeholder='Search every folder by filename or notes…';['bk-search','bk-filter'].forEach(id=>$(id).addEventListener(id==='bk-search'?'input':'change',renderList));renderList();}
  }
 
- const bkFileCache=new Map(),bkObjectUrls=new Set();
+
+ const bkFileCache=new Map(),bkDataCache=new Map(),bkPdfCache=new Map(),bkObjectUrls=new Set();
+ let bkPdfLibraryPromise;
  const documentDriveId=link=>{try{const u=new URL(link);if(!['drive.google.com','docs.google.com'].includes(u.hostname))return '';return u.pathname.match(/\/(?:d|folders)\/([a-zA-Z0-9_-]+)/)?.[1]||u.searchParams.get('id')||''}catch{return ''}};
+ function bkPdfLibrary(){
+  return bkPdfLibraryPromise||=(import(new URL('./vendor/pdfjs/pdf.min.mjs',document.baseURI).href).then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.min.mjs',document.baseURI).href;return pdf}));
+ }
  async function bkDriveMeta(id){
-  if(!bkFileCache.has(id))bkFileCache.set(id,(async()=>{const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,thumbnailLink,capabilities(canDownload)&supportsAllDrives=true',{headers:{Authorization:'Bearer '+thToken}});if(!response.ok)throw new Error('Document access could not be verified. Reconnect Google Drive and try again.');return response.json()})().catch(error=>{bkFileCache.delete(id);throw error}));
+  if(!bkFileCache.has(id))bkFileCache.set(id,(async()=>{const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,capabilities(canDownload)&supportsAllDrives=true',{headers:{Authorization:'Bearer '+thToken}});if(!response.ok)throw new Error('Document access could not be verified. Reconnect Google Drive and try again.');return response.json()})().catch(error=>{bkFileCache.delete(id);throw error}));
   return bkFileCache.get(id);
  }
+ async function bkDocumentData(id){
+  if(!bkDataCache.has(id))bkDataCache.set(id,(async()=>{
+   const meta=await bkDriveMeta(id),native=meta.mimeType.startsWith('application/vnd.google-apps.');
+   const url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+(native?'/export?mimeType=application%2Fpdf':'?alt=media&supportsAllDrives=true');
+   const response=await fetch(url,{headers:{Authorization:'Bearer '+thToken}});
+   if(!response.ok)throw new Error('The document could not be loaded. Check Google Drive access and try again.');
+   return {meta,bytes:await response.arrayBuffer(),mime:native?'application/pdf':meta.mimeType};
+  })().catch(error=>{bkDataCache.delete(id);throw error}));
+  return bkDataCache.get(id);
+ }
+ async function bkPdfDocument(id){
+  if(!bkPdfCache.has(id))bkPdfCache.set(id,(async()=>{const [pdf,file]=await Promise.all([bkPdfLibrary(),bkDocumentData(id)]);return pdf.getDocument({data:new Uint8Array(file.bytes.slice(0)),isEvalSupported:false,useWasm:false}).promise})().catch(error=>{bkPdfCache.delete(id);throw error}));
+  return bkPdfCache.get(id);
+ }
  const bkBlobUrl=blob=>{const url=URL.createObjectURL(blob);bkObjectUrls.add(url);return url};
- async function loadDocumentThumbnails(){
-  const targets=[...document.querySelectorAll('.bk-document-thumb[data-preview]')];
+ async function bkPageCanvas(pdf,number,width){
+  const page=await pdf.getPage(number),base=page.getViewport({scale:1}),scale=width/base.width,ratio=Math.min(window.devicePixelRatio||1,2);
+  const viewport=page.getViewport({scale:scale*ratio}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);canvas.style.width='100%';canvas.style.height='auto';
+  await page.render({canvasContext:canvas.getContext('2d'),viewport,background:'#ffffff'}).promise;return canvas;
+ }
+ let bkThumbObserver;
+ function loadDocumentThumbnails(){
+  bkThumbObserver?.disconnect();
+  const targets=[...document.querySelectorAll('.bk-document-thumb[data-preview]')],queue=[];let active=0;
   async function load(button){
-   if(button.dataset.loaded)return;button.dataset.loaded='true';
    const item=items.find(r=>r.id===button.dataset.preview),id=documentDriveId(item?.link);
-   if(!id){button.querySelector('span').textContent='Preview';return;}
    try{
-    const meta=await bkDriveMeta(id);
-    if(!meta.thumbnailLink)throw new Error('No thumbnail');
-    const thumbHost=new URL(meta.thumbnailLink).hostname;if(!/(^|\.)(googleusercontent\.com|google\.com)$/.test(thumbHost))throw new Error('Thumbnail host unavailable');
-    const response=await fetch(meta.thumbnailLink,{headers:{Authorization:'Bearer '+thToken}});
-    if(!response.ok)throw new Error('Thumbnail unavailable');
-    const image=document.createElement('img');image.alt='First-page preview of '+item.title;image.src=bkBlobUrl(await response.blob());
-    button.replaceChildren(image);
-   }catch{button.querySelector('span').textContent='Preview';button.classList.add('bk-thumb-fallback')}
+    if(!id)throw new Error('This document must be opened in its original viewer.');
+    const file=await bkDocumentData(id);
+    if(file.mime==='application/pdf'){
+     const canvas=await bkPageCanvas(await bkPdfDocument(id),1,160);canvas.setAttribute('role','img');canvas.setAttribute('aria-label','First page of '+item.title);button.replaceChildren(canvas);
+    }else if(file.mime.startsWith('image/')){
+     const img=document.createElement('img');img.alt='Preview of '+item.title;img.src=bkBlobUrl(new Blob([file.bytes],{type:file.mime}));button.replaceChildren(img);
+    }else throw new Error('Preview unavailable for this file type.');
+   }catch(error){button.textContent='Preview unavailable';button.title=error.message;button.classList.add('bk-thumb-fallback')}
   }
-  if('IntersectionObserver'in window){const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){observer.unobserve(entry.target);load(entry.target)}},{rootMargin:'150px'});targets.forEach(button=>observer.observe(button));}
-  else targets.forEach(load);
+  function pump(){while(active<3&&queue.length){active++;load(queue.shift()).finally(()=>{active--;pump()})}}
+  function enqueue(button){if(button.dataset.loaded)return;button.dataset.loaded='true';queue.push(button);pump()}
+  if('IntersectionObserver'in window){bkThumbObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){bkThumbObserver.unobserve(entry.target);enqueue(entry.target)}},{rootMargin:'200px'});targets.forEach(button=>bkThumbObserver.observe(button))}
+  else targets.forEach(enqueue);
  }
  async function downloadBkDocument(item,button,status){
   const id=documentDriveId(item.link);
   if(!id){window.open(item.link,'_blank','noopener');status.textContent='Use Download in the original document viewer.';return}
   button.disabled=true;status.textContent='Preparing download…';
   try{
-   const meta=await bkDriveMeta(id),native=meta.mimeType.startsWith('application/vnd.google-apps.');
+   const file=await bkDocumentData(id),meta=file.meta;
    if(meta.capabilities?.canDownload===false)throw new Error('Downloading is restricted by the file owner.');
-   const endpoint='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+(native?'/export?mimeType=application%2Fpdf':'?alt=media&supportsAllDrives=true');
-   const response=await fetch(endpoint,{headers:{Authorization:'Bearer '+thToken}});
-   if(!response.ok)throw new Error('Download failed. Check your Google Drive access and try again.');
-   const url=bkBlobUrl(await response.blob()),a=document.createElement('a');a.href=url;a.download=native?meta.name.replace(/\.pdf$/i,'')+'.pdf':meta.name;a.style.display='none';document.body.append(a);a.click();a.remove();status.textContent='Download ready. On iPhone or iPad, use Save to Files if the document opens.';
+   const url=bkBlobUrl(new Blob([file.bytes],{type:file.mime})),a=document.createElement('a');a.href=url;a.download=meta.mimeType.startsWith('application/vnd.google-apps.')?meta.name.replace(/\.pdf$/i,'')+'.pdf':meta.name;a.style.display='none';document.body.append(a);a.click();a.remove();status.textContent='Download ready. On iPhone or iPad, use Save to Files if the document opens.';
   }catch(error){status.textContent=error.message}finally{button.disabled=false}
  }
- function openBkDocument(id){
+ async function openBkDocument(id){
   const item=items.find(r=>r.id===id);if(!item||!safeLink(item.link))return;
   let dialog=$('bk-document-preview');
-  if(!dialog){dialog=document.createElement('dialog');dialog.id='bk-document-preview';dialog.className='bk-dialog bk-document-preview';dialog.setAttribute('aria-labelledby','bk-preview-title');document.body.append(dialog);dialog.addEventListener('close',()=>{dialog.querySelector('iframe')?.remove();dialog.classList.remove('bk-preview-expanded')});}
-  const driveId=documentDriveId(item.link);
-  dialog.innerHTML=`<header class="bk-preview-header"><div><small>${esc(caseYear)} · Document</small><h2 id="bk-preview-title">${esc(item.title)}</h2></div><div class="bk-preview-tools"><button type="button" id="bk-preview-expand" aria-pressed="false">Expand</button><button type="button" id="bk-preview-download">Download</button><button type="button" id="bk-preview-close" aria-label="Close document preview">✕</button></div></header><div class="bk-preview-stage">${driveId?`<iframe src="https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview" title="${esc(item.title)}" allow="fullscreen"></iframe>`:'<p>This document opens in its original viewer. Use its download control to save a copy.</p>'}</div><footer class="bk-preview-footer"><p id="bk-preview-message" role="status" aria-live="polite"></p><a href="${esc(safeLink(item.link))}" target="_blank" rel="noopener noreferrer">Open original ↗</a></footer>`;
+  if(!dialog){dialog=document.createElement('dialog');dialog.id='bk-document-preview';dialog.className='bk-dialog bk-document-preview';dialog.setAttribute('aria-labelledby','bk-preview-title');document.body.append(dialog);dialog.addEventListener('close',()=>{dialog.querySelector('.bk-preview-stage')?.replaceChildren();dialog.classList.remove('bk-preview-expanded')})}
+  const driveId=documentDriveId(item.link),previewToken=Symbol();dialog.bkPreviewToken=previewToken;let pageNumber=1,pdf=null,renderSequence=0;
+  dialog.innerHTML=`<header class="bk-preview-header"><div><small>${esc(caseYear)} · Document</small><h2 id="bk-preview-title">${esc(item.title)}</h2></div><div class="bk-preview-tools"><button type="button" id="bk-preview-expand" aria-pressed="false">Expand</button><button type="button" id="bk-preview-download">Download</button><button type="button" id="bk-preview-close" aria-label="Close document preview">✕</button></div></header><nav class="bk-preview-pages" aria-label="Document pages" hidden><button type="button" id="bk-preview-prev" aria-label="Previous page">←</button><span id="bk-preview-page-label" aria-live="polite"></span><button type="button" id="bk-preview-next" aria-label="Next page">→</button></nav><div class="bk-preview-stage"><p role="status">Loading document…</p></div><footer class="bk-preview-footer"><p id="bk-preview-message" role="status" aria-live="polite"></p><a href="${esc(safeLink(item.link))}" target="_blank" rel="noopener noreferrer">Open original ↗</a></footer>`;
+  const stage=dialog.querySelector('.bk-preview-stage'),message=$('bk-preview-message');
+  async function renderPage(){
+   const sequence=++renderSequence;stage.setAttribute('aria-busy','true');
+   $('bk-preview-prev').disabled=pageNumber<=1;$('bk-preview-next').disabled=pageNumber>=pdf.numPages;$('bk-preview-page-label').textContent='Page '+pageNumber+' of '+pdf.numPages;
+   try{const canvas=await bkPageCanvas(pdf,pageNumber,Math.max(260,stage.clientWidth-32));canvas.setAttribute('role','img');canvas.setAttribute('aria-label',item.title+' — page '+pageNumber);if(sequence===renderSequence&&dialog.open&&dialog.bkPreviewToken===previewToken){stage.replaceChildren(canvas);stage.scrollTop=0}}catch(error){message.textContent=error.message}finally{if(sequence===renderSequence)stage.setAttribute('aria-busy','false')}
+  }
   $('bk-preview-close').onclick=()=>dialog.close();
-  $('bk-preview-expand').onclick=e=>{const expanded=dialog.classList.toggle('bk-preview-expanded');e.currentTarget.textContent=expanded?'Restore size':'Expand';e.currentTarget.setAttribute('aria-pressed',String(expanded));};
-  $('bk-preview-download').onclick=()=>downloadBkDocument(item,$('bk-preview-download'),$('bk-preview-message'));
+  $('bk-preview-expand').onclick=e=>{const expanded=dialog.classList.toggle('bk-preview-expanded');e.currentTarget.textContent=expanded?'Restore size':'Expand';e.currentTarget.setAttribute('aria-pressed',String(expanded));if(pdf)requestAnimationFrame(renderPage)};
+  $('bk-preview-download').onclick=()=>downloadBkDocument(item,$('bk-preview-download'),message);
+  $('bk-preview-prev').onclick=()=>{if(pdf&&pageNumber>1){pageNumber--;renderPage()}};
+  $('bk-preview-next').onclick=()=>{if(pdf&&pageNumber<pdf.numPages){pageNumber++;renderPage()}};
   dialog.showModal();
+  try{
+   if(!driveId)throw new Error('Open the original document to view this file.');
+   const file=await bkDocumentData(driveId);if(!dialog.open||dialog.bkPreviewToken!==previewToken)return;
+   if(file.mime==='application/pdf'){pdf=await bkPdfDocument(driveId);if(!dialog.open||dialog.bkPreviewToken!==previewToken)return;dialog.querySelector('.bk-preview-pages').hidden=false;await renderPage()}
+   else if(file.mime.startsWith('image/')){const image=document.createElement('img');image.alt=item.title;image.src=bkBlobUrl(new Blob([file.bytes],{type:file.mime}));stage.replaceChildren(image)}
+   else{const iframe=document.createElement('iframe');iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';iframe.title=item.title;stage.replaceChildren(iframe)}
+  }catch(error){stage.replaceChildren();message.textContent=error.message}
  }
- addEventListener('pagehide',()=>{for(const url of bkObjectUrls)URL.revokeObjectURL(url);bkObjectUrls.clear()});
-
+ addEventListener('pagehide',()=>{bkThumbObserver?.disconnect();for(const url of bkObjectUrls)URL.revokeObjectURL(url);bkObjectUrls.clear()});
 
  function attorneyQuickAccess(){
  if(caseYear!=='2026'||folder||$('bk-search')?.value.trim())return '';
