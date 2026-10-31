@@ -311,11 +311,11 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 @media(min-width:1000px){#categoryView #assetGrid .card-photo{width:35%;height:145px}#categoryView #assetGrid .asset-card{min-height:240px;padding-top:48px}}
 </style>
 <style id="full-vehicle-photos">
-/* All vehicle types use edge-to-edge square photos on the card background. */
+/* Show the complete photo for every vehicle type, using the card background. */
 #categoryView #assetGrid .card-photo{display:flex;align-items:center;justify-content:center;flex:0 0 36%;width:36%;height:auto;aspect-ratio:1/1;padding:0;border:0;box-sizing:border-box;background:transparent;overflow:hidden}
-#categoryView #assetGrid .card-photo img{display:block;flex:none;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:cover;object-position:center;transform:none}
+#categoryView #assetGrid .card-photo img{display:block;flex:none;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:contain;object-position:center;transform:none}
 #assetView .photo-manager #assetPhoto{width:min(100%,440px);min-width:0}
-#assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:cover;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
+#assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
 @media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
 </head>
