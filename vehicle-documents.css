@@ -5,3 +5,5 @@
 
 /* Match the shared workspace action sizing and remove the shortcut's top margin. */
 .vehicle-workspace-actions .document-hub-button{margin:0!important;min-height:40px;padding:9px 16px;box-sizing:border-box;align-self:stretch;font:700 14px/1.4 Arial,Helvetica,sans-serif}
+
+.document-alternate-copies{margin-top:10px;color:#bfd6ef;font-size:12px}.document-alternate-copies summary{cursor:pointer}.document-alternate-copies a{display:block;color:#9ddaf1;margin-top:7px;overflow-wrap:anywhere}.document-shared-button{margin:8px 8px 0 0}.vehicle-workspace-actions .document-shared-button{margin:0;min-height:40px;padding:9px 16px}
