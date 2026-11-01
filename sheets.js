@@ -58,10 +58,27 @@ function thRecoverStartup(error){
  return true;
 }
 
+// Loading-only layers reuse the unchanged crest; the normal logo remains its original image.
+function thPrepareAuthSpinner(auth) {
+ const logo=auth.querySelector('img.th-auth-logo');
+ if(!logo||!/(?:^|\/)tiszod-crest\.svg(?:[?#]|$)/.test(logo.getAttribute('src')||''))return;
+ const ns='http://www.w3.org/2000/svg',source=logo.getAttribute('src');
+ const node=(tag,attributes={})=>{const el=document.createElementNS(ns,tag);for(const [key,value] of Object.entries(attributes))el.setAttribute(key,value);return el};
+ const shell=document.createElement('span');shell.className='th-auth-logo th-auth-logo-shell';
+ const svg=node('svg',{viewBox:'0 0 551 560',class:'th-auth-logo-layered','aria-hidden':'true',focusable:'false'});
+ const defs=node('defs'),outer=node('clipPath',{id:'th-auth-gear-clip',clipPathUnits:'userSpaceOnUse'});
+ outer.append(node('path',{d:'M0 0H551V560H0Z M473 272A185 185 0 1 0 103 272A185 185 0 1 0 473 272Z','clip-rule':'evenodd','fill-rule':'evenodd'}));
+ const clip=node('clipPath',{id:'th-auth-center-clip',clipPathUnits:'userSpaceOnUse'});clip.append(node('circle',{cx:'288',cy:'272',r:'186'}));defs.append(outer,clip);
+ const gear=node('image',{href:source,width:'551',height:'560',class:'th-auth-gear','clip-path':'url(#th-auth-gear-clip)'});
+ const center=node('image',{href:source,width:'551',height:'560','clip-path':'url(#th-auth-center-clip)'});
+ svg.append(defs,gear,center);logo.replaceWith(shell);logo.classList.remove('th-auth-logo');logo.classList.add('th-auth-logo-original');shell.append(logo,svg);
+}
+
 function thStatus(message) {
   const loading = message === 'Opening your private workbook…';
   const auth = document.getElementById('th-auth');
-  if(!document.getElementById('th-login-spin-style')){const style=document.createElement('style');style.id='th-login-spin-style';style.textContent="\n/* The requested loading animation stays active even when system motion is reduced. */\n#th-auth#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite!important;animation-play-state:running!important;transform-origin:center}\n@keyframes th-auth-logo-spin{to{transform:rotate(360deg)}}";document.head.append(style);}
+  if(!document.getElementById('th-login-spin-style')){const style=document.createElement('style');style.id='th-login-spin-style';style.textContent="/* Spin the gear around its artwork center; keep the original crest and its center still. */\n#th-auth#th-auth.th-auth-loading .th-auth-logo{animation:none!important;transform:none!important}\n#th-auth .th-auth-logo-shell{position:relative;flex:none;overflow:visible}\n#th-auth .th-auth-logo-original{display:block;width:100%;height:100%;object-fit:contain}\n#th-auth .th-auth-logo-layered{position:absolute;inset:0;display:none;width:100%;height:100%;overflow:visible}\n#th-auth.th-auth-loading .th-auth-logo-original{visibility:hidden}\n#th-auth.th-auth-loading .th-auth-logo-layered{display:block}\n#th-auth#th-auth.th-auth-loading .th-auth-gear{transform-box:view-box;transform-origin:52.26860254% 48.57142857%;animation:th-auth-gear-spin 1.8s linear infinite!important;animation-play-state:running!important;will-change:transform}\n@keyframes th-auth-gear-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}\n";document.head.append(style);}
+  thPrepareAuthSpinner(auth);
   auth.classList.toggle('th-auth-loading', loading);
   auth.setAttribute('aria-busy', String(loading));
   if(loading){auth.hidden=false;document.documentElement.classList.remove('th-session-pending');}
@@ -320,3 +337,4 @@ addEventListener('storage',event=>{
  else {thClearSession();document.getElementById('th-auth').hidden=false;document.documentElement.classList.remove('th-session-pending');thStatus('Sign in to reconnect your portal and Google Drive.');}
 });
 if(thNeedsDriveConsent)document.documentElement.classList.remove('th-session-pending');
+
