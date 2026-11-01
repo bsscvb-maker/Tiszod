@@ -20,12 +20,10 @@
 @media(max-width:520px){#th-auth#th-auth .th-auth-card{padding:30px 25px 38px}#th-auth .th-auth-brand{font-size:29px}#th-auth .th-auth-logo{width:195px;height:195px}}
 @media(prefers-reduced-motion:reduce){#th-auth.th-auth-loading #th-auth-message{animation:none}#th-auth #th-sign-in{transition:none}}
 
-/* The sign-in crest is the loading indicator until the workspace is ready. */
-#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite;transform-origin:50% 50%}
+/* The original logo stays still; sheets.js supplies loading-only gear layers. */
+#th-auth.th-auth-loading .th-auth-logo{animation:none!important}
 #th-auth.th-auth-loading #th-auth-message{animation:none;min-height:28px}
 #th-auth .th-wait-dots{display:none}
-@keyframes th-auth-logo-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#th-auth.th-auth-loading .th-auth-logo{animation:none}}
 
 /* Keep long startup messages within the phone viewport. */
 #th-auth#th-auth{box-sizing:border-box;min-width:0;overflow:auto}
@@ -33,8 +31,6 @@
 #th-auth #th-auth-message{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:520px){#th-auth#th-auth{padding:16px}#th-auth#th-auth .th-auth-card{padding:24px 20px}#th-auth .th-auth-logo{width:150px;height:150px}}
 
-/* The requested loading animation stays active even when system motion is reduced. */
-#th-auth#th-auth.th-auth-loading .th-auth-logo{animation:th-auth-logo-spin 1.8s linear infinite!important;animation-play-state:running!important;transform-origin:center}
-
 /* Do not flash sign-in while a saved session is being restored. */
 #th-auth:not(.th-auth-ready){visibility:hidden}
+
