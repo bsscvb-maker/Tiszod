@@ -18,7 +18,7 @@ window.TiszodVehicleDocuments = (() => {
     const image=/^image\//i.test(r.mime||'')||/\.(?:jpe?g|png|heic|webp|gif|bmp|tiff?)$/i.test(name);
     const scannedDocument=/\b(?:title|registration|receipt|invoice|bill of sale|contract|insurance|inspection|warranty|certificate|instructions?|manual|wiring|diagram|specifications?)\b/i.test(name);
     const referenceImage=/Manuals & Specs|Owners CD|\/support(?:\/|$)|\/How to/i.test(path);
-    if(image&&!scannedDocument&&!referenceImage)return 'Pictures';
+    if(image&&!scannedDocument)return 'Pictures';
     if(image&&scannedDocument){if(/inspection/i.test(name))return 'State Inspections';if(/registration/i.test(name))return 'Registration';if(/\btitle\b|certificate of origin/i.test(name))return 'Title';if(/insurance/i.test(name))return 'Insurance & Finance';if(/warranty/i.test(name))return 'Warranty & Plans';if(/invoice|receipt/i.test(name)&&category==='Photos & Accessories')return 'Service Documents';}
     if(/\/Selling(?:\/|$)/i.test(path)&&/bill of sale|sales aid/i.test(name))return 'Sale & Transfer';
     if(/state[ _-]*inspection/i.test(path+' '+name))return 'State Inspections';
@@ -26,6 +26,7 @@ window.TiszodVehicleDocuments = (() => {
     if(category==='Photos & Accessories')return 'Other';
     if(category==='State Inspections'||/\bstate[\s_-]*inspection\b|\b(?:SI|S\.I\.)\b/i.test(name)&&!/manual|guide|instructions/i.test(name))return 'State Inspections';
     if(category!=='Title & Registration')return category;
+    if(/\/Registration(?:\/|$)/i.test(path))return 'Registration';
     if(/\bregistration\b|\bregist(?:er|ration)\b|\btag registration\b/i.test(name)&&!/\btitle\b/i.test(name))return 'Registration';
     if(/\btitle\b|certificate of origin/i.test(name))return 'Title';
     // Keep legacy mixed records accessible while their filing is clarified.
