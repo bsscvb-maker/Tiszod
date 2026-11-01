@@ -1,13 +1,22 @@
 /* Document metadata stays in the signed-in owner's workbook; originals stay in Drive. */
 window.TiszodVehicleDocuments = (() => {
   const SHEET = 'Portal Vehicle Documents';
-  const categories = ['Purchase','Title & Registration','Warranty & Plans','Insurance & Finance','Manuals & Specs','Service Documents','Photos & Accessories','Other','Riding Gear','Data & Backups','Saved Web Pages'];
-  const tabs = categories.slice(0,6).map((name,i)=>({id:'documents-'+i,name})).concat({id:'documents-all',name:'All Documents'});
+  const categories = ['Purchase','Title','Registration','State Inspections','Warranty & Plans','Insurance & Finance','Manuals & Specs','Service Documents','Photos & Accessories','Other','Riding Gear','Data & Backups','Saved Web Pages'];
+  const tabs = categories.slice(0,8).map((name,i)=>({id:'documents-'+i,name})).concat({id:'documents-all',name:'All Documents'});
   const esc = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const assetKey = a => String(a.reportId || (a.profileRow?'profile-'+a.profileRow:'item-'+String(a.year+' '+a.make+' '+a.model).toLowerCase().replace(/[^a-z0-9]/g,'')));
   const assetName = a => [a.year,a.make,a.model].filter(Boolean).join(' ');
   const fields=['id','assetKey','vehicle','category','name','url','fileId','sourceFolder','sourcePath','mime','notes','kind','status','updated','alternateCopies'];
-  function parse(rows){return rows.slice(1).map((r,i)=>({...Object.fromEntries(fields.map((key,j)=>[key,String(r[j]??'')])),row:i+2})).filter(r=>r.id&&r.status!=='Removed');}
+  function documentCategory(r){
+    const name=r.name||'',category=r.category||'Other';
+    if(category==='State Inspections'||/\bstate[\s_-]*inspection\b|\b(?:SI|S\.I\.)\b/i.test(name)&&!/manual|guide|instructions/i.test(name))return 'State Inspections';
+    if(category!=='Title & Registration')return category;
+    if(/\bregistration\b|\bregist(?:er|ration)\b|\btag registration\b/i.test(name)&&!/\btitle\b/i.test(name))return 'Registration';
+    if(/\btitle\b|certificate of origin/i.test(name))return 'Title';
+    // Keep legacy mixed records accessible while their filing is clarified.
+    return 'Registration';
+  }
+  function parse(rows){return rows.slice(1).map((r,i)=>{const record={...Object.fromEntries(fields.map((key,j)=>[key,String(r[j]??'')])),row:i+2};record.category=documentCategory(record);return record;}).filter(r=>r.id&&r.status!=='Removed');}
   function driveUrl(value){try{const u=new URL(value);if(u.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(u.hostname))return '';return u.href}catch{return ''}}
   function fileId(url){try{const u=new URL(url);return u.pathname.match(/\/(?:d|folders)\/([a-zA-Z0-9_-]+)/)?.[1]||u.searchParams.get('id')||''}catch{return ''}}
   function create({assets,getAsset,filingShortcut=false}){
