@@ -187,6 +187,7 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 #assetMaintenance input{min-width:100px;width:100%;padding:8px;background:#172940;color:#f3f7ff;border:1px solid #526b8c;border-radius:4px}
 #assetMaintenance .notes-cell input{min-width:220px}
 #addService{margin:15px 0;padding:10px 14px;border:1px solid #638ac0;border-radius:5px;background:#244a7b;color:white;font-weight:700}
+.record-review{padding:18px;margin:20px 0;background:#142b46;border:1px solid #53769c;border-radius:9px;color:#e7f0fd}.record-review h3{margin:0 0 12px}.record-review p{line-height:1.6;white-space:pre-line}.record-review dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.record-review dt{font-size:12px;color:#b9d3ee}.record-review dd{margin:4px 0;font-weight:700}.record-review a{color:#99d7ff}.record-review .record-warning{padding:10px;border-left:3px solid #ffc76b;background:#302d27}.record-review summary{cursor:pointer}.record-review li{margin:8px 0}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -398,7 +399,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete vehicle</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
 <div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button></div>
- <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
+ <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
 <section class="asset-tab-panel" id="assetRecommended" hidden></section>
@@ -616,8 +617,16 @@ function specRecord(a){
  if(raw.trim().startsWith('{'))try{const parsed=JSON.parse(raw);if(parsed&&parsed.type==='vehicle-quick-specs-v1')saved=parsed}catch(_){}
  const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...(saved.specs||{})};
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
- return {type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
+ return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
+function renderRecordReview(a){
+ let record={};try{record=JSON.parse(a.reportNotes||'{}')}catch(_){}
+ const audit=record.documentAudit,specs=record.specs||{},reviews=record.documentReviews||[],facts=audit?.facts||[];
+ const panel=document.getElementById('assetRecordReview');if(!audit&&!reviews.length){panel.hidden=true;return}panel.hidden=false;
+ const sources=(audit?.sources||reviews.flatMap(r=>r.sources||[])).filter((r,i,all)=>r.url&&all.findIndex(x=>x.url===r.url)===i);
+ panel.innerHTML='<h3>Records found in Drive</h3>'+(facts.length?'<dl>'+facts.map(f=>'<div><dt>'+esc(f.label)+'</dt><dd>'+esc(f.value)+'</dd></div>').join('')+'</dl>':'')+(specs.startingReadingNote?'<p class="record-warning">'+esc(specs.startingReadingNote)+'</p>':'')+(audit?'<p>'+esc(audit.summary)+'</p><small>Folder review: '+esc(audit.reviewed)+' · '+audit.documents+' documents · '+audit.pictures+' pictures</small>':'')+(reviews.length?'<details><summary>Document findings and qualifications</summary>'+reviews.map(r=>'<p>'+esc(r.summary)+'</p>').join('')+'</details>':'')+(sources.length?'<details><summary>Source records</summary><ul>'+sources.map(r=>{let url='';try{const u=new URL(r.url);if(u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname))url=u.href}catch(_){}return url?'<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+'</a></li>':''}).join('')+'</ul></details>':'');
+}
+
 let category='',asset=null,status='all',yearOrder='oldest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
 const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset});
@@ -692,6 +701,7 @@ function renderAsset(tab='details'){
  const values=[['Year','year'],['Make','make'],['Model','model'],['VIN / serial number','vin'],['Tag / plate','tag'],['Engine','engine'],['Transmission','transmission'],['Tire size','tireSize'],['Color','color'],['Vehicle number','vehicleNumber'],['Registration renewal','renewal'],['Ownership since','ownershipStart']];
  const specs=specRecord(asset).specs;
  document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Vehicle status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option></select></label>'+values.map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Ownership since</span><div class="ownership-date-row"><input data-asset-field="ownershipStart" aria-label="Ownership since, type MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY" readonly><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'" disabled></div></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
+ renderRecordReview(asset);
  const specGroups=[
   {title:'Dimensions & weight',keys:['length','width','height','weight','groundClearance'],preview:[specs.length,specs.width,specs.height].every(Boolean)?[specs.length,specs.width,specs.height].map(v=>v.replace(/\s*(in|″)$/i,'')).join(' × ')+' in · '+specs.weight:[specs.length,specs.weight].filter(Boolean).join(' · ')},
   {title:'Capacity',keys:['cargoBed','seatKit','payload','towing','tongueWeight'],preview:[specs.payload&&'Payload '+specs.payload,specs.towing&&'Towing '+specs.towing].filter(Boolean).join(' · ')},
@@ -1109,4 +1119,5 @@ document.getElementById('backCategory').addEventListener('click',()=>{renderCate
 }
 
 window.thStart = async () => renderFleetPage(await thFleetData(), new URL('./',location.href).href);
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="vehicle-documents.js?v=20261031-filed-documents"></script><script src="sheets.js?v=20261029-documents-1"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="vehicle-documents.js?v=20261101-pictures-review-2"></script><script src="sheets.js?v=20261029-documents-1"></script></body></html>
+
