@@ -189,6 +189,18 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 #addService{margin:15px 0;padding:10px 14px;border:1px solid #638ac0;border-radius:5px;background:#244a7b;color:white;font-weight:700}
 .work-dialog{width:min(850px,95vw);max-height:90vh;overflow:auto;background:#162940;color:#f3f7ff;border:1px solid #7698c5;border-radius:10px;padding:24px}.work-dialog::backdrop{background:rgba(0,0,0,.7)}.work-dialog input,.work-dialog textarea{width:100%;padding:10px;background:#0d1e33;color:#fff;border:1px solid #6684aa;border-radius:4px;font:inherit}.work-dialog .work-check{display:flex;align-items:center;gap:10px;padding:8px;font-size:15px}.work-dialog input[type=checkbox],#assetRecommended input[type=checkbox]{width:20px;height:20px;accent-color:#6ba5ee}.work-dialog fieldset{max-height:240px;overflow:auto;border:1px solid #6381a8}.work-dialog label{min-width:0;display:grid;gap:6px}.work-dialog .complete-wide{grid-column:1/-1}.work-dialog .complete-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}.work-dialog button,#assetRecommended .complete-actions button{padding:11px 16px;background:#28568c;color:white;border:1px solid #729ccc;border-radius:5px;font:inherit}.work-dialog #workEntryStatus{white-space:pre-wrap}.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:600px){.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:1fr}}
 [data-history-search]{cursor:pointer}.service-entry-open{border:0;background:transparent;color:#a9ceff;font:700 17px Arial;cursor:pointer;text-align:left;padding:8px 0}.service-item-preview{font-size:14px;white-space:normal;line-height:1.8}.service-detail-table{min-width:950px}.service-detail-table td{white-space:normal;vertical-align:top}.service-detail-table td:first-child{min-width:240px}.service-detail-table input{min-width:100px}#workItemCosts label{margin:10px 0}
+
+#assetGrid .card-deadlines{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#fff}
+#assetGrid .deadline-row{padding:6px 0;font-size:12px;line-height:1.4}
+#assetGrid .deadline-row b{display:block;font-size:13px}
+#assetGrid .deadline-row[data-tone="late"]{color:#ffb5b5}
+#assetGrid .deadline-row[data-tone="soon"]{color:#ffe09a}
+#assetGrid .deadline-row[data-tone="ok"]{color:#b5f3ce}
+#assetGrid .deadline-row[data-tone="unknown"]{color:#ffe09a}
+#assetGrid .card-deadlines button{margin-top:6px;padding:5px 9px;font-size:12px}
+@media(min-width:1200px){#assetGrid .card-copy{position:relative;padding-right:175px;min-height:240px}#assetGrid .card-deadlines{position:absolute;right:0;top:25px;width:165px;margin:0}}
+#complianceDialog{width:min(480px,94vw);background:#142b46;color:#fff;border:1px solid #8cadd0;border-radius:12px;padding:24px}
+#complianceDialog label{display:block;margin-top:14px}#complianceDialog input,#complianceDialog select{display:block;width:100%;margin-top:5px;padding:8px}#complianceDialog button{margin:14px 8px 0 0}#complianceMessage{min-height:24px}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -662,8 +674,58 @@ function specRecord(a){
  if(raw.trim().startsWith('{'))try{const parsed=JSON.parse(raw);if(parsed&&parsed.type==='vehicle-quick-specs-v1')saved=parsed}catch(_){}
  const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...(saved.specs||{})};
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
- return {type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
+ return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
+
+// Verified document dates are starting values; workbook edits take precedence.
+const complianceEvidence={
+ '1FAFP40604F200855':{inspectionDue:'2027-04-30',inspectionSource:'Inspection certificate dated April 27, 2026'},
+ '3C63RRRL1KG580434':{inspectionDue:'2027-03-31',inspectionSource:'Inspection certificate dated March 11, 2026'},
+ '4YDT33126LT434476':{registrationMode:'permanent',registrationSource:'Permanent trailer registration',inspectionDue:'2027-03-31',inspectionSource:'Inspection certificate dated March 11, 2026'},
+ '2SSUBE1A1MB148250':{registrationMode:'permanent',registrationSource:'Permanent trailer registration'},
+ '1HD1KZF15PB653889':{registrationDue:'2026-09-30',registrationSource:'Registration expiration printed on August 12, 2024 document; confirm any later renewal',inspectionDue:'2027-09-30',inspectionSource:'Inspection certificate dated September 17, 2026'},
+ '1A8HX58N88F122005':{inspectionDue:'2027-08-31',inspectionSource:'Inspection certificate dated August 11, 2026'},
+ '2HGFG3B83CH543158':{registrationDue:'2026-11-30',registrationSource:'Title / registration dated November 26, 2025'}
+};
+function complianceFor(a){
+ const specs=specRecord(a).specs,base={...(complianceEvidence[String(a.vin||'').trim().toUpperCase()]||{})};
+ // Only credible future profile renewal dates are usable as a starting reminder.
+ const old=String(a.renewal||''),parts=old.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+ if(!base.registrationDue&&!base.registrationMode&&parts&&+parts[3]>=2026&&+parts[3]<2100){base.registrationDue=parts[3]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');base.registrationSource='Recorded profile renewal date; verify against current registration'}
+ for(const kind of ['registration','inspection'])for(const tail of ['Due','Mode','Source']){const k=kind+tail;if(Object.prototype.hasOwnProperty.call(specs,k))base[k]=specs[k]}
+ return base;
+}
+function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})){
+ if(mode==='permanent')return {tone:'ok',text:'Permanent — no renewal date'};
+ if(mode==='exempt')return {tone:'ok',text:'Exempt'};
+ if(mode==='not-required')return {tone:'ok',text:'Not required'};
+ if(mode==='unknown'||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return {tone:'unknown',text:'Date needed — confirm'};
+ const n=Math.round((Date.parse(date+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/86400000),label=new Date(date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'});
+ return {tone:n<0?'late':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
+}
+function deadlineCard(a){
+ if(!['active','managed'].includes(clean(a.status)))return '';
+ const d=complianceFor(a);
+ return '<aside class="card-deadlines" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{const state=deadlineState(d[k+'Due'],d[k+'Mode']);return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+(k==='registration'?'Registration':'State inspection')+'</b>'+esc(state.text)+'</div>'}).join('')+'<button type="button" data-compliance="'+esc(a.id)+'">Update dates</button></aside>';
+}
+const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
+complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
+let complianceTarget=null;
+complianceDialog.querySelector('[data-cancel]').onclick=()=>complianceDialog.close();
+document.getElementById('assetGrid').addEventListener('click',e=>{
+ const b=e.target.closest('[data-compliance]');if(!b)return;e.stopPropagation();complianceTarget=assets.find(a=>a.id===b.dataset.compliance);if(!complianceTarget)return;
+ const d=complianceFor(complianceTarget),form=complianceDialog.querySelector('form');form.querySelector('[data-name]').textContent=[complianceTarget.year,complianceTarget.make,complianceTarget.model].filter(Boolean).join(' ');
+ for(const k of ['registration','inspection']){form.elements[k+'Mode'].value=d[k+'Mode']||(d[k+'Due']?'dated':'unknown');form.elements[k+'Due'].value=d[k+'Due']||''}
+ document.getElementById('complianceMessage').textContent='';complianceDialog.showModal();
+});
+complianceDialog.querySelector('form').onsubmit=async e=>{
+ e.preventDefault();const a=complianceTarget,form=e.target,msg=document.getElementById('complianceMessage'),updates={};
+ for(const k of ['registration','inspection']){updates[k+'Mode']=form.elements[k+'Mode'].value;updates[k+'Due']=form.elements[k+'Due'].value;if(updates[k+'Mode']==='dated'&&!updates[k+'Due']){msg.textContent='Enter both due dates, or choose a status for dates you cannot confirm.';return}updates[k+'Source']='Updated in portal '+new Date().toISOString().slice(0,10)}
+ const button=form.querySelector('[type="submit"]');button.disabled=true;msg.textContent='Saving…';
+ const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{await ensureProfileRow(a);let record;try{record=JSON.parse(a.reportNotes)}catch(_){}if(!record||record.type!=='vehicle-quick-specs-v1')record=specRecord(a);record.specs={...(record.specs||{}),...updates};const json=JSON.stringify(record);await thWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json});a.specSaveQueue=saving;
+ try{await saving;renderCategory();complianceDialog.close()}catch(error){msg.textContent='Could not save: '+error.message}finally{button.disabled=false}
+};
+
 let category='',asset=null,status='active',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
 const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true});
@@ -700,7 +762,7 @@ function renderCategory(){
   const photoClass=String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=a.photoObjectUrl||a.photoFileId||a.photo?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
-  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed','totaled','repo'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold','Totaled','Repo'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong>'+(String(a.vin||'').trim()?'<span class="card-stat card-vin">VIN: <b>'+esc(a.vin)+'</b></span>':'')+'<span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span><span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(added===null?'—':added)+'</b></span><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
+  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed','totaled','repo'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold','Totaled','Repo'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong>'+(String(a.vin||'').trim()?'<span class="card-stat card-vin">VIN: <b>'+esc(a.vin)+'</b></span>':'')+'<span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span><span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(added===null?'—':added)+'</b></span>'+deadlineCard(a)+'<div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
  }).join(''):'<div class="asset-note">No items match these filters.</div>';
  const loadCardPhoto=a=>{
   assetPhoto(a).then(src=>{
@@ -1304,5 +1366,6 @@ window.thStart=()=>{
  return thFleetStarting;
 };
 </script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261029-visible-logo-3"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261029-fuel1"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261101-manual-cover-preview"></script><script src="sheets.js?v=20261030-startup-recovery-2"></script></body></html>
+
 
 
