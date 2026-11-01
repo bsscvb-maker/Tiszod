@@ -834,6 +834,7 @@ function renderAsset(tab='details'){
   {title:'Components & equipment',keys:['frameMaterial','frameAngles','fork','rearShock','brakeLevers','handlebar','stem','headset','frontDerailleur','crankset','rearDerailleur','pedals','cuttingHead','dumpCartModel','dumpCartProduct','dumpCartSerial'],preview:[specs.frameMaterial,specs.dumpCartModel].filter(Boolean).join(' · ')},
   {title:'Identification & other details',keys:['manufacturer','brand','itemWeight','productDimensions','partNumber','productNumber','productSerial','manufactured','gvwr','wheelbase','seatHeight','curbWeight','dryWeight','additionalDetails'],preview:[specs.manufacturer,specs.gvwr].filter(Boolean).join(' · ')}
  ];
+ document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<label class="asset-fact"><span>End of service date (optional)</span><input data-end-service type="date" aria-label="End of service date" value="'+esc(specRecord(asset).specs.endOfServiceDate||'')+'" readonly><small>Leave blank if unknown.</small></label>');
  document.getElementById('quickSpecGroups').innerHTML=specGroups.map(group=>'<details class="quick-spec-group'+(group.keys.some(key=>specs[key])?'':' quick-spec-group-empty')+'"><summary><strong>'+esc(group.title)+'</strong><small>'+esc(group.preview||'Add details')+'</small></summary><div class="asset-facts">'+quickSpecs.filter(([,key])=>group.keys.includes(key)).map(([label,key])=>'<label class="asset-fact quick-spec'+(specs[key]?'':' quick-spec-empty')+'"><span>'+esc(label)+'</span><textarea data-spec-field="'+key+'" aria-label="'+esc(label)+'" placeholder="Not recorded" rows="1" readonly>'+esc(specs[key]??'')+'</textarea></label>').join('')+'</div></details>').join('');
  document.getElementById('assetEditStatus').textContent='';
   document.getElementById('photoSummary').innerHTML=[['Engine',asset.engine],['VIN / serial number',asset.vin]].map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
@@ -979,7 +980,7 @@ document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
  const panel=document.getElementById(({details:'assetDetails',mileage:'assetMileage',maintenance:'assetMaintenance'})[tab]);
  panel.classList.toggle('editing-specs',editing&&tab==='details');
  if(tab==='details'&&editing)panel.querySelectorAll('.quick-spec-group').forEach(group=>group.open=true);
- panel.querySelectorAll('input[data-asset-field],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
+ panel.querySelectorAll('input[data-asset-field],input[data-end-service],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
   input.readOnly=!editing;
   if(!editing){const key=input.dataset.assetField;if(key)input.value=key==='ownershipStart'?ownershipText(asset[key]):key==='currentReading'?mileageFor(asset)?.currentMileage??'':key==='reportOdometer'?mileageFor(asset)?.startMileage??asset.reportOdometer??'':asset[key]??'';}
  });
@@ -1007,6 +1008,20 @@ document.getElementById('quickSpecGroups').addEventListener('change',async e=>{
  });
  a.specSaveQueue=saving;
  try{await saving;input.closest('.quick-spec').classList.toggle('quick-spec-empty',!next);message.textContent='Saved to your workbook.'}
+ catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
+ finally{input.disabled=false}
+});
+document.getElementById('assetFacts').addEventListener('change',async e=>{
+ const input=e.target;if(!input.matches('[data-end-service]')||!asset||!editing)return;
+ const a=asset,prior=specRecord(a).specs.endOfServiceDate||'',next=input.value,message=document.getElementById('assetEditStatus');
+ if(next===prior)return;
+ if(next&&(!/^\d{4}-\d{2}-\d{2}$/.test(next)||!ownershipDate(next))){input.value=prior;message.textContent='Enter a valid end of service date.';return}
+ input.disabled=true;message.textContent='Saving end of service date…';message.classList.remove('error');
+ const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+  await ensureProfileRow(a);const record=specRecord(a);record.specs.endOfServiceDate=next;
+  const json=JSON.stringify(record);await thWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json;
+ });a.specSaveQueue=saving;
+ try{await saving;message.textContent=next?'End of service date saved.':'End of service date cleared.'}
  catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
  finally{input.disabled=false}
 });
