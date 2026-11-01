@@ -45,12 +45,14 @@ window.TiszodVehicleDocuments = (() => {
       const meta=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=thumbnailLink,mimeType',{headers:{Authorization:'Bearer '+thToken}});
       if(!meta.ok)throw new Error('Drive access needed');
       const info=await meta.json();
+      // Drive thumbnails can display in an image even when their host blocks fetch/CORS.
+      if(info.thumbnailLink){try{return await imageThumbnail(info.thumbnailLink);}catch{}}
       if(info.thumbnailLink){
         try{const response=await fetch(info.thumbnailLink,{headers:{Authorization:'Bearer '+thToken}});
         if(response.ok)return URL.createObjectURL(await response.blob());}catch{/* Render the source image or PDF below if Google's thumbnail cannot be fetched. */}
       }
       if((info.mimeType||r.mime||'').startsWith('image/'))return thPhotoObjectUrl(id);
-      if((info.mimeType||r.mime)==='application/pdf'){
+      if((info.mimeType||r.mime)==='application/pdf'||/\.pdf$/i.test(r.name)){
         const response=await thDriveFetch(id);if(!response.ok)throw new Error('No preview');
         pdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
         const pdfjs=await pdfModule;pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.min.mjs',location.href).href;
@@ -59,16 +61,24 @@ window.TiszodVehicleDocuments = (() => {
       }
       throw new Error('Preview unavailable');
     }
+    function imageThumbnail(url){return new Promise((resolve,reject)=>{const probe=new Image();probe.referrerPolicy='no-referrer';const timer=setTimeout(()=>{probe.src='';reject(new Error('Thumbnail timed out'));},12000);probe.onload=()=>{clearTimeout(timer);resolve(url);};probe.onerror=()=>{clearTimeout(timer);reject(new Error('Thumbnail unavailable'));};probe.src=url;});}
+    async function thumbnailWithFallback(r){
+      try{return await makeThumbnail(r);}catch(error){
+        const id=r.fileId||fileId(r.url);
+        if(id){try{return await imageThumbnail('https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w320');}catch{}}
+        throw error;
+      }
+    }
     const thumbnailObserver=new IntersectionObserver(entries=>{
       for(const entry of entries){if(!entry.isIntersecting)continue;thumbnailObserver.unobserve(entry.target);const img=entry.target.querySelector('[data-document-thumbnail]'),r=records.find(r=>r.id===img.dataset.documentThumbnail);if(!r)continue;
         const key=r.fileId||r.url;
         const job=thumbnailCache.has(key)?Promise.resolve(thumbnailCache.get(key)):(thumbnailPending.get(key)||queueThumbnail(r,key));
-        job.then(url=>{img.onload=()=>{img.hidden=false;img.nextElementSibling.hidden=true;};img.onerror=()=>{img.nextElementSibling.textContent='Preview unavailable';};img.src=url;}).catch(()=>{img.nextElementSibling.textContent='Preview unavailable';});
+        job.then(url=>{img.referrerPolicy='no-referrer';img.onload=()=>{img.hidden=false;img.nextElementSibling.hidden=true;};img.onerror=()=>{img.nextElementSibling.textContent='Preview unavailable';};img.src=url;}).catch(()=>{img.nextElementSibling.textContent='Preview unavailable';});
       }
     },{rootMargin:'160px'});
     const thumbnailQueue=[];let thumbnailActive=0;
     function queueThumbnail(r,key){const promise=new Promise((resolve,reject)=>thumbnailQueue.push({r,key,resolve,reject}));thumbnailPending.set(key,promise);pumpThumbnails();return promise;}
-    function pumpThumbnails(){while(thumbnailActive<3&&thumbnailQueue.length){const task=thumbnailQueue.shift();thumbnailActive++;makeThumbnail(task.r).then(url=>{thumbnailCache.set(task.key,url);task.resolve(url);},task.reject).finally(()=>{thumbnailPending.delete(task.key);thumbnailActive--;pumpThumbnails();});}}
+    function pumpThumbnails(){while(thumbnailActive<3&&thumbnailQueue.length){const task=thumbnailQueue.shift();thumbnailActive++;thumbnailWithFallback(task.r).then(url=>{thumbnailCache.set(task.key,url);task.resolve(url);},task.reject).finally(()=>{thumbnailPending.delete(task.key);thumbnailActive--;pumpThumbnails();});}}
     function observeThumbnails(root){root.querySelectorAll('[data-document-thumbnail]:not([data-observed])').forEach(img=>{img.dataset.observed='true';thumbnailObserver.observe(img.parentElement);});}
     const rowObserver=new MutationObserver(()=>{observeThumbnails(panel);observeThumbnails(hub);});
     rowObserver.observe(panel,{childList:true,subtree:true});rowObserver.observe(hub,{childList:true,subtree:true});
