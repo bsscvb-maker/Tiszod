@@ -98,7 +98,16 @@ window.TiszodVehicleDocuments = (() => {
     const rowObserver=new MutationObserver(()=>{observeThumbnails(panel);observeThumbnails(hub);});
     rowObserver.observe(panel,{childList:true,subtree:true});rowObserver.observe(hub,{childList:true,subtree:true});
     hub.addEventListener('toggle',()=>{if(hub.open){hub.querySelectorAll('[data-document-thumbnail]').forEach(img=>{if(!img.src)thumbnailObserver.observe(img.parentElement);});}});
-    function sorted(rows){return rows.slice().sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));}
+    function documentDate(record){
+      const name=String(record.name||'');
+      const iso=name.match(/\b((?:19|20)\d{2})[.\/_-](\d{1,2})[.\/_-](\d{1,2})(?!\d)/);
+      const us=!iso&&name.match(/\b(\d{1,2})[.\/_-](\d{1,2})[.\/_-]((?:19|20)\d{2})(?!\d)/);
+      if(!iso&&!us)return 0;
+      const [year,month,day]=iso?[+iso[1],+iso[2],+iso[3]]:[+us[3],+us[1],+us[2]];
+      const date=new Date(Date.UTC(year,month-1,day));
+      return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day?date.getTime():0;
+    }
+    function sorted(rows){return rows.slice().sort((a,b)=>documentDate(b)-documentDate(a)||a.name.localeCompare(b.name,undefined,{numeric:true})||a.id.localeCompare(b.id));}
     function matches(r,q){return [r.name,r.vehicle,r.category,r.notes,r.sourcePath].join(' ').toLowerCase().includes(q.trim().toLowerCase());}
     function paint(){if(!current||!activeTab.startsWith('documents-'))return;const tab=tabs.find(t=>t.id===activeTab)||tabs.at(-1),all=records.filter(r=>r.kind!=='folder'&&r.assetKey===assetKey(current)),shown=sorted(all.filter(r=>(tab.id==='documents-all'||r.category===tab.name)&&matches(r,query)));const folders=records.filter(r=>r.kind==='folder'&&r.assetKey===assetKey(current));
       panel.innerHTML='<div class="document-section-head"><div><span class="document-eyebrow">Vehicle paperwork</span><h3>'+esc(tab.name)+'</h3><p>'+esc(assetName(current))+' · '+shown.length+' document'+(shown.length===1?'':'s')+'</p></div><div class="document-actions"><button type="button" data-new-document>Add document link</button><button type="button" data-open-document-hub>All vehicles</button><button type="button" data-refresh-documents>Refresh</button></div></div><div class="document-toolbar"><label>Find a document<input type="search" data-document-search placeholder="Search names, notes, folders…" value="'+esc(query)+'"></label><span class="document-help">Originals open with your Google Drive access.</span></div><div data-document-results aria-live="polite">'+(loadError?'<p role="alert">'+esc(loadError)+'</p>':!loaded?'<p role="status">Loading documents…</p>':rowsHtml(shown))+'</div>'+(folders.length?'<details class="document-source-folders"><summary>Source folders ('+folders.length+')</summary>'+folders.map(r=>'<a href="'+esc(driveUrl(r.url))+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+' ↗</a>').join('')+'</details>':'');
