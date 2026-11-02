@@ -779,7 +779,7 @@ function renderRecordReview(a){
  panel.innerHTML='<h3>Records found in Drive</h3>'+(facts.length?'<dl>'+facts.map(f=>'<div><dt>'+esc(f.label)+'</dt><dd>'+esc(f.value)+'</dd></div>').join('')+'</dl>':'')+(specs.startingReadingNote?'<p class="record-warning">'+esc(specs.startingReadingNote)+'</p>':'')+(audit?'<p>'+esc(audit.summary)+'</p><small>Folder review: '+esc(audit.reviewed)+' · '+audit.documents+' documents · '+audit.pictures+' pictures</small>':'')+(reviews.length?'<details><summary>Document findings and qualifications</summary>'+reviews.map(r=>'<p>'+esc(r.summary)+'</p>').join('')+'</details>':'')+(sources.length?'<details><summary>Source records</summary><ul>'+sources.map(r=>{let url='';try{const u=new URL(r.url);if(u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname))url=u.href}catch(_){}return url?'<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+'</a></li>':''}).join('')+'</ul></details>':'');
 }
 
-let category='',asset=null,status='active',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
+let category='',asset=null,status='current',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
 const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
 let photoObserver;
@@ -798,17 +798,16 @@ window.thViewAdapter={
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 function renderCategory(){
  photoObserver?.disconnect();
- const statusPriority=a=>clean(a.status)==='active'?0:clean(a.status)==='managed'?1:2;
- const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const priority=statusPriority(a)-statusPriority(b);if(priority)return priority;const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
+ const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
- const shown=items.filter(a=>{if(status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
+ const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
  document.getElementById('categoryTitle').textContent=category==='All Vehicles'?'All '+workspaceTitle:category;
  const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c));
  document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
  document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
- document.getElementById('vehicleStatusFilter').innerHTML=['active','inactive','managed','sold','totaled','repo','all'].map(s=>'<option value="'+s+'"'+(status===s?' selected':'')+'>'+s[0].toUpperCase()+s.slice(1)+' · '+(s==='all'?items.length:items.filter(a=>clean(a.status)===s).length)+'</option>').join('');
+ document.getElementById('vehicleStatusFilter').innerHTML=['current','active','managed','inactive','sold','totaled','repo','all'].map(s=>'<option value="'+s+'"'+(status===s?' selected':'')+'>'+(s==='current'?'Active + Managed':s[0].toUpperCase()+s.slice(1))+' · '+(s==='all'?items.length:items.filter(a=>s==='current'?['active','managed'].includes(clean(a.status)):clean(a.status)===s).length)+'</option>').join('');
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const photo=a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
@@ -1468,7 +1467,7 @@ if(workspaceDocs)workspaceDocs.textContent='Needs filing';
 document.getElementById('backDashboard').hidden=true;
 document.querySelector('#categoryView .kicker').textContent='Your garage';
 document.querySelector('#categoryView .section-title p').remove();
-category='All Vehicles';status='active';renderCategory();show('categoryView');
+category='All Vehicles';status='current';renderCategory();show('categoryView');
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
