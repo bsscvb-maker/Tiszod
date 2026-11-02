@@ -111,7 +111,8 @@ async function loadDocumentPreview(holder){
   if(file.type.startsWith('image/')){view=document.createElement('img');view.alt=holder.dataset.documentTitle;}
   else if(file.type==='application/pdf'){
    const pdfjs=await documentPdfJs();
-   const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.blob.arrayBuffer())}).promise;
+   const loadingTask=pdfjs.getDocument({data:new Uint8Array(await file.blob.arrayBuffer())});
+   const pdf=await loadingTask.promise;
    try{
     const page=await pdf.getPage(1),base=page.getViewport({scale:1});
     const scale=Math.min(2,(holder.clientWidth||400)*Math.min(devicePixelRatio||1,2)/base.width);
@@ -119,13 +120,13 @@ async function loadDocumentPreview(holder){
     view=document.createElement('canvas');view.width=Math.ceil(viewport.width);view.height=Math.ceil(viewport.height);
     view.setAttribute('role','img');view.setAttribute('aria-label',holder.dataset.documentTitle+' — first page');
     await page.render({canvasContext:view.getContext('2d'),viewport}).promise;
-   }finally{await pdf.destroy();}
+   }finally{try{await loadingTask.destroy();}catch(cleanupError){console.warn('Document preview cleanup failed',cleanupError);}}
   }
   else throw Error('Open this document using its title below.');
   if(view.tagName==='IMG')view.src=file.url;
   view.style.cssText='display:block;width:100%;height:100%;max-width:100%;min-height:0;object-fit:contain;object-position:center;border:0;background:#fff';
   holder.replaceChildren(view);
- }catch(error){if(holder.isConnected){const text=document.createElement('span');text.className='record-placeholder';text.textContent=error.message;holder.replaceChildren(text);}}
+ }catch(error){if(holder.isConnected){const text=document.createElement('span');text.className='record-placeholder record-preview-error';text.textContent='Preview could not load. Tap the document title to open it.';console.warn('Document preview failed',error);holder.replaceChildren(text);}}
 }
 const documentObserver=new MutationObserver(()=>{
  for(const holder of document.querySelectorAll('[data-document-id]'))loadDocumentPreview(holder);
