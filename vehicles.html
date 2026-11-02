@@ -629,11 +629,13 @@ function renderRecommended(a){
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
  const name=clean(a.make+' '+a.model),year=String(a.year),byAlias=Object.entries(alias).find(([k])=>name.startsWith(k));
- const matches=mileage.filter(m=>String(m.year)===year).map(m=>{
+ const matches=mileage.filter(m=>String(m.year)===year||(String(a.vin||'').toUpperCase()==='5NHUNS010EU106694'&&String(m.year)==='2013'&&clean(m.name)==='continentalcargo')).map(m=>{
   const key=clean(m.name);let score=0;
   if(key&&key===name)score=10000+key.length;
   else if(byAlias&&key===clean(byAlias[1]))score=5000+key.length;
   else if(key&&name.includes(key))score=1000+key.length;
+  else if(name.startsWith('trek7200')&&key.startsWith('trek7200'))score=4000;
+  else if(String(a.year)==='2012'&&name==='utilitymotorcycletrailer'&&key==='carryonmotorcycletrailer')score=4000;
   return {m,score};
  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.m.sheetRow-a.m.sheetRow);
  return matches[0]?.m||null;
@@ -650,7 +652,23 @@ function showCardEngine(a){
 }
 function usesHours(a){const name=clean(a.make+' '+a.model);if(/colemanb200|xprojaguar200/.test(name))return false;return ['Boats','Personal Watercraft','Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment','ATVs & Quads','Mini Bikes'].includes(a.category)||/pressurewasher|aircompressor|chainsaw|brushcutter|weedeater|trimmer|mower|leafblower|generator|jetski|waverunner/.test(name)}
 function readingName(a){return usesHours(a)?'Hours':'Mileage'}
-function cardReading(a,m){const value=cardNumber(m?.currentMileage);return value===null?'Not recorded':value+(usesHours(a)?' hours':' mi')}
+// Preserve documented historical readings separately from a current tracking value.
+function readingEvidence(a,m){
+ if(cardNumber(m?.currentMileage)!==null)return {value:m.currentMileage,kind:'tracked'};
+ const saved=specRecord(a),record=saved.sourceCsv?.record;
+ if(record&&cardNumber(record.ODOMETERREADING)!==null)return {value:record.ODOMETERREADING,kind:'historical'};
+ // Venture: transfer paperwork 2008-04-04, Drive 1xD1DVTrgWPmD7pn5V40-tdKaAcTTIrJw.
+ // Elantra: Virginia title 2005-07-15, Drive 1a-OuDGiphiFWlDwPRVWtiJ_bt836uT99.
+ const titleReadings={'1GNDX03E0YD210436':136993,'KMHJF24MXWU733164':37199};
+ if(Object.hasOwn(titleReadings,String(a.vin||'').toUpperCase()))return {value:titleReadings[String(a.vin).toUpperCase()],kind:'historical'};
+ if(cardNumber(a.reportOdometer)!==null)return {value:a.reportOdometer,kind:'starting'};
+ return null;
+}
+function cardReading(a,m){
+ const evidence=readingEvidence(a,m);if(!evidence)return 'Not recorded';
+ const brand=specRecord(a).specs.odometerBrand;
+ return cardNumber(evidence.value)+(usesHours(a)?' hours':' mi')+(brand==='NOT ACTUAL'?' · NOT ACTUAL':'')+(evidence.kind==='starting'?' · starting reading only':evidence.kind==='historical'?' · historical record':'');
+}
 function ownershipDate(value){const raw=String(value||'').trim(),iso=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/),us=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);if(!iso&&!us)return null;const year=Number(iso?iso[1]:us[3]),month=Number(iso?iso[2]:us[1]),day=Number(iso?iso[3]:us[2]),date=new Date(year,month-1,day);return date.getFullYear()===year&&date.getMonth()===month-1&&date.getDate()===day?date:null}
 function ownershipIso(date){return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')}
 function ownershipText(value){const date=ownershipDate(value);return date?[String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0'),date.getFullYear()].join('/'):''}
@@ -834,6 +852,8 @@ function renderAsset(tab='details'){
  const specs=specRecord(asset).specs;
  document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Vehicle status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option><option value="Totaled"'+(clean(asset.status)==='totaled'?' selected':'')+'>Totaled</option><option value="Repo"'+(clean(asset.status)==='repo'?' selected':'')+'>Repo</option></select></label>'+values.filter(([,key])=>key!=='engine'||showCardEngine(asset)).map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Ownership since</span><div class="ownership-date-row"><input data-asset-field="ownershipStart" aria-label="Ownership since, type MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY" readonly><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'" disabled></div></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
  renderRecordReview(asset);
+ const recorded=readingEvidence(asset,mileageFor(asset));
+ if(recorded&&recorded.kind!=='tracked')document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<div class="asset-fact"><span>Documented reading</span><strong>'+esc(cardReading(asset,mileageFor(asset)))+'</strong><small>Source reading retained separately from current mileage tracking.</small></div>');
  const specGroups=[
   {title:'Dimensions & weight',keys:['length','width','height','weight','groundClearance'],preview:[specs.length,specs.width,specs.height].every(Boolean)?[specs.length,specs.width,specs.height].map(v=>v.replace(/\s*(in|″)$/i,'')).join(' × ')+' in · '+specs.weight:[specs.length,specs.weight].filter(Boolean).join(' · ')},
   {title:'Capacity',keys:['cargoBed','seatKit','payload','towing','tongueWeight'],preview:[specs.payload&&'Payload '+specs.payload,specs.towing&&'Towing '+specs.towing].filter(Boolean).join(' · ')},
@@ -879,11 +899,11 @@ function dueItems(a){return ['active','managed'].includes(clean(a.status))?(sche
 function openDueReminder(a){if(clean(a?.status)!=='active')return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li><strong>'+esc(x.task.task)+'</strong> — '+(x.state.due?'Due':'Coming up')+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
 let appliedReport={type:'due',section:'all',vehicle:'all',vehicleStatus:'active',windowDays:30};
 function reportData(){const {type,section,vehicle,vehicleStatus,windowDays}=appliedReport,items=assets.filter(a=>(section==='all'||a.category===section)&&(vehicle==='all'||String(a.id)===vehicle)&&(vehicleStatus==='all'||clean(a.status)===vehicleStatus)),name=a=>[a.year,a.make,a.model].filter(Boolean).join(' ');let columns=[],rows=[];
- if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of scheduleFor(a)?.tasks||[]){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,state.due?'Due':state.soon?'Coming up':state.reason,task.nextDate||'',task.nextReading||'',mileageFor(a)?.currentMileage||''])}}}
+ if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of scheduleFor(a)?.tasks||[]){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,state.due?'Due':state.soon?'Coming up':state.reason,task.nextDate||'',task.nextReading||'',cardReading(a,mileageFor(a))])}}}
  else if(type==='history'){columns=['Vehicle','Section','Date','Service item','Reading','Cost','Notes'];for(const a of items)for(const entry of serviceFor(a))rows.push([name(a),a.category,entry.date,entry.item,entry.odometer,entry.cost,entry.notes]);rows.sort((a,b)=>String(b[2]).localeCompare(String(a[2])))}
- else if(type==='readings'){columns=['Vehicle','Section','Status','Unit','Starting reading','Current reading','Tracking since'];rows=items.map(a=>{const m=mileageFor(a);return[name(a),a.category,a.status,usesHours(a)?'Hours':'Miles',m?.startMileage||'',m?.currentMileage||'',m?.serviceStart||'']})}
+ else if(type==='readings'){columns=['Vehicle','Section','Status','Unit','Starting reading','Current reading','Tracking since'];rows=items.map(a=>{const m=mileageFor(a);return[name(a),a.category,a.status,usesHours(a)?'Hours':'Miles',m?.startMileage??a.reportOdometer??'',cardReading(a,m),m?.serviceStart||'']})}
  else if(type==='inventory'){columns=['Vehicle','Section','Status','VIN / serial','Plate','Engine','Current reading'];rows=items.map(a=>[name(a),a.category,a.status,a.vin,a.tag,a.engine,mileageFor(a)?.currentMileage||''])}
- else {columns=['Vehicle','Section','Missing fields'];rows=items.map(a=>[name(a),a.category,[!a.photoFileId&&!a.photo?'Photo':'',showCardEngine(a)&&cardEngine(a)==='Not recorded'?'Engine':'',!a.vin?'VIN / serial':'',!mileageFor(a)?.currentMileage?'Current reading':''].filter(Boolean).join(', ')]).filter(row=>row[2])}
+ else {columns=['Vehicle','Section','Missing fields'];rows=items.map(a=>[name(a),a.category,[!a.photoFileId&&!a.photo?'Photo':'',showCardEngine(a)&&cardEngine(a)==='Not recorded'?'Engine':'',!a.vin?'VIN / serial':'',cardReading(a,mileageFor(a))==='Not recorded'?'Mileage / reading':''].filter(Boolean).join(', ')]).filter(row=>row[2])}
  return {columns,rows};}
 function renderReport(){const {columns,rows}=reportData();document.getElementById('reportSummary').textContent=serviceLoaded?rows.length+' record'+(rows.length===1?'':'s'):'Loading service records…';document.getElementById('reportOutput').innerHTML=rows.length?'<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+esc(cell??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>No matching records.</p>'}
 const reportSection=document.getElementById('reportSection');reportSection.innerHTML+=[...new Set(assets.map(a=>a.category).filter(Boolean))].sort().map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
