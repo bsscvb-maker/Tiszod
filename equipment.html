@@ -749,6 +749,8 @@ function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{ti
  return {tone:n<0?'late':n<30?'urgent':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
 }
 function deadlineCard(a){
+ // Equipment has no registration or state inspection requirements.
+ if(workspace==='equipment')return '';
  if(!['active','managed','inactive','sold'].includes(clean(a.status)))return '';
  const muted=['sold','inactive'].includes(clean(a.status));
  const d=complianceFor(a),specs=specRecord(a).specs;
