@@ -94,3 +94,8 @@
 .bk-creditor-table{border-collapse:separate;border-spacing:0}
 .bk-creditor-table thead th{position:sticky;top:0;z-index:2;background:#1c3658;box-shadow:0 1px 0 #50749d}
 @media(max-width:650px){.bk-creditor-scroll{max-height:calc(100dvh - 32px)}}
+
+/* Page scrolling owns vertical movement; fixed heading copy tracks horizontal scrolling. */
+.bk .bk-creditor-scroll{max-height:none;overflow:auto;isolation:auto}
+.bk-frozen-creditor-head{background:#1c3658;border-bottom:1px solid #50749d;box-shadow:0 3px 8px #0005}
+.bk-frozen-creditor-head .bk-creditor-table thead th{position:static}
