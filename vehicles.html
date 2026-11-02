@@ -206,12 +206,18 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 .card-last-updated{display:block;font-size:12px;line-height:1.5;margin:10px 0;white-space:normal}
 .card-last-updated,#assetLastUpdated{font-weight:700;color:#ff6b6b!important}
 .card-last-updated[data-recorded="true"],#assetLastUpdated[data-recorded="true"]{color:#55efad!important}
-#assetGrid .antique-deadlines{background:linear-gradient(135deg,#302518,#171d26);border-color:#c69b56}
-#assetGrid .antique-badge{color:#f4d594;font-size:12px;font-weight:850;letter-spacing:.09em;padding:3px 0 9px;border-bottom:1px solid #c69b5655}
+#assetGrid .antique-deadlines{background:linear-gradient(135deg,#172e85,#101e59);border:1px solid #647fe0;box-shadow:inset 0 0 16px #4169e133}
+#assetGrid .antique-badge{color:#e4eaff;font-size:12px;font-weight:850;letter-spacing:.07em;padding:12px 2px;text-align:center;line-height:1.6}
 #assetGrid .antique-badge span{color:#edb95e}
 #assetGrid .antique-badge small{display:block;font-size:9px;letter-spacing:.06em;margin-top:5px;color:#cfbc9d;line-height:1.4}
 #assetGrid .deadline-source{display:block;width:fit-content;margin-top:4px;color:#a6d9ff;text-decoration:underline;font-size:11px}
 #assetGrid .antique-deadlines .deadline-row{color:#f1dfbb}
+#assetGrid .deadline-row[data-tone="urgent"]{color:#ff334f;background:#4d0a18;border-left:4px solid #ff173d;padding:8px;border-radius:5px;font-weight:750}
+#assetGrid .deadline-row[data-tone="late"]{color:#ff8500;background:#492100;border-left:4px solid #ff7600;padding:8px;border-radius:5px;font-weight:800}
+#assetGrid .deadline-row[data-tone="disabled"]{color:#8b95a5}
+#assetGrid .no-compliance-required{background:#1c222b;border-color:#424b58;color:#8b95a5}
+#assetGrid .deadline-label{color:inherit;text-decoration:underline;text-underline-offset:3px}
+#assetGrid .deadline-label:hover{filter:brightness(1.3)}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -736,21 +742,21 @@ function complianceFor(a){
 function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})){
  if(mode==='permanent')return {tone:'ok',text:'Permanent — no renewal date'};
  if(mode==='exempt')return {tone:'ok',text:'Exempt'};
- if(mode==='not-required')return {tone:'ok',text:'Not required'};
+ if(mode==='not-required')return {tone:'disabled',text:'Not required'};
  if(mode==='unknown'||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return {tone:'unknown',text:'Date needed — confirm'};
  const n=Math.round((Date.parse(date+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/86400000),label=new Date(date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'});
- return {tone:n<0?'late':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
+ return {tone:n<0?'late':n<30?'urgent':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
 }
 function deadlineCard(a){
  if(!['active','managed'].includes(clean(a.status)))return '';
  const d=complianceFor(a),specs=specRecord(a).specs;
- const antique=specs.antiqueRegistration===true;
- const badge=antique?'<div class="antique-badge"><span>★</span> ANTIQUE VEHICLE<small>CLASSIC STATUS · LESS RED TAPE</small></div>':'';
- return '<aside class="card-deadlines'+(antique?' antique-deadlines':'')+'" aria-label="Registration and inspection deadlines">'+badge+['registration','inspection'].map(k=>{
-  const state=deadlineState(d[k+'Due'],d[k+'Mode']);
-  const text=antique?(k==='registration'?'Permanent antique plates · No renewal':'Antique exemption · Not required'):state.text+(specs[k+'DueEstimated']?' (estimated)':'');
-  let source='';try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')source='<a class="deadline-source" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">View '+(k==='registration'?'registration':'inspection')+' ↗</a>'}catch(_){}
-  return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+(k==='registration'?'Registration':'State inspection')+'</b>'+esc(text)+source+'</div>';
+ if(specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">★ ANTIQUE VEHICLE ★</div></aside>';
+ const none=['registration','inspection'].every(k=>['not-required','exempt'].includes(d[k+'Mode']));
+ return '<aside class="card-deadlines'+(none?' no-compliance-required':'')+'" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{
+  const state=deadlineState(d[k+'Due'],d[k+'Mode']),label=k==='registration'?'Registration':'State inspection';
+  const text=state.text+(specs[k+'DueEstimated']?' (estimated)':'');
+  let heading=esc(label);try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')heading='<a class="deadline-label" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>'}catch(_){}
+  return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
  }).join('')+'</aside>';
 }
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
