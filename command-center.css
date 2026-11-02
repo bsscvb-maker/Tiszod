@@ -18,3 +18,6 @@ body[data-th-page] .th-module-card .th-module-art{background-color:#101a29!impor
 .pc-copy{grid-column:1;grid-row:1;min-width:0}.pc-health{grid-column:3;grid-row:1;min-width:0;max-width:320px}.pc-copy h1{font-size:clamp(30px,2.8vw,46px)}
 @media(max-width:1400px){.pc-hero{grid-template-columns:minmax(0,1fr) minmax(280px,40%);gap:20px}.pc-copy{grid-column:1;grid-row:1}.pc-health{grid-column:1;grid-row:2;justify-self:start}.pc-hero::before{grid-column:2;grid-row:1 / span 2;height:240px}}
 @media(max-width:650px){.pc-hero{grid-template-columns:minmax(0,1fr);padding:25px 20px;gap:20px}.pc-copy{grid-column:1;grid-row:1}.pc-hero::before{grid-column:1;grid-row:2;height:213px;max-width:240px;justify-self:center}.pc-health{grid-column:1;grid-row:3;justify-self:stretch;max-width:none}}
+
+/* Keep the system-check time as visible as the connection indicator. */
+.personal-command .pc-health .pc-last-checked{color:#6ef0ab!important;font-weight:750;font-size:12px;margin-top:7px}
