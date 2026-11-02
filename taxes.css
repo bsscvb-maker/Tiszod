@@ -32,3 +32,5 @@ dialog.tax-document-preview{width:min(1200px,calc(100vw - 24px));max-width:none;
 #tax-preview-viewer{height:min(68dvh,850px);background:#fff;color:#193047;overflow:auto}
 #tax-preview-status{margin:8px 0 0;color:#ffc1c7}
 @media(max-width:650px){dialog.tax-document-preview{padding:12px}.tax-preview-header h2{font-size:16px}.tax-preview-actions{gap:8px}#tax-preview-viewer{height:62dvh}}
+
+.tax-card-document-count{display:none}.tax-card-documents{padding:0 22px 16px}.taxes .tax-card-documents button{background:#224969;border:1px solid #75a8cf;border-radius:7px;padding:7px 12px;font-size:13px}.taxes .tax-card-documents button:hover{background:#305f85}
