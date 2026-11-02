@@ -600,6 +600,12 @@ for(const [i,item] of listed.entries())if(!deletedProfiles.some(p=>sameListedAss
 // Correct legacy category values for known vehicles before section filtering.
 for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
+if(workspace==='equipment'&&window.TiszodEquipmentCutouts){
+ for(const a of assets){
+  const cutout=window.TiszodEquipmentCutouts[clean(a.make+' '+a.model)];
+  if(cutout&&(!a.photoFileId||a.photoFileId==='1S6PG-ddcS2EeQwS9HTZf77ZJvXaKVCa8')){a.originalPhoto=a.photo;a.originalPhotoFileId=a.photoFileId;a.photo=cutout;a.photoFileId='';}
+ }
+}
 document.querySelector('.th-app-topbar strong').textContent=workspaceTitle;
 document.querySelectorAll('.th-sidebar [href$=".html"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')===(workspace==='vehicles'?'vehicles.html':workspace+'.html')));
 document.querySelector('#menuView h2').textContent=workspaceTitle+' workspace';
@@ -1541,4 +1547,4 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-mobile-toolbar-2"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-mobile-toolbar-2"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="equipment-photos.js?v=20261102-cutouts"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
