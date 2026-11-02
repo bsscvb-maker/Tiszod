@@ -291,6 +291,8 @@ $('bk-creditor-purchased').value=d.purchaseDate||'';$('bk-creditor-incurred').va
   if(!head){frozenHead?.remove();frozenHead=null;headerSource=null;return;}
   const bar=document.querySelector('.th-app-topbar'),barRect=bar?.getBoundingClientRect(),barPosition=bar?getComputedStyle(bar).position:'';
   const top=barRect&&['sticky','fixed'].includes(barPosition)?Math.max(0,barRect.bottom):0;
+  document.documentElement.style.setProperty('--bk-heading-top',top+'px');
+  if(innerWidth>=1500){if(frozenHead)frozenHead.hidden=true;return;}
   const rect=wrap.getBoundingClientRect(),hr=head.getBoundingClientRect(),height=hr.height;
   if(hr.top>=top||rect.bottom<=top+height||rect.right<=0||rect.left>=innerWidth){if(frozenHead)frozenHead.hidden=true;return;}
   if(!frozenHead){frozenHead=document.createElement('div');frozenHead.className='bk bk-frozen-creditor-head';frozenHead.setAttribute('aria-hidden','true');frozenHead.inert=true;document.body.append(frozenHead);}
