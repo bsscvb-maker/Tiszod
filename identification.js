@@ -10,10 +10,13 @@ window.thStart=async()=>{const rows=await thValues("'Identification Records'!A1:
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
+let documentOrders=new Map(),orderSaving=false;
 let hiddenPeople=new Set(['Heather','Alexis']),showHiddenPeople=false,visibilitySaving=false;
 const visibilityRange="'Identification Records'!D1:E2000";
 function applyVisibility(rows){
+ documentOrders=new Map();
  hiddenPeople=new Set(['Heather','Alexis']);
+ for(const [key,value] of rows){if(typeof key==='string'&&key.startsWith('document-order:')){try{const ids=JSON.parse(value);if(Array.isArray(ids))documentOrders.set(key.slice(15),ids.filter(id=>typeof id==='string'))}catch{}}}
  for(const [person,hidden] of rows){if(typeof person!=='string'||!person.startsWith('person-visibility:'))continue;const name=person.slice(18);if(hidden===true||hidden==='true')hiddenPeople.add(name);else if(hidden===false||hidden==='false')hiddenPeople.delete(name)}
 }
 async function saveVisibility(person){
@@ -79,7 +82,7 @@ function render(){
  if(isEducation&&selectedCategory&&!selectedFolder&&!q&&!category&&!deleted){const groups=[...new Set(shown.map(r=>r.data.folder?.split('/')[0]).filter(Boolean))].sort();if(groups.length){heading.textContent=selectedCategory;const loose=shown.filter(r=>!r.data.folder);$('identity-count').textContent=shown.length+' records';grid.innerHTML=html+groups.map(f=>groupCard(f,shown.filter(r=>r.data.folder===f||r.data.folder?.startsWith(f+'/')).length,'data-folder',f)).join('')+loose.map(card).join('');return}}
  heading.textContent=q?'Search results':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
  $('identity-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
- grid.innerHTML=html+shown.sort((a,b)=>title(a.data).localeCompare(title(b.data))).map(card).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
+ grid.innerHTML=html+shown.sort((a,b)=>compareDocuments(a,b,chosen)).map(r=>orderedCard(r,chosen,deleted)).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
 }
 document.querySelector('.identification').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
@@ -133,6 +136,84 @@ const documentObserver=new MutationObserver(()=>{
  for(const holder of document.querySelectorAll('[data-document-id]'))loadDocumentPreview(holder);
 });
 documentObserver.observe($('identity-grid'),{childList:true,subtree:true});
+
+function compareDocuments(a,b,person){
+ const order=documentOrders.get(person)||[],ai=order.indexOf(a.id),bi=order.indexOf(b.id);
+ return (ai<0?Infinity:ai)-(bi<0?Infinity:bi)||title(a.data).localeCompare(title(b.data));
+}
+function orderedCard(r,person,deleted){
+ const html=card(r);
+ if(!person||deleted)return html;
+ return html.replace('<footer>','<footer><button type="button" class="identity-reorder" data-reorder="'+esc(r.id)+'" aria-label="Move '+esc(title(r.data))+' — drag or use arrow keys" title="Drag to arrange; arrow keys also move documents" '+(orderSaving?'disabled':'')+'>⠿ Move</button>');
+}
+async function persistDocumentOrder(person,ids){
+ if(orderSaving)return false;
+ if(!thAuthorized()){message('Sign in to save document order.');render();return false}
+ orderSaving=true;
+ for(const handle of $('identity-grid').querySelectorAll('[data-reorder]'))handle.disabled=true;
+ try{
+  const rows=await thValues(visibilityRange,'UNFORMATTED_VALUE'),key='document-order:'+person;
+  let index=-1;rows.forEach((r,i)=>{if(r[0]===key)index=i});
+  const range=index<0?"'Identification Records'!D:E":"'Identification Records'!D"+(index+1)+":E"+(index+1);
+  const suffix=index<0?':append?valueInputOption=RAW&insertDataOption=OVERWRITE':'?valueInputOption=RAW';
+  const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+suffix,{method:index<0?'POST':'PUT',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},body:JSON.stringify({values:[[key,JSON.stringify(ids)]]})});
+  if(!response.ok)throw Error('Document order could not be saved. Please retry.');
+  documentOrders.set(person,ids);message('Document order saved across your devices.');return true;
+ }catch(err){message(err.message);return false}finally{orderSaving=false;render()}
+}
+const orderGrid=$('identity-grid');
+function moveDocument(person,id,target,after){
+ const all=records.filter(r=>!r.data.deleted&&(r.data.person||'General')===person).sort((a,b)=>compareDocuments(a,b,person)).map(r=>r.id);
+ const ids=all.filter(value=>value!==id),index=ids.indexOf(target);
+ if(index<0)return null;ids.splice(index+(after?1:0),0,id);return ids;
+}
+let documentDrag=null;
+orderGrid.addEventListener('pointerdown',e=>{
+ const handle=e.target.closest('[data-reorder]');
+ if(!handle||orderSaving||e.button!==0)return;
+ e.preventDefault();e.stopPropagation();
+ const person=$('identity-person').value||selectedPerson;
+ documentDrag={handle,person,id:handle.dataset.reorder,target:null,after:false};
+ handle.setPointerCapture(e.pointerId);
+ handle.closest('[data-file-id]').classList.add('identity-dragging');
+});
+orderGrid.addEventListener('pointermove',e=>{
+ if(!documentDrag)return;
+ e.preventDefault();
+ const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-file-id]');
+ orderGrid.querySelectorAll('.identity-drop-target').forEach(node=>node.classList.remove('identity-drop-target'));
+ documentDrag.target=null;
+ if(target&&orderGrid.contains(target)&&target.dataset.fileId!==documentDrag.id){
+  const rect=target.getBoundingClientRect();
+  documentDrag.target=target.dataset.fileId;
+  documentDrag.after=e.clientY>rect.top+rect.height/2;
+  target.classList.add('identity-drop-target');
+ }
+ if(e.clientY<80)window.scrollBy(0,-24);else if(e.clientY>window.innerHeight-80)window.scrollBy(0,24);
+});
+function endDocumentDrag(e){
+ if(!documentDrag)return;
+ const drag=documentDrag;documentDrag=null;
+ orderGrid.querySelectorAll('.identity-drop-target,.identity-dragging').forEach(node=>node.classList.remove('identity-drop-target','identity-dragging'));
+ if(drag.handle.hasPointerCapture(e.pointerId))drag.handle.releasePointerCapture(e.pointerId);
+ if(e.type==='pointercancel'||!drag.target)return;
+ const ids=moveDocument(drag.person,drag.id,drag.target,drag.after);
+ if(ids)persistDocumentOrder(drag.person,ids);
+}
+orderGrid.addEventListener('pointerup',endDocumentDrag);
+orderGrid.addEventListener('pointercancel',endDocumentDrag);
+orderGrid.addEventListener('keydown',async e=>{
+ const handle=e.target.closest('[data-reorder]');
+ if(!handle||orderSaving||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
+ e.preventDefault();const person=$('identity-person').value||selectedPerson,id=handle.dataset.reorder;
+ const cards=[...orderGrid.querySelectorAll('[data-file-id]')],index=cards.findIndex(node=>node.dataset.fileId===id),direction=['ArrowLeft','ArrowUp'].includes(e.key)?-1:1,target=cards[index+direction];
+ if(!target)return;
+ const ids=moveDocument(person,id,target.dataset.fileId,direction>0);
+ if(ids){await persistDocumentOrder(person,ids);[...orderGrid.querySelectorAll('[data-reorder]')].find(node=>node.dataset.reorder===id)?.focus()}
+});
+const orderStyle=document.createElement('style');
+orderStyle.textContent='.identity-reorder{touch-action:none;cursor:grab!important;min-height:44px}.identity-reorder:active{cursor:grabbing!important}.identity-dragging{opacity:.55;outline:2px solid #6ac5f3}.identity-drop-target{outline:3px dashed #6ac5f3;outline-offset:3px}';
+document.head.append(orderStyle);
 
 window.thViewAdapter={capture:()=>({selectedPerson,selectedCategory,selectedFolder,openedPictureId}),restore:s=>{selectedPerson=s?.selectedPerson||'';selectedCategory=s?.selectedCategory||'';selectedFolder=s?.selectedFolder||'';render();if(s?.openedPictureId)openPictures(s.openedPictureId);else if(pictureDialog.open){openedPictureId=null;pictureDialog.close()}}};
 
