@@ -39,7 +39,7 @@ window.thStart=async()=>{
  const byKey=new Map();
  for(const r of rows?.slice(1)||[]){const due=dueDate(r[6]);if(!r[0]||!r[2]||!due||due>upcoming)continue;const group=byKey.get(r[0])||[];group.push({task:r[2],due});byKey.set(r[0],group)}
  const vehiclesDue=[];
- for(const a of data.profiles.filter(p=>clean(p.status)==='active')){
+ for(const a of (window.thDashboardAssets?window.thDashboardAssets(data):data.profiles).filter(p=>clean(p.status)==='active')){
   const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const key=scheduleKeys.find(([pattern])=>pattern.test(name))?.[1];
   const tasks=key?byKey.get(key):null;if(tasks?.length)vehiclesDue.push({name:[a.year,a.make,a.model].filter(Boolean).join(' '),tasks:tasks.sort((x,y)=>x.due-y.due),key});
  }
@@ -60,5 +60,5 @@ window.thStart=async()=>{
  if(vehiclesDue.length>5){const more=document.createElement('p');more.className='more';more.textContent='+'+(vehiclesDue.length-5)+' more vehicles';list.append(more)}
  document.getElementById('updated').textContent='Vehicle data as of '+(data.asOf||'latest entry')+' · Values from your private Google Sheet';
 };</script>
-<script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-native-pdf-all"></script><script src="command-center.js?v=20261029-distinct-cards"></script><script src="sheets.js?v=20261030-in-page-loading-5"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-native-pdf-all"></script><script src="command-center.js?v=20261102-live-summary-1"></script><script src="sheets.js?v=20261030-in-page-loading-5"></script>
 </body></html>
