@@ -748,7 +748,7 @@ function deadlineCard(a){
  const badge=antique?'<div class="antique-badge"><span>★</span> ANTIQUE VEHICLE<small>CLASSIC STATUS · LESS RED TAPE</small></div>':'';
  return '<aside class="card-deadlines'+(antique?' antique-deadlines':'')+'" aria-label="Registration and inspection deadlines">'+badge+['registration','inspection'].map(k=>{
   const state=deadlineState(d[k+'Due'],d[k+'Mode']);
-  const text=antique?(k==='registration'?'Permanent antique plates · No renewal':'Antique exemption · Not required'):state.text;
+  const text=antique?(k==='registration'?'Permanent antique plates · No renewal':'Antique exemption · Not required'):state.text+(specs[k+'DueEstimated']?' (estimated)':'');
   let source='';try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')source='<a class="deadline-source" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">View '+(k==='registration'?'registration':'inspection')+' ↗</a>'}catch(_){}
   return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+(k==='registration'?'Registration':'State inspection')+'</b>'+esc(text)+source+'</div>';
  }).join('')+'</aside>';
