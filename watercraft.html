@@ -187,7 +187,37 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 #assetMaintenance input{min-width:100px;width:100%;padding:8px;background:#172940;color:#f3f7ff;border:1px solid #526b8c;border-radius:4px}
 #assetMaintenance .notes-cell input{min-width:220px}
 #addService{margin:15px 0;padding:10px 14px;border:1px solid #638ac0;border-radius:5px;background:#244a7b;color:white;font-weight:700}
+.work-dialog{width:min(850px,95vw);max-height:90vh;overflow:auto;background:#162940;color:#f3f7ff;border:1px solid #7698c5;border-radius:10px;padding:24px}.work-dialog::backdrop{background:rgba(0,0,0,.7)}.work-dialog input,.work-dialog textarea{width:100%;padding:10px;background:#0d1e33;color:#fff;border:1px solid #6684aa;border-radius:4px;font:inherit}.work-dialog .work-check{display:flex;align-items:center;gap:10px;padding:8px;font-size:15px}.work-dialog input[type=checkbox],#assetRecommended input[type=checkbox]{width:20px;height:20px;accent-color:#6ba5ee}.work-dialog fieldset{max-height:240px;overflow:auto;border:1px solid #6381a8}.work-dialog label{min-width:0;display:grid;gap:6px}.work-dialog .complete-wide{grid-column:1/-1}.work-dialog .complete-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}.work-dialog button,#assetRecommended .complete-actions button{padding:11px 16px;background:#28568c;color:white;border:1px solid #729ccc;border-radius:5px;font:inherit}.work-dialog #workEntryStatus{white-space:pre-wrap}.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:600px){.work-dialog .complete-grid{display:grid;gap:14px;grid-template-columns:1fr}}
+[data-history-search]{cursor:pointer}.service-entry-open{border:0;background:transparent;color:#a9ceff;font:700 17px Arial;cursor:pointer;text-align:left;padding:8px 0}.service-item-preview{font-size:14px;white-space:normal;line-height:1.8}.service-detail-table{min-width:950px}.service-detail-table td{white-space:normal;vertical-align:top}.service-detail-table td:first-child{min-width:240px}.service-detail-table input{min-width:100px}#workItemCosts label{margin:10px 0}
+
+#assetGrid .card-deadlines{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#fff}
+#assetGrid .deadline-row{padding:6px 0;font-size:12px;line-height:1.4}
+#assetGrid .deadline-row b{display:block;font-size:13px}
+#assetGrid .deadline-row[data-tone="late"]{color:#ffb5b5}
+#assetGrid .deadline-row[data-tone="soon"]{color:#ffe09a}
+#assetGrid .deadline-row[data-tone="ok"]{color:#b5f3ce}
+#assetGrid .deadline-row[data-tone="unknown"]{color:#ffe09a}
+#assetGrid .card-deadlines button{margin-top:6px;padding:5px 9px;font-size:12px}
+@media(min-width:1700px){#assetGrid .card-copy{position:relative;padding-right:175px;min-height:240px}#assetGrid .card-deadlines{position:absolute;right:0;top:25px;width:165px;margin:0}}
+#complianceDialog{width:min(480px,94vw);background:#142b46;color:#fff;border:1px solid #8cadd0;border-radius:12px;padding:24px}
+#complianceDialog label{display:block;margin-top:14px}#complianceDialog input,#complianceDialog select{display:block;width:100%;margin-top:5px;padding:8px}#complianceDialog button{margin:14px 8px 0 0}#complianceMessage{min-height:24px}
+
 .record-review{padding:18px;margin:20px 0;background:#142b46;border:1px solid #53769c;border-radius:9px;color:#e7f0fd}.record-review h3{margin:0 0 12px}.record-review p{line-height:1.6;white-space:pre-line}.record-review dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.record-review dt{font-size:12px;color:#b9d3ee}.record-review dd{margin:4px 0;font-weight:700}.record-review a{color:#99d7ff}.record-review .record-warning{padding:10px;border-left:3px solid #ffc76b;background:#302d27}.record-review summary{cursor:pointer}.record-review li{margin:8px 0}
+.card-last-updated{display:block;font-size:12px;line-height:1.5;margin:10px 0;white-space:normal}
+.card-last-updated,#assetLastUpdated{font-weight:700;color:#ff6b6b!important}
+.card-last-updated[data-recorded="true"],#assetLastUpdated[data-recorded="true"]{color:#55efad!important}
+#assetGrid .antique-deadlines{background:linear-gradient(135deg,#fff3a6 0%,#ffd43b 45%,#f6a800 100%);border:2px solid #ffe478;box-shadow:0 0 0 2px #9d5a00,0 0 22px #ffcc4566,inset 0 1px 0 #fff8;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#assetGrid .antique-badge{color:#352000;font-size:14px;font-weight:900;letter-spacing:.07em;padding:14px 4px;text-align:center;line-height:1.5;text-shadow:0 1px 0 #fff6;width:100%;box-sizing:border-box}
+#assetGrid .antique-badge span{color:#624000}
+#assetGrid .antique-badge small{display:block;font-size:9px;letter-spacing:.06em;margin-top:5px;color:#624000;line-height:1.4}
+#assetGrid .deadline-source{display:block;width:fit-content;margin-top:4px;color:#a6d9ff;text-decoration:underline;font-size:11px}
+#assetGrid .antique-deadlines .deadline-row{color:#352000}
+#assetGrid .deadline-row[data-tone="urgent"]{color:#ff334f;background:#4d0a18;border-left:4px solid #ff173d;padding:8px;border-radius:5px;font-weight:750}
+#assetGrid .deadline-row[data-tone="late"]{color:#ff8500;background:#492100;border-left:4px solid #ff7600;padding:8px;border-radius:5px;font-weight:800}
+#assetGrid .deadline-row[data-tone="disabled"]{color:#8b95a5}
+#assetGrid .no-compliance-required{background:#1c222b;border-color:#424b58;color:#8b95a5}
+#assetGrid .deadline-label{color:inherit;text-decoration:underline;text-underline-offset:3px}
+#assetGrid .deadline-label:hover{filter:brightness(1.3)}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -264,14 +294,58 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 .add-vehicle-button{border:1px solid #79aaff;border-radius:9px;background:#315d99;color:white;padding:11px 18px;font-size:17px;font-weight:800;cursor:pointer;white-space:nowrap}.add-vehicle-button:hover{background:#3d74ba}.add-vehicle-dialog{width:min(650px,calc(100% - 28px));max-height:90vh;overflow:auto;border:1px solid #688ab9;border-radius:14px;background:#142236;color:#f2f7ff;padding:26px;box-shadow:0 25px 70px #000b}.add-vehicle-dialog::backdrop{background:#020713bd}.add-vehicle-head,.add-vehicle-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}.add-vehicle-head h2{margin:0 0 20px;font-size:28px}.add-vehicle-head button{border:0;background:transparent;color:white;font-size:28px;cursor:pointer}.add-vehicle-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.add-vehicle-fields label{display:grid;gap:6px;color:#d5e4fb;font-size:14px;font-weight:700}.add-vehicle-fields input,.add-vehicle-fields select{min-width:0;width:100%;padding:11px;border:1px solid #688ab9;border-radius:7px;background:#0e1b2d;color:white;font-size:16px}.add-vehicle-fields input:focus-visible,.add-vehicle-fields select:focus-visible{outline:3px solid #8ac5ff}.add-vehicle-actions{justify-content:flex-end;margin-top:14px}.add-vehicle-actions button{padding:10px 16px;border:1px solid #688ab9;border-radius:7px;background:#244a7b;color:white;font-weight:800;cursor:pointer}.add-vehicle-actions button:disabled{opacity:.6}.add-vehicle-dialog [role=status]{min-height:20px;color:#ffbcbd}@media(max-width:600px){.add-vehicle-fields{grid-template-columns:1fr}.add-vehicle-dialog{padding:18px}#dashboardView .section-title{align-items:flex-start;flex-wrap:wrap}}
 #assetView .asset-header .add-vehicle-button{display:block;margin-top:14px}
 </style>
-<link rel="stylesheet" href="auth.css?v=5"><style>html.th-session-pending #th-auth{display:none!important}</style><script>try{const saved=JSON.parse(localStorage.getItem('thbudget-session-photos-v1')||sessionStorage.getItem('thbudget-session-photos-v1')||'null');if(saved?.expiresAt>Date.now()+30000){document.documentElement.classList.add('th-session-pending');setTimeout(()=>document.documentElement.classList.remove('th-session-pending'),15000)}}catch(_){}</script><link rel="icon" type="image/svg+xml" href="tiszod-crest.svg?v=1"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="vehicle-documents.css?v=20261029-docs1">
+<link rel="stylesheet" href="auth.css?v=20261030-mobile-recovery"><style>html.th-session-pending #th-auth{display:none!important}</style><script>try{const saved=JSON.parse(localStorage.getItem('thbudget-session-photos-v1')||sessionStorage.getItem('thbudget-session-photos-v1')||'null');if(saved?.expiresAt>Date.now()+30000){document.documentElement.classList.add('th-session-pending');setTimeout(()=>document.documentElement.classList.remove('th-session-pending'),15000)}}catch(_){}</script><link rel="icon" type="image/svg+xml" href="tiszod-crest.svg?v=1"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="fuel-capture.css?v=20261029-desktop2"><link rel="stylesheet" href="vehicle-documents.css?v=20261029-docs1"><style>
+/* Align profile status and actions with the portal controls. */
+#assetView .asset-header-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}
+#assetView .asset-header-actions #assetStatus{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #5d7694;border-radius:6px;background:#152b49;color:#e0eafb;font-size:13px;font-weight:750;line-height:1.3}
+#assetView .asset-header-actions #assetStatus:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--asset-status-color,#aebbd0)}
+#assetView .asset-header-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;margin:0;padding:9px 14px;border:1px solid #7297c4;border-radius:6px;background:#294d78;color:#f4f8ff;font:750 14px/1.3 Arial,Helvetica,sans-serif;cursor:pointer}
+#assetView .asset-header-actions button:hover{background:#365f90;border-color:#a9ceff}
+#assetView .asset-header-actions button:focus-visible{outline:2px solid #a9ceff;outline-offset:3px}
+#assetView .asset-header-actions button[hidden]{display:none}
+</style><style>
+/* Compact vehicle workspace: primary actions, summary, and reports. */
+#menuView .garage-menu{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start;gap:20px;margin:18px 0}
+#menuView .garage-panel{padding:22px;background:#13253b;box-shadow:none;border:1px solid #344e70;border-radius:10px}
+#menuView .garage-panel h3{font-size:21px;line-height:1.3}
+#menuView .garage-panel>p{font-size:14px;margin:7px 0 20px;color:#afc3dd;line-height:1.5}
+#menuView .garage-primary-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-bottom:22px}
+#menuView .garage-primary-actions button{display:flex;align-items:center;justify-content:center;min-height:44px;height:auto;flex:1 1 145px;margin:0;padding:11px 14px;border:1px solid #6489b8;border-radius:6px;background:#264769;color:#f3f7ff;font:750 14px/1.4 Arial,Helvetica,sans-serif;text-align:center}
+#menuView .garage-primary-actions #openVehicles{background:#305c96;border-color:#86b9f0;order:0}
+#menuView .garage-primary-actions .document-hub-button{order:1}
+#menuView .garage-primary-actions #openFuelCapture{order:2}
+#menuView .garage-primary-actions button:hover{background:#38608e}
+#menuView .garage-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0;border-top:1px solid #344e70;padding-top:8px}
+#menuView .garage-stat{padding:13px 9px;border:0;background:transparent;border-radius:0}
+#menuView .garage-stat strong{font-size:21px}
+#menuView .garage-stat span{font-size:12px;margin-top:4px;color:#afc3dd}
+#menuView .garage-more{margin-top:12px;border-top:1px solid #344e70;padding-top:14px}
+#menuView .garage-more summary{cursor:pointer;color:#b8d3f7;font-size:13px;font-weight:700}
+#menuView .garage-highlights{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#menuView .garage-highlight{padding:12px;background:#102036;border-color:#344e70}
+#menuView .garage-panel #openReports{min-height:40px;padding:9px 14px;font-size:14px}
+#menuView .report-shortcuts{margin-top:16px;gap:8px}
+#menuView .report-shortcuts button{min-height:45px;padding:11px 12px;font:700 13px/1.4 Arial,Helvetica,sans-serif;border-radius:6px;background:#102036;border-color:#344e70}
+@media(max-width:1100px){#menuView .garage-menu{grid-template-columns:1fr}#menuView .garage-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:520px){#menuView .garage-panel{padding:16px}#menuView .garage-primary-actions{flex-direction:column}#menuView .garage-primary-actions button{flex:auto}#menuView .garage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#menuView .garage-highlights,#menuView .report-shortcuts{grid-template-columns:1fr}}
+</style><style>
+#backDashboard[hidden],.vehicle-workspace-actions button[hidden]{display:none!important}.vehicle-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.vehicle-workspace-actions button{min-height:40px;margin:0;padding:9px 16px;border:1px solid #6382ad;border-radius:6px;background:#223d60;color:#f4f8ff;font:700 14px/1.4 Arial,Helvetica,sans-serif;cursor:pointer}
+.vehicle-workspace-actions button:hover{background:#305c96}
+#categoryView .section-title{align-items:center}
+#categoryView .document-hub-button:not(.vehicle-workspace-actions button){display:none}
+#categoryView .vehicle-filter-bar{padding:16px;background:#122237;border:1px solid #344e70;border-radius:9px}
+#categoryView .vehicle-filter-bar label{min-width:145px}
+#categoryView #assetGrid{gap:14px}
+@media(min-width:1000px){#categoryView #assetGrid .card-photo{width:35%;height:145px}#categoryView #assetGrid .asset-card{min-height:240px;padding-top:48px}}
+</style>
 <style id="full-vehicle-photos">
-/* Keep the entire original photo inside its frame at every screen size. */
-#categoryView #assetGrid .card-photo{display:flex;align-items:center;justify-content:center;flex:0 0 36%;width:36%;height:clamp(180px,18vw,250px);padding:8px;box-sizing:border-box;background:#101d30;overflow:hidden}
-#categoryView #assetGrid .card-photo img{display:block;flex:0 1 auto;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:contain;object-position:center;transform:none}
+/* Show the complete photo for every vehicle type, using the card background. */
+#categoryView #assetGrid .card-photo{display:flex;align-items:center;justify-content:center;flex:0 0 36%;width:36%;height:auto;aspect-ratio:1/1;padding:0;border:0;box-sizing:border-box;background:transparent;overflow:hidden}
+#categoryView #assetGrid .card-photo img{display:block;flex:none;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:contain;object-position:center;transform:none}
 #assetView .photo-manager #assetPhoto{width:min(100%,440px);min-width:0}
-#assetView #assetPhoto .asset-photo{display:block;width:100%;height:clamp(230px,30vw,340px);max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:#101d30;padding:8px;box-sizing:border-box}
-@media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:170px}#assetView #assetPhoto .asset-photo{height:260px}}
+#assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
+@media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
 </head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
@@ -325,6 +399,10 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 #assetGrid .card-status.active:before{background:#5fe188;box-shadow:0 0 0 2px #5fe18822}
 #assetGrid .card-status.inactive:before{background:#ff6767;box-shadow:0 0 0 2px #ff676722}
 #assetGrid .card-status.sold:before{background:#f4b85e;box-shadow:0 0 0 2px #f4b85e22}
+#assetGrid .card-status.totaled:before{background:#e88bff;box-shadow:0 0 0 2px #e88bff22}
+#assetGrid .card-status.repo:before{background:#ff8254;box-shadow:0 0 0 2px #ff825422}
+#assetGrid .card-copy .card-vin{font-size:12px;overflow-wrap:anywhere}
+#assetGrid .card-vin b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:all;letter-spacing:.02em}
 #assetGrid .card-status.managed:before{background:#79c7f1;box-shadow:0 0 0 2px #79c7f122}
 #assetGrid .card-status select{border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;outline:none}
 #assetGrid .card-status select option{background:#152b49;color:#fff}
@@ -370,45 +448,45 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 
 .garage-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}.garage-menu button{min-height:155px;text-align:left;border:1px solid #45658e;border-radius:12px;background:#1a304c;color:#f5f8ff;padding:24px;cursor:pointer}.garage-menu strong{display:block;font-size:25px}.garage-menu span{display:block;margin-top:10px;color:#b8cee9;font-size:15px;line-height:1.5}.garage-menu button:hover,.garage-menu button:focus-visible{border-color:#8acbff;background:#23456c;outline:2px solid #8acbff;outline-offset:2px}.report-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:20px 0}.report-controls label{display:grid;gap:5px;font-size:14px}.report-controls select,.report-controls button{min-height:42px;padding:8px 12px;background:#1b304d;color:white;border:1px solid #6686ac;border-radius:6px;font-size:15px}.report-output{overflow-x:auto}.report-output table{width:100%;border-collapse:collapse;min-width:640px}.report-output th,.report-output td{text-align:left;padding:11px;border-bottom:1px solid #415675;vertical-align:top;font-size:14px}.report-output th{color:#aecdff}.report-summary{color:#d9e8fa;font-size:16px}.due-dialog{width:min(600px,calc(100vw - 24px));max-height:85vh;overflow:auto;border:1px solid #6792be;border-radius:12px;background:#152943;color:#f5f8ff;padding:24px}.due-dialog::backdrop{background:#06101acc}.due-dialog h2{margin:0 0 10px;font-size:24px}.due-dialog li{margin:10px 0;line-height:1.5}.due-dialog button{padding:10px 16px;border:1px solid #86b9f0;border-radius:6px;background:#285b93;color:white;cursor:pointer;font-size:15px}@media(max-width:620px){.garage-menu{grid-template-columns:1fr}.garage-menu button{min-height:115px}}
 .garage-panel{min-width:0;padding:24px;border:1px solid #45658e;border-radius:12px;background:linear-gradient(160deg,#1a304c,#14253e);color:#f5f8ff}.garage-panel h3{margin:0;font-size:25px}.garage-panel>p{margin:8px 0 19px;color:#b8cee9;font-size:15px}.garage-panel .garage-open{min-height:0;padding:9px 17px;border:1px solid #86b9f0;border-radius:7px;background:#305c96;color:#fff;font-size:14px;font-weight:800}.garage-panel .garage-open:hover{background:#4076b8}.garage-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:21px}.garage-stat{min-width:0;padding:12px;border:1px solid #415b7b;border-radius:8px;background:#11253f}.garage-stat strong{display:block;font-size:22px;color:#fff;line-height:1.2}.garage-stat span{display:block;margin-top:5px;color:#bdd1eb;font-size:12px}.garage-highlights{display:grid;gap:10px;margin-top:12px}.garage-highlight{padding:11px 13px;border:1px solid #415b7b;border-radius:8px;background:#11253f}.garage-highlight span{display:block;color:#abc8ed;font-size:12px;font-weight:700}.garage-highlight strong{display:block;margin-top:3px;font-size:15px;overflow-wrap:anywhere}.garage-highlight small{display:block;margin-top:3px;color:#b8cee9;font-size:12px}.report-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:21px}.report-shortcuts button{min-height:52px;padding:10px 12px;text-align:left;border:1px solid #45658e;border-radius:8px;background:#11253f;color:#dceaff;font-size:14px;font-weight:700}.report-shortcuts button:hover,.report-shortcuts button:focus-visible{border-color:#8acbff;background:#23456c;outline:2px solid #8acbff;outline-offset:2px}@media(max-width:800px){.garage-menu{grid-template-columns:1fr}}@media(max-width:430px){.garage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.report-shortcuts{grid-template-columns:1fr}}
-</style><div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link active" aria-current="page" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside><div class="th-app-main"><header class="th-app-topbar"><div><strong>Watercraft</strong><small>Inventory and individual profiles</small></div><span class="th-connection" id="th-connection">Connecting…</span></header><div class="th-page-content"><div class="wrap">
+</style><div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link active" aria-current="page" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside><div class="th-app-main"><header class="th-app-topbar"><div><strong>Vehicles</strong><small>Watercraft dashboard and individual profiles</small></div><span class="th-connection" id="th-connection">Connecting…</span></header><div class="th-page-content"><div class="wrap">
 <header>
 <a class="brand" id="homeLink" href="#"><span class="logo">TZ</span><span>TisZod<small>VEHICLE WORKSPACE</small></span></a>
 <nav class="actions"><a class="link primary" id="allLink" href="#">FULL PORTAL ↗</a></nav>
 </header>
 <main>
-<div class="topline"><span>VEHICLES / PERSONAL GARAGE</span><span class="updated">LIVE SHEET · UPDATED <b id="updated"></b></span></div>
+<div class="topline"><span>WATERCRAFT / PERSONAL GARAGE</span><span class="updated">LIVE SHEET · UPDATED <b id="updated"></b></span></div>
 
-<div class="workspace-view" id="menuView"><div class="section-title"><div><div class="kicker">Your garage</div><h2>Watercraft workspace</h2></div></div><div class="garage-menu"><section class="garage-panel"><h3>Vehicles</h3><p>Explore your collection and open individual profiles.</p><button type="button" class="garage-open" id="openVehicles">Browse vehicles →</button><div class="garage-stats" id="garageStats" aria-label="Garage statistics"></div><div class="garage-highlights" id="garageHighlights"></div></section><section class="garage-panel"><h3>Reporting</h3><p>Jump straight into any report. Refine the section, vehicle, and status there.</p><button type="button" class="garage-open" id="openReports">Open reporting →</button><div class="report-shortcuts" id="reportShortcuts"><button type="button" data-report-link="due">Service due or coming up →</button><button type="button" data-report-link="schedule">Complete service schedule →</button><button type="button" data-report-link="history">Service history →</button><button type="button" data-report-link="readings">Mileage and hours →</button><button type="button" data-report-link="inventory">Vehicle inventory →</button><button type="button" data-report-link="missing">Missing information →</button></div></section></div></div>
-<div class="workspace-view" id="reportsView" hidden><button type="button" class="back-link" id="backReports">Back to menu</button><div class="section-title"><div><div class="kicker">Your garage</div><h2>Reporting</h2><p>Choose a report and section to see the current records.</p></div></div><div class="report-controls"><label>Report<select id="reportType"><option value="due">Service due or coming up</option><option value="schedule">Complete service schedule</option><option value="history">Service history</option><option value="readings">Mileage and hours</option><option value="inventory">Inventory</option><option value="missing">Missing information</option></select></label><label>Section<select id="reportSection"><option value="all">All sections</option></select></label><label>Vehicle<select id="reportVehicle"><option value="all">All items</option></select></label><label>Status<select id="reportStatus"><option value="active">Active</option><option value="inactive">Inactive</option><option value="sold">Sold</option><option value="managed">Managed</option><option value="all">All items</option></select></label><label id="reportWindowLabel">Coming up within<select id="reportWindow"><option value="30" selected>30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="365">One year</option></select></label><button type="button" id="applyReport">Apply</button><button type="button" id="exportReport">Download CSV</button><button type="button" id="printReport">Print report</button></div><p class="report-summary" id="reportSummary" role="status"></p><div class="report-output" id="reportOutput"></div></div>
+<div class="workspace-view" id="menuView"><div class="section-title"><div><div class="kicker">Your garage</div><h2>Vehicle workspace</h2></div></div><div class="garage-menu"><section class="garage-panel"><h3>Vehicles</h3><p>Explore your collection and open individual profiles.</p><div class="garage-primary-actions"><button type="button" class="garage-open" id="openVehicles">Browse vehicles →</button><button type="button" class="fuel-log-button" id="openFuelCapture">⛽ Fuel Log</button></div><div class="garage-stats" id="garageStats" aria-label="Garage statistics"></div><details class="garage-more"><summary>Ownership &amp; mileage highlights</summary><div class="garage-highlights" id="garageHighlights"></div></details></section><section class="garage-panel"><h3>Reporting</h3><p>Jump straight into any report. Refine the section, vehicle, and status there.</p><button type="button" class="garage-open" id="openReports">Open reporting →</button><div class="report-shortcuts" id="reportShortcuts"><button type="button" data-report-link="due">Service due or coming up →</button><button type="button" data-report-link="schedule">Complete service schedule →</button><button type="button" data-report-link="history">Service history →</button><button type="button" data-report-link="readings">Mileage and hours →</button><button type="button" data-report-link="inventory">Watercraft inventory →</button><button type="button" data-report-link="missing">Missing information →</button></div></section></div></div>
+<div class="workspace-view" id="reportsView" hidden><button type="button" class="back-link" id="backReports">Back to menu</button><div class="section-title"><div><div class="kicker">Your garage</div><h2>Reporting</h2><p>Choose a report and section to see the current records.</p></div></div><div class="report-controls"><label>Report<select id="reportType"><option value="due">Service due or coming up</option><option value="schedule">Complete service schedule</option><option value="history">Service history</option><option value="readings">Mileage and hours</option><option value="inventory">Watercraft inventory</option><option value="missing">Missing information</option></select></label><label>Section<select id="reportSection"><option value="all">All sections</option></select></label><label>Vehicle<select id="reportVehicle"><option value="all">All watercraft</option></select></label><label>Watercraft status<select id="reportStatus"><option value="active">Active</option><option value="inactive">Inactive</option><option value="sold">Sold</option><option value="managed">Managed</option><option value="totaled">Totaled</option><option value="repo">Repo</option><option value="all">All watercraft</option></select></label><label id="reportWindowLabel">Coming up within<select id="reportWindow"><option value="30" selected>30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="365">One year</option></select></label><button type="button" id="applyReport">Apply</button><button type="button" id="exportReport">Download CSV</button><button type="button" id="printReport">Print report</button></div><p class="report-summary" id="reportSummary" role="status"></p><div class="report-output" id="reportOutput"></div></div>
 <div class="workspace-view" id="dashboardView" hidden>
-<div class="section-title"><div><div class="kicker">Your garage</div><h2>Watercraft directory</h2><p>Choose a section to see its items.</p></div><button type="button" class="add-vehicle-button" id="addVehicleButton">+ Add vehicle</button></div>
+<div class="section-title"><div><div class="kicker">Your garage</div><h2>Vehicle directory</h2><p>Choose a category to see its vehicles and equipment.</p></div><button type="button" class="add-vehicle-button" id="addVehicleButton">+ Add vehicle</button></div>
 <div class="category-grid" id="categoryGrid"></div>
 </div>
 <div class="workspace-view" id="categoryView" hidden>
 <button type="button" class="back-link" id="backDashboard">Back</button>
-<div class="section-title"><div><div class="kicker">Category</div><h2 id="categoryTitle"></h2><p>Choose an item to view its details, readings, maintenance, and service recommendations.</p></div><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
-<div class="status-filter" id="statusFilters"></div>
-<div class="vehicle-filter-bar"><label class="vehicle-search">Search items<input id="vehicleSearch" type="search" placeholder="Year, make, model, serial number…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label></div>
-<label class="year-sort" for="yearSort">Year order <select id="yearSort"><option value="oldest">Oldest to newest</option><option value="newest">Newest to oldest</option></select></label>
+<div class="section-title"><div><div class="kicker">Category</div><h2 id="categoryTitle"></h2><p>Choose an item to view its details, mileage, maintenance, and service recommendations.</p></div><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
+<div class="vehicle-filter-bar"><label class="vehicle-search">Search watercraft<input id="vehicleSearch" type="search" placeholder="Year, make, model, HIN, registration…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by watercraft status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No hours / reading</option></select></label></div>
+<label class="year-sort" for="yearSort">Year order <select id="yearSort"><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label>
 <p id="vehicleResults" class="vehicle-results" role="status"></p>
 <div class="asset-grid" id="assetGrid"></div>
 </div>
 <div class="workspace-view" id="assetView" hidden>
 <button type="button" class="back-link" id="backCategory">Back</button>
-<div class="asset-header"><div class="kicker" id="assetCategory"></div><h2 id="assetTitle"></h2><span id="assetStatus"></span><button type="button" class="add-vehicle-button" id="addDetailVehicleButton">+ Add vehicle</button></div>
-<div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete vehicle</button><span id="categoryMoveStatus" role="status"></span></div>
+<div class="asset-header"><div class="kicker" id="assetCategory"></div><h2 id="assetTitle"></h2><div class="asset-header-actions"><span id="assetStatus"></span><button type="button" class="fuel-log-button" id="logAssetFuel">⛽ Log Fuel</button><button type="button" class="add-vehicle-button" id="addDetailVehicleButton">+ Add vehicle</button></div></div>
+<div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete watercraft</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
-<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button></div>
+<p id="assetLastUpdated" role="status" style="font-size:13px;margin:8px 0 14px"></p>
+<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button></div>
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
-<section class="asset-tab-panel" id="assetRecommended" hidden></section>
+<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" src="mustang-fuel.html" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
 </div>
-<footer class="foot"><span>TisZod · VEHICLES</span><span>PRIVATE SHEET CONNECTION</span></footer>
+<footer class="foot"><span>TisZod · WATERCRAFT</span><span>PRIVATE SHEET CONNECTION</span></footer>
 </main></div>
 </div></div></div>
-<dialog id="addVehicleDialog" class="add-vehicle-dialog" aria-labelledby="addVehicleTitle"><form id="addVehicleForm"><div class="add-vehicle-head"><h2 id="addVehicleTitle">Add a vehicle</h2><button type="button" id="closeAddVehicle" aria-label="Close">×</button></div><div class="add-vehicle-fields"><label>Year <input name="year" type="number" min="1900" max="2100" required></label><label>Make <input name="make" required maxlength="100"></label><label>Model <input name="model" required maxlength="120"></label><label>Section <select name="category" id="newVehicleCategory" required></select></label><label>Status <select name="status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Sold">Sold</option><option value="Managed">Managed</option></select></label><label>Engine <input name="engine" maxlength="100"></label><label>VIN / serial number <input name="vin" maxlength="100"></label><label>Tag / plate <input name="tag" maxlength="50"></label><label>Color <input name="color" maxlength="80"></label></div><p id="addVehicleStatus" role="status"></p><div class="add-vehicle-actions"><button type="button" id="cancelAddVehicle">Cancel</button><button type="submit" id="saveVehicle">Save vehicle</button></div></form></dialog>
-<dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
+<dialog id="addVehicleDialog" class="add-vehicle-dialog" aria-labelledby="addVehicleTitle"><form id="addVehicleForm"><div class="add-vehicle-head"><h2 id="addVehicleTitle">Add a vehicle</h2><button type="button" id="closeAddVehicle" aria-label="Close">×</button></div><div class="add-vehicle-fields"><label>Year <input name="year" type="number" min="1900" max="2100" required></label><label>Make <input name="make" required maxlength="100"></label><label>Model <input name="model" required maxlength="120"></label><label>Section <select name="category" id="newVehicleCategory" required></select></label><label>Status <select name="status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Sold">Sold</option><option value="Managed">Managed</option><option value="Totaled">Totaled</option><option value="Repo">Repo</option></select></label><label>Engine <input name="engine" maxlength="100"></label><label>HIN / serial number <input name="vin" maxlength="100"></label><label>Tag / plate <input name="tag" maxlength="50"></label><label>Color <input name="color" maxlength="80"></label></div><p id="addVehicleStatus" role="status"></p><div class="add-vehicle-actions"><button type="button" id="cancelAddVehicle">Cancel</button><button type="submit" id="saveVehicle">Save vehicle</button></div></form></dialog>
+<dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueComplete">Complete tasks</button> <button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
 <dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script>
@@ -423,7 +501,7 @@ const workspace=location.pathname.endsWith('/equipment.html')?'equipment':locati
 const workspaceCategories=workspace==='equipment'?equipmentSections:workspace==='watercraft'?waterSections:categories.filter(c=>!equipmentSections.includes(c)&&!waterSections.includes(c));
 const belongsHere=a=>workspaceCategories.includes(a.category)||workspace==='vehicles'&&a.category==='Unfiled';
 const workspaceTitle=workspace==='equipment'?'Equipment':workspace==='watercraft'?'Watercraft':'Vehicles';
-const inSection=(a,section)=>section==='All Vehicles'||(section===equipmentGroup?equipmentSections.includes(a.category):a.category===section);
+const inSection=(a,section)=>section==='All Watercraft'||(section===equipmentGroup?equipmentSections.includes(a.category):a.category===section);
 const paths={
 'Cars':'<path d="M4 15h16l-2-6H6l-2 6Zm2-6 2-3h8l2 3M5 15v3m14-3v3M7 18h10"/>',
 'Trucks':'<path d="M2 7h12v10H2zM14 11h4l4 4v2h-8M6 17a2 2 0 1 0 4 0m8 0a2 2 0 1 0 4 0"/>',
@@ -519,6 +597,8 @@ function listedCategory(a){const n=clean(a.make+' '+a.model);
 }
 const assets=primary.concat(extras);
 for(const [i,item] of listed.entries())if(!deletedProfiles.some(p=>sameListedAsset(p,item))&&!assets.some(a=>sameListedAsset(a,item)))assets.push({...item,status:item.status||'Active',category:listedCategory(item),id:'f'+i});
+// Correct legacy category values for known vehicles before section filtering.
+for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
 document.querySelector('.th-app-topbar strong').textContent=workspaceTitle;
 document.querySelectorAll('.th-sidebar [href$=".html"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')===(workspace==='vehicles'?'vehicles.html':workspace+'.html')));
@@ -544,46 +624,72 @@ const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','
 function serviceAssetKey(a){const name=clean(a.make+' '+a.model),legacy=Object.entries(serviceKeys).find(([prefix])=>name.startsWith(prefix))?.[1];return legacy||(a.reportId&&String(a.reportId).startsWith('PDF-')?'report-'+String(a.reportId).slice(4):'')||(a.profileRow?'profile-'+a.profileRow:'item-'+clean(a.year+' '+a.make+' '+a.model))}
 function serviceFor(a){const key=serviceAssetKey(a);return services.filter(s=>clean(s.asset)===clean(key))}
 const scheduleKeys=[[/trek.*7200/, 'trek7200'],[/harley.*(ultra|flhtcui)/,'harleydavidsonultra'],[/lifetime.*spitfire/,'lifetimespitfire'],[/keystone.*bullet/,'keystonebullet'],[/stirling|westbrook.*trailer/,'stirling'],[/makdaddy.*legend/,'makdaddylegend'],[/harley.*(roadglide|fltrk)/,'harleydavidsonroad'],[/ram.*3500/,'ram3500'],[/coleman.*(b200|8200)/,'colemanb200'],[/volpam.*sp03/,'volpamsp03'],[/coolster.*3050/,'coolster3050'],[/ford.*f150/,'fordf150'],[/xpro.*jaguar/,'xprojaguar'],[/ford.*mustang/,'fordmustang'],[/toyota.*4runner/,'toyota4runner'],[/chrysler.*aspen/,'chrysleraspen'],[/honda.*civic/,'hondacivic'],[/husqvarna.*122hd4[5s]/,'husqvarna122hd4s'],[/echo.*pb2520/,'echopb2520'],[/dewalt.*aircompressor/,'dewaltaircompressor'],[/dewalt.*dxpw3425|dewalt.*pressurewasher/,'dewaltdxpw3425'],[/craftsman.*18.*chainsaw/,'craftsman18inchchainsaw'],[/craftsman.*10.*polesaw/,'craftsman10polesaw'],[/husqvarna.*yth24k48/,'husqvarnayth24k48'],[/cubcadet.*kohler/,'cubcadetkohler'],[/husqvarna.*330lx|husqvarna.*weedeater/,'husqvarna330lx'],[/stihl.*fs56/,'stihlfs56']];
-function scheduleFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return entry?schedules[entry[1]]:null}
+function scheduleFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return schedules[entry?entry[1]:serviceAssetKey(a)]||null}
 function renderRecommended(a){
  const panel=document.getElementById('assetRecommended'),schedule=scheduleFor(a);
- if(!['active','managed'].includes(clean(a.status))||!schedule){panel.innerHTML='';return}
+ if(!['active','managed'].includes(clean(a.status)) ){panel.innerHTML='';return}
  const today=new Date();today.setHours(0,0,0,0);
  const soon=new Date(today);soon.setDate(soon.getDate()+60);
  const groups=[[],[],[]];
- for(const task of schedule.tasks){
+ for(const task of schedule?.tasks||[]){
   const due=task.nextDate?new Date(task.nextDate+' 12:00:00'):null;
   const bucket=due&&!Number.isNaN(due.getTime())?(due<today?0:due<=soon?1:2):2;
   groups[bucket].push({task,due});
  }
  for(const group of groups)group.sort((a,b)=>(a.due?.getTime()??Infinity)-(b.due?.getTime()??Infinity)||a.task.task.localeCompare(b.task.task));
- const titles=['Dates passed in report','Coming up in 60 days','Later or no date listed'];
- const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td>'+esc(task.task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+esc(task.nextDate||'No date listed')+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button></td></tr>').join('')+'</tbody></table></div></section>':'').join('');
+ const titles=['Past due dates','Coming up in 60 days','Later or no date listed'];
+ const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+(task.notes?'<small style="display:block;white-space:normal">'+esc(task.notes)+'</small>':'')+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+esc(task.nextDate||'No date listed')+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button></td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2019'?'<p class="recommend-warning">This Ram 3500 is a 2019. Update the vehicle year to match the confirmed record.</p>':'';
- panel.innerHTML='<p class="recommend-intro">Complete service schedule imported from the September 24, 2026 report, grouped by due date. These dates and readings are from that report; mileage or hours may make an item due sooner. Completed work is saved in the Service Log.</p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected">Complete selected items</button><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Select all items completed during one visit, then choose Complete selected items. New to-dos appear here alongside your imported schedule. Mileage or hours may make an item due sooner.</p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
  const name=clean(a.make+' '+a.model),year=String(a.year),byAlias=Object.entries(alias).find(([k])=>name.startsWith(k));
- const matches=mileage.filter(m=>String(m.year)===year).map(m=>{
+ const matches=mileage.filter(m=>String(m.year)===year||(String(a.vin||'').toUpperCase()==='5NHUNS010EU106694'&&String(m.year)==='2013'&&clean(m.name)==='continentalcargo')).map(m=>{
   const key=clean(m.name);let score=0;
   if(key&&key===name)score=10000+key.length;
   else if(byAlias&&key===clean(byAlias[1]))score=5000+key.length;
   else if(key&&name.includes(key))score=1000+key.length;
+  else if(name.startsWith('trek7200')&&key.startsWith('trek7200'))score=4000;
+  else if(String(a.year)==='2012'&&name==='utilitymotorcycletrailer'&&key==='carryonmotorcycletrailer')score=4000;
   return {m,score};
  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.m.sheetRow-a.m.sheetRow);
  return matches[0]?.m||null;
 }
 function cardNumber(value){const n=Number(String(value??'').replace(/,/g,'').trim());return value!==undefined&&value!==null&&String(value).trim()!==''&&Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:1}):null}
 function cardEngine(a){return a.engine&&clean(a.engine)!=='na'?a.engine:'Not recorded'}
+function showCardEngine(a){
+ const model=clean([a.make,a.model].filter(Boolean).join(' '));
+ if(a.category==='Trailers'||/trailer|keystonebullet|stirling|yamahaezloader/.test(model)||['4YDT33126LT434476','2SSUBE1A1MB148250'].includes(String(a.vin||'').toUpperCase()))return false;
+ if(a.category==='Bicycles'||/pedal|humanpowered|nonmotorized/.test(clean(a.engine||'')))return false;
+ const engine=clean(a.engine||'');
+ if(/^(noengine|nomotor|none|notapplicable)/.test(engine))return false;
+ return !!engine&&!['na','none','noengine','nomotor','notapplicable','notrecorded','unknown','0'].includes(engine);
+}
 function usesHours(a){const name=clean(a.make+' '+a.model);if(/colemanb200|xprojaguar200/.test(name))return false;return ['Boats','Personal Watercraft','Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment','ATVs & Quads','Mini Bikes'].includes(a.category)||/pressurewasher|aircompressor|chainsaw|brushcutter|weedeater|trimmer|mower|leafblower|generator|jetski|waverunner/.test(name)}
 function readingName(a){return usesHours(a)?'Hours':'Mileage'}
-function cardReading(a,m){const value=cardNumber(m?.currentMileage);return value===null?'Not recorded':value+(usesHours(a)?' hours':' mi')}
+// Preserve documented historical readings separately from a current tracking value.
+function readingEvidence(a,m){
+ if(cardNumber(m?.currentMileage)!==null)return {value:m.currentMileage,kind:'tracked'};
+ const saved=specRecord(a),record=saved.sourceCsv?.record;
+ if(record&&cardNumber(record.ODOMETERREADING)!==null)return {value:record.ODOMETERREADING,kind:'historical'};
+ // Venture: transfer paperwork 2008-04-04, Drive 1xD1DVTrgWPmD7pn5V40-tdKaAcTTIrJw.
+ // Elantra: Virginia title 2005-07-15, Drive 1a-OuDGiphiFWlDwPRVWtiJ_bt836uT99.
+ const titleReadings={'1GNDX03E0YD210436':136993,'KMHJF24MXWU733164':37199};
+ if(Object.hasOwn(titleReadings,String(a.vin||'').toUpperCase()))return {value:titleReadings[String(a.vin).toUpperCase()],kind:'historical'};
+ if(cardNumber(a.reportOdometer)!==null)return {value:a.reportOdometer,kind:'starting'};
+ return null;
+}
+function cardReading(a,m){
+ const evidence=readingEvidence(a,m);if(!evidence)return 'Not recorded';
+ const brand=specRecord(a).specs.odometerBrand;
+ return cardNumber(evidence.value)+(usesHours(a)?' hours':' mi')+(brand==='NOT ACTUAL'?' · NOT ACTUAL':'')+(evidence.kind==='starting'?' · starting reading only':evidence.kind==='historical'?' · historical record':'');
+}
 function ownershipDate(value){const raw=String(value||'').trim(),iso=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/),us=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);if(!iso&&!us)return null;const year=Number(iso?iso[1]:us[3]),month=Number(iso?iso[2]:us[1]),day=Number(iso?iso[3]:us[2]),date=new Date(year,month-1,day);return date.getFullYear()===year&&date.getMonth()===month-1&&date.getDate()===day?date:null}
 function ownershipIso(date){return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')}
 function ownershipText(value){const date=ownershipDate(value);return date?[String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0'),date.getFullYear()].join('/'):''}
 function ownershipDuration(value){const start=ownershipDate(value);if(!start)return '';const today=new Date(),end=new Date(today.getFullYear(),today.getMonth(),today.getDate());if(start>end)return 'Check date';let months=(end.getFullYear()-start.getFullYear())*12+end.getMonth()-start.getMonth();let anchor=new Date(start.getFullYear(),start.getMonth()+months,Math.min(start.getDate(),new Date(start.getFullYear(),start.getMonth()+months+1,0).getDate()));if(anchor>end){months--;anchor=new Date(start.getFullYear(),start.getMonth()+months,Math.min(start.getDate(),new Date(start.getFullYear(),start.getMonth()+months+1,0).getDate()))}const days=Math.round((Date.UTC(end.getFullYear(),end.getMonth(),end.getDate())-Date.UTC(anchor.getFullYear(),anchor.getMonth(),anchor.getDate()))/86400000);return [Math.floor(months/12)?Math.floor(months/12)+' yr':'',months%12?months%12+' mo':'',days||!months?days+' days':''].filter(Boolean).join(' ')}
-function ownershipFor(a,m){const exact=Boolean(ownershipDate(a.ownershipStart)),date=exact?a.ownershipStart:m?.serviceStart,managed=clean(a.status)==='managed';return {label:managed?(exact?'Care began':'Tracking began'):exact?'Date acquired':date?'Mileage tracking began':'Date acquired',date:ownershipText(date)||'Not recorded',duration:date?ownershipDuration(date):'Not recorded',durationLabel:managed?'Time managed':exact?'Time owned':'Time tracked'}}
+function ownershipFor(a,m){const exact=Boolean(ownershipDate(a.ownershipStart)),date=exact?a.ownershipStart:m?.serviceStart;return {label:'Date Acquired',date:(ownershipText(date)||'Not recorded')+(!exact&&ownershipDate(date)?' (estimated)':''),duration:date?ownershipDuration(date):'Not recorded',durationLabel:'Length of Ownership'}}
 function renderGarageStats(){
  const active=assets.filter(a=>clean(a.status)==='active').length,inactive=assets.filter(a=>clean(a.status)==='inactive').length,sold=assets.filter(a=>clean(a.status)==='sold').length,managed=assets.filter(a=>clean(a.status)==='managed').length;
  const current=assets.filter(a=>['active','inactive'].includes(clean(a.status)));
@@ -614,6 +720,64 @@ function specRecord(a){
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
  return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
+
+// Verified document dates are starting values; workbook edits take precedence.
+const complianceEvidence={
+ '1FAFP40604F200855':{inspectionDue:'2027-04-30',inspectionSource:'Inspection certificate dated April 27, 2026'},
+ '3C63RRRL1KG580434':{inspectionDue:'2027-03-31',inspectionSource:'Inspection certificate dated March 11, 2026'},
+ '4YDT33126LT434476':{registrationMode:'permanent',registrationSource:'Permanent trailer registration',inspectionDue:'2027-03-31',inspectionSource:'Inspection certificate dated March 11, 2026'},
+ '2SSUBE1A1MB148250':{registrationMode:'permanent',registrationSource:'Permanent trailer registration'},
+ '1HD1KZF15PB653889':{registrationDue:'2026-09-30',registrationSource:'Registration expiration printed on August 12, 2024 document; confirm any later renewal',inspectionDue:'2027-09-30',inspectionSource:'Inspection certificate dated September 17, 2026'},
+ '1A8HX58N88F122005':{inspectionDue:'2027-08-31',inspectionSource:'Inspection certificate dated August 11, 2026'},
+ '2HGFG3B83CH543158':{registrationDue:'2026-11-30',registrationSource:'Title / registration dated November 26, 2025'}
+};
+function complianceFor(a){
+ const specs=specRecord(a).specs,base={...(complianceEvidence[String(a.vin||'').trim().toUpperCase()]||{})};
+ // Only credible future profile renewal dates are usable as a starting reminder.
+ const old=String(a.renewal||''),parts=old.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+ if(!base.registrationDue&&!base.registrationMode&&parts&&+parts[3]>=2026&&+parts[3]<2100){base.registrationDue=parts[3]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');base.registrationSource='Recorded profile renewal date; verify against current registration'}
+ for(const kind of ['registration','inspection'])for(const tail of ['Due','Mode','Source']){const k=kind+tail;if(Object.prototype.hasOwnProperty.call(specs,k))base[k]=specs[k]}
+ return base;
+}
+function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})){
+ if(mode==='permanent')return {tone:'ok',text:'Permanent — no renewal date'};
+ if(mode==='exempt')return {tone:'ok',text:'Exempt'};
+ if(mode==='not-required')return {tone:'disabled',text:'Not required'};
+ if(mode==='unknown'||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return {tone:'unknown',text:'Date needed — confirm'};
+ const n=Math.round((Date.parse(date+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/86400000),label=new Date(date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'});
+ return {tone:n<0?'late':n<30?'urgent':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
+}
+function deadlineCard(a){
+ if(!['active','managed'].includes(clean(a.status)))return '';
+ if(workspace==='equipment')return '';
+ const d=complianceFor(a),specs=specRecord(a).specs;
+ if(specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">ANTIQUE VEHICLE</div></aside>';
+ const none=['registration','inspection'].every(k=>['not-required','exempt'].includes(d[k+'Mode']));
+ return '<aside class="card-deadlines'+(none?' no-compliance-required':'')+'" aria-label="Registration deadlines">'+(workspace==='watercraft'?['registration']:['registration','inspection']).map(k=>{
+  const state=deadlineState(d[k+'Due'],d[k+'Mode']),label=k==='registration'?'Registration':'State inspection';
+  const text=state.text+(specs[k+'DueEstimated']?' (estimated)':'');
+  let heading=esc(label);try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')heading='<a class="deadline-label" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>'}catch(_){}
+  return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
+ }).join('')+'</aside>';
+}
+const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
+complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
+let complianceTarget=null;
+complianceDialog.querySelector('[data-cancel]').onclick=()=>complianceDialog.close();
+document.getElementById('assetGrid').addEventListener('click',e=>{
+ const b=e.target.closest('[data-compliance]');if(!b)return;e.stopPropagation();complianceTarget=assets.find(a=>a.id===b.dataset.compliance);if(!complianceTarget)return;
+ const d=complianceFor(complianceTarget),form=complianceDialog.querySelector('form');form.querySelector('[data-name]').textContent=[complianceTarget.year,complianceTarget.make,complianceTarget.model].filter(Boolean).join(' ');
+ for(const k of ['registration','inspection']){form.elements[k+'Mode'].value=d[k+'Mode']||(d[k+'Due']?'dated':'unknown');form.elements[k+'Due'].value=d[k+'Due']||''}
+ document.getElementById('complianceMessage').textContent='';complianceDialog.showModal();
+});
+complianceDialog.querySelector('form').onsubmit=async e=>{
+ e.preventDefault();const a=complianceTarget,form=e.target,msg=document.getElementById('complianceMessage'),updates={};
+ for(const k of ['registration','inspection']){updates[k+'Mode']=form.elements[k+'Mode'].value;updates[k+'Due']=form.elements[k+'Due'].value;if(updates[k+'Mode']==='dated'&&!updates[k+'Due']){msg.textContent='Enter both due dates, or choose a status for dates you cannot confirm.';return}updates[k+'Source']='Updated in portal '+new Date().toISOString().slice(0,10)}
+ const button=form.querySelector('[type="submit"]');button.disabled=true;msg.textContent='Saving…';
+ const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{await ensureProfileRow(a);let record;try{record=JSON.parse(a.reportNotes)}catch(_){}if(!record||record.type!=='vehicle-quick-specs-v1')record=specRecord(a);record.specs={...(record.specs||{}),...updates};const json=JSON.stringify(record);await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json});a.specSaveQueue=saving;
+ try{await saving;renderCategory();complianceDialog.close()}catch(error){msg.textContent='Could not save: '+error.message}finally{button.disabled=false}
+};
+
 function renderRecordReview(a){
  let record={};try{record=JSON.parse(a.reportNotes||'{}')}catch(_){}
  const audit=record.documentAudit,specs=record.specs||{},reviews=record.documentReviews||[],facts=audit?.facts||[];
@@ -622,42 +786,42 @@ function renderRecordReview(a){
  panel.innerHTML='<h3>Records found in Drive</h3>'+(facts.length?'<dl>'+facts.map(f=>'<div><dt>'+esc(f.label)+'</dt><dd>'+esc(f.value)+'</dd></div>').join('')+'</dl>':'')+(specs.startingReadingNote?'<p class="record-warning">'+esc(specs.startingReadingNote)+'</p>':'')+(audit?'<p>'+esc(audit.summary)+'</p><small>Folder review: '+esc(audit.reviewed)+' · '+audit.documents+' documents · '+audit.pictures+' pictures</small>':'')+(reviews.length?'<details><summary>Document findings and qualifications</summary>'+reviews.map(r=>'<p>'+esc(r.summary)+'</p>').join('')+'</details>':'')+(sources.length?'<details><summary>Source records</summary><ul>'+sources.map(r=>{let url='';try{const u=new URL(r.url);if(u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname))url=u.href}catch(_){}return url?'<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+'</a></li>':''}).join('')+'</ul></details>':'');
 }
 
-let category='',asset=null,status='active',yearOrder='oldest',editing=false,vehicleQuery='',missingFilter='all';
+let category='',asset=null,status='current',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
-const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset});
+const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
 let photoObserver;
 function assetPhoto(a){
  if(a.photoObjectUrl)return Promise.resolve(a.photoObjectUrl);
  a.photoLoading ||= thPhotoObjectUrl(a.photoFileId).then(url=>(a.photoObjectUrl=url)).finally(()=>{a.photoLoading=null});
  return a.photoLoading;
 }
-function show(view){if(view==='menuView')renderGarageStats();for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
+function show(view){if(view==='menuView'){view='categoryView';if(!category)category='All Watercraft';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
 // Navigation restores display state without replaying data-changing actions.
 window.thViewAdapter={
  capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
  restore:s=>{category=s.category;status=s.status;asset=assets.find(a=>a.id===s.asset)||null;if(s.view==='categoryView')renderCategory();if(s.view==='assetView'&&asset)renderAsset(s.assetTab);show(s.view);}
 };
 
-function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
+function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Watercraft',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Watercraft'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 function renderCategory(){
  photoObserver?.disconnect();
- const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
+ const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const rank={active:0,managed:1,inactive:2,sold:3,totaled:4,repo:5};const statusOrder=(rank[clean(a.status)]??6)-(rank[clean(b.status)]??6);if(statusOrder)return statusOrder;const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
- const missing=a=>({photo:!(a.photoFileId||a.photo),engine:cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
- const shown=items.filter(a=>{if(status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
- document.getElementById('categoryTitle').textContent=category==='All Vehicles'?'All '+workspaceTitle:category;
- const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c));
+ const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
+ const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
+ document.getElementById('categoryTitle').textContent=category==='All Watercraft'?'All '+workspaceTitle:category;
+ const sections=['All Watercraft',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Watercraft'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c));
  document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
- document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
- document.getElementById('statusFilters').innerHTML=['active','inactive','managed','sold','all'].map(s=>'<button type="button" class="filter-chip '+(status===s?'active':'')+'" data-status="'+s+'">'+s[0].toUpperCase()+s.slice(1)+' · '+(s==='all'?items.length:items.filter(a=>clean(a.status)===s).length)+'</button>').join('');
+ document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Watercraft'?'All '+workspaceTitle:category);
+ document.getElementById('vehicleStatusFilter').innerHTML=['current','active','managed','inactive','sold','totaled','repo','all'].map(s=>'<option value="'+s+'"'+(status===s?' selected':'')+'>'+(s==='current'?'Active + Managed':s[0].toUpperCase()+s.slice(1))+' · '+(s==='all'?items.length:items.filter(a=>s==='current'?['active','managed'].includes(clean(a.status)):clean(a.status)===s).length)+'</option>').join('');
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const photo=a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
   const photoClass=String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=a.photoObjectUrl||a.photoFileId||a.photo?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
-  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong><span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span><span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(added===null?'—':added)+'</b></span><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
+  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed','totaled','repo'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+['Active','Inactive','Managed','Sold','Totaled','Repo'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong>'+(String(a.vin||'').trim()?'<span class="card-stat card-vin">HIN / serial number: <b>'+esc(a.vin)+'</b></span>':'')+(showCardEngine(a)?'<span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span>':'')+'<span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(specRecord(a).specs.odometerBrand==='NOT ACTUAL'?'Not comparable':added===null?'—':added)+'</b></span>'+deadlineCard(a)+'<p class="card-last-updated" data-recorded="'+hasRecordedUpdate(a)+'" data-updated-asset="'+esc(a.id)+'">'+esc(updatedLabel(a))+'</p><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b></div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
  }).join(''):'<div class="asset-note">No items match these filters.</div>';
  const loadCardPhoto=a=>{
   assetPhoto(a).then(src=>{
@@ -676,10 +840,72 @@ function renderCategory(){
  }else for(const a of shown.filter(a=>a.photoFileId&&!a.photoObjectUrl))loadCardPhoto(a);
 
 }
+// Save the edit time with the vehicle record, never with page visits.
+// Estimates reflect the Nov 1 profile review and Nov 2 Mustang mileage update.
+// Exact saved timestamps always take priority over these historical estimates.
+function estimatedUpdate(a){
+ const name=clean([a.year,a.make,a.model].join(' '));
+ if(name.includes('2004')&&name.includes('mustang'))return '2026-11-02';
+ if(a.profileRow)return '2026-11-01';
+ return '';
+}
+function hasRecordedUpdate(a){return Boolean(a.lastUpdated)&&Number.isFinite(new Date(a.lastUpdated).getTime())||Boolean(estimatedUpdate(a))}
+function updatedLabel(a){
+ const date=new Date(a.lastUpdated||'');
+ if(Number.isNaN(date.getTime())){
+  const estimate=estimatedUpdate(a);
+  return estimate?'Last updated: '+new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(estimate+'T12:00:00'))+' (estimated)':'Last updated: Not yet recorded';
+ }
+ return 'Last updated: '+new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(date);
+}
+function paintUpdated(){
+ const el=document.getElementById('assetLastUpdated');if(el&&asset){el.textContent=updatedLabel(asset);el.dataset.recorded=String(hasRecordedUpdate(asset))}
+ for(const node of document.querySelectorAll('[data-updated-asset]')){const a=assets.find(a=>a.id===node.dataset.updatedAsset);if(a){node.textContent=updatedLabel(a);node.dataset.recorded=String(hasRecordedUpdate(a))}}
+}
+function changedAsset(sheet,range){
+ const row=Number(String(range).match(/\d+/)?.[0]);
+ if(sheet==='Portal Asset Profiles')return assets.find(a=>a.profileRow===row);
+ if(sheet==='Vehicle Registry')return assets.find(a=>a.registryRow===row);
+ if(sheet==='Mileage-2025.10.16')return assets.find(a=>mileageFor(a)?.sheetRow===row);
+ if(sheet==='Portal Service History'){const entry=services.find(e=>e.sheetRow===row);return entry?assets.find(a=>serviceAssetKey(a)===entry.asset):asset;}
+ if(sheet==='Portal Service Schedules')return asset;
+ return null;
+}
+async function fleetWriteRanges(updates,option='USER_ENTERED'){
+ const changed=[...new Set(updates.map(u=>changedAsset(u.sheet,u.range)).filter(Boolean))];
+ for(const a of changed)await ensureProfileRow(a);
+ const now=new Date().toISOString();
+ await thWriteRanges([...updates,...changed.map(a=>({sheet:'Portal Asset Profiles',range:'AD'+a.profileRow,values:[[now]]}))],option);
+ for(const a of changed)a.lastUpdated=now;
+ paintUpdated();
+}
+function fleetWriteCell(sheet,cell,value){return fleetWriteRanges([{sheet,range:cell,values:[[value]]}])}
+async function touchAsset(a){await ensureProfileRow(a);const now=new Date().toISOString();await thWriteCell('Portal Asset Profiles','AD'+a.profileRow,now);a.lastUpdated=now;paintUpdated()}
+async function fleetAppendRow(sheet,values,option='USER_ENTERED'){
+ const now=new Date().toISOString();
+ if(sheet==='Portal Asset Profiles'){values=[...values];values[29]=now;}
+ const row=await thAppendRow(sheet,values,option);
+ if(sheet!=='Portal Asset Profiles'&&asset&&['Mileage-2025.10.16','Portal Service History','Portal Service Schedules'].includes(sheet))await touchAsset(asset);
+ return row;
+}
 function renderAsset(tab='details'){
+ paintUpdated();
  const hours=usesHours(asset);
+ const fuelName=clean([asset.make,asset.model,asset.name].filter(Boolean).join(' '));
+ const isMustang=/mustang/.test(fuelName)&&String(asset.year)==='2004';
+ const isRoadGlide=/roadglide|fltrk/.test(fuelName)&&String(asset.year)==='2023';
+ const isUltra=/ultraclassic|electraglide|flhtcui/.test(fuelName)&&String(asset.year)==='2000';
+ const isF150=/f150|f100|fseries/.test(fuelName)&&String(asset.year)==='1977';
+ const isRam3500=/ram3500|3500.*ram|ram.*3500/.test(fuelName)&&String(asset.year)==='2022';
+ const canFuel=workspace==='vehicles'&&!hours&&!['Trailers','RVs','Bicycles'].includes(asset.category);
+ document.getElementById('mustangFuelTab').hidden=!canFuel;
+ document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
+ const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
+ const historyUrl='fuel-history.html?v=20261029-desktop2&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
+ const fuelFrame=document.getElementById('fuelFrame');if(fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
+ if(tab==='fuel'&&!canFuel)tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
- const recommended=['active','managed'].includes(clean(asset.status))&&(!serviceLoaded||Boolean(scheduleFor(asset)));
+ const recommended=['active','managed'].includes(clean(asset.status));
  document.querySelector('[data-asset-tab="recommended"]').hidden=!recommended;
  if(tab==='recommended'&&!recommended)tab='details';
  editing=false;
@@ -693,10 +919,13 @@ function renderAsset(tab='details'){
  document.getElementById('categoryMoveStatus').textContent='';
  document.getElementById('assetTitle').textContent=[asset.year,asset.make,asset.model].filter(Boolean).join(' ');
  document.getElementById('assetStatus').textContent=asset.status||'Status to review';
- const values=[['Year','year'],['Make','make'],['Model','model'],['VIN / serial number','vin'],['Tag / plate','tag'],['Engine','engine'],['Transmission','transmission'],['Tire size','tireSize'],['Color','color'],['Vehicle number','vehicleNumber'],['Registration renewal','renewal'],['Ownership since','ownershipStart']];
+ document.getElementById('assetStatus').style.setProperty('--asset-status-color',({active:'#5fe188',inactive:'#ff6767',managed:'#79c7f1',sold:'#f4b85e',totaled:'#e88bff',repo:'#ff8254'})[clean(asset.status)]||'#aebbd0');
+ const values=[['Year','year'],['Make','make'],['Model','model'],['HIN / serial number','vin'],['Tag / plate','tag'],['Engine','engine'],['Transmission','transmission'],['Tire size','tireSize'],['Color','color'],['Asset number','vehicleNumber'],['Registration renewal','renewal'],['Date Acquired','ownershipStart']];
  const specs=specRecord(asset).specs;
- document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Vehicle status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option></select></label>'+values.map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Ownership since</span><div class="ownership-date-row"><input data-asset-field="ownershipStart" aria-label="Ownership since, type MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY" readonly><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'" disabled></div></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
+ document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Watercraft status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option><option value="Totaled"'+(clean(asset.status)==='totaled'?' selected':'')+'>Totaled</option><option value="Repo"'+(clean(asset.status)==='repo'?' selected':'')+'>Repo</option></select></label>'+values.filter(([,key])=>key!=='engine'||showCardEngine(asset)).map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Date Acquired</span><div class="ownership-date-row"><input data-asset-field="ownershipStart" aria-label="Date Acquired, type MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY" readonly><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'" disabled></div></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
  renderRecordReview(asset);
+ const recorded=readingEvidence(asset,mileageFor(asset));
+ if(recorded&&recorded.kind!=='tracked')document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<div class="asset-fact"><span>Documented reading</span><strong>'+esc(cardReading(asset,mileageFor(asset)))+'</strong><small>Source reading retained separately from current mileage tracking.</small></div>');
  const specGroups=[
   {title:'Dimensions & weight',keys:['length','width','height','weight','groundClearance'],preview:[specs.length,specs.width,specs.height].every(Boolean)?[specs.length,specs.width,specs.height].map(v=>v.replace(/\s*(in|″)$/i,'')).join(' × ')+' in · '+specs.weight:[specs.length,specs.weight].filter(Boolean).join(' · ')},
   {title:'Capacity',keys:['cargoBed','seatKit','payload','towing','tongueWeight'],preview:[specs.payload&&'Payload '+specs.payload,specs.towing&&'Towing '+specs.towing].filter(Boolean).join(' · ')},
@@ -705,9 +934,10 @@ function renderAsset(tab='details'){
   {title:'Components & equipment',keys:['frameMaterial','frameAngles','fork','rearShock','brakeLevers','handlebar','stem','headset','frontDerailleur','crankset','rearDerailleur','pedals','cuttingHead','dumpCartModel','dumpCartProduct','dumpCartSerial'],preview:[specs.frameMaterial,specs.dumpCartModel].filter(Boolean).join(' · ')},
   {title:'Identification & other details',keys:['manufacturer','brand','itemWeight','productDimensions','partNumber','productNumber','productSerial','manufactured','gvwr','wheelbase','seatHeight','curbWeight','dryWeight','additionalDetails'],preview:[specs.manufacturer,specs.gvwr].filter(Boolean).join(' · ')}
  ];
- document.getElementById('quickSpecGroups').innerHTML=specGroups.map(group=>'<details class="quick-spec-group'+(group.keys.some(key=>specs[key])?'':' quick-spec-group-empty')+'"><summary><strong>'+esc(group.title)+'</strong><small>'+esc(group.preview||'Add details')+'</small></summary><div class="asset-facts">'+quickSpecs.filter(([,key])=>group.keys.includes(key)).map(([label,key])=>'<label class="asset-fact quick-spec'+(specs[key]?'':' quick-spec-empty')+'"><span>'+esc(label)+'</span><textarea data-spec-field="'+key+'" aria-label="'+esc(label)+'" placeholder="Not recorded" rows="1" readonly>'+esc(specs[key]??'')+'</textarea></label>').join('')+'</div></details>').join('');
+ document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<label class="asset-fact"><span>End of service date (optional)</span><input data-end-service type="date" aria-label="End of service date" value="'+esc(specRecord(asset).specs.endOfServiceDate||'')+'" readonly><small>Leave blank if unknown.</small></label>');
+ document.getElementById('quickSpecGroups').innerHTML=specGroups.filter(group=>group.title!=='Engine & service'||showCardEngine(asset)).map(group=>'<details class="quick-spec-group'+(group.keys.some(key=>specs[key])?'':' quick-spec-group-empty')+'"><summary><strong>'+esc(group.title)+'</strong><small>'+esc(group.preview||'Add details')+'</small></summary><div class="asset-facts">'+quickSpecs.filter(([,key])=>group.keys.includes(key)).map(([label,key])=>'<label class="asset-fact quick-spec'+(specs[key]?'':' quick-spec-empty')+'"><span>'+esc(label)+'</span><textarea data-spec-field="'+key+'" aria-label="'+esc(label)+'" placeholder="Not recorded" rows="1" readonly>'+esc(specs[key]??'')+'</textarea></label>').join('')+'</div></details>').join('');
  document.getElementById('assetEditStatus').textContent='';
-  document.getElementById('photoSummary').innerHTML=[['Engine',asset.engine],['VIN / serial number',asset.vin]].map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
+  document.getElementById('photoSummary').innerHTML=[['Engine',asset.engine],['HIN / serial number',asset.vin]].filter(([label])=>label!=='Engine'||showCardEngine(asset)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
  const photo=asset.photo||'';
  document.getElementById('assetPhoto').innerHTML=asset.photoFileId?'<div class="photo-empty">Loading photo…</div>':photo?'<img class="asset-photo" src="'+esc(photo)+'" alt="'+esc(asset.make+' '+asset.model)+'" referrerpolicy="no-referrer">':'<div class="photo-empty">No photo yet</div>';
  if(asset.photoObjectUrl){document.getElementById('assetPhoto').innerHTML='<img class="asset-photo" src="'+esc(asset.photoObjectUrl)+'" alt="'+esc(asset.make+' '+asset.model)+'">'}else if(asset.photoFileId)assetPhoto(asset).then(src=>{if(document.getElementById('assetPhoto')&&asset===currentAsset()){document.getElementById('assetPhoto').innerHTML='<img class="asset-photo" src="'+esc(src)+'" alt="'+esc(asset.make+' '+asset.model)+'">';}}).catch(()=>{if(asset===currentAsset())document.getElementById('assetPhoto').innerHTML='<div class="photo-empty">Photo unavailable</div>'});
@@ -720,10 +950,11 @@ function renderAsset(tab='details'){
  else{
   const entries=serviceFor(asset).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)||b.sheetRow-a.sheetRow);
   renderRecommended(asset);
-  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><div class="table-wrap"><table><thead><tr><th>Date</th><th>Service item</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Notes</th></tr></thead><tbody>'+entries.map(e=>'<tr>'+[['date','C'],['item','D'],['odometer','E'],['notes','G']].map(([key,col])=>'<td class="'+(key==='notes'?'notes-cell':'')+'"><input data-service-row="'+e.sheetRow+'" data-service-col="'+col+'" aria-label="'+(key==='odometer'&&hours?'hours':esc(key))+'" value="'+esc(e[key]||'')+'" readonly></td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><p>Click an entry to view, edit, or delete its individual service items.</p><label>Find service <input id="serviceHistorySearch" type="search" placeholder="Search heater core, oil change…"></label><div class="table-wrap"><table><thead><tr><th>Date</th><th>Work completed</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Visit total ($)</th></tr></thead><tbody>'+entries.map(e=>{const parts=serviceItemization(e);return '<tr data-open-service="'+e.sheetRow+'" data-history-search="'+esc(parts.map(x=>x.name).join(' ').toLowerCase())+'"><td>'+esc(e.date||'Not recorded')+'</td><td><button type="button" class="service-entry-open" data-open-service="'+e.sheetRow+'">'+esc(parts.length===1?parts[0].name:parts.length+' service items completed')+'</button><div class="service-item-preview">'+parts.map(x=>'<div>'+esc(x.name)+'</div>').join('')+'</div></td><td>'+esc(e.odometer??'')+'</td><td>'+esc(e.cost??'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+
  }
  for(const b of document.querySelectorAll('[data-asset-tab]'))b.classList.toggle('active',b.dataset.assetTab===tab);
- for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended']])document.getElementById(id).hidden=name!==tab;
+ for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended'],['fuel','assetFuel']])document.getElementById(id).hidden=name!==tab;
  vehicleDocuments.render(tab,asset);
 }
 function dueState(a,task,windowDays=60){
@@ -737,14 +968,14 @@ function dueState(a,task,windowDays=60){
  return {due,soon,days,remaining,reason:[days!==null?(days<0?Math.abs(days)+' days past due':days===0?'due today':'due in '+days+' days'):'',remaining!==null?(remaining<=0?'reading passed':'in '+cardNumber(remaining)+' '+(usesHours(a)?'hours':'miles')):''].filter(Boolean).join(' · ')||'No next due date or reading'};
 }
 function dueItems(a){return ['active','managed'].includes(clean(a.status))?(scheduleFor(a)?.tasks||[]).map(task=>({task,state:dueState(a,task)})).filter(x=>x.state.due||x.state.soon).sort((x,y)=>Number(y.state.due)-Number(x.state.due)||((x.state.days??Infinity)-(y.state.days??Infinity))):[]}
-function openDueReminder(a){const dialog=document.getElementById('dueDialog'),items=dueItems(a);document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li><strong>'+esc(x.task.task)+'</strong> — '+(x.state.due?'Due':'Coming up')+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
+function openDueReminder(a){if(clean(a?.status)!=='active')return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li><strong>'+esc(x.task.task)+'</strong> — '+(x.state.due?'Due':'Coming up')+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
 let appliedReport={type:'due',section:'all',vehicle:'all',vehicleStatus:'active',windowDays:30};
 function reportData(){const {type,section,vehicle,vehicleStatus,windowDays}=appliedReport,items=assets.filter(a=>(section==='all'||a.category===section)&&(vehicle==='all'||String(a.id)===vehicle)&&(vehicleStatus==='all'||clean(a.status)===vehicleStatus)),name=a=>[a.year,a.make,a.model].filter(Boolean).join(' ');let columns=[],rows=[];
- if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of scheduleFor(a)?.tasks||[]){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,state.due?'Due':state.soon?'Coming up':state.reason,task.nextDate||'',task.nextReading||'',mileageFor(a)?.currentMileage||''])}}}
+ if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of scheduleFor(a)?.tasks||[]){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,state.due?'Due':state.soon?'Coming up':state.reason,task.nextDate||'',task.nextReading||'',cardReading(a,mileageFor(a))])}}}
  else if(type==='history'){columns=['Vehicle','Section','Date','Service item','Reading','Cost','Notes'];for(const a of items)for(const entry of serviceFor(a))rows.push([name(a),a.category,entry.date,entry.item,entry.odometer,entry.cost,entry.notes]);rows.sort((a,b)=>String(b[2]).localeCompare(String(a[2])))}
- else if(type==='readings'){columns=['Vehicle','Section','Status','Unit','Starting reading','Current reading','Tracking since'];rows=items.map(a=>{const m=mileageFor(a);return[name(a),a.category,a.status,usesHours(a)?'Hours':'Miles',m?.startMileage||'',m?.currentMileage||'',m?.serviceStart||'']})}
- else if(type==='inventory'){columns=['Vehicle','Section','Status','VIN / serial','Plate','Engine','Current reading'];rows=items.map(a=>[name(a),a.category,a.status,a.vin,a.tag,a.engine,mileageFor(a)?.currentMileage||''])}
- else {columns=['Vehicle','Section','Missing fields'];rows=items.map(a=>[name(a),a.category,[!a.photoFileId&&!a.photo?'Photo':'',!a.engine?'Engine':'',!a.vin?'VIN / serial':'',!mileageFor(a)?.currentMileage?'Current reading':''].filter(Boolean).join(', ')]).filter(row=>row[2])}
+ else if(type==='readings'){columns=['Vehicle','Section','Status','Unit','Starting reading','Current reading','Tracking since'];rows=items.map(a=>{const m=mileageFor(a);return[name(a),a.category,a.status,usesHours(a)?'Hours':'Miles',m?.startMileage??a.reportOdometer??'',cardReading(a,m),m?.serviceStart||'']})}
+ else if(type==='inventory'){columns=['Vehicle','Section','Status','HIN / serial number','Plate','Engine','Current reading'];rows=items.map(a=>[name(a),a.category,a.status,a.vin,a.tag,a.engine,mileageFor(a)?.currentMileage||''])}
+ else {columns=['Vehicle','Section','Missing fields'];rows=items.map(a=>[name(a),a.category,[!a.photoFileId&&!a.photo?'Photo':'',showCardEngine(a)&&cardEngine(a)==='Not recorded'?'Engine':'',!a.vin?'HIN / serial number':'',cardReading(a,mileageFor(a))==='Not recorded'?'Mileage / reading':''].filter(Boolean).join(', ')]).filter(row=>row[2])}
  return {columns,rows};}
 function renderReport(){const {columns,rows}=reportData();document.getElementById('reportSummary').textContent=serviceLoaded?rows.length+' record'+(rows.length===1?'':'s'):'Loading service records…';document.getElementById('reportOutput').innerHTML=rows.length?'<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+esc(cell??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>No matching records.</p>'}
 const reportSection=document.getElementById('reportSection');reportSection.innerHTML+=[...new Set(assets.map(a=>a.category).filter(Boolean))].sort().map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
@@ -760,8 +991,13 @@ async function openReport(type='due'){
  show('reportsView');renderReport();
  try{await loadServiceDetails();renderReport()}catch(e){document.getElementById('reportSummary').textContent='Could not load service records: '+e.message}
 }
+// Restore this optional toolbar action if an older or restored page layout lacks it.
 let reportsButton=document.getElementById('openReports');
-if(!reportsButton){reportsButton=document.createElement('button');reportsButton.type='button';reportsButton.id='openReports';reportsButton.className='garage-open';reportsButton.textContent='Reports';(document.querySelector('#categoryView .section-title')||document.getElementById('categoryView')).append(reportsButton);}
+if(!reportsButton){
+ reportsButton=document.createElement('button');
+ reportsButton.type='button';reportsButton.id='openReports';reportsButton.className='garage-open';reportsButton.textContent='Reports';
+ (document.querySelector('#categoryView .section-title')||document.getElementById('categoryView')).append(reportsButton);
+}
 reportsButton.onclick=()=>openReport();
 document.getElementById('reportShortcuts').addEventListener('click',e=>{const link=e.target.closest('[data-report-link]');if(link)openReport(link.dataset.reportLink)});
 document.getElementById('backReports').addEventListener('click',()=>show('menuView'));
@@ -770,14 +1006,15 @@ document.getElementById('applyReport').addEventListener('click',()=>{appliedRepo
 document.getElementById('exportReport').addEventListener('click',()=>{const {columns,rows}=reportData(),csv=[columns,...rows].map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='vehicle-'+appliedReport.type+'-report.csv';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
 document.getElementById('printReport').addEventListener('click',()=>window.print());
 document.getElementById('dueClose').addEventListener('click',()=>document.getElementById('dueDialog').close());
+document.getElementById('dueComplete').addEventListener('click',()=>{if(!asset)return;document.getElementById('dueDialog').close();openWorkDialog('service');});
 document.getElementById('dueSchedule').addEventListener('click',()=>{document.getElementById('dueDialog').close();if(!document.querySelector('[data-asset-tab="recommended"]').hidden)renderAsset('recommended')});
 document.getElementById('homeLink').href=PORTAL;
 document.getElementById('allLink').href=PORTAL+'finance.html';
 document.getElementById('updated').textContent=D.asOf||'latest';
 
 renderCategories();
-document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='active';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
-document.getElementById('statusFilters').addEventListener('click',e=>{const b=e.target.closest('[data-status]');if(!b)return;status=b.dataset.status;renderCategory()});
+document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='all';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
+document.getElementById('vehicleStatusFilter').addEventListener('change',e=>{status=e.target.value;renderCategory()});
 document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory()});
 document.getElementById('vehicleSearch').addEventListener('input',e=>{vehicleQuery=e.target.value;renderCategory()});
 document.getElementById('vehicleSectionFilter').addEventListener('change',e=>{category=e.target.value;renderCategory()});
@@ -813,17 +1050,17 @@ document.getElementById('mileageForm').addEventListener('submit',async e=>{
   const start=Number(m?.startMileage??a.reportOdometer??0);
   if(!Number.isFinite(start)||value<start)throw new Error('Current reading cannot be lower than the starting reading ('+start+').');
   if(adding&&!confirm('Add '+entered+' '+(usesHours(a)?'hours':'miles')+' to '+current+'? New total: '+value+'. To enter an odometer reading, cancel and choose Current odometer / hour reading.'))return;
-  if(m){await thWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value)}
+  if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value)}
   else{
    const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
    const baseline=Number(String(a.reportOdometer||'').replace(/,/g,'')),starting=Number.isFinite(baseline)&&a.reportOdometer!==''?baseline:0;
-   const row=await thAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,starting,value,'','','','','']);
+   const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,starting,value,'','','','','']);
    m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date,startMileage:starting,currentMileage:value};mileage.push(m);
-   await thWriteCell('Mileage-2025.10.16','G'+row,'=F'+row+'-E'+row);
-   await thWriteCell('Mileage-2025.10.16','H'+row,'=TODAY()-D'+row);
-   await thWriteCell('Mileage-2025.10.16','I'+row,'=H'+row+'/30.4375');
-   await thWriteCell('Mileage-2025.10.16','J'+row,'=IFERROR(G'+row+'/I'+row+',0)');
-   await thWriteCell('Mileage-2025.10.16','K'+row,'=J'+row+'*12');
+   await fleetWriteCell('Mileage-2025.10.16','G'+row,'=F'+row+'-E'+row);
+   await fleetWriteCell('Mileage-2025.10.16','H'+row,'=TODAY()-D'+row);
+   await fleetWriteCell('Mileage-2025.10.16','I'+row,'=H'+row+'/30.4375');
+   await fleetWriteCell('Mileage-2025.10.16','J'+row,'=IFERROR(G'+row+'/I'+row+',0)');
+   await fleetWriteCell('Mileage-2025.10.16','K'+row,'=J'+row+'*12');
   }
   const rows=await thValues("'Mileage-2025.10.16'!B"+m.sheetRow+':K'+m.sheetRow),r=rows[0]||[];
    const numeric=await thValues("'Mileage-2025.10.16'!E"+m.sheetRow+':K'+m.sheetRow,'UNFORMATTED_VALUE');
@@ -843,7 +1080,7 @@ document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
  const panel=document.getElementById(({details:'assetDetails',mileage:'assetMileage',maintenance:'assetMaintenance'})[tab]);
  panel.classList.toggle('editing-specs',editing&&tab==='details');
  if(tab==='details'&&editing)panel.querySelectorAll('.quick-spec-group').forEach(group=>group.open=true);
- panel.querySelectorAll('input[data-asset-field],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
+ panel.querySelectorAll('input[data-asset-field],input[data-end-service],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
   input.readOnly=!editing;
   if(!editing){const key=input.dataset.assetField;if(key)input.value=key==='ownershipStart'?ownershipText(asset[key]):key==='currentReading'?mileageFor(asset)?.currentMileage??'':key==='reportOdometer'?mileageFor(asset)?.startMileage??asset.reportOdometer??'':asset[key]??'';}
  });
@@ -866,11 +1103,25 @@ document.getElementById('quickSpecGroups').addEventListener('change',async e=>{
   await ensureProfileRow(a);
   const record=specRecord(a);record.specs[key]=next;
   const saved=JSON.stringify(record);
-  await thWriteCell('Portal Asset Profiles','AB'+a.profileRow,saved);
+  await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,saved);
   a.reportNotes=saved;
  });
  a.specSaveQueue=saving;
  try{await saving;input.closest('.quick-spec').classList.toggle('quick-spec-empty',!next);message.textContent='Saved to your workbook.'}
+ catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
+ finally{input.disabled=false}
+});
+document.getElementById('assetFacts').addEventListener('change',async e=>{
+ const input=e.target;if(!input.matches('[data-end-service]')||!asset||!editing)return;
+ const a=asset,prior=specRecord(a).specs.endOfServiceDate||'',next=input.value,message=document.getElementById('assetEditStatus');
+ if(next===prior)return;
+ if(next&&(!/^\d{4}-\d{2}-\d{2}$/.test(next)||!ownershipDate(next))){input.value=prior;message.textContent='Enter a valid end of service date.';return}
+ input.disabled=true;message.textContent='Saving end of service date…';message.classList.remove('error');
+ const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+  await ensureProfileRow(a);const record=specRecord(a);record.specs.endOfServiceDate=next;
+  const json=JSON.stringify(record);await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json;
+ });a.specSaveQueue=saving;
+ try{await saving;message.textContent=next?'End of service date saved.':'End of service date cleared.'}
  catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
  finally{input.disabled=false}
 });
@@ -887,9 +1138,9 @@ const registryColumns={year:'B',make:'C',model:'D',vin:'E',tag:'F'};
 async function saveAssetStatus(a,next){
  const prior=a.status||'Active';
  await ensureProfileRow(a);
- await thWriteCell('Portal Asset Profiles','I'+a.profileRow,next);
+ await fleetWriteCell('Portal Asset Profiles','I'+a.profileRow,next);
  try{
-  if(a.registryRow)await thWriteCell('Vehicle Registry','G'+a.registryRow,next);
+  if(a.registryRow)await fleetWriteCell('Vehicle Registry','G'+a.registryRow,next);
   const [profile,registry]=await Promise.all([
    thValues("'Portal Asset Profiles'!I"+a.profileRow),
    a.registryRow?thValues("'Vehicle Registry'!G"+a.registryRow):Promise.resolve([[next]])
@@ -898,8 +1149,8 @@ async function saveAssetStatus(a,next){
  }catch(error){
   // Do not leave the two source tabs disagreeing after a partial save.
   await Promise.allSettled([
-   thWriteCell('Portal Asset Profiles','I'+a.profileRow,prior),
-   a.registryRow?thWriteCell('Vehicle Registry','G'+a.registryRow,prior):Promise.resolve()
+   fleetWriteCell('Portal Asset Profiles','I'+a.profileRow,prior),
+   a.registryRow?fleetWriteCell('Vehicle Registry','G'+a.registryRow,prior):Promise.resolve()
   ]);
   throw error;
  }
@@ -909,8 +1160,9 @@ async function ensureProfileRow(a){
  if(a.profileRow)return a.profileRow;
  const row=Array(29).fill('');
  Object.assign(row,{1:[a.year,a.make,a.model].filter(Boolean).join(' '),2:a.year,3:a.make,4:a.model,5:a.color,7:a.category,8:a.status,11:a.vin,12:a.vehicleNumber,13:a.tag,14:a.renewal,15:a.engine,16:a.transmission,17:a.tireSize,23:a.photoFileId,24:a.photo,27:a.reportNotes||''});
- a.profileRow=await thAppendRow('Portal Asset Profiles',row);
+ a.profileRow=await fleetAppendRow('Portal Asset Profiles',row);
  if(!a.profileRow)throw new Error('Could not locate the new profile row.');
+ a.lastUpdated=new Date().toISOString();
  return a.profileRow;
 }
 async function moveAssetTo(next){
@@ -920,7 +1172,7 @@ async function moveAssetTo(next){
  controls.forEach(control=>control.disabled=true);message.textContent='Saving section…';
  try{
   await ensureProfileRow(a);
-  await thWriteCell('Portal Asset Profiles','H'+a.profileRow,next);
+  await fleetWriteCell('Portal Asset Profiles','H'+a.profileRow,next);
   a.category=next;
   renderCategories();renderCategory();renderAsset();
   document.getElementById('categoryMoveStatus').textContent=next==='Unfiled'?'Removed from the section. Find it in Unfiled.':'Moved to '+next+'.';
@@ -947,9 +1199,9 @@ document.getElementById('addVehicleForm').addEventListener('submit',async e=>{
  try{
   const row=Array(27).fill('');
   Object.assign(row,{1:[data.year,data.make,data.model].join(' '),2:data.year,3:data.make,4:data.model,5:data.color,7:data.category,8:data.status,11:data.vin,13:data.tag,15:data.engine});
-  const profileRow=await thAppendRow('Portal Asset Profiles',row);
+  const profileRow=await fleetAppendRow('Portal Asset Profiles',row);
   if(!profileRow)throw new Error('The vehicle was saved, but its row could not be identified. Refresh to see it.');
-  const next={...data,name:row[1],profileRow,id:'new'+profileRow,photo:'',photoFileId:''};
+  const next={...data,lastUpdated:new Date().toISOString(),name:row[1],profileRow,id:'new'+profileRow,photo:'',photoFileId:''};
   assets.push(next);category=data.category;status=clean(data.status);renderCategories();renderCategory();asset=next;renderAsset();show('assetView');
   document.getElementById('addVehicleDialog').close();
  }catch(error){message.textContent=error.message}
@@ -963,7 +1215,7 @@ document.getElementById('deleteAssetButton').addEventListener('click',async()=>{
  button.disabled=true;message.textContent='Deleting vehicle…';
  try{
   await ensureProfileRow(a);
-  await thWriteCell('Portal Asset Profiles','I'+a.profileRow,'Deleted');
+  await fleetWriteCell('Portal Asset Profiles','I'+a.profileRow,'Deleted');
   a.status='Deleted';assets.splice(assets.indexOf(a),1);
   asset=null;renderCategories();renderCategory();show('categoryView');
  }catch(error){message.textContent=error.message;button.disabled=false}
@@ -977,12 +1229,12 @@ document.getElementById('assetFacts').addEventListener('change',async e=>{
   if(next===''||!Number.isFinite(value)||value<0||!Number.isFinite(start)||value<start){input.value=prior;message.textContent='Enter a current reading at least as high as the starting reading.';message.classList.add('error');return}
   input.disabled=true;message.textContent='Saving current reading…';message.classList.remove('error');
   try{
-   if(m){await thWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value);m.currentMileage=value;m.addedMileage=value-start}
+   if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value);m.currentMileage=value;m.addedMileage=value-start}
    else{
     const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
-    const row=await thAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,start,value,'','','','','']);
+    const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,start,value,'','','','','']);
     const created={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date,startMileage:start,currentMileage:value,addedMileage:value-start};mileage.push(created);
-    for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await thWriteCell('Mileage-2025.10.16',col+row,formula);
+    for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await fleetWriteCell('Mileage-2025.10.16',col+row,formula);
    }
    renderCategory();message.textContent='Current reading saved.';
   }catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
@@ -1000,15 +1252,15 @@ document.getElementById('assetFacts').addEventListener('change',async e=>{
  try{
   await ensureProfileRow(a);
   if(key==='reportOdometer'){
-   const m=mileageFor(a);if(m)await thWriteCell('Mileage-2025.10.16','E'+m.sheetRow,next);
+   const m=mileageFor(a);if(m)await fleetWriteCell('Mileage-2025.10.16','E'+m.sheetRow,next);
   }
-  try{await thWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,next)}catch(error){if(key==='reportOdometer'){const m=mileageFor(a);if(m)await thWriteCell('Mileage-2025.10.16','E'+m.sheetRow,m.startMileage)}throw error}
+  try{await fleetWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,next)}catch(error){if(key==='reportOdometer'){const m=mileageFor(a);if(m)await fleetWriteCell('Mileage-2025.10.16','E'+m.sheetRow,m.startMileage)}throw error}
   if(key==='reportOdometer'){const m=mileageFor(a);if(m){m.startMileage=next;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(next)}}
-  if(a.registryRow&&registryColumns[key]){try{await thWriteCell('Vehicle Registry',registryColumns[key]+a.registryRow,next)}catch(error){await thWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,prior).catch(()=>{});throw error}}
+  if(a.registryRow&&registryColumns[key]){try{await fleetWriteCell('Vehicle Registry',registryColumns[key]+a.registryRow,next)}catch(error){await fleetWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,prior).catch(()=>{});throw error}}
   a[key]=next;
   message.textContent='Saved to your workbook.';
   if(['year','make','model','ownershipStart','reportOdometer'].includes(key)){document.getElementById('assetTitle').textContent=[a.year,a.make,a.model].filter(Boolean).join(' ');renderCategory()}
-   if(['engine','vin'].includes(key))document.getElementById('photoSummary').innerHTML=[['Engine',a.engine],['VIN / serial number',a.vin]].map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
+   if(['engine','vin'].includes(key))document.getElementById('photoSummary').innerHTML=[['Engine',a.engine],['HIN / serial number',a.vin]].filter(([label])=>label!=='Engine'||showCardEngine(a)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
  }catch(error){input.value=key==='ownershipStart'?ownershipText(prior):prior;message.textContent=error.message;message.classList.add('error')}
  finally{input.disabled=false}
 });
@@ -1022,7 +1274,7 @@ document.getElementById('assetMileage').addEventListener('change',async e=>{
   input.value=String(value);
  }
  input.disabled=true;
- try{await thWriteCell('Mileage-2025.10.16',col+input.dataset.mileageRow,input.value);if(col==='E'){try{await ensureProfileRow(asset);await thWriteCell('Portal Asset Profiles','K'+asset.profileRow,input.value)}catch(error){await thWriteCell('Mileage-2025.10.16','E'+input.dataset.mileageRow,old);throw error}asset.reportOdometer=input.value}if(m){m[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[col]]=input.value;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(String(m.startMileage).replace(/,/g,''))}document.getElementById('assetEditStatus').textContent='Reading saved to your workbook.';renderCategory();}
+ try{await fleetWriteCell('Mileage-2025.10.16',col+input.dataset.mileageRow,input.value);if(col==='E'){try{await ensureProfileRow(asset);await fleetWriteCell('Portal Asset Profiles','K'+asset.profileRow,input.value)}catch(error){await fleetWriteCell('Mileage-2025.10.16','E'+input.dataset.mileageRow,old);throw error}asset.reportOdometer=input.value}if(m){m[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[col]]=input.value;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(String(m.startMileage).replace(/,/g,''))}document.getElementById('assetEditStatus').textContent='Reading saved to your workbook.';renderCategory();}
  catch(error){input.value=old??'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
  finally{input.disabled=false}
 });
@@ -1033,29 +1285,136 @@ document.getElementById('assetMileage').addEventListener('submit',async e=>{
  button.disabled=true;status.textContent='Saving…';
  try{
   if(mileageFor(a))throw new Error('This vehicle already has a mileage record. Reload the page to edit it.');
-  const row=await thAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,form.elements.startDate.value,starting,current,'','','','','']);
+  const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,form.elements.startDate.value,starting,current,'','','','','']);
   const m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:form.elements.startDate.value,startMileage:starting,currentMileage:current,addedMileage:current-starting};mileage.push(m);
-  for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await thWriteCell('Mileage-2025.10.16',col+row,formula);
+  for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await fleetWriteCell('Mileage-2025.10.16',col+row,formula);
   renderCategory();renderAsset('mileage');document.getElementById('assetEditStatus').textContent='Starting and current mileage saved.';
  }catch(error){status.textContent=error.message}finally{button.disabled=false}
 });
 document.getElementById('assetMaintenance').addEventListener('change',async e=>{
  const input=e.target.closest('[data-service-row]');if(!input||!editing)return;
+ if(input.dataset.serviceCol==='E'){try{checkedReading(input.value)}catch(error){document.getElementById('assetEditStatus').textContent=error.message;return}}
  input.disabled=true;
- try{await thWriteCell('Portal Service History',input.dataset.serviceCol+input.dataset.serviceRow,input.value);const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)entry[{C:'date',D:'item',E:'odometer',G:'notes'}[input.dataset.serviceCol]]=input.value;document.getElementById('assetEditStatus').textContent='Service entry saved.'}
- catch(error){const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)input.value=entry[{C:'date',D:'item',E:'odometer',G:'notes'}[input.dataset.serviceCol]]||'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
+ try{await fleetWriteCell('Portal Service History',input.dataset.serviceCol+input.dataset.serviceRow,input.value);const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry){entry[{C:'date',D:'item',E:'odometer',F:'cost',G:'notes'}[input.dataset.serviceCol]]=input.value;if(input.dataset.serviceCol==='E')await syncServiceReading(asset,input.value,entry.date)}document.getElementById('assetEditStatus').textContent='Service entry saved.'}
+ catch(error){const entry=services.find(item=>item.sheetRow===Number(input.dataset.serviceRow));if(entry)input.value=entry[{C:'date',D:'item',E:'odometer',F:'cost',G:'notes'}[input.dataset.serviceCol]]||'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
  finally{input.disabled=false}
 });
-document.getElementById('assetMaintenance').addEventListener('click',async e=>{
- if(e.target.id!=='addService'||!asset)return;
- const button=e.target;button.disabled=true;
+document.getElementById('assetMaintenance').addEventListener('click',e=>{
+ if(e.target.id==='addService'&&asset)openWorkDialog('service');
+ const open=e.target.closest('[data-open-service]');if(open){const entry=services.find(x=>x.sheetRow===Number(open.dataset.openService));if(entry)openServiceEntry(entry)}
+});
+function serviceItemization(entry){
+ try{const detail=JSON.parse(entry.id);if(detail.tiszodService===1&&Array.isArray(detail.items)&&detail.items.length)return detail.items.map(x=>({name:String(x.name||''),cost:x.cost??'',notes:String(x.notes||'')}))}catch{}
+ const names=String(entry.item||'Service').split(';').map(x=>x.trim()).filter(Boolean);
+ return names.map(name=>({name,cost:names.length===1?(entry.cost??''):'',notes:''}));
+}
+document.getElementById('assetMaintenance').addEventListener('input',e=>{if(e.target.id==='serviceHistorySearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-history-search]').forEach(row=>row.hidden=!row.dataset.historySearch.includes(q))}});
+const entryDialog=document.createElement('dialog');entryDialog.className='work-dialog';entryDialog.setAttribute('aria-label','Service entry details');document.body.append(entryDialog);
+let detailEntry=null,detailAsset=null;
+function openServiceEntry(entry){
+ detailEntry=entry;detailAsset=asset;const items=serviceItemization(entry);
+ entryDialog.innerHTML='<form id="serviceDetailForm"><h2>Service entry · '+esc(entry.date)+'</h2><p>'+items.length+' individual service item'+(items.length===1?'':'s')+'. Each item shares this visit’s date and reading. Blank item costs mean the visit total has not been allocated.</p><div class="complete-grid"><label>Service date<input name="date" required value="'+esc(entry.date||'')+'"></label><label>'+esc(usesHours(asset)?'Hours':'Odometer')+'<input name="reading" type="number" min="0" step="any" value="'+esc(entry.odometer??'')+'"></label><label>Visit total ($)<input name="total" type="number" min="0" step="0.01" value="'+esc(String(entry.cost??'').replace(/[$,]/g,''))+'"></label><label class="complete-wide">Visit notes / shop<textarea name="notes">'+esc(entry.notes||'')+'</textarea></label></div><div class="table-wrap"><table class="service-detail-table"><thead><tr><th>Individual service item</th><th>Date</th><th>Reading</th><th>Item cost ($)</th><th>Notes</th><th></th></tr></thead><tbody>'+items.map((x,i)=>'<tr data-detail-item><td><input data-detail-name aria-label="Service item '+(i+1)+'" value="'+esc(x.name)+'" required></td><td data-detail-date>'+esc(entry.date)+'</td><td data-detail-reading>'+esc(entry.odometer??'')+'</td><td><input data-detail-cost aria-label="Item cost '+(i+1)+'" type="number" min="0" step="0.01" placeholder="Not allocated" value="'+esc(String(x.cost).replace(/[$,]/g,''))+'"></td><td><input data-detail-notes aria-label="Item notes '+(i+1)+'" value="'+esc(x.notes)+'"></td><td><button type="button" data-remove-detail>Remove item</button></td></tr>').join('')+'</tbody></table></div><p role="status" id="serviceDetailStatus"></p><div class="complete-actions"><button type="submit">Save changes</button><button type="button" id="deleteServiceEntry">Delete entry</button><button type="button" id="closeServiceEntry">Close</button></div></form>';
+ entryDialog.showModal();
+}
+entryDialog.addEventListener('input',e=>{if(e.target.name==='date'||e.target.name==='reading'){entryDialog.querySelectorAll(e.target.name==='date'?'[data-detail-date]':'[data-detail-reading]').forEach(x=>x.textContent=e.target.value)}});
+entryDialog.addEventListener('click',async e=>{
+ if(e.target.id==='closeServiceEntry'){entryDialog.close();return}
+ if(e.target.closest('[data-remove-detail]')){if(entryDialog.querySelectorAll('[data-detail-item]').length===1){document.getElementById('serviceDetailStatus').textContent='Use Delete entry to remove the last item.';return}e.target.closest('[data-detail-item]').remove();return}
+ if(e.target.id!=='deleteServiceEntry')return;
+ if(!confirm('Delete this service entry and all of its items? Mileage and the service schedule will stay as they are.'))return;
+ const entry=detailEntry;entryDialog.querySelectorAll('button').forEach(b=>b.disabled=true);
+ try{await fleetWriteRanges([{sheet:'Portal Service History',range:'A'+entry.sheetRow+':G'+entry.sheetRow,values:[['','','','','','','']]}]);services.splice(services.indexOf(entry),1);entryDialog.close();if(asset===detailAsset)renderAsset('maintenance')}
+ catch(error){document.getElementById('serviceDetailStatus').textContent=error.message}
+ finally{entryDialog.querySelectorAll('button').forEach(b=>b.disabled=false)}
+});
+entryDialog.addEventListener('submit',async e=>{
+ e.preventDefault();const entry=detailEntry,a=detailAsset,form=e.target,data=Object.fromEntries(new FormData(form)),message=document.getElementById('serviceDetailStatus');
+ const items=Array.from(entryDialog.querySelectorAll('[data-detail-item]'),row=>({name:row.querySelector('[data-detail-name]').value.trim(),cost:row.querySelector('[data-detail-cost]').value,notes:row.querySelector('[data-detail-notes]').value}));
+ entryDialog.querySelectorAll('button').forEach(b=>b.disabled=true);message.textContent='Saving itemized service…';
  try{
-  await ensureProfileRow(asset);const serviceAsset=serviceAssetKey(asset),today=new Date().toISOString().slice(0,10);
-  const row=await thAppendRow('Portal Service History',[serviceAsset,'',today,'New service','','','']);
-  services.push({asset:serviceAsset,id:'',date:today,item:'New service',odometer:'',cost:'',notes:'',sheetRow:row});
-  renderAsset('maintenance');document.getElementById('assetEditStatus').textContent='Service entry added. Edit its details below.';
- }catch(error){document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
- finally{button.disabled=false}
+  checkedReading(data.reading);
+  const id=JSON.stringify({tiszodService:1,items}),item=items.map(x=>x.name).join('; ');
+  await fleetWriteRanges([{sheet:'Portal Service History',range:'B'+entry.sheetRow+':G'+entry.sheetRow,values:[[id,data.date,item,data.reading,data.total,data.notes]]}]);
+  Object.assign(entry,{id,date:data.date,item,odometer:data.reading,cost:data.total,notes:data.notes});await syncServiceReading(a,data.reading,data.date);
+  entryDialog.close();if(asset===a)renderAsset('maintenance');
+ }catch(error){message.textContent=error.message}
+ finally{entryDialog.querySelectorAll('button').forEach(b=>b.disabled=false)}
+});
+function localServiceDate(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function checkedReading(value){if(String(value).trim()==='')return null;const n=Number(String(value).replace(/,/g,''));if(!Number.isFinite(n)||n<0)throw new Error('Enter a valid nonnegative mileage or hour reading.');return n}
+async function syncServiceReading(a,value,date){
+ const n=checkedReading(value);if(n===null)return;
+ let m=mileageFor(a);const old=checkedReading(m?.currentMileage??a.reportOdometer??'');
+ // Historical service must never roll back the current odometer.
+ if(old!==null&&n<=old)return;
+ if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,n);m.currentMileage=n;m.addedMileage=n-Number(String(m.startMileage).replace(/,/g,''))}
+ else{
+  const start=checkedReading(a.reportOdometer??'')??0;
+  const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date||localServiceDate(),Math.min(start,n),n,'','','','','']);
+  m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date||localServiceDate(),startMileage:Math.min(start,n),currentMileage:n,addedMileage:n-Math.min(start,n)};mileage.push(m);
+  await fleetWriteRanges([{sheet:'Mileage-2025.10.16',range:'G'+row+':K'+row,values:[['=F'+row+'-E'+row,'=TODAY()-D'+row,'=H'+row+'/30.4375','=IFERROR(G'+row+'/I'+row+',0)','=J'+row+'*12']]}]);
+ }
+ renderCategory();renderGarageStats();
+}
+const workDialog=document.createElement('dialog');workDialog.className='work-dialog';
+workDialog.innerHTML='<form id="workEntryForm"><h2 id="workEntryTitle"></h2><p id="workVehicleName"></p><div id="workEntryFields" class="complete-grid"></div><div class="complete-actions"><button type="submit">Save</button><button type="button" id="cancelWorkEntry">Cancel</button></div><p role="status" id="workEntryStatus"></p></form>';
+document.body.append(workDialog);workDialog.addEventListener('cancel',e=>{if(workDialog.dataset.saving)e.preventDefault()});
+workDialog.querySelector('#cancelWorkEntry').onclick=()=>workDialog.close();
+let workTarget=null,workMode='service';
+function openWorkDialog(mode,selected=[]){
+ workTarget=asset;workMode=mode;const attention=new Set(dueItems(asset).map(x=>x.task.sheetRow));const tasks=(scheduleFor(asset)?.tasks||[]).filter(task=>attention.has(task.sheetRow)||selected.includes(task.sheetRow)),todo=mode==='todo';
+ document.getElementById('workEntryTitle').textContent=todo?'Add service to-do':'Record completed service';
+ document.getElementById('workVehicleName').textContent=[asset.year,asset.make,asset.model].join(' ');
+ const field=(label,name,type='text',value='',required=false)=>'<label>'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'></label>';
+ document.getElementById('workEntryFields').innerHTML=(todo?'': '<fieldset class="complete-wide"><legend>Select the remaining work you completed</legend>'+tasks.map(t=>'<label class="work-check"><input type="checkbox" name="tasks" value="'+t.sheetRow+'" '+(selected.includes(t.sheetRow)?'checked':'')+'>'+esc(t.task)+'</label>').join('')+'</fieldset>')+field(todo?'Service / repair needed':'Other work completed','item','text','',todo)+field(todo?'Date added':'Completed date','date','date',localServiceDate(),true)+field(usesHours(asset)?'Current hours':'Odometer reading','reading','number',mileageFor(asset)?.currentMileage??asset.reportOdometer??'',!todo)+(todo?field('Due date','nextDate','date')+field(usesHours(asset)?'Due at hours':'Due at mileage','nextReading','number')+field('Repeat interval (e.g. 6 months or 5,000 miles; blank for one-time)','interval')+field('Priority','priority','text','Normal'):'')+field(todo?'Estimated cost ($)':'Total visit cost ($)','cost','number')+field('Shop / person doing the work','provider')+'<label class="complete-wide">Notes / symptoms / parts needed<textarea name="notes" rows="3"></textarea></label>';
+ const itemCosts=document.createElement('div');itemCosts.id='workItemCosts';itemCosts.className='complete-wide';document.getElementById('workEntryFields').append(itemCosts);updateWorkItemCosts();
+ document.getElementById('workEntryStatus').textContent='';workDialog.querySelector('[type=submit]').disabled=false;workDialog.showModal();(workDialog.querySelector('[name=tasks]')||workDialog.querySelector('[name=item]'))?.focus();
+}
+function updateWorkItemCosts(){
+ const form=document.getElementById('workEntryForm'),container=document.getElementById('workItemCosts');if(!container||workMode!=='service')return;
+ const previous=new Map(Array.from(container.querySelectorAll('[data-new-item-cost]'),x=>[x.dataset.newItemCost,x.value]));
+ const selected=new FormData(form).getAll('tasks').map(Number),items=(scheduleFor(workTarget)?.tasks||[]).filter(t=>selected.includes(t.sheetRow)).map(t=>({key:String(t.sheetRow),name:t.task}));
+ const otherWork=form.querySelector('[name="item"]')?.value.trim()||'';
+ if(otherWork)items.push({key:'other',name:otherWork});
+ container.innerHTML=items.length?'<h3>Individual item costs</h3><p>Enter a cost for each item if known. Leave blank when only the visit total is known.</p>'+items.map(x=>'<label>'+esc(x.name)+'<input type="number" min="0" step="0.01" data-new-item-cost="'+x.key+'" aria-label="Cost for '+esc(x.name)+'" value="'+esc(previous.get(x.key)||'')+'" placeholder="Not allocated"></label>').join(''):'';
+}
+document.getElementById('workEntryForm').addEventListener('change',e=>{if(e.target.name==='tasks'||e.target.name==='item')updateWorkItemCosts()});
+document.getElementById('workEntryForm').addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.target,a=workTarget,data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]'),message=document.getElementById('workEntryStatus');
+ const selected=new FormData(form).getAll('tasks').map(Number),tasks=(scheduleFor(a)?.tasks||[]).filter(t=>selected.includes(t.sheetRow));
+ if(workMode==='service'&&!tasks.length&&!data.item.trim()){message.textContent='Select at least one service item or describe the work completed.';return}
+ if(button.disabled)return;
+ button.disabled=true;workDialog.dataset.saving='true';document.getElementById('cancelWorkEntry').disabled=true;message.textContent='Recording service…';let saved=false;
+ try{
+  checkedReading(data.reading);if(data.nextReading)checkedReading(data.nextReading);
+  await ensureProfileRow(a);
+  const notes=[workMode==='todo'&&'Added: '+data.date,data.provider&&'Shop / person: '+data.provider,workMode==='todo'&&data.priority&&'Priority: '+data.priority,workMode==='todo'&&data.cost&&'Estimated cost: $'+data.cost,data.notes].filter(Boolean).join(' · ');
+  if(workMode==='todo'){
+   const match=scheduleKeys.find(([pattern])=>pattern.test(clean([a.make,a.model,a.name].filter(Boolean).join(' ')))),key=match?match[1]:serviceAssetKey(a),name=[a.year,a.make,a.model].join(' ');
+   const row=await fleetAppendRow('Portal Service Schedules',[key,name,data.item.trim(),data.interval,'','',data.nextDate,data.nextReading,notes]);saved=true;
+   (schedules[key]||={sourceName:name,tasks:[]}).tasks.push({sheetRow:row,task:data.item.trim(),interval:data.interval,lastDate:'',lastReading:'',nextDate:data.nextDate,nextReading:data.nextReading,notes});
+  }else{
+   const item=[...tasks.map(t=>t.task),data.item.trim()].filter(Boolean).join('; '),key=serviceAssetKey(a);
+   const costFor=key=>document.querySelector('[data-new-item-cost="'+key+'"]')?.value||'';
+   const items=tasks.map(t=>({name:t.task,cost:costFor(t.sheetRow),notes:''}));if(data.item.trim())items.push({name:data.item.trim(),cost:costFor('other'),notes:''});
+   const total=data.cost!==''?data.cost:items.some(x=>x.cost!=='')?String(items.reduce((sum,x)=>sum+Number(x.cost||0),0)):'';
+   if(items.length===1&&items[0].cost===''&&total!=='')items[0].cost=total;
+   const id=JSON.stringify({tiszodService:1,items});
+   const row=await fleetAppendRow('Portal Service History',[key,id,data.date,item,data.reading,total,notes]);saved=true;
+   services.push({sheetRow:row,asset:key,id,date:data.date,item,odometer:data.reading,cost:total,notes});
+   if(tasks.length){
+    message.textContent='Service recorded. Updating '+tasks.length+' scheduled item'+(tasks.length===1?'':'s')+'…';
+    const updates=tasks.map(task=>({task,next:nextScheduleValues(task,data.date,data.reading)}));
+    await fleetWriteRanges(updates.map(({task,next})=>({sheet:'Portal Service Schedules',range:'E'+task.sheetRow+':H'+task.sheetRow,values:[[data.date,data.reading,next.nextDate,next.nextReading]]})));
+    for(const {task,next} of updates)Object.assign(task,{lastDate:data.date,lastReading:data.reading,...next});
+   }
+  }
+  message.textContent='Updating vehicle mileage…';
+  await syncServiceReading(a,data.reading,data.date);
+  workDialog.close();if(asset===a)renderAsset(workMode==='todo'?'recommended':'maintenance');
+  document.getElementById('assetEditStatus').textContent=workMode==='todo'?'Service to-do saved.':'Completed work saved. Main mileage updated.';
+ }catch(error){message.textContent=error.message+(saved?' The entry was saved, but a follow-up update failed. Close this window and check the record before adding it again.':'');button.disabled=saved}
+ finally{delete workDialog.dataset.saving;document.getElementById('cancelWorkEntry').disabled=false;if(!saved)button.disabled=false}
 });
 function nextScheduleValues(task,date,reading){
  const interval=task.interval||'';
@@ -1068,51 +1427,72 @@ function nextScheduleValues(task,date,reading){
  return {nextDate,nextReading};
 }
 document.getElementById('assetRecommended').addEventListener('click',e=>{
+ if(!asset)return;
+ if(e.target.id==='addScheduledTask'){openWorkDialog('todo');return}
  const button=e.target.closest('[data-complete-row]');
- if(e.target.id==='cancelComplete'){document.getElementById('completePanel').hidden=true;return}
- if(!button||!asset)return;
- const task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(button.dataset.completeRow));if(!task)return;
- const panel=document.getElementById('completePanel'),today=new Date(),date=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
- const reading=mileageFor(asset)?.currentMileage||asset.reportOdometer||'';
- const next=nextScheduleValues(task,date,reading);
- panel.hidden=false;
- panel.innerHTML='<h3>Complete: '+esc(task.task)+'</h3><p>Frequency: '+esc(task.interval||'Not recorded')+'. Confirm the work and the next due date or reading before saving.</p><form id="completeServiceForm" data-schedule-row="'+task.sheetRow+'"><div class="complete-grid"><label>Completed date<input name="date" type="date" value="'+date+'" required></label><label>'+esc(usesHours(asset)?'Hours':'Odometer')+'<input name="reading" inputmode="decimal" value="'+esc(reading)+'" placeholder="Optional"></label><label>Next due date<input name="nextDate" type="date" value="'+esc(next.nextDate)+'"></label><label>'+esc(usesHours(asset)?'Next due hours':'Next due mileage')+'<input name="nextReading" inputmode="decimal" value="'+esc(next.nextReading)+'" placeholder="Optional"></label><label class="complete-wide">Notes<textarea name="notes" rows="2" placeholder="What was done? Parts used?"></textarea></label></div><div class="complete-actions"><button type="submit">Save completed service</button><button id="cancelComplete" type="button">Cancel</button><span class="complete-message" role="status"></span></div></form>';
- panel.scrollIntoView({block:'nearest',behavior:'smooth'});
-});
-document.getElementById('assetRecommended').addEventListener('change',e=>{
- const input=e.target;if(!['date','reading'].includes(input.name))return;
- const form=input.closest('#completeServiceForm'),task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(form?.dataset.scheduleRow));if(!task)return;
- const next=nextScheduleValues(task,form.elements.date.value,form.elements.reading.value);
- if(!form.elements.nextDate.dataset.custom)form.elements.nextDate.value=next.nextDate;
- if(!form.elements.nextReading.dataset.custom)form.elements.nextReading.value=next.nextReading;
-});
-document.getElementById('assetRecommended').addEventListener('input',e=>{if(['nextDate','nextReading'].includes(e.target.name))e.target.dataset.custom='true'});
-document.getElementById('assetRecommended').addEventListener('submit',async e=>{
- if(e.target.id!=='completeServiceForm'||!asset)return;
- e.preventDefault();const form=e.target,button=form.querySelector('[type=submit]'),message=form.querySelector('.complete-message'),task=scheduleFor(asset)?.tasks.find(x=>x.sheetRow===Number(form.dataset.scheduleRow));if(!task)return;
- const data=Object.fromEntries(new FormData(form));button.disabled=true;message.textContent='Saving completed service…';
- try{
-  await ensureProfileRow(asset);const serviceAsset=serviceAssetKey(asset);
-  const row=await thAppendRow('Portal Service History',[serviceAsset,'',data.date,task.task,data.reading,'',data.notes]);
-  services.push({asset:serviceAsset,id:'',date:data.date,item:task.task,odometer:data.reading,cost:'',notes:data.notes,sheetRow:row});
-  button.disabled=true;message.textContent='Saved to Service Log. Updating schedule…';
-  for(const [column,value] of [['E',data.date],['F',data.reading],['G',data.nextDate],['H',data.nextReading]])await thWriteCell('Portal Service Schedules',column+task.sheetRow,value);
-  Object.assign(task,{lastDate:data.date,lastReading:data.reading,nextDate:data.nextDate,nextReading:data.nextReading});
-  renderAsset('recommended');const newPanel=document.getElementById('completePanel');newPanel.hidden=false;newPanel.innerHTML='<p role="status">Completed service saved to Service Log and the schedule updated.</p>';
- }catch(error){message.textContent=error.message+' Check the Service Log before trying again.';button.disabled=true}
+ if(button){openWorkDialog('service',[Number(button.dataset.completeRow)]);return}
+ if(e.target.id==='completeSelected'){
+  const selected=Array.from(document.querySelectorAll('[data-select-service]:checked'),x=>Number(x.dataset.selectService));
+  openWorkDialog('service',selected);
+ }
 });
 document.getElementById('assetPhotoInput').addEventListener('change',async e=>{
  const file=e.target.files?.[0];if(!file||!asset)return;const current=asset;
  const statusEl=document.getElementById('photoUploadStatus'),label=document.querySelector('.photo-upload');
  label.style.pointerEvents='none';statusEl.textContent='Uploading photo…';
- try {const url=await thUploadAssetPhoto(file,current);current.photo=url;current.photoObjectUrl=URL.createObjectURL(file);renderAsset();renderCategory();document.getElementById('photoUploadStatus').textContent='Photo saved to this item.'}
+ try {const url=await thUploadAssetPhoto(file,current);await touchAsset(current);current.photo=url;current.photoObjectUrl=URL.createObjectURL(file);renderAsset();renderCategory();document.getElementById('photoUploadStatus').textContent='Photo saved to this item.'}
  catch(error){statusEl.textContent=error.message}
  finally {label.style.pointerEvents='';e.target.value=''}
 });
+function fuelVehicleRank(a){
+ const name=clean([a.make,a.model].filter(Boolean).join(' '));
+ if(name.includes('mustang'))return 0;
+ if(name.includes('roadglide')||name.includes('fltrk'))return 1;
+ if(String(a.year)==='1977'&&/f150|f100|fseries/.test(name))return 2;
+ if(/ultraclassic|electraglide|flhtcui/.test(name))return 3;
+ return 4;
+}
+window.tiszodFuelOptions=()=>({
+ vehicles:assets.filter(a=>clean(a.status)==='active'&&!usesHours(a)&&!['Trailers','RVs','Bicycles'].includes(a.category)).sort((a,b)=>fuelVehicleRank(a)-fuelVehicleRank(b)||[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' '))).map(a=>({key:serviceAssetKey(a),name:[a.year,a.make,a.model].filter(Boolean).join(' '),profileRow:a.profileRow||null,year:Number(a.year),mileageName:[a.make,a.model].filter(Boolean).join(' '),mileageRow:mileageFor(a)?.sheetRow||null,current:mileageFor(a)?.currentMileage??null})),
+ selected:asset&&!document.getElementById('assetView').hidden?serviceAssetKey(asset):null,
+ onSaved:async entry=>{const fresh=await thFleetData();for(const a of assets){const p=fresh.profiles.find(p=>p.profileRow===a.profileRow);if(p)a.lastUpdated=p.lastUpdated}paintUpdated();mileage.splice(0,mileage.length,...fresh.vehicles);renderCategory();renderGarageStats();if(asset&&!document.getElementById('assetView').hidden)renderAsset('fuel');}
+});
+const openFuel=()=>TisFuel.open(window.tiszodFuelOptions());
+document.getElementById('openFuelCapture').onclick=openFuel;
+document.getElementById('logAssetFuel').onclick=openFuel;
 document.getElementById('backDashboard').addEventListener('click',()=>show('menuView'));
+
+/* Open the working vehicle list directly, with a single compact action bar. */
+const quickActions=document.createElement('div');quickActions.className='vehicle-workspace-actions';
+document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
+for(const el of [document.getElementById('openFuelCapture'),document.querySelector('#menuView .document-hub-button'),document.getElementById('openReports')].filter(Boolean))quickActions.append(el);
+document.getElementById('openReports').textContent='Reports';
+document.getElementById('openFuelCapture').textContent='Fuel log';
+ document.getElementById('openFuelCapture').hidden=true;
+
+const workspaceDocs=quickActions.querySelector('.document-hub-button');
+if(workspaceDocs)workspaceDocs.textContent='Needs filing';
+document.getElementById('backDashboard').hidden=true;
+document.querySelector('#categoryView .kicker').textContent=workspaceTitle;
+ document.querySelector('#reportVehicle').parentElement.firstChild.textContent=workspaceTitle;
+ document.querySelector('#deleteAssetButton').textContent='Delete '+workspaceTitle.toLowerCase();
+document.querySelector('#categoryView .section-title p').remove();
+category='All Watercraft';status='current';renderCategory();show('categoryView');
+
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
 
-window.thStart = async () => renderFleetPage(await thFleetData(), new URL('./',location.href).href);
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-mobile-toolbar-2"></script><script src="vehicle-documents.js?v=20261101-shared-viewers-1"></script><script src="sheets.js?v=20261029-documents-1"></script></body></html>
-
+// Rebuild from intact markup on retries; prior rendering may have moved controls.
+const thFleetTemplates=Array.from(document.querySelectorAll('.workspace-view'),node=>node.cloneNode(true));
+let thFleetStarting=null;
+window.thStart=()=>{
+ if(thFleetStarting)return thFleetStarting;
+ thFleetStarting=(async()=>{
+  const data=await thFleetData();
+  for(const template of thFleetTemplates){const current=document.getElementById(template.id);if(current)current.replaceWith(template.cloneNode(true));}
+  document.querySelectorAll('body > .work-dialog, body > .vehicle-documents, body > #complianceDialog').forEach(node=>node.remove());
+  return renderFleetPage(data,new URL('./',location.href).href);
+ })().finally(()=>{thFleetStarting=null});
+ return thFleetStarting;
+};
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-mobile-toolbar-2"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
