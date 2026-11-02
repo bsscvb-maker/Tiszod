@@ -642,7 +642,7 @@ function cardNumber(value){const n=Number(String(value??'').replace(/,/g,'').tri
 function cardEngine(a){return a.engine&&clean(a.engine)!=='na'?a.engine:'Not recorded'}
 function showCardEngine(a){
  const model=clean([a.make,a.model].filter(Boolean).join(' '));
- if(/bullet|stirling/.test(model)||['4YDT33126LT434476','2SSUBE1A1MB148250'].includes(String(a.vin||'').toUpperCase()))return true;
+ if(a.category==='Trailers'||/trailer|keystonebullet|stirling|yamahaezloader/.test(model)||['4YDT33126LT434476','2SSUBE1A1MB148250'].includes(String(a.vin||'').toUpperCase()))return false;
  if(a.category==='Bicycles'||/pedal|humanpowered|nonmotorized/.test(clean(a.engine||'')))return false;
  const engine=clean(a.engine||'');
  if(/^(noengine|nomotor|none|notapplicable)/.test(engine))return false;
