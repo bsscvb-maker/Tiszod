@@ -99,3 +99,10 @@
 .bk .bk-creditor-scroll{max-height:none;overflow:auto;isolation:auto}
 .bk-frozen-creditor-head{background:#1c3658;border-bottom:1px solid #50749d;box-shadow:0 3px 8px #0005}
 .bk-frozen-creditor-head .bk-creditor-table thead th{position:static}
+
+/* Desktop: let native sticky cells follow the page, without an overflow ancestor. */
+@media(min-width:1500px){
+ .bk .bk-creditor-scroll{overflow:visible;max-height:none;isolation:auto}
+ .bk .bk-creditor-table thead th{position:sticky;top:var(--bk-heading-top,76px);z-index:35;background:#1c3658}
+ .bk-frozen-creditor-head{display:none!important}
+}
