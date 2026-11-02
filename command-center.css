@@ -21,3 +21,11 @@ body[data-th-page] .th-module-card .th-module-art{background-color:#101a29!impor
 
 /* Keep the system-check time as visible as the connection indicator. */
 .personal-command .pc-health .pc-last-checked{color:#6ef0ab!important;font-weight:750;font-size:12px;margin-top:7px}
+
+/* Dashboard totals: blue vehicles, green positive cash, red debt, task workload colors. */
+.personal-command .pc-kpi[href="vehicles.html"]>strong{color:#69aaff!important}
+.personal-command .pc-kpi[href="bk.html"]>strong{color:#ff626b!important}
+.personal-command .pc-kpi>strong[data-tone="positive"]{color:#36bf78!important}
+.personal-command .pc-kpi>strong[data-tone="warning"]{color:#f4ca55!important}
+.personal-command .pc-kpi>strong[data-tone="negative"]{color:#ff626b!important}
+.personal-command .pc-kpi>strong[data-tone="neutral"]{color:#e7edf6!important}
