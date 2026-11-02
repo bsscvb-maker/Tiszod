@@ -20,7 +20,7 @@ window.thStart=async()=>{
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
-let documentOrders=new Map(),orderSaving=false;
+let documentOrders=new Map(),orderSaving=false,arrangeDocuments=false;
 let hiddenPeople=new Set(['Heather','Alexis']),showHiddenPeople=false,visibilitySaving=false;
 const visibilityRange="'Identification Records'!D1:E2000";
 function applyVisibility(rows){
@@ -85,7 +85,7 @@ function render(){
  const grid=$('identity-grid'),chosen=person||selectedPerson;
  const heading=grid.previousElementSibling;
  let shown=list,html='<div class="record-breadcrumb"><button data-record-back="root">← '+(isEducation?'Education':'People')+'</button>';
- if(!isEducation&&chosen){shown=shown.filter(r=>(r.data.person||'General')===chosen);html+='<strong>'+esc(chosen)+'</strong><button type="button" data-toggle-person="'+esc(chosen)+'" data-hide-value="'+String(!hiddenPeople.has(chosen))+'" '+(visibilitySaving?'disabled':'')+'>'+(hiddenPeople.has(chosen)?'Unhide ':'Hide ')+esc(chosen)+'</button>';}
+ if(!isEducation&&chosen){shown=shown.filter(r=>(r.data.person||'General')===chosen);html+='<strong>'+esc(chosen)+'</strong>'+(!deleted&&!hiddenDocuments?'<button type="button" data-arrange-documents aria-pressed="'+String(arrangeDocuments)+'" '+(orderSaving?'disabled':'')+'>'+(arrangeDocuments?'Done':'Arrange documents')+'</button>':'')+'<button type="button" data-toggle-person="'+esc(chosen)+'" data-hide-value="'+String(!hiddenPeople.has(chosen))+'" '+(visibilitySaving?'disabled':'')+'>'+(hiddenPeople.has(chosen)?'Unhide ':'Hide ')+esc(chosen)+'</button>';}
  if(isEducation&&selectedCategory){shown=shown.filter(r=>(r.data.category||'Other')===selectedCategory);html+='<strong>'+esc(selectedCategory)+'</strong>';}
  if(isEducation&&selectedFolder){shown=shown.filter(r=>(r.data.folder||'')===selectedFolder||r.data.folder?.startsWith(selectedFolder+'/'));html+='<button data-record-back="category">← '+esc(selectedCategory||'Categories')+'</button><strong>'+esc(selectedFolder)+'</strong>';}
  html+='</div>';
@@ -98,11 +98,12 @@ function render(){
 }
 document.querySelector('.identification').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
+ if(b.hasAttribute('data-arrange-documents')){arrangeDocuments=!arrangeDocuments;render();message(arrangeDocuments?'Drag any document card to arrange it. Changes save automatically. Tap Done when finished.':'Finished arranging documents.');return}
  if(b.dataset.togglePerson){saveVisibility(b.dataset.togglePerson,b.dataset.hideValue==='true');return}
- if(b.dataset.person){selectedPerson=b.dataset.person;$('identity-person').value='';$('identity-category').value='';$('identity-search').value='';recordPage=1;render()}
+ if(b.dataset.person){arrangeDocuments=false;selectedPerson=b.dataset.person;$('identity-person').value='';$('identity-category').value='';$('identity-search').value='';recordPage=1;render()}
  if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
- if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value=''}recordPage=1;render()}
+ if(b.dataset.recordBack){arrangeDocuments=false;selectedFolder='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value=''}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
 function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('identity-form');f.reset();for(const k of ['name','person','category','url','expires','notes'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('identity-save-status').textContent='';$('identity-dialog').showModal()}
@@ -155,14 +156,15 @@ function compareDocuments(a,b,person){
 }
 function orderedCard(r,person,deleted){
  const html=card(r).replace('<footer>','<footer>'+(deleted?'':'<button type="button" data-hide-document="'+esc(r.id)+'">'+(r.data.hidden?'Unhide':'Hide')+'</button>'));
- if(!person||deleted)return html;
- return html.replace('<footer>','<footer><button type="button" class="identity-reorder" data-reorder="'+esc(r.id)+'" aria-label="Move '+esc(title(r.data))+' — drag or use arrow keys" title="Drag to arrange; arrow keys also move documents" '+(orderSaving?'disabled':'')+'>⠿ Move</button>');
+ if(!person||deleted||!arrangeDocuments||$('identity-view').value==='hidden')return html;
+ return html.replace('<article ','<article data-reorder="'+esc(r.id)+'" tabindex="0" aria-label="'+esc(title(r.data))+' — drag to arrange, or use arrow keys" ');
+
 }
 async function persistDocumentOrder(person,ids){
  if(orderSaving)return false;
  if(!thAuthorized()){message('Sign in to save document order.');render();return false}
  orderSaving=true;
- for(const handle of $('identity-grid').querySelectorAll('[data-reorder]'))handle.disabled=true;
+ message('Saving document order…');
  try{
   const rows=await thValues(visibilityRange,'UNFORMATTED_VALUE'),key='document-order:'+person;
   let index=-1;rows.forEach((r,i)=>{if(r[0]===key)index=i});
@@ -174,6 +176,10 @@ async function persistDocumentOrder(person,ids){
  }catch(err){message(err.message);return false}finally{orderSaving=false;render()}
 }
 const orderGrid=$('identity-grid');
+orderGrid.addEventListener('click',e=>{if(arrangeDocuments&&e.target.closest('[data-reorder]')){e.preventDefault();e.stopImmediatePropagation()}},true);
+orderGrid.addEventListener('dragstart',e=>{if(arrangeDocuments)e.preventDefault()});
+for(const id of ['identity-search','identity-person','identity-category','identity-view'])$(id).addEventListener(id==='identity-search'?'input':'change',()=>{arrangeDocuments=false;render()});
+
 function moveDocument(person,id,target,after){
  const all=records.filter(r=>!r.data.deleted&&(r.data.person||'General')===person).sort((a,b)=>compareDocuments(a,b,person)).map(r=>r.id);
  const ids=all.filter(value=>value!==id),index=ids.indexOf(target);
@@ -182,7 +188,7 @@ function moveDocument(person,id,target,after){
 let documentDrag=null;
 orderGrid.addEventListener('pointerdown',e=>{
  const handle=e.target.closest('[data-reorder]');
- if(!handle||orderSaving||e.button!==0)return;
+ if(!arrangeDocuments||!handle||orderSaving||e.button!==0)return;
  e.preventDefault();e.stopPropagation();
  const person=$('identity-person').value||selectedPerson;
  documentDrag={handle,person,id:handle.dataset.reorder,target:null,after:false};
@@ -198,7 +204,8 @@ orderGrid.addEventListener('pointermove',e=>{
  if(target&&orderGrid.contains(target)&&target.dataset.fileId!==documentDrag.id){
   const rect=target.getBoundingClientRect();
   documentDrag.target=target.dataset.fileId;
-  documentDrag.after=e.clientY>rect.top+rect.height/2;
+  const sourceRect=documentDrag.handle.getBoundingClientRect();
+  documentDrag.after=Math.abs(sourceRect.top-rect.top)<30?e.clientX>rect.left+rect.width/2:e.clientY>rect.top+rect.height/2;
   target.classList.add('identity-drop-target');
  }
  if(e.clientY<80)window.scrollBy(0,-24);else if(e.clientY>window.innerHeight-80)window.scrollBy(0,24);
@@ -224,7 +231,7 @@ orderGrid.addEventListener('keydown',async e=>{
  if(ids){await persistDocumentOrder(person,ids);[...orderGrid.querySelectorAll('[data-reorder]')].find(node=>node.dataset.reorder===id)?.focus()}
 });
 const orderStyle=document.createElement('style');
-orderStyle.textContent='.identity-reorder{touch-action:none;cursor:grab!important;min-height:44px}.identity-reorder:active{cursor:grabbing!important}.identity-dragging{opacity:.55;outline:2px solid #6ac5f3}.identity-drop-target{outline:3px dashed #6ac5f3;outline-offset:3px}';
+orderStyle.textContent='[data-reorder]{touch-action:none;cursor:grab!important;user-select:none;outline:2px dashed #6ac5f3;outline-offset:-2px}[data-reorder]:active{cursor:grabbing!important}[data-reorder] .record-link,[data-reorder] .identity-picture-card,[data-reorder] footer,[data-reorder] img,[data-reorder] iframe{pointer-events:none}[data-reorder] footer{opacity:.4}.identity-dragging{opacity:.55;outline:2px solid #6ac5f3}.identity-drop-target{outline:3px dashed #6ac5f3;outline-offset:3px}';
 document.head.append(orderStyle);
 
 window.thViewAdapter={capture:()=>({selectedPerson,selectedCategory,selectedFolder,openedPictureId}),restore:s=>{selectedPerson=s?.selectedPerson||'';selectedCategory=s?.selectedCategory||'';selectedFolder=s?.selectedFolder||'';render();if(s?.openedPictureId)openPictures(s.openedPictureId);else if(pictureDialog.open){openedPictureId=null;pictureDialog.close()}}};
