@@ -495,3 +495,43 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }
  }`;document.head.append(style);
 })();
+
+/* Compact phone equipment cards and history controls. */
+(()=>{
+ const style=document.createElement('style');
+ style.textContent=`
+ @media(max-width:700px){
+ body[data-th-page] .th-mobile-bar .th-browser-controls{display:flex!important;order:3;flex-basis:100%;gap:6px;margin:0;padding:0}
+ body[data-th-page] .th-mobile-bar .th-browser-controls button{display:flex!important;flex:1;flex-direction:row!important;gap:6px;width:auto!important;height:44px!important;min-height:44px!important;padding:6px!important;font-size:12px!important}
+ body[data-th-page] .th-mobile-bar .th-browser-controls svg{width:18px!important;height:18px!important}
+ body[data-th-page] .th-mobile-bar .th-mobile-control-label{font-size:12px!important}
+ body[data-th-page] .th-mobile-brand{font-size:18px}
+ body[data-th-page] .th-mobile-brand img{width:28px;height:28px}
+ body[data-th-page] .th-mobile-bar>button{min-height:40px;height:40px}
+ body[data-th-page] #categoryView #assetGrid .asset-card{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:10px 12px;min-height:0;padding:12px;border-radius:12px}
+ body[data-th-page] #categoryView #assetGrid .card-status{position:static;grid-column:1/-1;justify-self:end;margin:0;padding:3px 8px;min-height:36px;font-size:12px}
+ body[data-th-page] #categoryView #assetGrid .card-status select{min-height:30px;max-width:150px}
+ body[data-th-page] #categoryView #assetGrid .card-photo{grid-column:1;grid-row:2;width:88px;height:76px;aspect-ratio:auto;align-self:center}
+ body[data-th-page] #categoryView #assetGrid .card-copy{display:contents}
+ body[data-th-page] #categoryView #assetGrid .card-copy>strong{grid-column:2;grid-row:2;display:block;font-size:16px;line-height:1.3;margin:0;align-self:center}
+ body[data-th-page] #categoryView #assetGrid .card-copy>.card-stat{grid-column:1/-1;margin:0;font-size:13px;line-height:1.4}
+ body[data-th-page] #categoryView #assetGrid .card-last-updated{grid-column:1/-1;margin:0;font-size:12px;line-height:1.4}
+ body[data-th-page] #categoryView #assetGrid .card-ownership{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 12px;margin:0;padding:10px 0;border-top:1px solid #ffffff26;border-bottom:1px solid #ffffff26}
+ body[data-th-page] #categoryView #assetGrid .card-ownership>span:nth-child(1){grid-column:1;grid-row:1}
+ body[data-th-page] #categoryView #assetGrid .card-ownership>b:nth-child(2){grid-column:1;grid-row:2}
+ body[data-th-page] #categoryView #assetGrid .card-ownership>span:nth-child(3){grid-column:2;grid-row:1}
+ body[data-th-page] #categoryView #assetGrid .card-ownership>b:nth-child(4){grid-column:2;grid-row:2}
+ body[data-th-page] #categoryView #assetGrid .card-ownership span{font-size:11px}
+ body[data-th-page] #categoryView #assetGrid .card-ownership b{font-size:13px;margin:0}
+ body[data-th-page] #categoryView #assetGrid .card-deadlines{grid-column:1/-1}
+ body[data-th-page] #categoryView #assetGrid .card-open,body[data-th-page] #categoryView #assetGrid .card-mileage{position:static;grid-column:1/-1;width:100%;min-height:44px;margin:0;padding:10px;font-size:13px;text-align:center}
+ body[data-th-page] #categoryView #assetGrid .card-open{grid-column:1/-1}
+ }
+ @media(min-width:360px) and (max-width:700px){
+ body[data-th-page] #categoryView #assetGrid .asset-card{grid-template-columns:88px minmax(0,1fr) minmax(0,1fr)}
+ body[data-th-page] #categoryView #assetGrid .card-copy>strong{grid-column:2/-1}
+ body[data-th-page] #categoryView #assetGrid .card-open{grid-column:1/3;grid-row:auto}
+ body[data-th-page] #categoryView #assetGrid .card-mileage{grid-column:3}
+ }`;
+ document.head.append(style);
+})();
