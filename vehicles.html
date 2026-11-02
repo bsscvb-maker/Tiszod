@@ -934,7 +934,7 @@ function renderAsset(tab='details'){
   {title:'Components & equipment',keys:['frameMaterial','frameAngles','fork','rearShock','brakeLevers','handlebar','stem','headset','frontDerailleur','crankset','rearDerailleur','pedals','cuttingHead','dumpCartModel','dumpCartProduct','dumpCartSerial'],preview:[specs.frameMaterial,specs.dumpCartModel].filter(Boolean).join(' · ')},
   {title:'Identification & other details',keys:['manufacturer','brand','itemWeight','productDimensions','partNumber','productNumber','productSerial','manufactured','gvwr','wheelbase','seatHeight','curbWeight','dryWeight','additionalDetails'],preview:[specs.manufacturer,specs.gvwr].filter(Boolean).join(' · ')}
  ];
- document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<label class="asset-fact"><span>End of service date (optional)</span><input data-end-service type="date" aria-label="End of service date" value="'+esc(specRecord(asset).specs.endOfServiceDate||'')+'" readonly><small>Leave blank if unknown.</small></label>');
+ document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<div class="asset-fact"><span>End of service date (optional)</span><div class="ownership-date-row"><input data-end-service type="text" inputmode="numeric" maxlength="10" placeholder="MM/DD/YYYY" aria-label="End of service date, MM/DD/YYYY" value="'+esc(ownershipText(specRecord(asset).specs.endOfServiceDate))+'"><input data-end-service-picker type="date" aria-label="Choose end of service date" value="'+esc(specRecord(asset).specs.endOfServiceDate||'')+'"></div><button type="button" data-save-end-service style="padding:8px 12px;margin-top:8px">Save end date</button><small data-end-service-message role="status" aria-live="polite">Leave blank and save to clear the end date.</small></div>');
  document.getElementById('quickSpecGroups').innerHTML=specGroups.filter(group=>group.title!=='Engine & service'||showCardEngine(asset)).map(group=>'<details class="quick-spec-group'+(group.keys.some(key=>specs[key])?'':' quick-spec-group-empty')+'"><summary><strong>'+esc(group.title)+'</strong><small>'+esc(group.preview||'Add details')+'</small></summary><div class="asset-facts">'+quickSpecs.filter(([,key])=>group.keys.includes(key)).map(([label,key])=>'<label class="asset-fact quick-spec'+(specs[key]?'':' quick-spec-empty')+'"><span>'+esc(label)+'</span><textarea data-spec-field="'+key+'" aria-label="'+esc(label)+'" placeholder="Not recorded" rows="1" readonly>'+esc(specs[key]??'')+'</textarea></label>').join('')+'</div></details>').join('');
  document.getElementById('assetEditStatus').textContent='';
   document.getElementById('photoSummary').innerHTML=[['Engine',asset.engine],['VIN / serial number',asset.vin]].filter(([label])=>label!=='Engine'||showCardEngine(asset)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
@@ -1080,7 +1080,7 @@ document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
  const panel=document.getElementById(({details:'assetDetails',mileage:'assetMileage',maintenance:'assetMaintenance'})[tab]);
  panel.classList.toggle('editing-specs',editing&&tab==='details');
  if(tab==='details'&&editing)panel.querySelectorAll('.quick-spec-group').forEach(group=>group.open=true);
- panel.querySelectorAll('input[data-asset-field],input[data-end-service],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
+ panel.querySelectorAll('input[data-asset-field],textarea[data-spec-field],input[data-mileage-col],input[data-service-row]').forEach(input=>{
   input.readOnly=!editing;
   if(!editing){const key=input.dataset.assetField;if(key)input.value=key==='ownershipStart'?ownershipText(asset[key]):key==='currentReading'?mileageFor(asset)?.currentMileage??'':key==='reportOdometer'?mileageFor(asset)?.startMileage??asset.reportOdometer??'':asset[key]??'';}
  });
@@ -1111,19 +1111,35 @@ document.getElementById('quickSpecGroups').addEventListener('change',async e=>{
  catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
  finally{input.disabled=false}
 });
-document.getElementById('assetFacts').addEventListener('change',async e=>{
- const input=e.target;if(!input.matches('[data-end-service]')||!asset||!editing)return;
- const a=asset,prior=specRecord(a).specs.endOfServiceDate||'',next=input.value,message=document.getElementById('assetEditStatus');
- if(next===prior)return;
- if(next&&(!/^\d{4}-\d{2}-\d{2}$/.test(next)||!ownershipDate(next))){input.value=prior;message.textContent='Enter a valid end of service date.';return}
- input.disabled=true;message.textContent='Saving end of service date…';message.classList.remove('error');
+document.getElementById('assetFacts').addEventListener('change',e=>{
+ const picker=e.target;if(!picker.matches('[data-end-service-picker]'))return;
+ const field=document.querySelector('[data-end-service]');
+ if(field)field.value=ownershipText(picker.value);
+});
+document.getElementById('assetFacts').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-save-end-service]');if(!button||!asset)return;
+ const a=asset,input=document.querySelector('[data-end-service]'),picker=document.querySelector('[data-end-service-picker]'),message=document.querySelector('[data-end-service-message]');
+ const raw=input.value.trim(),date=ownershipDate(raw),next=raw&&date?ownershipIso(date):'';
+ message.classList.remove('error');
+ if(raw&&!date){message.textContent='Enter a complete date as MM/DD/YYYY, or choose it from the calendar.';message.classList.add('error');input.focus();return}
+ const start=ownershipDate(a.ownershipStart)||ownershipDate(mileageFor(a)?.serviceStart);
+ if(date&&start&&date<start){message.textContent='End of service cannot be before Date Acquired.';message.classList.add('error');input.focus();return}
+ button.disabled=true;input.disabled=true;picker.disabled=true;message.textContent='Saving end date…';
  const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
-  await ensureProfileRow(a);const record=specRecord(a);record.specs.endOfServiceDate=next;
-  const json=JSON.stringify(record);await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json;
+  await ensureProfileRow(a);
+  const record=specRecord(a);record.specs.endOfServiceDate=next;
+  const json=JSON.stringify(record);
+  await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);
+  const values=await thValues("'Portal Asset Profiles'!AB"+a.profileRow);
+  let confirmed;try{confirmed=JSON.parse(values[0]?.[0]||'')}catch(_){}
+  if(confirmed?.specs?.endOfServiceDate!==next)throw new Error('The end date could not be confirmed in your workbook. Please try Save end date again.');
+  a.reportNotes=values[0][0];
  });a.specSaveQueue=saving;
- try{await saving;renderCategory();renderGarageStats();message.textContent=next?'End of service date saved. Ownership duration updated.':'End of service date cleared. Ownership duration updated.'}
- catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
- finally{input.disabled=false}
+ try{
+  await saving;input.value=ownershipText(next);picker.value=next;renderCategory();renderGarageStats();
+  message.textContent=next?'Saved and verified: '+ownershipText(next)+'. Ownership duration updated.':'End date cleared and verified. Ownership duration now runs through today.';
+ }catch(error){message.textContent=error.message;message.classList.add('error')}
+ finally{button.disabled=false;input.disabled=false;picker.disabled=false}
 });
 document.getElementById('assetFacts').addEventListener('change',async e=>{
  if(e.target.id!=='assetStatusEdit'||!asset||!editing)return;
