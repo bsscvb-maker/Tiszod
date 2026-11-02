@@ -243,3 +243,67 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 /* Header Home replaces the redundant sidebar Home. Keep group indices stable. */
 (()=>{const nav=document.querySelector('.th-sidebar nav');if(!nav)return;nav.querySelector('a[href="./"]')?.remove();for(const label of nav.querySelectorAll('.th-nav-label'))if(label.textContent.trim()==='Main')label.hidden=true;})();
+
+/* Compatibility helpers required by the bundled PDF.js, including its worker. */
+if(!Uint8Array.prototype.toHex)Uint8Array.prototype.toHex=function(){return Array.from(this,b=>b.toString(16).padStart(2,'0')).join('')};
+for(const C of [Map,WeakMap]){
+ if(!C.prototype.getOrInsertComputed)C.prototype.getOrInsertComputed=function(k,f){if(!this.has(k))this.set(k,f(k));return this.get(k)};
+ if(!C.prototype.getOrInsert)C.prototype.getOrInsert=function(k,v){if(!this.has(k))this.set(k,v);return this.get(k)};
+}
+if(!Uint8Array.fromBase64)Uint8Array.fromBase64=function(value){const s=atob(value.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(s,c=>c.charCodeAt(0))};
+if(!Uint8Array.prototype.toBase64)Uint8Array.prototype.toBase64=function(){let s='';for(let i=0;i<this.length;i+=8192)s+=String.fromCharCode(...this.subarray(i,i+8192));return btoa(s)};
+
+/* Shared private Drive previews. Keep iframe handles for existing dialog controllers. */
+(()=>{'use strict';
+const states=new Map(),files=new Map();let library;
+const pdfLibrary=()=>library||=(import('./vendor/pdfjs/pdf.min.mjs').then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',document.baseURI).href;return pdf}));
+function driveId(value){try{const u=new URL(value,document.baseURI);return ['drive.google.com','docs.google.com'].includes(u.hostname)?u.pathname.match(/\/d\/([^/]+)/)?.[1]||u.searchParams.get('id')||'':''}catch{return ''}}
+async function file(id){
+ if(!files.has(id))files.set(id,(async()=>{
+  if(typeof thAuthorized!=='function'||!thAuthorized())throw Error('Sign in to the portal to view this document.');
+  const base='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id);
+  const meta=await fetch(base+'?fields=mimeType,name&supportsAllDrives=true',{headers:{Authorization:'Bearer '+thToken}});
+  if(!meta.ok)throw Error('This Google account cannot access this document.');
+  const info=await meta.json(),native=info.mimeType.startsWith('application/vnd.google-apps.');
+  const response=await fetch(base+(native?'/export?mimeType=application%2Fpdf':'?alt=media&supportsAllDrives=true'),{headers:{Authorization:'Bearer '+thToken}});
+  if(!response.ok)throw Error('Unable to load this document. Open the original or reconnect Google.');
+  return {blob:await response.blob(),type:native?'application/pdf':info.mimeType};
+ })().catch(e=>{files.delete(id);throw e}));
+ return files.get(id);
+}
+function dispose(holder){const old=states.get(holder);if(old){old.cancelled=true;if(old.url)URL.revokeObjectURL(old.url);old.task?.destroy().catch(()=>{});states.delete(holder)}}
+async function render(holder,id,title='Document',full=false){
+ dispose(holder);const state={cancelled:false};states.set(holder,state);holder.classList.remove('th-document-error');holder.classList.add('th-document-viewer');holder.classList.toggle('th-document-full',full);holder.textContent='Loading document…';
+ try{
+  const data=await file(id);if(state.cancelled||!holder.isConnected)return;
+  if(data.type.startsWith('image/')){const img=document.createElement('img');img.alt=title;state.url=URL.createObjectURL(data.blob);img.src=state.url;holder.replaceChildren(img);return}
+  if(data.type!=='application/pdf'){holder.textContent='Use Open original to view this file type.';return}
+  const pdfjs=await pdfLibrary();if(state.cancelled)return;
+  state.task=pdfjs.getDocument({data:new Uint8Array(await data.blob.arrayBuffer()),isEvalSupported:false});
+  const pdf=await state.task.promise;if(state.cancelled)return;
+  let number=1,sequence=0;const stage=document.createElement('div');stage.className='th-document-page';holder.replaceChildren(stage);
+  const nav=document.createElement('nav'),prev=document.createElement('button'),next=document.createElement('button'),label=document.createElement('span');
+  if(full&&pdf.numPages>1){nav.setAttribute('aria-label','Document pages');prev.type=next.type='button';prev.textContent='← Previous';next.textContent='Next →';nav.append(prev,label,next);holder.prepend(nav)}
+  async function paint(){const run=++sequence;prev.disabled=number<=1;next.disabled=number>=pdf.numPages;label.textContent='Page '+number+' of '+pdf.numPages;
+   const page=await pdf.getPage(number),base=page.getViewport({scale:1}),width=holder.clientWidth||600,viewport=page.getViewport({scale:Math.min(2,width*Math.min(window.devicePixelRatio||1,2)/base.width)}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);canvas.setAttribute('role','img');canvas.setAttribute('aria-label',title+' — page '+number);await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;if(!state.cancelled&&run===sequence)stage.replaceChildren(canvas);
+  }
+  prev.onclick=()=>{if(number>1){number--;paint().catch(fail)}};next.onclick=()=>{if(number<pdf.numPages){number++;paint().catch(fail)}};await paint();
+ }catch(error){fail(error)}
+ function fail(error){if(!state.cancelled){holder.textContent=error.message||'Preview unavailable. Open the original document.';holder.classList.add('th-document-error')}}
+}
+window.thDocumentViewer={render,dispose,driveId};
+const css=document.createElement('style');css.textContent='.th-document-viewer{box-sizing:border-box;display:flex!important;flex-direction:column;align-items:center;justify-content:center;width:100%;height:300px;min-height:0!important;overflow:hidden;background:#fff;color:#193047;font:14px/1.5 system-ui;text-align:center}.th-document-viewer>img,.th-document-page>canvas{display:block!important;width:100%!important;height:100%!important;min-height:0!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important}.th-document-page{flex:1;min-height:0;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}.th-document-full{height:min(70dvh,800px);pointer-events:auto!important}.th-document-viewer nav{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:8px;flex-shrink:0}.th-document-viewer nav button{font:14px system-ui;padding:8px}.th-document-error{padding:20px;overflow-wrap:anywhere}iframe[data-th-private-frame]{display:none!important}.th-document-viewer[hidden]{display:none!important}';document.head.append(css);
+const frames=new Map();
+function sync(frame){
+ const src=frame.getAttribute('src')||'',id=driveId(src);let entry=frames.get(frame);
+ if(!id){if(entry){dispose(entry.holder);entry.holder.remove();frames.delete(frame);frame.removeAttribute('data-th-private-frame')}return}
+ if(!entry){const holder=document.createElement('div');holder.className=frame.className;frame.after(holder);entry={holder,id:null};frames.set(frame,entry)}
+ frame.dataset.thPrivateFrame='true';const hidden=frame.hidden||frame.style.display==='none';if(entry.holder.hidden!==hidden)entry.holder.hidden=hidden;
+ if(frame.closest('dialog')&&!frame.closest('dialog').open)return;
+ if(entry.id!==id){entry.id=id;render(entry.holder,id,frame.title||'Document',!!frame.closest('dialog')).catch(()=>{})}
+}
+let pending=false;function scan(){pending=false;for(const holder of states.keys())if(!holder.isConnected)dispose(holder);for(const frame of document.querySelectorAll('iframe'))sync(frame);for(const [frame,entry]of frames)if(!frame.isConnected){dispose(entry.holder);entry.holder.remove();frames.delete(frame)}}
+const observer=new MutationObserver(()=>{if(!pending){pending=true;queueMicrotask(scan)}});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['src','hidden','style','open']});scan();
+addEventListener('pagehide',()=>{for(const holder of states.keys())dispose(holder);files.clear()});
+document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [frame,entry]of frames)if(e.target.contains(frame)){dispose(entry.holder);entry.id=null;entry.holder.replaceChildren()}},true);
+})();

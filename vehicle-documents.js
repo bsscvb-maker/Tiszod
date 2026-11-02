@@ -95,9 +95,9 @@ window.TiszodVehicleDocuments = (() => {
       if((info.mimeType||r.mime)==='application/pdf'||/\.pdf$/i.test(r.name)){
         const response=await thDriveFetch(id);if(!response.ok)throw new Error('No preview');
         pdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
-        const pdfjs=await pdfModule;pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.min.mjs',location.href).href;
-        const doc=await pdfjs.getDocument({data:new Uint8Array(await response.arrayBuffer())}).promise;
-        try{const page=await doc.getPage(1),base=page.getViewport({scale:1}),viewport=page.getViewport({scale:240/base.width}),canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;return canvas.toDataURL('image/jpeg',.8);}finally{await doc.destroy();}
+        const pdfjs=await pdfModule;pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',location.href).href;
+        const task=pdfjs.getDocument({data:new Uint8Array(await response.arrayBuffer())});const doc=await task.promise;
+        try{const page=await doc.getPage(1),base=page.getViewport({scale:1}),viewport=page.getViewport({scale:240/base.width}),canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;return canvas.toDataURL('image/jpeg',.8);}finally{await task.destroy();}
       }
       throw new Error('Preview unavailable');
     }

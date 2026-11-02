@@ -143,7 +143,7 @@
  let bkPdfLibraryPromise;
  const documentDriveId=link=>{try{const u=new URL(link);if(!['drive.google.com','docs.google.com'].includes(u.hostname))return '';return u.pathname.match(/\/(?:d|folders)\/([a-zA-Z0-9_-]+)/)?.[1]||u.searchParams.get('id')||''}catch{return ''}};
  function bkPdfLibrary(){
-  return bkPdfLibraryPromise||=(import(new URL('./vendor/pdfjs/pdf.min.mjs',document.baseURI).href).then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.min.mjs',document.baseURI).href;return pdf}));
+  return bkPdfLibraryPromise||=(import(new URL('./vendor/pdfjs/pdf.min.mjs',document.baseURI).href).then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',document.baseURI).href;return pdf}));
  }
  async function bkDriveMeta(id){
   if(!bkFileCache.has(id))bkFileCache.set(id,(async()=>{const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,capabilities(canDownload)&supportsAllDrives=true',{headers:{Authorization:'Bearer '+thToken}});if(!response.ok)throw new Error('Document access could not be verified. Reconnect Google Drive and try again.');return response.json()})().catch(error=>{bkFileCache.delete(id);throw error}));
