@@ -25,6 +25,9 @@
   const docs=items.filter(x=>x.type==='Document'&&safeLink(x.link));
   const links=new Map();
   if(safeLink(r.link))links.set(r.link,{title:'Source document',id:docs.find(x=>x.link===r.link)?.id});
+  const d=creditorInfo(r);
+  for(const doc of d.sourceDocuments||[])if(safeLink(doc.url))links.set(doc.url,{title:doc.label||'Source document',id:docs.find(x=>x.link===doc.url)?.id});
+  for(const [key,url] of Object.entries(d))if(/SourceUrl$/.test(key)&&typeof url==='string'&&safeLink(url)&&!links.has(url))links.set(url,{title:key.replace(/SourceUrl$/,'').replace(/([A-Z])/g,' $1')+' evidence',id:docs.find(x=>x.link===url)?.id});
   const references=[r.source,r.notes,r.related].join(' ').toLowerCase();
   for(const doc of docs){
    const title=doc.title.toLowerCase();
@@ -191,7 +194,7 @@
     if(!id)throw new Error('This document must be opened in its original viewer.');
     const file=await bkDocumentData(id);
     if(file.mime==='application/pdf'){
-     const canvas=await bkPageCanvas(await bkPdfDocument(id),1,160);canvas.setAttribute('role','img');canvas.setAttribute('aria-label','First page of '+item.title);button.replaceChildren(canvas);
+     const holder=document.createElement('div');holder.style.cssText='width:100%;height:100%!important;pointer-events:none';button.replaceChildren(holder);await window.thDocumentViewer.render(holder,id,item.title,false);
     }else if(file.mime.startsWith('image/')){
      const img=document.createElement('img');img.alt='Preview of '+item.title;img.src=bkBlobUrl(new Blob([file.bytes],{type:file.mime}));button.replaceChildren(img);
     }else throw new Error('Preview unavailable for this file type.');
