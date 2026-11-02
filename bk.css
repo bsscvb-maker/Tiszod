@@ -86,3 +86,5 @@
 .bk-creditor-table td:last-child button{font-size:12px;padding:7px 10px}
 .bk-entered-row .bk-creditor-name>strong{color:#a5e5c3}
 .bk-creditor-scroll{scrollbar-width:auto;scrollbar-color:#6184ad #14243c}
+
+.bk .bk-report-updated,.bk .bk-report-updated *{color:#39ff14!important}.bk-report-updated{font-weight:650}.bk-report-updated details{font-weight:400}
