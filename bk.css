@@ -106,3 +106,7 @@
  .bk .bk-creditor-table thead th{position:sticky;top:var(--bk-heading-top,76px);z-index:35;background:#1c3658}
  .bk-frozen-creditor-head{display:none!important}
 }
+
+.bk .bk-report-blue,.bk .bk-report-blue *{color:#00bfff!important}
+.bk .bk-report-previous-green,.bk .bk-report-previous-green *{color:#39ff14!important}
+.bk-report-blue{font-weight:650}.bk-report-previous-green{font-size:11px;margin-top:6px;font-weight:400}
