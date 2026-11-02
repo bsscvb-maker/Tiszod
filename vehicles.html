@@ -1128,6 +1128,7 @@ async function ensureProfileRow(a){
  Object.assign(row,{1:[a.year,a.make,a.model].filter(Boolean).join(' '),2:a.year,3:a.make,4:a.model,5:a.color,7:a.category,8:a.status,11:a.vin,12:a.vehicleNumber,13:a.tag,14:a.renewal,15:a.engine,16:a.transmission,17:a.tireSize,23:a.photoFileId,24:a.photo,27:a.reportNotes||''});
  a.profileRow=await fleetAppendRow('Portal Asset Profiles',row);
  if(!a.profileRow)throw new Error('Could not locate the new profile row.');
+ a.lastUpdated=new Date().toISOString();
  return a.profileRow;
 }
 async function moveAssetTo(next){
@@ -1166,7 +1167,7 @@ document.getElementById('addVehicleForm').addEventListener('submit',async e=>{
   Object.assign(row,{1:[data.year,data.make,data.model].join(' '),2:data.year,3:data.make,4:data.model,5:data.color,7:data.category,8:data.status,11:data.vin,13:data.tag,15:data.engine});
   const profileRow=await fleetAppendRow('Portal Asset Profiles',row);
   if(!profileRow)throw new Error('The vehicle was saved, but its row could not be identified. Refresh to see it.');
-  const next={...data,name:row[1],profileRow,id:'new'+profileRow,photo:'',photoFileId:''};
+  const next={...data,lastUpdated:new Date().toISOString(),name:row[1],profileRow,id:'new'+profileRow,photo:'',photoFileId:''};
   assets.push(next);category=data.category;status=clean(data.status);renderCategories();renderCategory();asset=next;renderAsset();show('assetView');
   document.getElementById('addVehicleDialog').close();
  }catch(error){message.textContent=error.message}
