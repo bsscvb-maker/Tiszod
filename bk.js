@@ -282,6 +282,32 @@ $('bk-creditor-purchased').value=d.purchaseDate||'';$('bk-creditor-incurred').va
  $('bk-content').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]');if(preview){openBkDocument(preview.dataset.preview);return;}const edit=e.target.closest('[data-edit]'),add=e.target.closest('[data-add]'),tab=e.target.closest('[data-section]'),year=e.target.closest('[data-case]'),dir=e.target.closest('[data-folder]');if(year){caseYear=year.dataset.case;folder='';section='Documents';scopeCase();render();return}if(dir){folder=dir.dataset.folder;section='Documents';render();return}if(edit)openItem(edit.dataset.edit);else if(add)openItem(null,add.dataset.add);else if(tab){section=tab.dataset.section;render()}});
  $('bk-add').onclick=()=>openItem(null,section==='Documents'?'Document':isDebtSection()?'Creditor':section==='Notes & questions'?'Note':'Task');$('bk-refresh').onclick=()=>window.thStart().catch(e=>message(e.message,true));$('bk-close').onclick=()=>$('bk-item-dialog').close();$('bk-delete-item').onclick=deleteItem;$('bk-item-form').onsubmit=saveItem;$('bk-item-form').elements.namedItem('type').onchange=e=>{setStatuses(e.target.value);if(e.target.value==='Creditor')showCreditorFields(editing||{type:'Creditor'});};
  $('bk-backup').onclick=()=>{if(!ready){message('Load BK before exporting.',true);return}const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),cases:caseRecords,items:allItems},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='TisZod-BK-project-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);message('BK backup downloaded. It contains private project information and file links, not copies of linked files.')};
+
+ // Keep a viewport-level copy of the creditor headings during page scrolling.
+ let frozenHead=null,headerFrame=0,headerSource=null;
+ function syncCreditorHead(){
+  headerFrame=0;
+  const wrap=document.querySelector('.bk-creditor-scroll'),table=wrap?.querySelector('.bk-creditor-table'),head=table?.tHead;
+  if(!head){frozenHead?.remove();frozenHead=null;headerSource=null;return;}
+  const bar=document.querySelector('.th-app-topbar'),barRect=bar?.getBoundingClientRect(),barPosition=bar?getComputedStyle(bar).position:'';
+  const top=barRect&&['sticky','fixed'].includes(barPosition)?Math.max(0,barRect.bottom):0;
+  const rect=wrap.getBoundingClientRect(),hr=head.getBoundingClientRect(),height=hr.height;
+  if(hr.top>=top||rect.bottom<=top+height||rect.right<=0||rect.left>=innerWidth){if(frozenHead)frozenHead.hidden=true;return;}
+  if(!frozenHead){frozenHead=document.createElement('div');frozenHead.className='bk bk-frozen-creditor-head';frozenHead.setAttribute('aria-hidden','true');frozenHead.inert=true;document.body.append(frozenHead);}
+  if(headerSource!==head){const copy=table.cloneNode(false);copy.removeAttribute('id');copy.append(head.cloneNode(true));copy.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));frozenHead.replaceChildren(copy);headerSource=head;}
+  const clone=frozenHead.firstElementChild,originalCells=[...head.querySelectorAll('th')];
+  [...clone.querySelectorAll('th')].forEach((cell,i)=>{cell.style.width=originalCells[i].getBoundingClientRect().width+'px';cell.style.boxSizing='border-box';});
+  const left=Math.max(0,rect.left),right=Math.min(innerWidth,rect.right);
+  frozenHead.hidden=false;frozenHead.style.cssText='position:fixed;z-index:39;pointer-events:none;overflow:hidden;margin:0;max-width:none;top:'+top+'px;left:'+left+'px;width:'+Math.max(0,right-left)+'px;height:'+height+'px;';
+  clone.style.cssText='table-layout:fixed;border-collapse:separate;border-spacing:0;min-width:0;width:'+table.getBoundingClientRect().width+'px;transform:translateX('+(rect.left-left-wrap.scrollLeft)+'px);';
+ }
+ function queueCreditorHead(){if(!headerFrame)headerFrame=requestAnimationFrame(syncCreditorHead);}
+ addEventListener('scroll',queueCreditorHead,{capture:true,passive:true});
+ addEventListener('resize',queueCreditorHead,{passive:true});
+ new MutationObserver(queueCreditorHead).observe($('bk-content'),{childList:true,subtree:true});
+ if(window.ResizeObserver){const observer=new ResizeObserver(queueCreditorHead);const bar=document.querySelector('.th-app-topbar');if(bar)observer.observe(bar);}
+ queueCreditorHead();
+
  window.thViewAdapter={capture:()=>({section,caseYear,folder}),restore:s=>{if(sections.includes(s?.section)){section=s.section;if(caseRecords.some(c=>c.year===s.caseYear))caseYear=s.caseYear;folder=s.folder||'';scopeCase();render()}}};
 })();
 
