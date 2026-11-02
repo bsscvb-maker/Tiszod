@@ -922,7 +922,7 @@ function renderAsset(tab='details'){
  document.getElementById('assetStatus').style.setProperty('--asset-status-color',({active:'#5fe188',inactive:'#ff6767',managed:'#79c7f1',sold:'#f4b85e',totaled:'#e88bff',repo:'#ff8254'})[clean(asset.status)]||'#aebbd0');
  const values=[['Year','year'],['Make','make'],['Model','model'],['Serial number','vin'],['Tag / plate','tag'],['Engine','engine'],['Transmission','transmission'],['Tire size','tireSize'],['Color','color'],['Asset number','vehicleNumber'],['Registration renewal','renewal'],['Date Acquired','ownershipStart']];
  const specs=specRecord(asset).specs;
- document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Equipment status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option><option value="Totaled"'+(clean(asset.status)==='totaled'?' selected':'')+'>Totaled</option><option value="Repo"'+(clean(asset.status)==='repo'?' selected':'')+'>Repo</option></select></label>'+values.filter(([,key])=>key!=='engine'||showCardEngine(asset)).map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Date Acquired</span><div class="ownership-date-row"><input data-asset-field="ownershipStart" aria-label="Date Acquired, type MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY" readonly><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'" disabled></div></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
+ document.getElementById('assetFacts').innerHTML='<label class="asset-fact"><span>Status</span><select id="assetStatusEdit" aria-label="Equipment status" disabled><option value="Active"'+(clean(asset.status)==='active'?' selected':'')+'>Active</option><option value="Inactive"'+(clean(asset.status)==='inactive'?' selected':'')+'>Inactive</option><option value="Sold"'+(clean(asset.status)==='sold'?' selected':'')+'>Sold</option><option value="Managed"'+(clean(asset.status)==='managed'?' selected':'')+'>Managed</option><option value="Totaled"'+(clean(asset.status)==='totaled'?' selected':'')+'>Totaled</option><option value="Repo"'+(clean(asset.status)==='repo'?' selected':'')+'>Repo</option></select></label>'+values.filter(([,key])=>key!=='engine'||showCardEngine(asset)).map(([label,key])=>key==='ownershipStart'?'<div class="asset-fact"><span>Date Acquired</span><div class="ownership-date-row"><input data-acquired-date aria-label="Date Acquired, MM/DD/YYYY" type="text" inputmode="numeric" maxlength="10" autocomplete="off" value="'+esc(ownershipText(asset[key]))+'" placeholder="MM/DD/YYYY"><input data-ownership-picker type="date" aria-label="Choose ownership date from calendar" value="'+esc(ownershipDate(asset[key])?ownershipIso(ownershipDate(asset[key])):'')+'"></div><button type="button" data-save-acquired style="padding:8px 12px;margin-top:8px">Save acquired date</button><small data-acquired-message role="status" aria-live="polite">Save to confirm Date Acquired in your workbook.</small></div>':'<label class="asset-fact"><span>'+esc(label)+'</span><input data-asset-field="'+key+'" aria-label="'+esc(label)+'" value="'+esc(asset[key]??'')+'" placeholder="Not recorded" readonly></label>').join('')+'<label class="asset-fact"><span>Starting '+(hours?'hours':'mileage')+'</span><input data-asset-field="reportOdometer" aria-label="Starting '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.startMileage??asset.reportOdometer??'')+'" placeholder="Not recorded" readonly></label><label class="asset-fact"><span>Current '+(hours?'hours':'mileage')+'</span><input data-asset-field="currentReading" aria-label="Current '+(hours?'hours':'mileage')+'" type="number" min="0" step="any" value="'+esc(mileageFor(asset)?.currentMileage??'')+'" placeholder="Not recorded" readonly></label>';
  renderRecordReview(asset);
  const recorded=readingEvidence(asset,mileageFor(asset));
  if(recorded&&recorded.kind!=='tracked')document.getElementById('assetFacts').insertAdjacentHTML('beforeend','<div class="asset-fact"><span>Documented reading</span><strong>'+esc(cardReading(asset,mileageFor(asset)))+'</strong><small>Source reading retained separately from current mileage tracking.</small></div>');
@@ -1084,7 +1084,6 @@ document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
   input.readOnly=!editing;
   if(!editing){const key=input.dataset.assetField;if(key)input.value=key==='ownershipStart'?ownershipText(asset[key]):key==='currentReading'?mileageFor(asset)?.currentMileage??'':key==='reportOdometer'?mileageFor(asset)?.startMileage??asset.reportOdometer??'':asset[key]??'';}
  });
- panel.querySelectorAll('[data-ownership-picker]').forEach(input=>input.disabled=!editing);
  if(tab==='details')document.getElementById('assetStatusEdit').disabled=!editing;
  const button=document.getElementById('toggleAssetEdit');
  button.setAttribute('aria-pressed',String(editing));
@@ -1236,8 +1235,36 @@ document.getElementById('deleteAssetButton').addEventListener('click',async()=>{
   asset=null;renderCategories();renderCategory();show('categoryView');
  }catch(error){message.textContent=error.message;button.disabled=false}
 });
+document.getElementById('assetFacts').addEventListener('change',e=>{
+ if(e.target.matches('[data-ownership-picker]')){
+  const input=e.currentTarget.querySelector('[data-acquired-date]');
+  input.value=ownershipText(e.target.value);
+ }
+});
+document.getElementById('assetFacts').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-save-acquired]');if(!button||!asset)return;
+ const a=asset,input=document.querySelector('[data-acquired-date]'),picker=document.querySelector('[data-ownership-picker]'),message=document.querySelector('[data-acquired-message]');
+ const raw=input.value.trim(),date=ownershipDate(raw),next=raw&&date?ownershipIso(date):'';
+ message.classList.remove('error');
+ if(raw&&(!date||date>new Date())){message.textContent='Enter a complete past date as MM/DD/YYYY, or use the calendar.';message.classList.add('error');input.focus();return}
+ const end=ownershipDate(specRecord(a).specs.endOfServiceDate);
+ if(date&&end&&date>end){message.textContent='Date Acquired cannot be after the end of service date.';message.classList.add('error');input.focus();return}
+ button.disabled=true;input.disabled=true;picker.disabled=true;message.textContent='Saving Date Acquired…';
+ try{
+  await ensureProfileRow(a);
+  // Keep calendar dates as ISO text so spreadsheet date formatting cannot alter reloads.
+  await fleetWriteRanges([{sheet:'Portal Asset Profiles',range:'AC'+a.profileRow,values:[[next]]}],'RAW');
+  const values=await thValues("'Portal Asset Profiles'!AC"+a.profileRow);
+  const stored=String(values[0]?.[0]??'');
+  if(stored!==next)throw new Error('Date Acquired was not confirmed in your workbook. Please try Save acquired date again.');
+  a.ownershipStart=stored;input.value=ownershipText(stored);picker.value=stored;
+  renderCategory();renderGarageStats();
+  message.textContent=next?'Saved and verified: '+ownershipText(next)+'.':'Date Acquired cleared and verified.';
+ }catch(error){message.textContent=error.message;message.classList.add('error')}
+ finally{button.disabled=false;input.disabled=false;picker.disabled=false}
+});
 document.getElementById('assetFacts').addEventListener('change',async e=>{
- if(e.target.matches('[data-ownership-picker]')){const typed=e.currentTarget.querySelector('[data-asset-field="ownershipStart"]');typed.value=ownershipText(e.target.value);typed.dispatchEvent(new Event('change',{bubbles:true}));return}
+
  const input=e.target.closest('[data-asset-field]');if(!input||!asset||!editing)return;
  const a=asset,key=input.dataset.assetField,prior=key==='currentReading'?mileageFor(a)?.currentMileage??'':a[key]??'',message=document.getElementById('assetEditStatus');let next=input.value.trim();
  if(key==='currentReading'){
