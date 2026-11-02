@@ -34,3 +34,28 @@ dialog.tax-document-preview{width:min(1200px,calc(100vw - 24px));max-width:none;
 @media(max-width:650px){dialog.tax-document-preview{padding:12px}.tax-preview-header h2{font-size:16px}.tax-preview-actions{gap:8px}#tax-preview-viewer{height:62dvh}}
 
 .tax-card-document-count{display:none}.tax-card-documents{padding:0 22px 16px}.taxes .tax-card-documents button{background:#224969;border:1px solid #75a8cf;border-radius:7px;padding:7px 12px;font-size:13px}.taxes .tax-card-documents button:hover{background:#305f85}
+
+/* Consistent tax card layout and anchored actions. */
+#tax-grid{grid-auto-rows:1fr;align-items:stretch}
+.tax-card{display:flex;flex-direction:column;min-width:0}
+.taxes .tax-card-open{flex:1;display:grid;grid-template-rows:52px 60px minmax(180px,1fr) 52px minmax(22px,auto);align-content:start;padding:18px;box-sizing:border-box}
+.tax-card-top{align-items:center;min-width:0}
+.tax-card-top .tax-status-badge{max-width:60%;box-sizing:border-box}
+.tax-card .tax-filing-lines{margin:8px 0;align-content:start;gap:6px}
+.tax-card-body{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:14px;align-items:start;padding:14px 0}
+.tax-card-body dl{margin:0;gap:16px 10px;grid-template-columns:1fr 1fr}
+.tax-card-body dl>div{min-width:0}
+.tax-card-body dt{min-height:32px;line-height:1.3;overflow-wrap:anywhere}
+.tax-card-body dd{font-size:19px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tax-card-received{border-left:1px solid #365a7d;padding-left:12px;min-width:0;text-align:left}
+.tax-card-section-label{display:block;color:#adc3dd;font-size:11px;font-weight:650;margin-bottom:10px}
+.tax-card-received .tax-document-checks{margin:0;gap:12px;line-height:1.4}
+.tax-card-received .tax-document-checks span{display:block}
+.tax-card-dates{font-size:12px;line-height:1.7;font-weight:400;color:#c6d8eb;padding-top:8px;border-top:1px solid #2e4c69}
+.tax-card-follow-up{font-size:12px;line-height:1.4;color:#ffe29a;margin:8px 0 0}
+.tax-card footer{margin-top:auto;justify-content:space-between;align-items:center;padding:12px;gap:8px;min-height:58px;box-sizing:border-box}
+.tax-card-edit-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.taxes .tax-card footer .tax-card-documents-button{background:#224969;border-color:#75a8cf;white-space:nowrap}
+.tax-card footer button{min-height:36px;padding:6px 8px}
+@media(min-width:1101px) and (max-width:1450px){#tax-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.taxes .tax-card-open{padding:16px;grid-template-rows:52px 60px auto 52px minmax(22px,auto)}.tax-card-body{grid-template-columns:1fr;gap:18px;min-height:0}.tax-card-body dl{gap:18px}.tax-card-received{border-left:0;border-top:1px solid #365a7d;padding:12px 0 0}.tax-card-received .tax-document-checks{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.tax-card-section-label{margin-bottom:8px}.tax-card-body dt{min-height:16px}.tax-card footer{padding:10px;gap:6px}.tax-card footer button{font-size:12px;padding:6px}.tax-card-edit-actions{gap:4px}}
