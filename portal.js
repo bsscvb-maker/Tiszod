@@ -412,3 +412,33 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+
+/* Phone module picker and navigation reset. */
+(()=>{
+ function init(){
+  const search=document.querySelector('.th-module-search'),nav=document.querySelector('.th-sidebar nav');
+  if(!search||!nav)return;
+  const row=document.createElement('div');row.className='th-phone-module-picker';
+  const select=document.createElement('select');select.setAttribute('aria-label','Go to module');
+  const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Go to module…';select.append(placeholder);
+  const links=[...nav.querySelectorAll('a[href]')];
+  const entries=new Map([['./','Dashboard']]);
+  for(const a of links){const copy=a.cloneNode(true);copy.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(x=>x.remove());entries.set(a.getAttribute('href'),copy.textContent.trim());}
+  for(const [path,label] of entries){const option=document.createElement('option');option.value=path;option.textContent=label;select.append(option);}
+  select.addEventListener('change',()=>{if(select.value)location.assign(select.value)});
+  const reset=document.createElement('button');reset.type='button';reset.textContent='Reset';reset.setAttribute('aria-label','Reset module selection and search');
+  reset.onclick=()=>{select.value='';const input=search.querySelector('input');if(input){input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));}select.focus();};
+  row.append(select,reset);search.prepend(row);
+  addEventListener('pageshow',()=>{select.value=''});
+  const css=document.createElement('style');css.textContent=`
+  .th-phone-module-picker{display:none}
+  @media(max-width:700px){
+   .th-phone-module-picker{display:flex;gap:8px;margin-bottom:8px;width:100%;box-sizing:border-box}
+   .th-phone-module-picker select{flex:1;min-width:0;width:0}
+   .th-phone-module-picker select,.th-phone-module-picker button{box-sizing:border-box;min-height:44px;border:1px solid #415775;border-radius:9px;background:#172538;color:#ecf3ff;font:16px system-ui;padding:10px 12px}
+   .th-phone-module-picker button{flex:none;cursor:pointer}
+   .th-phone-module-picker :focus-visible{outline:3px solid #8cb8ff;outline-offset:2px}
+  }`;document.head.append(css);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
