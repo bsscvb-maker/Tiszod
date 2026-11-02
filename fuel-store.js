@@ -70,6 +70,17 @@
    cells[3]={userEnteredValue:{formulaValue:'=DATE('+entry.date.split('-').map(Number).join(',')+')'}};
    requests.push({updateCells:{range:{sheetId:mileage.sheetId,startRowIndex:n-1,endRowIndex:n,startColumnIndex:0,endColumnIndex:11},rows:[{values:cells}],fields:'userEnteredValue'}});
   }
+  // Fuel, mileage, spending, and the vehicle's edit time commit together.
+  const profiles=state.meta.sheets.find(s=>s.properties.title==='Portal Asset Profiles')?.properties;
+  if(!profiles||profiles.gridProperties.columnCount<30)throw Error('Vehicle update tracking is unavailable. Refresh Vehicles before saving.');
+  let profileRow=vehicle.profileRow;
+  if(!profileRow){
+   const names=await thValues("'Portal Asset Profiles'!B2:B1000");
+   const matches=names.map((r,i)=>({name:r[0],row:i+2})).filter(r=>FuelCore.normalize(r.name)===FuelCore.normalize(vehicle.name));
+   if(matches.length!==1)throw Error('Open this vehicle from Vehicles before logging fuel so its update time can be saved.');
+   profileRow=matches[0].row;
+  }
+  requests.push(update(profiles.sheetId,profileRow-1,29,[new Date().toISOString()]));
   try{await request(':batchUpdate',{requests});}catch(error){
    try{const check=await read(),saved=check.entries.find(x=>x.id===entry.id);if(saved&&JSON.stringify(row(saved))===JSON.stringify(row(entry)))return {entry:saved,recovered:true};}catch{}
    const uncertain=new Error('Save was not confirmed. Reopen fuel history before retrying. Your photos may already be saved. '+error.message);uncertain.uncertain=true;throw uncertain;
