@@ -206,6 +206,12 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 .card-last-updated{display:block;font-size:12px;line-height:1.5;margin:10px 0;white-space:normal}
 .card-last-updated,#assetLastUpdated{font-weight:700;color:#ff6b6b!important}
 .card-last-updated[data-recorded="true"],#assetLastUpdated[data-recorded="true"]{color:#55efad!important}
+#assetGrid .antique-deadlines{background:linear-gradient(135deg,#302518,#171d26);border-color:#c69b56}
+#assetGrid .antique-badge{color:#f4d594;font-size:12px;font-weight:850;letter-spacing:.09em;padding:3px 0 9px;border-bottom:1px solid #c69b5655}
+#assetGrid .antique-badge span{color:#edb95e}
+#assetGrid .antique-badge small{display:block;font-size:9px;letter-spacing:.06em;margin-top:5px;color:#cfbc9d;line-height:1.4}
+#assetGrid .deadline-source{display:block;width:fit-content;margin-top:4px;color:#a6d9ff;text-decoration:underline;font-size:11px}
+#assetGrid .antique-deadlines .deadline-row{color:#f1dfbb}
 </style>
 <link rel="stylesheet" href="portal-dark.css?v=8">
 <style>/* Vehicle directory and horizontal vehicle details */
@@ -737,8 +743,15 @@ function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{ti
 }
 function deadlineCard(a){
  if(!['active','managed'].includes(clean(a.status)))return '';
- const d=complianceFor(a);
- return '<aside class="card-deadlines" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{const state=deadlineState(d[k+'Due'],d[k+'Mode']);return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+(k==='registration'?'Registration':'State inspection')+'</b>'+esc(state.text)+'</div>'}).join('')+'</aside>';
+ const d=complianceFor(a),specs=specRecord(a).specs;
+ const antique=specs.antiqueRegistration===true;
+ const badge=antique?'<div class="antique-badge"><span>★</span> ANTIQUE VEHICLE<small>CLASSIC STATUS · LESS RED TAPE</small></div>':'';
+ return '<aside class="card-deadlines'+(antique?' antique-deadlines':'')+'" aria-label="Registration and inspection deadlines">'+badge+['registration','inspection'].map(k=>{
+  const state=deadlineState(d[k+'Due'],d[k+'Mode']);
+  const text=antique?(k==='registration'?'Permanent antique plates · No renewal':'Antique exemption · Not required'):state.text;
+  let source='';try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')source='<a class="deadline-source" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">View '+(k==='registration'?'registration':'inspection')+' ↗</a>'}catch(_){}
+  return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+(k==='registration'?'Registration':'State inspection')+'</b>'+esc(text)+source+'</div>';
+ }).join('')+'</aside>';
 }
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
 complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
