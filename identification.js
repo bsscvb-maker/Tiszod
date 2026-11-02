@@ -59,10 +59,9 @@ document.head.append(visibilityStyle);
 const hiddenOption=document.createElement('option');hiddenOption.value='hidden';hiddenOption.textContent='Hidden documents';$('identity-view').append(hiddenOption);
 const isEducation=false;
 function title(d){
- let n=String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ');
- if(!isEducation){if(/social security/i.test(n))return 'Social Security Card';if(/birth certificate/i.test(n)&&!/process/i.test(n))return 'Birth Certificate';if(/marriage certificate/i.test(n))return 'Marriage Certificate';if(/boater.*license/i.test(n))return 'Boating License';if(/drivers? license/i.test(n))return /replacement/i.test(n)?'Driver’s License — Replacement Record':'Driver’s License';}
- return n;
+ return String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ').trim();
 }
+
 function preview(d){
  let u;try{u=new URL(safe(d.url))}catch{return '<span class="record-placeholder">Document</span>'}
  const folder=u.pathname.includes('/folders/'),id=u.pathname.match(/\/d\/([^/]+)/)?.[1];
