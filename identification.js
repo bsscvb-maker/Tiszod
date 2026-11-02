@@ -20,7 +20,7 @@ function preview(d){
  let u;try{u=new URL(safe(d.url))}catch{return '<span class="record-placeholder">Document</span>'}
  const folder=u.pathname.includes('/folders/'),id=u.pathname.match(/\/d\/([^/]+)/)?.[1];
  if(folder)return '<span class="record-placeholder">▤<small>Archive folder</small></span>';
- if(id&&['drive.google.com','docs.google.com'].includes(u.hostname))return '<iframe class="record-preview" src="https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview" title="'+esc(title(d))+' preview" loading="lazy" tabindex="-1" referrerpolicy="no-referrer"></iframe>';
+ if(id&&['drive.google.com','docs.google.com'].includes(u.hostname))return '<div class="record-preview private-document-preview" data-document-id="'+esc(id)+'" data-document-title="'+esc(title(d))+'"><span class="record-placeholder">Loading document…</span></div>';
  return '<span class="record-placeholder">'+esc(d.category||'Document')+'</span>';
 }
 function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
@@ -85,6 +85,36 @@ $('identity-pictures-close').onclick=()=>{openedPictureId=null;pictureDialog.clo
 pictureDialog.addEventListener('close',()=>{openedPictureId=null});
 document.querySelector('.identification').addEventListener('click',e=>{const b=e.target.closest('[data-identity-open]');if(b){e.preventDefault();openPictures(b.dataset.identityOpen)}});
 const frontObserver=new MutationObserver(()=>{for(const button of document.querySelectorAll('[data-identity-open]')){const holder=button.querySelector('.picture-cover');if(holder.dataset.loaded)continue;holder.dataset.loaded='true';const r=records.find(r=>r.id===button.dataset.identityOpen);if(r?.data.sides?.[0])loadOriginalImage(r.data.sides[0],holder)}});frontObserver.observe($('identity-grid'),{childList:true,subtree:true});
+
+
+const privateDocuments=new Map();
+async function privateDocument(id){
+ if(!privateDocuments.has(id))privateDocuments.set(id,(async()=>{
+  const response=await thDriveFetch(id);
+  if(!response.ok)throw Error('Unable to load this document. Check your Google connection and file access.');
+  const blob=await response.blob();
+  return {url:URL.createObjectURL(blob),type:blob.type};
+ })().catch(error=>{privateDocuments.delete(id);throw error}));
+ return privateDocuments.get(id);
+}
+async function loadDocumentPreview(holder){
+ if(holder.dataset.loading)return;holder.dataset.loading='true';
+ try{
+  const file=await privateDocument(holder.dataset.documentId);
+  if(!holder.isConnected)return;
+  let view;
+  if(file.type.startsWith('image/')){view=document.createElement('img');view.alt=holder.dataset.documentTitle;}
+  else if(file.type==='application/pdf'){view=document.createElement('iframe');view.title=holder.dataset.documentTitle;view.src=file.url+'#toolbar=0&view=FitH';}
+  else throw Error('Open this document using its title below.');
+  if(!view.src)view.src=file.url;
+  view.style.cssText='display:block;width:100%;height:100%;min-height:270px;object-fit:contain;border:0;background:#fff';
+  holder.replaceChildren(view);
+ }catch(error){if(holder.isConnected){const text=document.createElement('span');text.className='record-placeholder';text.textContent=error.message;holder.replaceChildren(text);}}
+}
+const documentObserver=new MutationObserver(()=>{
+ for(const holder of document.querySelectorAll('[data-document-id]'))loadDocumentPreview(holder);
+});
+documentObserver.observe($('identity-grid'),{childList:true,subtree:true});
 
 window.thViewAdapter={capture:()=>({selectedPerson,selectedCategory,selectedFolder,openedPictureId}),restore:s=>{selectedPerson=s?.selectedPerson||'';selectedCategory=s?.selectedCategory||'';selectedFolder=s?.selectedFolder||'';render();if(s?.openedPictureId)openPictures(s.openedPictureId);else if(pictureDialog.open){openedPictureId=null;pictureDialog.close()}}};
 
