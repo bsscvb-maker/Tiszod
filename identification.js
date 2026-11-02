@@ -87,13 +87,18 @@ document.querySelector('.identification').addEventListener('click',e=>{const b=e
 const frontObserver=new MutationObserver(()=>{for(const button of document.querySelectorAll('[data-identity-open]')){const holder=button.querySelector('.picture-cover');if(holder.dataset.loaded)continue;holder.dataset.loaded='true';const r=records.find(r=>r.id===button.dataset.identityOpen);if(r?.data.sides?.[0])loadOriginalImage(r.data.sides[0],holder)}});frontObserver.observe($('identity-grid'),{childList:true,subtree:true});
 
 
+let documentPdfLibrary;
+function documentPdfJs(){
+ if(!documentPdfLibrary)documentPdfLibrary=import('./vendor/pdfjs/pdf.min.mjs').then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.min.mjs',location.href).href;return pdf;});
+ return documentPdfLibrary;
+}
 const privateDocuments=new Map();
 async function privateDocument(id){
  if(!privateDocuments.has(id))privateDocuments.set(id,(async()=>{
   const response=await thDriveFetch(id);
   if(!response.ok)throw Error('Unable to load this document. Check your Google connection and file access.');
   const blob=await response.blob();
-  return {url:URL.createObjectURL(blob),type:blob.type};
+  return {url:URL.createObjectURL(blob),type:blob.type,blob};
  })().catch(error=>{privateDocuments.delete(id);throw error}));
  return privateDocuments.get(id);
 }
@@ -104,10 +109,21 @@ async function loadDocumentPreview(holder){
   if(!holder.isConnected)return;
   let view;
   if(file.type.startsWith('image/')){view=document.createElement('img');view.alt=holder.dataset.documentTitle;}
-  else if(file.type==='application/pdf'){view=document.createElement('iframe');view.title=holder.dataset.documentTitle;view.src=file.url+'#toolbar=0&view=FitH';}
+  else if(file.type==='application/pdf'){
+   const pdfjs=await documentPdfJs();
+   const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.blob.arrayBuffer())}).promise;
+   try{
+    const page=await pdf.getPage(1),base=page.getViewport({scale:1});
+    const scale=Math.min(2,(holder.clientWidth||400)*Math.min(devicePixelRatio||1,2)/base.width);
+    const viewport=page.getViewport({scale});
+    view=document.createElement('canvas');view.width=Math.ceil(viewport.width);view.height=Math.ceil(viewport.height);
+    view.setAttribute('role','img');view.setAttribute('aria-label',holder.dataset.documentTitle+' — first page');
+    await page.render({canvasContext:view.getContext('2d'),viewport}).promise;
+   }finally{await pdf.destroy();}
+  }
   else throw Error('Open this document using its title below.');
-  if(!view.src)view.src=file.url;
-  view.style.cssText='display:block;width:100%;height:100%;min-height:270px;object-fit:contain;border:0;background:#fff';
+  if(view.tagName==='IMG')view.src=file.url;
+  view.style.cssText='display:block;width:100%;height:100%;max-width:100%;min-height:0;object-fit:contain;object-position:center;border:0;background:#fff';
   holder.replaceChildren(view);
  }catch(error){if(holder.isConnected){const text=document.createElement('span');text.className='record-placeholder';text.textContent=error.message;holder.replaceChildren(text);}}
 }
