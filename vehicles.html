@@ -749,15 +749,16 @@ function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{ti
  return {tone:n<0?'late':n<30?'urgent':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
 }
 function deadlineCard(a){
- if(!['active','managed'].includes(clean(a.status)))return '';
+ if(!['active','managed','inactive','sold'].includes(clean(a.status)))return '';
+ const muted=['sold','inactive'].includes(clean(a.status));
  const d=complianceFor(a),specs=specRecord(a).specs;
- if(specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">ANTIQUE VEHICLE</div></aside>';
+ if(!muted&&specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">ANTIQUE VEHICLE</div></aside>';
  const none=['registration','inspection'].every(k=>['not-required','exempt'].includes(d[k+'Mode']));
- return '<aside class="card-deadlines'+(none?' no-compliance-required':'')+'" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{
+ return '<aside class="card-deadlines'+(none||muted?' no-compliance-required':'')+'" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{
   const state=deadlineState(d[k+'Due'],d[k+'Mode']),label=k==='registration'?'Registration':'State inspection';
-  const text=state.text+(specs[k+'DueEstimated']?' (estimated)':'');
+  const text=(muted?(ownershipText(d[k+'Due'])||state.text):state.text)+(specs[k+'DueEstimated']?' (estimated)':'');
   let heading=esc(label);try{const url=new URL(specs[k+'DocumentUrl']);if(url.protocol==='https:'&&url.hostname==='drive.google.com')heading='<a class="deadline-label" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(label)+'</a>'}catch(_){}
-  return '<div class="deadline-row" data-tone="'+state.tone+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
+  return '<div class="deadline-row" data-tone="'+(muted?'disabled':state.tone)+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
  }).join('')+'</aside>';
 }
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
