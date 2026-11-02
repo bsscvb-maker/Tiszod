@@ -328,6 +328,17 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  const bar=document.createElement('header');bar.className='th-mobile-bar';
  const brand=document.createElement('a');brand.href='./';brand.className='th-mobile-brand';brand.innerHTML='<img src="tiszod-crest.svg" alt=""><span>TisZod</span>';
  const menu=document.createElement('button');menu.type='button';menu.textContent='☰';menu.setAttribute('aria-label','Open navigation menu');menu.setAttribute('aria-expanded','false');
+ // Reuse the working history controls and their event handlers in the phone header.
+ const controls=main.querySelector('.th-browser-controls');
+ if(controls){
+  const slot=document.createComment('Desktop browser controls');controls.before(slot);
+  for(const button of controls.querySelectorAll('button')){
+   const label=document.createElement('span');label.className='th-mobile-control-label';
+   label.textContent={back:'Back',forward:'Forward',refresh:'Refresh',home:'Home'}[button.dataset.thNavigate];button.append(label);
+  }
+  const placeControls=()=>{if(media.matches)bar.append(controls);else slot.after(controls)};
+  media.addEventListener('change',placeControls);placeControls();
+ }
  const sidebarId=side.id||(side.id='th-mobile-navigation');menu.setAttribute('aria-controls',sidebarId);bar.append(brand,menu);main.before(bar);
  const shade=document.createElement('button');shade.type='button';shade.className='th-mobile-shade';shade.setAttribute('aria-label','Close navigation menu');document.body.append(shade);
  const close=document.createElement('button');close.type='button';close.className='th-mobile-close';close.textContent='Close ✕';side.prepend(close);
@@ -439,4 +450,48 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
   }`;document.head.append(css);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+
+/* Shared phone ergonomics. All layout overrides stop at 700px. */
+(()=>{
+ const style=document.createElement('style');style.textContent=`
+ .th-mobile-control-label{display:none}
+ @media(max-width:700px){
+ html{scroll-padding-top:128px}
+ body[data-th-page] .th-mobile-bar{flex-wrap:wrap;gap:6px;padding:6px 12px;padding-top:calc(6px + env(safe-area-inset-top));height:auto;margin:0!important;width:100%}
+ body[data-th-page] .th-app-topbar{margin:0!important;width:100%;box-sizing:border-box}
+ body[data-th-page] .th-mobile-bar .th-browser-controls{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));flex:1 0 100%!important;order:3!important;margin:0;gap:6px}
+ body[data-th-page] .th-mobile-bar .th-browser-controls button{display:flex;flex-direction:column;gap:3px;width:100%;min-width:0;min-height:48px;height:auto;padding:5px;font-size:11px;line-height:1.2}
+ .th-mobile-control-label{display:block}
+ body[data-th-page] :is(input,select,textarea){font-size:16px!important;max-width:100%;box-sizing:border-box}
+ body[data-th-page] :is(button,input:not([type=checkbox]):not([type=radio]),select){min-height:44px}
+ body[data-th-page] :is(input[type=checkbox],input[type=radio]){width:22px;height:22px;flex-shrink:0}
+ body[data-th-page] :is(.th-page-content,.th-page-content>*,.finance-wrap,.wrap,.shell){min-width:0;max-width:100%;box-sizing:border-box}
+ body[data-th-page] .th-page-content{padding:16px 12px 24px}
+ body[data-th-page] :is(.tax-heading,.identity-heading,.education-heading,.investment-heading,.fd-heading){align-items:flex-start;flex-direction:column;gap:12px}
+ body[data-th-page] :is(.tax-toolbar,.identity-toolbar,.education-toolbar,.fd-tools,.history-filters){display:flex;flex-direction:column;align-items:stretch;gap:12px}
+ body[data-th-page] :is(.tax-toolbar,.identity-toolbar,.education-toolbar,.fd-tools,.history-filters)>*{width:100%;min-width:0!important;box-sizing:border-box}
+ body[data-th-page] :is(.identity-grid,.education-grid,.investment-grid,.identity-fields,.education-fields,.tax-fields,.credit-detail-grid,.complete-grid,.bk-form-grid){grid-template-columns:minmax(0,1fr)!important}
+ body[data-th-page] :is(.identity-grid,.education-grid,.investment-grid,.complete-grid)>*{min-width:0}
+ body[data-th-page] :is(.tax-tabs,.bk-tabs,.asset-tabs,.vehicle-workspace-actions,.vehicle-filter-bar,.finance-bank-nav,.history-nav){max-width:100%;flex-wrap:wrap;gap:8px}
+ body[data-th-page] :is(.table-wrap,.bk-table-wrap,.history-table-wrap,.bm-table-wrap,.credit-table-wrap){max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+ body[data-th-page] :is(.tax-card,.account-login,.bk-document,.record-caption,.asset-detail-card){overflow-wrap:anywhere}
+ body[data-th-page] :is(dialog,.bk-dialog,.work-dialog){box-sizing:border-box;width:calc(100% - 16px);max-width:calc(100% - 16px);max-height:calc(100dvh - 24px);padding:16px;overflow:auto}
+ body[data-th-page] dialog :is(footer,.dialog-actions,.complete-actions,.bk-preview-tools,.tax-preview-actions){display:flex;flex-wrap:wrap;gap:8px}
+ body[data-th-page] dialog :is(pre,.account-notes){white-space:pre-wrap;overflow-wrap:anywhere}
+ body[data-th-page] .th-document-full{height:58dvh}
+ body[data-th-page] :is(.bk-preview-header,.tax-preview-header){flex-wrap:wrap;gap:10px}
+ body[data-th-page] :is(.bk-preview-header,.tax-preview-header) h2{font-size:18px;overflow-wrap:anywhere}
+ body[data-th-page="freebirds"] .section-head{align-items:flex-start;flex-direction:column}
+ body[data-th-page="freebirds"] .topline{flex-wrap:wrap;gap:8px}
+ body[data-th-page="freebirds"] :is(.toolbar,.filter-row){min-width:0;max-width:100%}
+ body[data-th-page="freebirds"] .add-fields{grid-template-columns:minmax(0,1fr)}
+ body[data-th-page] .bm-main{padding:16px 12px 24px}
+ body[data-th-page] .bm-head{flex-direction:column;align-items:stretch}
+ body[data-th-page] .bm-counts{max-width:none;width:100%}
+ body[data-th-page] .investment-metrics>div{min-width:0;flex-basis:100%;box-sizing:border-box}
+ @media(max-width:380px){
+ body[data-th-page] :is(.accounts-grid,.bk-years,.bk-quick,.stats,.metrics){grid-template-columns:minmax(0,1fr)!important}
+ }
+ }`;document.head.append(style);
 })();
