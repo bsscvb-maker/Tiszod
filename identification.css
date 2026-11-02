@@ -12,3 +12,5 @@
 /* Keep complete private document pages inside their preview window. */
 .private-document-preview{overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff}
 .private-document-preview>img,.private-document-preview>canvas,.identity-picture-card .picture-cover>img{object-fit:contain!important;object-position:center!important;max-width:100%;min-height:0!important}
+
+.private-document-preview .record-preview-error{font:14px/1.5 system-ui;min-height:0;width:100%;height:100%;padding:20px;box-sizing:border-box;text-align:center;overflow-wrap:anywhere}
