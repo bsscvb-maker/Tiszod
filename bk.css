@@ -88,3 +88,9 @@
 .bk-creditor-scroll{scrollbar-width:auto;scrollbar-color:#6184ad #14243c}
 
 .bk .bk-report-updated,.bk .bk-report-updated *{color:#39ff14!important}.bk-report-updated{font-weight:650}.bk-report-updated details{font-weight:400}
+
+/* Freeze creditor column labels inside the scrolling worksheet. */
+.bk-creditor-scroll{max-height:calc(100dvh - 110px);overflow:auto;position:relative;isolation:isolate}
+.bk-creditor-table{border-collapse:separate;border-spacing:0}
+.bk-creditor-table thead th{position:sticky;top:0;z-index:2;background:#1c3658;box-shadow:0 1px 0 #50749d}
+@media(max-width:650px){.bk-creditor-scroll{max-height:calc(100dvh - 32px)}}
