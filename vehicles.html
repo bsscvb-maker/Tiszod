@@ -206,8 +206,8 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 .card-last-updated{display:block;font-size:12px;line-height:1.5;margin:10px 0;white-space:normal}
 .card-last-updated,#assetLastUpdated{font-weight:700;color:#ff6b6b!important}
 .card-last-updated[data-recorded="true"],#assetLastUpdated[data-recorded="true"]{color:#55efad!important}
-#assetGrid .antique-deadlines{background:linear-gradient(135deg,#fff3a6 0%,#ffd43b 45%,#f6a800 100%);border:2px solid #ffe478;box-shadow:0 0 0 2px #9d5a00,0 0 22px #ffcc4566,inset 0 1px 0 #fff8;overflow:hidden}
-#assetGrid .antique-badge{color:#352000;font-size:14px;font-weight:900;letter-spacing:.07em;padding:14px 4px;text-align:center;line-height:1.5;text-shadow:0 1px 0 #fff6}
+#assetGrid .antique-deadlines{background:linear-gradient(135deg,#fff3a6 0%,#ffd43b 45%,#f6a800 100%);border:2px solid #ffe478;box-shadow:0 0 0 2px #9d5a00,0 0 22px #ffcc4566,inset 0 1px 0 #fff8;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#assetGrid .antique-badge{color:#352000;font-size:14px;font-weight:900;letter-spacing:.07em;padding:14px 4px;text-align:center;line-height:1.5;text-shadow:0 1px 0 #fff6;width:100%;box-sizing:border-box}
 #assetGrid .antique-badge span{color:#624000}
 #assetGrid .antique-badge small{display:block;font-size:9px;letter-spacing:.06em;margin-top:5px;color:#624000;line-height:1.4}
 #assetGrid .deadline-source{display:block;width:fit-content;margin-top:4px;color:#a6d9ff;text-decoration:underline;font-size:11px}
@@ -750,7 +750,7 @@ function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{ti
 function deadlineCard(a){
  if(!['active','managed'].includes(clean(a.status)))return '';
  const d=complianceFor(a),specs=specRecord(a).specs;
- if(specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">★ ANTIQUE VEHICLE ★</div></aside>';
+ if(specs.antiqueRegistration===true)return '<aside class="card-deadlines antique-deadlines" aria-label="Antique vehicle"><div class="antique-badge">ANTIQUE VEHICLE</div></aside>';
  const none=['registration','inspection'].every(k=>['not-required','exempt'].includes(d[k+'Mode']));
  return '<aside class="card-deadlines'+(none?' no-compliance-required':'')+'" aria-label="Registration and inspection deadlines">'+['registration','inspection'].map(k=>{
   const state=deadlineState(d[k+'Due'],d[k+'Mode']),label=k==='registration'?'Registration':'State inspection';
