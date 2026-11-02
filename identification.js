@@ -10,6 +10,18 @@ window.thStart=async()=>{const rows=await thValues("'Identification Records'!A1:
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
+const visibilityKey='tiszod-identification-hidden-people-v1';
+let hiddenPeople=new Set(['Heather','Alexis']),showHiddenPeople=false;
+try{const saved=JSON.parse(localStorage.getItem(visibilityKey));if(Array.isArray(saved))hiddenPeople=new Set(saved.filter(p=>typeof p==='string'))}catch{}
+const personIsHidden=p=>hiddenPeople.has(p)||String(p||'').split(' & ').some(name=>hiddenPeople.has(name));
+const visibilityBar=document.createElement('div');
+visibilityBar.className='identity-visibility';
+visibilityBar.innerHTML='<button type="button" id="identity-show-hidden" aria-pressed="false">Show hidden people</button><small>Visibility choices are remembered in this browser. Documents stay available.</small>';
+$('identity-count').before(visibilityBar);
+$('identity-show-hidden').onclick=()=>{showHiddenPeople=!showHiddenPeople;selectedPerson='';$('identity-person').value='';render()};
+const visibilityStyle=document.createElement('style');
+visibilityStyle.textContent='.identity-visibility{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}.identity-visibility small{opacity:.75}.identity-person-wrap{display:flex;flex-direction:column;min-width:0;gap:8px}.identity-person-wrap>.person-record{width:100%;flex:1}.identity-person-wrap>.identity-person-visibility{align-self:flex-end;min-height:44px;padding:8px 16px}.identity-person-wrap.is-hidden>.person-record{border-style:dashed}';
+document.head.append(visibilityStyle);
 const isEducation=false;
 function title(d){
  let n=String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ');
@@ -27,8 +39,13 @@ function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)ret
 const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend']};
 function groupCard(label,count,attribute,value){const profile=attribute==='data-person'?(personStyles[label]||['other',label.charAt(0),'Documents']):null;return '<button class="identity-card person-record'+(profile?' person-profile person-'+profile[0]:'')+'" '+attribute+'="'+esc(value)+'">'+(profile?'<span class="person-topline"><span class="person-avatar'+(['Todd','Aiden','Alexis','Tracy'].includes(label)?' person-photo':'')+'" aria-hidden="true">'+(['Todd','Aiden','Alexis','Tracy'].includes(label)?'':esc(profile[1]))+'</span><span class="person-relationship">'+esc(profile[2])+'</span></span>':'<span class="person-avatar" aria-hidden="true">'+esc(isEducation?'▤':label.charAt(0))+'</span>')+'<h3>'+esc(label)+'</h3><p>'+count+' '+(count===1?'document':'documents')+'</p>'+(profile?'<span class="person-open" aria-hidden="true">↗</span>':'')+'</button>';}
 function render(){
+ $('identity-show-hidden').textContent=(showHiddenPeople?'Hide hidden people':'Show hidden people')+' ('+hiddenPeople.size+')';
+ $('identity-show-hidden').setAttribute('aria-pressed',String(showHiddenPeople));
+ for(const option of $('identity-person').options){option.hidden=!!option.value&&!showHiddenPeople&&personIsHidden(option.value)}
+ if(!showHiddenPeople&&personIsHidden($('identity-person').value))$('identity-person').value='';
+ if(!showHiddenPeople&&personIsHidden(selectedPerson))selectedPerson='';
  const q=$('identity-search').value.trim().toLowerCase(),person=$('identity-person').value,category=$('identity-category').value,deleted=$('identity-view').value==='deleted';
- const list=records.filter(r=>!!r.data.deleted===deleted&&(!person||r.data.person===person)&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
+ const list=records.filter(r=>!!r.data.deleted===deleted&&(showHiddenPeople||!personIsHidden(r.data.person))&&(!person||r.data.person===person)&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
  $('identity-pin-section').hidden=true;
  const grid=$('identity-grid'),chosen=person||selectedPerson;
  const heading=grid.previousElementSibling;
@@ -37,7 +54,7 @@ function render(){
  if(isEducation&&selectedCategory){shown=shown.filter(r=>(r.data.category||'Other')===selectedCategory);html+='<strong>'+esc(selectedCategory)+'</strong>';}
  if(isEducation&&selectedFolder){shown=shown.filter(r=>(r.data.folder||'')===selectedFolder||r.data.folder?.startsWith(selectedFolder+'/'));html+='<button data-record-back="category">← '+esc(selectedCategory||'Categories')+'</button><strong>'+esc(selectedFolder)+'</strong>';}
  html+='</div>';
- if(!q&&!person&&!category&&!deleted&&!chosen&&!isEducation){heading.textContent='Choose a person';$('identity-count').textContent=list.length+' documents';grid.innerHTML=[...new Set(['Todd','Aiden','Alexis','Heather','Tracy',...list.map(r=>r.data.person||'General')])].map(p=>groupCard(p,list.filter(r=>(r.data.person||'General')===p).length,'data-person',p)).join('');return}
+ if(!q&&!person&&!category&&!deleted&&!chosen&&!isEducation){heading.textContent='Choose a person';$('identity-count').textContent=list.length+' documents';grid.innerHTML=[...new Set(['Todd','Aiden','Alexis','Heather','Tracy',...list.map(r=>r.data.person||'General')])].filter(p=>showHiddenPeople||!personIsHidden(p)).map(p=>'<div class="identity-person-wrap'+(personIsHidden(p)?' is-hidden':'')+'">'+groupCard(p,list.filter(r=>(r.data.person||'General')===p).length,'data-person',p)+'<button type="button" class="identity-person-visibility" data-toggle-person="'+esc(p)+'" aria-label="'+(hiddenPeople.has(p)?'Unhide ':'Hide ')+esc(p)+'">'+(hiddenPeople.has(p)?'Unhide':'Hide')+'</button></div>').join('');return}
  if(isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent='Choose a category';$('identity-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('');return}
  if(isEducation&&selectedCategory&&!selectedFolder&&!q&&!category&&!deleted){const groups=[...new Set(shown.map(r=>r.data.folder?.split('/')[0]).filter(Boolean))].sort();if(groups.length){heading.textContent=selectedCategory;const loose=shown.filter(r=>!r.data.folder);$('identity-count').textContent=shown.length+' records';grid.innerHTML=html+groups.map(f=>groupCard(f,shown.filter(r=>r.data.folder===f||r.data.folder?.startsWith(f+'/')).length,'data-folder',f)).join('')+loose.map(card).join('');return}}
  heading.textContent=q?'Search results':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
@@ -46,6 +63,7 @@ function render(){
 }
 document.querySelector('.identification').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.togglePerson){const p=b.dataset.togglePerson;const next=new Set(hiddenPeople);if(next.has(p))next.delete(p);else next.add(p);try{localStorage.setItem(visibilityKey,JSON.stringify([...next]));hiddenPeople=next;render();message(p+(next.has(p)?' hidden. Use Show hidden people to view or unhide.':' is visible again.'))}catch{message('Your browser could not save this visibility choice. Allow site storage and retry.')}return}
  if(b.dataset.person){selectedPerson=b.dataset.person;recordPage=1;render()}
  if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
