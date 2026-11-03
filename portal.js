@@ -535,3 +535,17 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }`;
  document.head.append(style);
 })();
+
+/* Filed document index is private workbook data; original files stay in Drive. */
+(()=>{
+ const nav=document.querySelector('.th-sidebar nav');if(!nav)return;
+ const link=document.createElement('a');link.href='#filed-documents';link.className='th-nav-link';link.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Filed Documents</span>';nav.append(link);
+ const dialog=document.createElement('dialog');dialog.setAttribute('aria-label','Filed Documents');dialog.style.cssText='width:min(960px,calc(100vw - 24px));max-height:90dvh;box-sizing:border-box;padding:20px;border:1px solid #58779e;border-radius:14px;background:#11233b;color:#f3f7ff';
+ dialog.innerHTML='<header style="display:flex;gap:12px;align-items:center;justify-content:space-between"><h2 style="margin:0">Filed Documents</h2><button type="button" data-close>Close</button></header><p>Search your filed originals, including BK, vehicles, employment and the BSSC archive.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><input type="search" aria-label="Search filed documents" placeholder="Search filenames and folders…" style="flex:1;min-width:180px;padding:10px"><select aria-label="Document section"><option value="">All sections</option><option>BK</option><option>Vehicles</option><option>Employment</option><option>BSSC</option></select><button type="button" data-refresh>Refresh</button></div><p data-status role="status" aria-live="polite"></p><div data-list></div>';
+ document.body.append(dialog);
+ const search=dialog.querySelector('input'),section=dialog.querySelector('select'),status=dialog.querySelector('[data-status]'),list=dialog.querySelector('[data-list]');let rows=[],loading=false;
+ function url(value){try{const u=new URL(value);return u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname)?u.href:''}catch{return ''}}
+ function paint(){const q=search.value.trim().toLowerCase(),filtered=rows.filter(r=>(!section.value||r[1]===section.value)&&[r[2],r[4],r[6]].join(' ').toLowerCase().includes(q));status.textContent=filtered.length+' of '+rows.length+' files';list.replaceChildren();for(const r of filtered){const card=document.createElement('article');card.style.cssText='padding:14px 0;border-top:1px solid #3a506b;overflow-wrap:anywhere';const name=document.createElement('a');name.textContent=r[2];name.href=url(r[3]);name.target='_blank';name.rel='noopener noreferrer';name.style.cssText='color:#a8d4ff;font-weight:600;display:block';const path=document.createElement('small');path.textContent=r[1]+' · '+r[4];card.append(name,path);list.append(card)}if(!filtered.length){const p=document.createElement('p');p.textContent='No matching files.';list.append(p)}}
+ async function load(){if(loading)return;loading=true;status.textContent='Loading private document list…';try{if(typeof thValues!=='function'||typeof thToken==='undefined'||!thToken)throw new Error('Sign in to TISZOD, then select Refresh to load your documents.');const data=await thValues("'Portal Filed Documents'!A1:H1000");rows=data.slice(1).filter(r=>r[0]&&url(r[3]));paint()}catch(e){status.textContent=e.message}finally{loading=false}}
+ link.addEventListener('click',e=>{e.preventDefault();if(!dialog.open)dialog.showModal();load()});dialog.querySelector('[data-close]').onclick=()=>dialog.close();dialog.querySelector('[data-refresh]').onclick=load;search.oninput=paint;section.onchange=paint;
+})();
