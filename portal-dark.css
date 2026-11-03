@@ -49,3 +49,8 @@ body[data-th-page="fleet"] .vehicle-mileage{margin-top:36px}body[data-th-page="f
 #th-auth #th-sign-in[hidden]{display:none}
 @keyframes th-wait-pulse{0%,100%{opacity:1;text-shadow:0 0 0 transparent}50%{opacity:.55;text-shadow:0 0 14px #8db7ff}}
 @media(prefers-reduced-motion:reduce){#th-auth.th-auth-loading #th-auth-message{animation:none}}
+
+/* Keep native date calendar glyphs white on every portal screen. */
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) invert(1)!important;opacity:1!important;cursor:pointer}
+[data-save-acquired][hidden],[data-save-end-service][hidden]{display:none!important}
