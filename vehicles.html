@@ -494,11 +494,14 @@ function renderFleetPage(D,PORTAL) {
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clean=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const categories=['Cars','Trucks','SUVs','Vans','Classic','Motorcycles','Boats','Personal Watercraft','Trailers','RVs','Golf Carts','ATVs & Quads','Scooters & Mopeds','Mini Bikes','Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment','Bicycles'];
+const vehicleSections=['Cars','Trucks & SUVs','Vans','Campers','Motorcycles','Trailers','Golf Carts','Off-Road'];
+const vehicleSectionAliases={'Trucks':'Trucks & SUVs','SUVs':'Trucks & SUVs','Classic':'Trucks & SUVs','RVs':'Campers','ATVs & Quads':'Off-Road','Mini Bikes':'Off-Road','Scooters & Mopeds':'Off-Road','Bicycles':'Off-Road'};
+for(const section of vehicleSections)if(!categories.includes(section))categories.push(section);
 const equipmentSections=['Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment'];
 const equipmentGroup='Yard & Equipment';
 const waterSections=['Boats','Personal Watercraft'];
 const workspace=location.pathname.endsWith('/equipment.html')?'equipment':location.pathname.endsWith('/watercraft.html')?'watercraft':'vehicles';
-const workspaceCategories=workspace==='equipment'?equipmentSections:workspace==='watercraft'?waterSections:categories.filter(c=>!equipmentSections.includes(c)&&!waterSections.includes(c));
+const workspaceCategories=workspace==='equipment'?equipmentSections:workspace==='watercraft'?waterSections:vehicleSections;
 const belongsHere=a=>workspaceCategories.includes(a.category)||workspace==='vehicles'&&a.category==='Unfiled';
 const workspaceTitle=workspace==='equipment'?'Equipment':workspace==='watercraft'?'Watercraft':'Vehicles';
 const inSection=(a,section)=>section==='All Vehicles'||(section===equipmentGroup?equipmentSections.includes(a.category):a.category===section);
@@ -523,7 +526,7 @@ const paths={
 'Shop Equipment':'<path d="M4 10h16v8H4zM7 10V7h10v3M8 18v3m8-3v3M9 14h6M20 12h2"/>',
 'Bicycles':'<circle cx="5" cy="17" r="4"/><circle cx="19" cy="17" r="4"/><path d="m5 17 5-8 4 8 5-8M9 9h5M18 9h3"/>'
 };
-function icon(c){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[c]||paths.Cars)+'</svg>'}
+function icon(c){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[c]||paths[c==='Trucks & SUVs'?'Trucks':c==='Campers'?'RVs':c==='Off-Road'?'ATVs & Quads':c]||paths.Cars)+'</svg>'}
 function normalizeCategory(p){
  const source=String(p.category||'').toLowerCase(), name=clean([p.make,p.model,p.name].filter(Boolean).join(' '));
  if(p.category==='Unfiled')return 'Unfiled';
@@ -599,6 +602,8 @@ const assets=primary.concat(extras);
 for(const [i,item] of listed.entries())if(!deletedProfiles.some(p=>sameListedAsset(p,item))&&!assets.some(a=>sameListedAsset(a,item)))assets.push({...item,status:item.status||'Active',category:listedCategory(item),id:'f'+i});
 // Correct legacy category values for known vehicles before section filtering.
 for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
+// Consolidate legacy sections while retaining their reading and engine semantics.
+for(const a of assets){a.readingCategory=a.category;a.category=vehicleSectionAliases[a.category]||a.category;}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
 document.querySelector('.th-app-topbar strong').textContent=workspaceTitle;
 document.querySelectorAll('.th-sidebar [href$=".html"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')===(workspace==='vehicles'?'vehicles.html':workspace+'.html')));
@@ -661,12 +666,12 @@ function cardEngine(a){return a.engine&&clean(a.engine)!=='na'?a.engine:'Not rec
 function showCardEngine(a){
  const model=clean([a.make,a.model].filter(Boolean).join(' '));
  if(a.category==='Trailers'||/trailer|keystonebullet|stirling|yamahaezloader/.test(model)||['4YDT33126LT434476','2SSUBE1A1MB148250'].includes(String(a.vin||'').toUpperCase()))return false;
- if(a.category==='Bicycles'||/pedal|humanpowered|nonmotorized/.test(clean(a.engine||'')))return false;
+ if(a.category==='Bicycles'||a.readingCategory==='Bicycles'||/trek7200|huffy/.test(model)||/pedal|humanpowered|nonmotorized/.test(clean(a.engine||'')))return false;
  const engine=clean(a.engine||'');
  if(/^(noengine|nomotor|none|notapplicable)/.test(engine))return false;
  return !!engine&&!['na','none','noengine','nomotor','notapplicable','notrecorded','unknown','0'].includes(engine);
 }
-function usesHours(a){const name=clean(a.make+' '+a.model);if(/colemanb200|xprojaguar200/.test(name))return false;return ['Boats','Personal Watercraft','Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment','ATVs & Quads','Mini Bikes'].includes(a.category)||/pressurewasher|aircompressor|chainsaw|brushcutter|weedeater|trimmer|mower|leafblower|generator|jetski|waverunner/.test(name)}
+function usesHours(a){const name=clean(a.make+' '+a.model);if(/coolster3050/.test(name))return true;if(/colemanb200|xprojaguar200/.test(name))return false;return ['Boats','Personal Watercraft','Tractors','Yard Equipment','Outdoor Equipment','Shop Equipment','ATVs & Quads','Mini Bikes'].includes(a.readingCategory||a.category)||/pressurewasher|aircompressor|chainsaw|brushcutter|weedeater|trimmer|mower|leafblower|generator|jetski|waverunner/.test(name)}
 function readingName(a){return usesHours(a)?'Hours':'Mileage'}
 // Preserve documented historical readings separately from a current tracking value.
 function readingEvidence(a,m){
@@ -898,7 +903,7 @@ function renderAsset(tab='details'){
  const isUltra=/ultraclassic|electraglide|flhtcui/.test(fuelName)&&String(asset.year)==='2000';
  const isF150=/f150|f100|fseries/.test(fuelName)&&String(asset.year)==='1977';
  const isRam3500=/ram3500|3500.*ram|ram.*3500/.test(fuelName)&&String(asset.year)==='2022';
- const canFuel=!hours&&!['Trailers','RVs','Bicycles'].includes(asset.category);
+ const canFuel=!hours&&!['Trailers','RVs','Campers','Bicycles'].includes(asset.readingCategory||asset.category)&&!/trek7200|huffy/.test(clean(asset.make+' '+asset.model));
  document.getElementById('mustangFuelTab').hidden=!canFuel;
  document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
@@ -1506,7 +1511,7 @@ function fuelVehicleRank(a){
  return 4;
 }
 window.tiszodFuelOptions=()=>({
- vehicles:assets.filter(a=>clean(a.status)==='active'&&!usesHours(a)&&!['Trailers','RVs','Bicycles'].includes(a.category)).sort((a,b)=>fuelVehicleRank(a)-fuelVehicleRank(b)||[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' '))).map(a=>({key:serviceAssetKey(a),name:[a.year,a.make,a.model].filter(Boolean).join(' '),profileRow:a.profileRow||null,year:Number(a.year),mileageName:[a.make,a.model].filter(Boolean).join(' '),mileageRow:mileageFor(a)?.sheetRow||null,current:mileageFor(a)?.currentMileage??null})),
+ vehicles:assets.filter(a=>clean(a.status)==='active'&&!usesHours(a)&&!['Trailers','RVs','Campers','Bicycles'].includes(a.readingCategory||a.category)&&!/trek7200|huffy/.test(clean(a.make+' '+a.model))).sort((a,b)=>fuelVehicleRank(a)-fuelVehicleRank(b)||[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' '))).map(a=>({key:serviceAssetKey(a),name:[a.year,a.make,a.model].filter(Boolean).join(' '),profileRow:a.profileRow||null,year:Number(a.year),mileageName:[a.make,a.model].filter(Boolean).join(' '),mileageRow:mileageFor(a)?.sheetRow||null,current:mileageFor(a)?.currentMileage??null})),
  selected:asset&&!document.getElementById('assetView').hidden?serviceAssetKey(asset):null,
  onSaved:async entry=>{const fresh=await thFleetData();for(const a of assets){const p=fresh.profiles.find(p=>p.profileRow===a.profileRow);if(p)a.lastUpdated=p.lastUpdated}paintUpdated();mileage.splice(0,mileage.length,...fresh.vehicles);renderCategory();renderGarageStats();if(asset&&!document.getElementById('assetView').hidden)renderAsset('fuel');}
 });
@@ -1546,6 +1551,7 @@ window.thStart=()=>{
  return thFleetStarting;
 };
 </script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261102-mobile-toolbar-2"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
+
 
 
 
