@@ -44,7 +44,10 @@
 .legal-preview-image{display:block;max-width:100%;height:auto;margin:10px auto;background:#fff}
 .legal-view [hidden]{display:none!important}
 
-#legal-launcher{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.5vw,16px);max-width:432px;margin:0 auto}
+#legal-launcher{--columns:2;--rows:2;--gap:clamp(10px,1.5vw,16px);display:grid;grid-template-columns:repeat(var(--columns),minmax(0,1fr));gap:var(--gap);width:min(100%,max(280px,calc((100dvh - 144px + var(--gap)) / var(--rows) * var(--columns) - var(--gap))));margin:0 auto;container-type:inline-size}
+#legal-launcher:has(.legal-tile:nth-child(5)){--columns:3}
+#legal-launcher:has(.legal-tile:nth-child(7)){--rows:3}
+@media(max-width:600px){#legal-launcher:has(.legal-tile:nth-child(5)){--columns:2;--rows:3}#legal-launcher:has(.legal-tile:nth-child(7)){--rows:4}}
 #legal-launcher .legal-tile{box-sizing:border-box;--ink:#f2d4a1;--glow:#594434;position:relative;aspect-ratio:1;display:grid;place-items:center;isolation:isolate;overflow:hidden;padding:12px;border:1px solid #536078;border-radius:clamp(12px,2vw,24px);background:radial-gradient(ellipse at 50% 42%,var(--glow),transparent 72%),linear-gradient(145deg,#222d40,#101622);color:#fff;text-decoration:none;transition:border-color .18s,box-shadow .18s}
 .legal-tile:hover,.legal-tile:focus-visible{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
 .legal-tile:nth-child(3){--ink:#b9d6fa;--glow:#304b6d}
@@ -52,7 +55,7 @@
 .legal-tile-number{position:absolute;top:9%;left:9%;color:var(--ink);font-weight:750;letter-spacing:.12em;font-size:clamp(.75rem,2vw,1rem)}
 .legal-tile svg,.legal-tile img{width:57%;height:57%;margin-bottom:13%;object-fit:contain;color:var(--ink);filter:drop-shadow(0 8px 12px #0007)}
 .legal-tile img{border-radius:50%;background:#fff;padding:3%;box-sizing:border-box}
-.legal-tile strong{position:absolute;bottom:9%;left:5%;right:5%;text-align:center;font:600 clamp(.86rem,2.65vw,1.18rem)/1.12 Georgia,serif}
+.legal-tile strong{position:absolute;bottom:9%;left:5%;right:5%;text-align:center;font:600 clamp(.86rem,3.5cqi,1.85rem)/1.12 Georgia,serif}
 .legal-return{display:inline-block;margin:0 0 14px;color:var(--gold)}
 </style></head><body data-th-page="legal">
 
