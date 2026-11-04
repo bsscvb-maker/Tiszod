@@ -2,19 +2,28 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TisZod · Legal</title><meta name="theme-color" content="#0b1019">
 <link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><style>
-.legal-workspace{max-width:1100px;margin:auto;color:#edf3ff}
-.legal-hero,.legal-panel{border:1px solid #34445e;border-radius:18px;background:#111b2a;padding:clamp(18px,4vw,36px)}
-.legal-hero{background:linear-gradient(125deg,#172c42,#111b2a 78%);margin-bottom:20px}
-.legal-kicker{color:#9bcdf3;font-size:.75rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
-.legal-hero h1{font-size:clamp(2rem,5vw,3.2rem);margin:.2em 0}.legal-workspace p{color:#b9c7db;line-height:1.55;margin:.5rem 0}
-.legal-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.legal-tabs button{min-height:48px;padding:9px 12px;border:1px solid #34445e;border-radius:10px;background:#111b2a;color:#cdd8e9;font:inherit;font-weight:650;cursor:pointer}
-.legal-tabs button[aria-selected=true]{background:#234766;border-color:#81c7ff;color:white}
-.legal-workspace :is(button,a,[tabindex]):focus-visible{outline:2px solid #9ed7ff;outline-offset:3px}
-.legal-panel h2{margin:0;font-size:1.55rem}.legal-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;margin-top:20px}
-.legal-card{display:flex;flex-direction:column;gap:8px;min-height:108px;padding:16px;border:1px solid #3a4f6b;border-radius:12px;background:#172438;color:#edf3ff;text-decoration:none;overflow-wrap:anywhere}
-.legal-card:hover{border-color:#8fcfff;background:#1d3048}.legal-card span{color:#adc5df;font-size:.85rem}.legal-card.primary{border-color:#79b8eb;background:#204361}
-@media(max-width:680px){.legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.legal-workspace{--gold:#edca86;--muted:#bac6d8;max-width:1160px;margin:auto;color:#f5f6fa}
+.legal-hero{position:relative;isolation:isolate;overflow:hidden;border:1px solid #69573c;border-radius:24px;padding:clamp(24px,6vw,70px);background:radial-gradient(ellipse at 85% 45%,#3d3227,transparent 58%),linear-gradient(125deg,#1c2536,#111722 72%);margin-bottom:24px;box-shadow:0 18px 45px #0004}
+.legal-kicker,.legal-kind{color:var(--gold);font-size:.73rem;font-weight:750;letter-spacing:.13em;text-transform:uppercase}
+.legal-hero h1{font:500 clamp(2.7rem,7vw,5.6rem)/1 Georgia,serif;letter-spacing:-.055em;margin:.15em 0}
+.legal-hero p,.legal-panel p{color:var(--muted);line-height:1.55;margin:.5rem 0;max-width:58ch}
+.legal-scales{position:absolute;z-index:-1;right:5%;top:50%;transform:translateY(-50%);width:clamp(110px,24vw,290px);color:var(--gold);opacity:.27}
+.legal-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.legal-tabs button{min-height:74px;padding:12px;text-align:left;border:1px solid #37445a;border-radius:13px;background:#151d2b;color:#e0e7f2;font:inherit;font-weight:680;cursor:pointer}
+.legal-tabs button span{display:block;color:var(--gold);font-size:.7rem;letter-spacing:.12em;margin-bottom:4px}
+.legal-tabs button:hover,.legal-tabs button[aria-selected=true]{border-color:var(--gold);background:#302a23;color:#fff}
+.legal-tabs button[aria-selected=true]{box-shadow:inset 0 -3px var(--gold)}
+.legal-workspace :is(button,a,input,[tabindex]):focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.legal-workspace [hidden]{display:none!important}
+.legal-panel{border:1px solid #37445a;border-radius:18px;background:#111926;padding:clamp(16px,4vw,34px)}
+.legal-panel h2{margin:0;font:500 clamp(1.65rem,4vw,2.55rem)/1.12 Georgia,serif}
+.legal-filter{display:grid;gap:6px;margin:20px 0 8px;color:#e0e7f2;font-size:.86rem;font-weight:650;max-width:28rem}
+.legal-filter input{box-sizing:border-box;width:100%;min-height:44px;border:1px solid #52627b;border-radius:9px;padding:8px 12px;background:#0e1520;color:#fff;font:inherit;font-size:16px}
+.legal-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));gap:10px;margin-top:16px}
+.legal-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:center;gap:5px 12px;min-height:84px;padding:13px 15px;border:1px solid #37445a;border-radius:11px;background:#192435;color:#f5f6fa;text-decoration:none;overflow-wrap:anywhere}
+.legal-card strong{grid-column:1}.legal-card .legal-arrow{grid-column:2;grid-row:1/span 2;align-self:center;color:var(--gold);font-size:1.2rem}
+.legal-card:hover{border-color:var(--gold);background:#243148;color:#fff}.legal-card.primary{border-color:#a68654;background:#302a23}
+@media(max-width:720px){.legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.legal-scales{opacity:.14;right:3%}}
 </style></head><body data-th-page="legal">
 
 <div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
@@ -23,7 +32,7 @@
 <div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside>
 <div class="th-app-main"><header class="th-app-topbar"><div><strong>Legal</strong><small>Private legal records</small></div><span class="th-connection" id="th-connection">Connecting…</span></header>
 <main class="th-page-content"><div class="legal-workspace">
-<header class="legal-hero"><span class="legal-kicker">Private workspace</span><h1>Legal</h1><p>Find case records, settlement folders, and filings in one place.</p></header>
+<header class="legal-hero"><svg class="legal-scales" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 18v79M38 102h44M46 97h28M24 34h72M25 34 9 67h32L25 34Zm70 0L79 67h32L95 34ZM9 67a16 13 0 0 0 32 0m38 0a16 13 0 0 0 32 0"/><circle cx="60" cy="15" r="4"/></svg><span class="legal-kicker">TisZod / Private workspace</span><h1>Legal</h1><p>Case files, settlement records, and personal filings.</p></header>
 <p id="legal-status" role="status">Sign in to load your private records.</p><div id="legal-records" hidden></div>
 </div></main></div></div>
 <script>
@@ -46,7 +55,7 @@ window.thStart=async()=>{
   if(focus)buttons[index].focus();
  }
  legalSections.forEach(({id,key,title,description},index)=>{
-  const button=document.createElement('button');button.type='button';button.id='legal-tab-'+id;button.textContent=title;button.setAttribute('role','tab');button.setAttribute('aria-controls','legal-panel-'+id);button.onclick=()=>select(index);tabs.append(button);buttons.push(button);
+  const button=document.createElement('button');button.type='button';button.id='legal-tab-'+id;const number=document.createElement('span');number.textContent=String(index+1).padStart(2,'0');number.setAttribute('aria-hidden','true');button.append(number,title);button.setAttribute('role','tab');button.setAttribute('aria-controls','legal-panel-'+id);button.onclick=()=>select(index);tabs.append(button);buttons.push(button);
   button.onkeydown=event=>{
    const next={ArrowRight:(index+1)%legalSections.length,ArrowLeft:(index+legalSections.length-1)%legalSections.length,Home:0,End:legalSections.length-1}[event.key];
    if(next!==undefined){event.preventDefault();select(next,true)}
@@ -56,19 +65,34 @@ window.thStart=async()=>{
   heading.textContent=title;summary.textContent=description;cards.className='legal-cards';
   function addCard(name,url,label,primary=false){
    const card=document.createElement('a'),kind=document.createElement('span'),caption=document.createElement('strong');
-   card.className='legal-card'+(primary?' primary':'');card.href=url;kind.textContent=label;caption.textContent=name;
+   card.className='legal-card'+(primary?' primary':'');card.href=url;kind.className='legal-kind';kind.textContent=label;caption.textContent=name;
    if(!primary){card.target='_blank';card.rel='noopener noreferrer'}
-   card.append(kind,caption);cards.append(card);
+   const arrow=document.createElement('span');arrow.className='legal-arrow';arrow.textContent=primary?'→':'↗';arrow.setAttribute('aria-hidden','true');
+   card.append(kind,caption,arrow);cards.append(card);
   }
   if(key==='BK')addCard('Open BK Workspace','bk.html','TisZod workspace',true);
   for(const [section,name,link] of rows.slice(1)){
    if(section!==key||!name)continue;
    let url;try{url=new URL(link)}catch{continue}
    if(url.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(url.hostname))continue;
-   addCard(name,url.href,url.pathname.includes('/folders/')?'Google Drive folder ↗':'Document ↗');
+   addCard(name,url.href,url.pathname.includes('/folders/')?'Google Drive folder':'Document');
   }
   if(!cards.children.length){const empty=document.createElement('p');empty.textContent='No records are filed here yet.';cards.append(empty)}
-  panel.append(heading,summary,cards);
+  panel.append(heading,summary);
+  const records=Array.from(cards.querySelectorAll('a'));
+  if(records.length>1){
+   const filter=document.createElement('label'),input=document.createElement('input'),matches=document.createElement('p');
+   filter.className='legal-filter';filter.textContent='Find a record';input.type='search';input.placeholder='Search this section';filter.append(input);
+   matches.setAttribute('role','status');
+   function updateMatches(){
+    const query=input.value.trim().toLowerCase();
+    records.forEach(record=>{record.hidden=!record.querySelector('strong').textContent.toLowerCase().includes(query)});
+    const count=records.filter(record=>!record.hidden).length;
+    matches.textContent=count===0?'No matching records.':count+' '+(count===1?'link':'links');
+   }
+   input.addEventListener('input',updateMatches);updateMatches();panel.append(filter,matches);
+  }
+  panel.append(cards);
  });
  output.replaceChildren(tabs,...panels);select(1);output.hidden=false;status.hidden=true;
  document.getElementById('th-connection').textContent='Private workbook connected';
