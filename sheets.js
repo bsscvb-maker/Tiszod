@@ -138,13 +138,25 @@ function thSignIn() {
   thTokenClient.requestAccessToken({prompt: ''});
 }
 async function thSheets(path) {
-  const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + TH_SHEET_ID + path, {
-    headers: {Authorization: 'Bearer ' + thToken}
-  });
+  const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + TH_SHEET_ID + path;
+  let response;
+  for (const delay of [0, 1000, 3000, 8000]) {
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 250));
+    try {
+      response = await fetch(url, {
+        cache: 'no-store',
+        headers: {Authorization: 'Bearer ' + thToken}
+      });
+    } catch (error) {
+      if (delay === 8000) throw new Error('Could not reach Google Sheets. Check your connection and try again.');
+      continue;
+    }
+    if (![429, 500, 502, 503, 504].includes(response.status)) break;
+  }
   if (!response.ok) {
     if (response.status === 401) { const error = new Error('Your sign-in expired. Please sign in again.'); error.status = 401; throw error; }
     if (response.status === 403 || response.status === 404) throw new Error('This Google account cannot open the TisZod workbook. Sign in with the account that owns it.');
-    throw new Error('The workbook could not be loaded. Please try again.');
+    throw new Error('Google Sheets could not load the workbook (HTTP ' + response.status + '). Please try again.');
   }
   return response.json();
 }
