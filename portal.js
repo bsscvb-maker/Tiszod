@@ -228,7 +228,8 @@ let rows=defaults,editing=false,dragged=null;try{rows=normalize(JSON.parse(local
 if(!bssc){
   const moduleGroup=groups.find(({label})=>label.textContent.trim()==='Modules');
   if(moduleGroup){
-    const modules=rows.filter(row=>row.group===moduleGroup.index).sort((a,b)=>map.get(a.id).textContent.trim().localeCompare(map.get(b.id).textContent.trim()));
+    const moduleName=row=>{const link=map.get(row.id).cloneNode(true);link.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(icon=>icon.remove());return link.textContent.trim()};
+    const modules=rows.filter(row=>row.group===moduleGroup.index).sort((a,b)=>moduleName(a).localeCompare(moduleName(b)));
     rows=rows.map(row=>row.group===moduleGroup.index?modules.shift():row);
   }
 }
