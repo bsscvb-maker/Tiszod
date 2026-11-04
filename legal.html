@@ -34,6 +34,12 @@
 .legal-thumbnail-label::after{content:'›';font-size:1.25rem}
 .legal-thumbnail-art{position:absolute;inset:0 0 44px;display:grid;place-items:center;overflow:hidden}
 .legal-thumbnail img{position:absolute;inset:0;width:100%;height:100%;min-height:0;object-fit:cover;object-position:center top}
+.legal-folder-cover{--cover-ink:#ecd097;--cover-glow:#49402d;position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;color:var(--cover-ink);background:radial-gradient(ellipse at 50% 46%,var(--cover-glow),transparent 70%),linear-gradient(135deg,#20293a,#101722)}
+.legal-folder-cover::before{content:'';position:absolute;inset:10px;border:1px solid currentColor;border-radius:6px;opacity:.22;background:repeating-linear-gradient(135deg,transparent 0 12px,#ffffff14 12px 13px)}
+.legal-folder-cover svg{position:relative;width:min(68%,148px);height:86%;filter:drop-shadow(0 4px 8px #0006)}
+.legal-folder-cover[data-tone=plum]{--cover-ink:#f1bfd4;--cover-glow:#56384e}
+.legal-folder-cover[data-tone=teal]{--cover-ink:#abe0d3;--cover-glow:#254a49}
+.legal-folder-cover[data-tone=blue]{--cover-ink:#b7d4f6;--cover-glow:#284566}
 .legal-thumbnail img[data-photo]{object-position:center}
 .legal-file strong{display:block;margin:4px 0 12px;font-size:1.06rem;line-height:1.35;overflow-wrap:anywhere}
 .legal-file > .legal-kind{display:block;margin-bottom:4px}
@@ -150,24 +156,20 @@ async function legalDocumentCover(record){
   return null;
  }finally{await task.destroy()}
 }
-async function legalCover(record){
- if(!record.folder)return legalDocumentCover(record);
- const queue=[{record}];
- let attempts=0;
- for(let index=0;index<queue.length&&index<8;index++){
-  const entry=queue[index];
-  const result=await legalFolderPage(entry.record,entry.pageToken).catch(()=>null);
-  if(!result)continue;
-  if(result.nextPageToken)queue.push({record:entry.record,pageToken:result.nextPageToken});
-  for(const file of result.files){
-   if(file.folder){queue.push({record:file});continue}
-   if(!/^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(file.mime)&&file.mime!=='application/pdf'&&!['document','spreadsheet','presentation'].some(type=>file.mime===legalMimePrefix+type))continue;
-   if(attempts++>=12)return null;
-   const cover=await legalDocumentCover(file).catch(()=>null);
-   if(cover)return cover;
-  }
- }
- return null;
+const legalFolderThemes=[
+ {pattern:/divorce|dissolution|separation|marriage/i,tone:'plum',art:'<path d="M65 26 59 46l8 9-8 16 6 15" stroke-dasharray="4 5"/><circle cx="44" cy="57" r="13"/><circle cx="83" cy="57" r="13"/><path d="m35 43 4-7h10l4 7m21 0 4-7h10l4 7"/>'},
+ {pattern:/sealing|pardon|expungement|restoration/i,tone:'teal',art:'<rect x="42" y="48" width="44" height="31" rx="5"/><path d="M51 48V38a13 13 0 0 1 26 0v10m-13 12v7"/>'},
+ {pattern:/support|custody|family/i,tone:'teal',art:'<circle cx="48" cy="42" r="8"/><circle cx="80" cy="42" r="8"/><circle cx="64" cy="57" r="6"/><path d="M34 67v-3a14 14 0 0 1 20-13m40 16v-3a14 14 0 0 0-20-13M52 80v-3a12 12 0 0 1 24 0v3"/>'},
+ {pattern:/settlement|claims?|litigation|leasing|kroger|refund/i,tone:'blue',art:'<rect x="38" y="30" width="52" height="44" rx="4"/><path d="M47 41h21m-21 9h15m-15 9h10"/><circle cx="83" cy="70" r="15"/><path d="m76 70 5 5 9-10"/>'},
+ {pattern:/bankruptcy|court|legal/i,tone:'gold',art:'<path d="M64 29v49m-14 0h28M42 40h44M43 40l-10 19h20L43 40Zm42 0L75 59h20L85 40ZM33 59a10 8 0 0 0 20 0m22 0a10 8 0 0 0 20 0"/>'}
+];
+function legalFolderCover(name){
+ const theme=legalFolderThemes.find(({pattern})=>pattern.test(name))||
+  {tone:'gold',art:'<path d="M36 43h22l6 6h28v25H36z"/><path d="M44 43V33h34v16m-25-8h16"/>'};
+ const cover=document.createElement('span');
+ cover.className='legal-folder-cover';cover.dataset.tone=theme.tone;
+ cover.innerHTML='<svg viewBox="0 0 128 108" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M64 7 111 54 64 101 17 54Z" opacity=".28"/><path d="M64 15 103 54 64 93 25 54Z" opacity=".16"/>'+theme.art+'</svg>';
+ return cover;
 }
 const legalCoverJobs=new WeakMap();
 const legalCoverObserver=new IntersectionObserver(entries=>{
@@ -190,18 +192,22 @@ function legalFileCard(record,back){
   button.append(art,label);
   button.setAttribute('aria-label',(record.folder?'Browse ':'Preview ')+record.name);
   button.onclick=()=>showLegalRecord(record,back);
-  legalCoverJobs.set(button,async()=>{
+  if(record.folder){
+   art.replaceChildren(legalFolderCover(record.name));
+  }else{
+   legalCoverJobs.set(button,async()=>{
    try{
-    const cover=await legalCover(record);
+    const cover=await legalDocumentCover(record);
     if(!cover||!button.isConnected)return;
     const img=document.createElement('img'),url=URL.createObjectURL(cover.blob);
     if(cover.photo)img.dataset.photo='';
     img.alt='';img.onload=()=>{URL.revokeObjectURL(url);art.replaceChildren(img)};
     img.onerror=()=>URL.revokeObjectURL(url);img.src=url;
    }catch{/* Keep the labeled fallback when the cover request fails. */}
-   finally{art.firstChild?.nodeType===3&&(art.textContent=record.folder?'Folder cover unavailable':'Cover unavailable')}
+   finally{art.firstChild?.nodeType===3&&(art.textContent='Cover unavailable')}
   });
-  legalCoverObserver.observe(button);
+   legalCoverObserver.observe(button);
+  }
   card.append(button);
  }
  legalDownloadAction(actions,record);
