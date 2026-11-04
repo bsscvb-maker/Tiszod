@@ -134,7 +134,7 @@ async function legalDocumentCover(record){
  const task=await legalPdf(blob);
  try{
   const pdf=await task.promise;
-  for(let number=1;number<=Math.min(pdf.numPages,4);number++){
+  for(let number=1;number<=Math.min(pdf.numPages,8);number++){
    const canvas=await legalPdfPage(pdf,number,640);
    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
    let ink=0;
@@ -152,13 +152,20 @@ async function legalDocumentCover(record){
 }
 async function legalCover(record){
  if(!record.folder)return legalDocumentCover(record);
- const {files}=await legalFolderPage(record);
- const candidates=files.filter(file=>!file.folder&&(file.mime==='application/pdf'||file.mime?.startsWith('image/')||file.mime?.startsWith(legalMimePrefix))).slice(0,4);
- for(const file of candidates){
-  try{
-   const cover=await legalDocumentCover(file);
+ const queue=[{record}];
+ let attempts=0;
+ for(let index=0;index<queue.length&&index<8;index++){
+  const entry=queue[index];
+  const result=await legalFolderPage(entry.record,entry.pageToken).catch(()=>null);
+  if(!result)continue;
+  if(result.nextPageToken)queue.push({record:entry.record,pageToken:result.nextPageToken});
+  for(const file of result.files){
+   if(file.folder){queue.push({record:file});continue}
+   if(!/^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(file.mime)&&file.mime!=='application/pdf'&&!['document','spreadsheet','presentation'].some(type=>file.mime===legalMimePrefix+type))continue;
+   if(attempts++>=12)return null;
+   const cover=await legalDocumentCover(file).catch(()=>null);
    if(cover)return cover;
-  }catch{/* Try the next file if this one cannot provide a cover. */}
+  }
  }
  return null;
 }
@@ -178,7 +185,7 @@ function legalFileCard(record,back){
   const button=document.createElement('button');
   button.type='button';button.className='legal-thumbnail';
   const art=document.createElement('span'),label=document.createElement('span');
-  art.className='legal-thumbnail-art';art.textContent=record.folder?'▰':'▤';art.setAttribute('aria-hidden','true');
+  art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
   label.className='legal-thumbnail-label';label.textContent=record.folder?'Browse files':'Preview';
   button.append(art,label);
   button.setAttribute('aria-label',(record.folder?'Browse ':'Preview ')+record.name);
@@ -191,7 +198,8 @@ function legalFileCard(record,back){
     if(cover.photo)img.dataset.photo='';
     img.alt='';img.onload=()=>{URL.revokeObjectURL(url);art.replaceChildren(img)};
     img.onerror=()=>URL.revokeObjectURL(url);img.src=url;
-   }catch{/* Keep the file or folder icon when a cover is unavailable. */}
+   }catch{/* Keep the labeled fallback when the cover request fails. */}
+   finally{art.firstChild?.nodeType===3&&(art.textContent=record.folder?'Folder cover unavailable':'Cover unavailable')}
   });
   legalCoverObserver.observe(button);
   card.append(button);
