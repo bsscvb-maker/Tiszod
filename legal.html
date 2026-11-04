@@ -25,15 +25,18 @@
 .legal-card:hover{border-color:var(--gold);background:#243148;color:#fff}.legal-card.primary{border-color:#a68654;background:#302a23}
 @media(max-width:720px){.legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.legal-scales{opacity:.14;right:3%}}
 
-.legal-file{padding:12px;border:1px solid #37445a;border-radius:11px;background:#192435;min-width:0}
+.legal-file{padding:14px;border:1px solid #37445a;border-radius:14px;background:#192435;min-width:0;align-self:start}
 .legal-file button,.legal-file a,.legal-view button,.legal-view a{color:#f5e1bc;font:inherit;cursor:pointer}
 .legal-file button,.legal-view button{background:#111926;border:1px solid #52627b;border-radius:8px;padding:8px 12px}
-.legal-file .legal-thumbnail{display:grid;place-items:center;width:100%;height:clamp(150px,20vw,210px);padding:0;overflow:hidden;position:relative;color:#edca86;font-size:1.8rem}
+.legal-file .legal-thumbnail{display:grid;place-items:center;width:100%;height:clamp(190px,36vw,260px);padding:0;overflow:hidden;position:relative;color:#edca86;font-size:1.8rem}
 .legal-file .legal-thumbnail:hover,.legal-file .legal-thumbnail:focus-visible{border-color:#edca86}
-.legal-thumbnail-label{position:absolute;inset:auto 0 0;padding:8px;background:#111926ed;color:#f5e1bc;font-size:.8rem;font-weight:700;text-align:center}
-.legal-thumbnail-art{position:absolute;inset:0 0 34px;display:grid;place-items:center;overflow:hidden}
-.legal-thumbnail img{position:absolute;inset:0;width:100%;height:100%;min-height:0;object-fit:contain}
-.legal-file strong{display:block;margin:8px 0;overflow-wrap:anywhere}
+.legal-thumbnail-label{position:absolute;inset:auto 0 0;display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:0 12px;background:#111926;color:#f5e1bc;font-size:.87rem;font-weight:700;text-align:left;border-top:1px solid #37445a}
+.legal-thumbnail-label::after{content:'›';font-size:1.25rem}
+.legal-thumbnail-art{position:absolute;inset:0 0 44px;display:grid;place-items:center;overflow:hidden}
+.legal-thumbnail img{position:absolute;inset:0;width:100%;height:100%;min-height:0;object-fit:cover;object-position:center top}
+.legal-thumbnail img[data-photo]{object-position:center}
+.legal-file strong{display:block;margin:4px 0 12px;font-size:1.06rem;line-height:1.35;overflow-wrap:anywhere}
+.legal-file > .legal-kind{display:block;margin-bottom:4px}
 .legal-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
 .legal-actions a{display:inline-flex;align-items:center;min-height:44px}
 .legal-view{box-sizing:border-box;width:min(960px,calc(100% - 20px));max-height:94dvh;overflow:auto;padding:clamp(12px,3vw,24px);background:#111926;color:#f5f6fa;border:1px solid #69573c;border-radius:16px}
@@ -125,19 +128,39 @@ async function legalPdfPage(pdf,number,width){
  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
  return canvas;
 }
-async function legalCover(record){
- if(record.folder){
-  const {files}=await legalFolderPage(record);
-  record=files.find(file=>!file.folder&&(file.thumbnail||file.mime==='application/pdf'||file.mime?.startsWith('image/')||file.mime?.startsWith(legalMimePrefix)));
-  if(!record)return null;
- }
+async function legalDocumentCover(record){
  const blob=await legalMedia(record);
- if(blob.type!=='application/pdf')return blob;
+ if(blob.type!=='application/pdf')return {blob,photo:true};
  const task=await legalPdf(blob);
  try{
-  const canvas=await legalPdfPage(await task.promise,1,320);
-  return await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.85));
+  const pdf=await task.promise;
+  for(let number=1;number<=Math.min(pdf.numPages,4);number++){
+   const canvas=await legalPdfPage(pdf,number,640);
+   const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+   let ink=0;
+   for(let offset=0;offset<pixels.length;offset+=16){
+    if(pixels[offset+3]>128&&Math.min(pixels[offset],pixels[offset+1],pixels[offset+2])<225)ink++;
+    if(ink>=48){
+     const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+     if(image)return {blob:image,photo:false};
+     break;
+    }
+   }
+  }
+  return null;
  }finally{await task.destroy()}
+}
+async function legalCover(record){
+ if(!record.folder)return legalDocumentCover(record);
+ const {files}=await legalFolderPage(record);
+ const candidates=files.filter(file=>!file.folder&&(file.mime==='application/pdf'||file.mime?.startsWith('image/')||file.mime?.startsWith(legalMimePrefix))).slice(0,4);
+ for(const file of candidates){
+  try{
+   const cover=await legalDocumentCover(file);
+   if(cover)return cover;
+  }catch{/* Try the next file if this one cannot provide a cover. */}
+ }
+ return null;
 }
 const legalCoverJobs=new WeakMap();
 const legalCoverObserver=new IntersectionObserver(entries=>{
@@ -150,6 +173,7 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
  card.className='legal-file';caption.textContent=record.name;actions.className='legal-actions';
+ const type=document.createElement('span');type.className='legal-kind';type.textContent=record.folder?'Folder':'Document';card.append(type,caption);
  if(record.id){
   const button=document.createElement('button');
   button.type='button';button.className='legal-thumbnail';
@@ -161,9 +185,10 @@ function legalFileCard(record,back){
   button.onclick=()=>showLegalRecord(record,back);
   legalCoverJobs.set(button,async()=>{
    try{
-    const blob=await legalCover(record);
-    if(!blob||!button.isConnected)return;
-    const img=document.createElement('img'),url=URL.createObjectURL(blob);
+    const cover=await legalCover(record);
+    if(!cover||!button.isConnected)return;
+    const img=document.createElement('img'),url=URL.createObjectURL(cover.blob);
+    if(cover.photo)img.dataset.photo='';
     img.alt='';img.onload=()=>{URL.revokeObjectURL(url);art.replaceChildren(img)};
     img.onerror=()=>URL.revokeObjectURL(url);img.src=url;
    }catch{/* Keep the file or folder icon when a cover is unavailable. */}
@@ -171,7 +196,7 @@ function legalFileCard(record,back){
   legalCoverObserver.observe(button);
   card.append(button);
  }
- legalDownloadAction(actions,record);card.append(caption);
+ legalDownloadAction(actions,record);
  if(actions.childElementCount)card.append(actions);
  return card;
 }
