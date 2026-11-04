@@ -102,7 +102,7 @@ function render(){
  $('identity-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
  const groupCards=groupView&&!agency&&!arrangeDocuments?Object.entries(agencies).map(([key,[title,logo]])=>{
   const count=shown.filter(r=>agencyKey(r)===key).length;
-  return count?'<button type="button" class="identity-card agency-card" data-record-category="'+esc(key)+'"><img src="'+logo+'" alt="" referrerpolicy="no-referrer"><strong>'+esc(title)+'</strong><small>'+count+' '+(count===1?'document':'documents')+'</small></button>':'';
+  return count?'<button type="button" class="identity-card agency-card" data-record-category="'+esc(key)+'"><img class="agency-logo record-preview" src="'+logo+'" alt=""><span class="record-caption"><strong>'+esc(title)+'</strong><small>'+count+' '+(count===1?'document':'documents')+'</small></span></button>':'';
  }).join(''):'';
  const documents=groupCards?shown.filter(r=>!agencyKey(r)):shown;
  grid.innerHTML=html+groupCards+documents.sort((a,b)=>compareDocuments(a,b,chosen)).map(r=>orderedCard(r,chosen,deleted)).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
@@ -143,6 +143,12 @@ function openPictures(id){
  const r=records.find(r=>r.id===id);if(!r?.data.sides?.length)return;
  openedPictureId=id;$('identity-pictures-title').textContent=title(r.data)+' · '+(r.data.person||'');
  $('identity-picture-sides').innerHTML=r.data.sides.map((side,index)=>{const fileId=sideFileId(side),url=safe(side.url),download=fileId?'https://drive.google.com/uc?export=download&amp;id='+encodeURIComponent(fileId):url;return '<section class="identity-side"><h3>'+esc(side.label)+'</h3><div class="identity-side-image" data-side-index="'+index+'">'+(fileId?'<iframe src="https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/preview" title="'+esc(side.label)+' picture" loading="lazy" referrerpolicy="no-referrer"></iframe>':'')+'</div><footer><a class="side-download" href="'+download+'" target="_blank" rel="noopener noreferrer" download="'+esc(side.filename||'Identification-'+side.label)+'">Download '+esc(side.label.toLowerCase())+' ('+esc((side.filename||'image').split('.').pop().toUpperCase())+')</a><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">View full-size '+esc(side.label.toLowerCase())+' ↗</a>'+(side.originalUrl?'<a href="'+esc(safe(side.originalUrl))+'" target="_blank" rel="noopener noreferrer">Original photo ↗</a>':'')+'</footer></section>'}).join('');
+ const attachments=(r.data.relatedDocuments||[]).filter(doc=>safe(doc.url));
+ if(attachments.length){
+  const section=document.createElement('section');section.className='identity-passport-attachments';
+  section.innerHTML='<h3>Passport documents</h3><ul>'+attachments.map(doc=>'<li><a href="'+esc(safe(doc.url))+'" target="_blank" rel="noopener noreferrer">'+esc(doc.title)+' ↗</a></li>').join('')+'</ul>';
+  $('identity-picture-sides').append(section);
+ }
  if(!pictureDialog.open)pictureDialog.showModal();
  for(const holder of $('identity-picture-sides').querySelectorAll('[data-side-index]'))loadOriginalImage(r.data.sides[Number(holder.dataset.sideIndex)],holder);
 }
