@@ -102,7 +102,7 @@ function render(){
  $('identity-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
  const groupCards=groupView&&!agency&&!arrangeDocuments?Object.entries(agencies).map(([key,[title,logo]])=>{
   const count=shown.filter(r=>agencyKey(r)===key).length;
-  return count?'<article class="identity-card visual-record agency-card"><button type="button" class="agency-open record-link" data-record-category="'+esc(key)+'"><img class="agency-logo record-preview" src="'+logo+'" alt=""><span class="record-caption"><strong>'+esc(title)+'</strong><small>'+esc(chosen)+' · '+(key==='Hunter Education'?'Hunter Education':key)+' · '+count+' '+(count===1?'document':'documents')+'</small></span></button><footer><button type="button" data-record-category="'+esc(key)+'">Open documents</button></footer></article>':'';
+  return count?'<article class="identity-card visual-record agency-card"><button type="button" class="agency-open record-link" data-record-category="'+esc(key)+'"><img class="agency-logo record-preview" src="'+logo+'" alt=""><span class="record-caption"><strong>'+esc(title)+'</strong><small>'+esc(chosen)+' · '+(key==='Hunter Education'?'Hunter Education':key)+' · '+count+' '+(count===1?'document':'documents')+'</small></span></button><footer>'+['Hide','Edit','Delete'].map(action=>'<button type="button" data-record-category="'+esc(key)+'" data-agency-action="'+action.toLowerCase()+'" aria-label="'+action+' a document in '+esc(title)+'">'+action+'</button>').join('')+'</footer></article>':'';
  }).join(''):'';
  const documents=groupCards?shown.filter(r=>!agencyKey(r)):shown;
  const sorted=documents.sort((a,b)=>compareDocuments(a,b,chosen));
@@ -114,7 +114,15 @@ document.querySelector('.identification').addEventListener('click',e=>{
  if(b.hasAttribute('data-arrange-documents')){arrangeDocuments=!arrangeDocuments;render();message(arrangeDocuments?'Drag any document card to arrange it. Changes save automatically. Tap Done when finished.':'Finished arranging documents.');return}
  if(b.dataset.togglePerson){saveVisibility(b.dataset.togglePerson,b.dataset.hideValue==='true');return}
  if(b.dataset.person){arrangeDocuments=false;selectedPerson=b.dataset.person;selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value='';recordPage=1;render()}
- if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
+ if(b.dataset.recordCategory){
+  selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render();
+  const action=b.dataset.agencyAction;
+  if(action){
+   const control={hide:'hide-document',edit:'edit',delete:'delete'}[action];
+   $('identity-grid').querySelector('button[data-'+control+']')?.focus();
+   message('Choose a document below to '+action+'.');
+  }
+ }
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
  if(b.dataset.recordBack){arrangeDocuments=false;selectedFolder='';if(b.dataset.recordBack==='agency')selectedCategory='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value=''}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
