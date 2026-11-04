@@ -52,14 +52,7 @@
   }
   if(nav){const tracker=nav.querySelector('[href="plan-tracker.html"]');const label=[...nav.querySelectorAll(".th-nav-label")].find(el=>el.textContent.trim()==="Workspaces");if(tracker&&label)nav.insertBefore(tracker,label);}
 
-  if(nav && !nav.querySelector('[href="interview.html"]')) {
-    const link=document.createElement('a');link.href='interview.html';
-    const active=location.pathname.endsWith('/interview.html');
-    link.className='th-nav-link'+(active?' active':'');
-    if(active)link.setAttribute('aria-current','page');
-    link.innerHTML='<span class="th-nav-icon" aria-hidden="true">◉</span><span>Interview Prep</span>';
-    nav.append(link);
-  }
+  nav?.querySelectorAll('[href="interview.html"]').forEach(link=>link.remove());
   nav?.querySelectorAll('[href="bk.html"]').forEach(link=>link.remove());
   if(nav&&!nav.querySelector('[href="identification.html"]')){const a=document.createElement('a');a.href='identification.html';const active=location.pathname.endsWith('/identification.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▣</span><span>Identification</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="legal.html"]')){const a=document.createElement('a');a.href='legal.html';const active=/\/(legal|bk)\.html$/.test(location.pathname);a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v17m-5 1h10M4 6h16M5 6l-3 7h6L5 6zm14 0-3 7h6l-3-7zM2 13a3 3 0 0 0 6 0m8 0a3 3 0 0 0 6 0"/></svg></span><span>Legal</span>';nav.append(a);}
@@ -77,7 +70,7 @@
     const bm=nav.querySelector('[href="black-mild.html"]');
     if(bm)bm.innerHTML='<span class="th-nav-icon th-bm-icon" aria-hidden="true">B&amp;M</span><span>Black &amp; Mild</span>';
     const groups=[
-      ['Overview',['./','plan-tracker.html','interview.html']],
+      ['Overview',['./','plan-tracker.html']],
       ['Workspaces',['legal.html','identification.html','education.html','finance.html','pets.html','freebirds.html','black-mild.html']],
       ['Vehicles & gear',['vehicles.html','equipment.html','watercraft.html']],
       ['System',['accounts.html','admin.html']]
@@ -202,7 +195,7 @@
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['plan-tracker.html','interview.html','legal.html','identification.html','education.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html']],['System',['accounts.html','admin.html']]];
+  const order=[['Main',['./']],['Modules',['plan-tracker.html','legal.html','identification.html','education.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html']],['System',['accounts.html','admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
@@ -213,7 +206,7 @@
  const heading=main.querySelector('.dash-heading');heading?.querySelector('h1')?.replaceChildren(document.createTextNode('Personal Command Center'));
  const h2=grid.querySelector('h2');if(h2)h2.textContent='Modules';
  grid.classList.add('th-module-grid');grid.setAttribute('aria-label','Personal modules');
- const modulePaths=['plan-tracker.html','interview.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','admin.html'];
+ const modulePaths=['plan-tracker.html','finance.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','admin.html'];
  for(const path of ['plan-tracker.html','black-mild.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=path==='plan-tracker.html'?'Task Tracker':'Black & Mild';small.textContent=path==='plan-tracker.html'?'Your tasks, priorities, and next steps':'Your Black & Mild records';body.append(strong,small);a.append(icon,body);grid.append(a)}
  const cards=[...grid.querySelectorAll('a.workspace')];cards.sort((a,b)=>modulePaths.indexOf(a.getAttribute('href'))-modulePaths.indexOf(b.getAttribute('href'))).forEach(a=>{a.classList.add('th-module-card');const icon=a.querySelector('.workspace-icon'),body=[...a.children].find(c=>c.querySelector('strong'));const art=document.createElement('span');art.className='th-module-art';if(icon)art.append(icon);if(body)body.classList.add('th-module-body');a.prepend(art);grid.append(a)});
  const title=document.createElement('div');title.className='th-module-heading';const label=document.createElement('h2');label.textContent='Modules';title.append(label);
