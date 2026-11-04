@@ -24,6 +24,20 @@
 .legal-card strong{grid-column:1}.legal-card .legal-arrow{grid-column:2;grid-row:1/span 2;align-self:center;color:var(--gold);font-size:1.2rem}
 .legal-card:hover{border-color:var(--gold);background:#243148;color:#fff}.legal-card.primary{border-color:#a68654;background:#302a23}
 @media(max-width:720px){.legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.legal-scales{opacity:.14;right:3%}}
+
+.legal-file{padding:12px;border:1px solid #37445a;border-radius:11px;background:#192435;min-width:0}
+.legal-file button,.legal-file a,.legal-view button,.legal-view a{color:#f5e1bc;font:inherit;cursor:pointer}
+.legal-file button,.legal-view button{background:#111926;border:1px solid #52627b;border-radius:8px;padding:8px 12px}
+.legal-file .legal-thumbnail{display:grid;place-items:center;width:100%;height:116px;overflow:hidden;position:relative;color:#edca86;font-size:1.8rem}
+.legal-thumbnail img{position:absolute;inset:0;width:100%;height:100%;min-height:0;object-fit:contain}
+.legal-file strong{display:block;margin:8px 0;overflow-wrap:anywhere}
+.legal-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+.legal-actions a{display:inline-flex;align-items:center;min-height:44px}
+.legal-view{box-sizing:border-box;width:min(960px,calc(100% - 20px));max-height:94dvh;overflow:auto;padding:clamp(12px,3vw,24px);background:#111926;color:#f5f6fa;border:1px solid #69573c;border-radius:16px}
+.legal-view::backdrop{background:#020713d9}
+.legal-view h2{overflow-wrap:anywhere;margin:10px 0}
+.legal-view iframe{width:100%;height:64dvh;border:0;background:#0e1520;margin-top:10px}
+.legal-view [hidden]{display:none!important}
 </style></head><body data-th-page="legal">
 
 <div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
@@ -35,7 +49,117 @@
 <header class="legal-hero"><svg class="legal-scales" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 18v79M38 102h44M46 97h28M24 34h72M25 34 9 67h32L25 34Zm70 0L79 67h32L95 34ZM9 67a16 13 0 0 0 32 0m38 0a16 13 0 0 0 32 0"/><circle cx="60" cy="15" r="4"/></svg><span class="legal-kicker">TisZod / Private workspace</span><h1>Legal</h1><p>Case files, settlement records, and personal filings.</p></header>
 <p id="legal-status" role="status">Sign in to load your private records.</p><div id="legal-records" hidden></div>
 </div></main></div></div>
+<dialog class="legal-view" id="legal-view" aria-labelledby="legal-view-title">
+ <div class="legal-actions"><button type="button" id="legal-view-back" hidden>Back to folder</button><button type="button" id="legal-view-close">Close</button></div>
+ <h2 id="legal-view-title"></h2>
+ <div class="legal-actions" id="legal-view-actions"></div>
+ <div id="legal-view-body"></div>
+</dialog>
 <script>
+const legalViewer=document.getElementById('legal-view');
+const legalViewerBody=document.getElementById('legal-view-body');
+const legalViewerBack=document.getElementById('legal-view-back');
+let legalViewRequest;
+document.getElementById('legal-view-close').onclick=()=>legalViewer.close();
+legalViewer.addEventListener('close',()=>{
+ legalViewRequest?.abort();
+ legalViewerBody.replaceChildren();
+ legalViewerBack.onclick=null;
+});
+function legalLink(label,url){
+ const link=document.createElement('a');
+ link.textContent=label;link.href=url;link.target='_blank';link.rel='noopener noreferrer';
+ return link;
+}
+function legalDriveActions(target,record){
+ target.append(legalLink('Open in Drive ↗',record.url));
+ if(record.folder||!record.id||record.canDownload===false)return;
+ const nativeType=new URL(record.url).pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
+ const base='https://docs.google.com/'+nativeType+'/d/'+record.id;
+ const download=nativeType==='presentation'?base+'/export/pdf':nativeType?base+'/export?format=pdf':'https://drive.google.com/uc?export=download&id='+record.id;
+ const url=new URL(download);
+ if(record.resourceKey&&!nativeType)url.searchParams.set('resourcekey',record.resourceKey);
+ target.append(legalLink(nativeType?'Download PDF':'Download',url.href));
+}
+function legalFileCard(record,back){
+ const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
+ card.className='legal-file';caption.textContent=record.name;actions.className='legal-actions';
+ if(record.id){
+  const button=document.createElement('button');
+  button.type='button';button.className='legal-thumbnail';button.textContent=record.folder?'▰':'▤';
+  button.setAttribute('aria-label',(record.folder?'Browse ':'Preview ')+record.name);
+  button.onclick=()=>showLegalRecord(record,back);
+  if(!record.folder){
+   const img=document.createElement('img');
+   img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';
+   img.style.opacity='0';
+   img.onload=()=>{img.style.opacity='1';button.replaceChildren(img)};
+   img.onerror=()=>{if(record.thumbnail&&img.src===record.thumbnail)img.src=fallback.href};
+   const fallback=new URL('https://drive.google.com/thumbnail');
+   fallback.searchParams.set('id',record.id);fallback.searchParams.set('sz','w320');
+   if(record.resourceKey)fallback.searchParams.set('resourcekey',record.resourceKey);
+   img.src=record.thumbnail||fallback.href;
+   // Keep the placeholder visible until the thumbnail loads.
+   button.append(img);
+  }
+  card.append(button);
+  const open=document.createElement('button');
+  open.type='button';open.textContent=record.folder?'Browse files':'Preview';open.onclick=button.onclick;actions.append(open);
+ }
+ legalDriveActions(actions,record);card.append(caption,actions);
+ return card;
+}
+async function showLegalRecord(record,back){
+ legalViewRequest?.abort();
+ const request=new AbortController();
+ legalViewRequest=request;
+ legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
+ document.getElementById('legal-view-title').textContent=record.name;
+ const actions=document.getElementById('legal-view-actions');
+ actions.replaceChildren();legalDriveActions(actions,record);
+ const status=document.createElement('p');status.setAttribute('role','status');
+ legalViewerBody.replaceChildren(status);
+ if(!legalViewer.open)legalViewer.showModal();
+ if(!record.folder){
+  status.textContent='If the preview is unavailable, open the file in Drive.';
+  const frame=document.createElement('iframe');
+  frame.title='Preview of '+record.name;frame.referrerPolicy='no-referrer';
+  const url=new URL(record.url);
+  const preview=new URL('https://drive.google.com/file/d/'+record.id+'/preview');
+  const nativeType=url.pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
+  if(nativeType)preview.href='https://docs.google.com/'+nativeType+'/d/'+record.id+'/preview';
+  if(record.resourceKey)preview.searchParams.set('resourcekey',record.resourceKey);
+  frame.src=preview.href;legalViewerBody.append(frame);return;
+ }
+ status.textContent='Loading folder…';
+ const files=document.createElement('div');files.className='legal-cards';legalViewerBody.append(files);
+ const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;legalViewerBody.append(more);
+ async function loadPage(pageToken){
+  more.disabled=true;
+  try{
+   if(!thAuthorized())throw Error('Sign in required');
+   const params=new URLSearchParams({q:"'"+record.id+"' in parents and trashed = false",fields:'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',pageSize:'50',orderBy:'folder,name_natural',supportsAllDrives:'true',includeItemsFromAllDrives:'true'});
+   if(pageToken)params.set('pageToken',pageToken);
+   const headers={Authorization:'Bearer '+thToken};
+   if(record.resourceKey)headers['X-Goog-Drive-Resource-Keys']=record.id+'/'+record.resourceKey;
+   const response=await fetch('https://www.googleapis.com/drive/v3/files?'+params,{headers,signal:request.signal});
+   if(!response.ok)throw Error('Folder unavailable');
+   const result=await response.json();
+   if(request.signal.aborted)return;
+   for(const file of result.files||[]){
+    const folder=file.mimeType==='application/vnd.google-apps.folder';
+    const fallback=folder?'https://drive.google.com/drive/folders/':'https://drive.google.com/file/d/';
+    files.append(legalFileCard({id:file.id,name:file.name,folder,url:file.webViewLink||fallback+file.id,thumbnail:file.thumbnailLink,resourceKey:file.resourceKey,canDownload:file.capabilities?.canDownload},()=>showLegalRecord(record,back)));
+   }
+   status.textContent=files.children.length?'':'This folder is empty.';
+   more.hidden=!result.nextPageToken;more.onclick=()=>loadPage(result.nextPageToken);
+  }catch{
+   if(!request.signal.aborted)status.textContent='Could not load this folder here. Use Open in Drive to view its files.';
+  }finally{more.disabled=false}
+ }
+ await loadPage();
+}
+
 const legalSections=[
  {id:'bankruptcy',key:'BK',title:'Bankruptcy',description:'Open the BK workspace to review case documents, creditors, and next steps.'},
  {id:'settlements',key:'Class Action Settlements',title:'Class Action Settlements',description:'Find claim forms, confirmations, and payment records by settlement.'},
@@ -75,11 +199,16 @@ window.thStart=async()=>{
    if(section!==key||!name)continue;
    let url;try{url=new URL(link)}catch{continue}
    if(url.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(url.hostname))continue;
-   addCard(name,url.href,url.pathname.includes('/folders/')?'Google Drive folder':'Document');
+   const folder=url.pathname.includes('/folders/');
+   const rawId=url.pathname.match(/\/(?:folders|d)\/([\w-]+)/)?.[1]||url.searchParams.get('id');
+   const id=/^[\w-]+$/.test(rawId||'')?rawId:null;
+   const rawKey=url.searchParams.get('resourcekey');
+   const resourceKey=/^[\w-]+$/.test(rawKey||'')?rawKey:null;
+   cards.append(legalFileCard({name,url:url.href,folder,id,resourceKey}));
   }
   if(!cards.children.length){const empty=document.createElement('p');empty.textContent='No records are filed here yet.';cards.append(empty)}
   panel.append(heading,summary);
-  const records=Array.from(cards.querySelectorAll('a'));
+  const records=Array.from(cards.children).filter(card=>card.querySelector('strong'));
   if(records.length>1){
    const filter=document.createElement('label'),input=document.createElement('input'),matches=document.createElement('p');
    filter.className='legal-filter';filter.textContent='Find a record';input.type='search';input.placeholder='Search this section';filter.append(input);
