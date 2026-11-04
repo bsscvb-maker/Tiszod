@@ -159,7 +159,7 @@ function showPetReminders(){
   const copy=document.createElement('div'),title=document.createElement('strong'),detail=document.createElement('small'),button=document.createElement('button');
   title.textContent=item.title;detail.textContent=item.detail;copy.append(title,detail);
   button.type='button';button.textContent='Open '+petNames[item.pet];
-  button.addEventListener('click',()=>{document.getElementById('tab-'+item.pet).click();dialog.close();document.querySelector('#panel-'+item.pet+' '+(item.kind==='rabiesExpires'?'.rabies':item.kind==='licenseExpires'?'.license':'.medication-card')).scrollIntoView({behavior:'smooth',block:'center'})});
+  button.addEventListener('click',()=>{selectPet(document.getElementById('tab-'+item.pet));dialog.close();document.querySelector('#panel-'+item.pet+' '+(item.kind==='rabiesExpires'?'.rabies':item.kind==='licenseExpires'?'.license':'.medication-card')).scrollIntoView({behavior:'smooth',block:'center'})});
   const petSummary=document.createElement('div');
   petSummary.className='reminder-pet';
   const portrait=document.querySelector('#tab-'+item.pet+' .pet-portrait').cloneNode();
@@ -226,19 +226,35 @@ document.querySelectorAll('[data-pet]').forEach(el=>el.addEventListener('input',
  refreshPetSummaries();refreshMedicationReminders();
  const status=document.getElementById('status');status.textContent='Unsaved changes — select Save changes.';
 }));
+const petTabs=document.querySelectorAll('.pet-tabs [role="tab"]');
+const petSaveArea=document.getElementById('pet-save-area');
 let petProfileOpened=false;
-document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener('click',event=>{
- document.getElementById('pet-save-area').hidden=false;
- document.querySelectorAll('[role="tab"]').forEach(t=>{
-  const selected=t===tab;t.setAttribute('aria-selected',String(selected));
-  document.getElementById(t.getAttribute('aria-controls')).hidden=!selected;
- })
- if(event.isTrusted){
-  document.getElementById('pet-save-area').scrollIntoView({block:'start'});
-  if(!petProfileOpened){
-   petProfileOpened=true;
-   showPetReminders();
-  }
+
+function selectPet(tab){
+ petSaveArea.hidden=!tab;
+ petTabs.forEach(card=>{
+  const selected=card===tab;
+  card.setAttribute('aria-selected',String(selected));
+  document.getElementById(card.getAttribute('aria-controls')).hidden=!selected;
+ });
+}
+
+window.addEventListener('pageshow',event=>{
+ if(!event.persisted)return;
+ document.getElementById('petReminderDialog').close();
+ document.getElementById('doseDialog')?.close();
+ selectPet(null);
+ petProfileOpened=false;
+ window.scrollTo(0,0);
+});
+
+petTabs.forEach(tab=>tab.addEventListener('click',event=>{
+ if(!event.isTrusted)return;
+ selectPet(tab);
+ petSaveArea.scrollIntoView({block:'start'});
+ if(!petProfileOpened){
+  petProfileOpened=true;
+  showPetReminders();
  }
 }));
 document.getElementById('closePetReminders').addEventListener('click',()=>dismissPetReminders());
