@@ -8,11 +8,6 @@
 .legal-hero h1{font:500 clamp(2.7rem,7vw,5.6rem)/1 Georgia,serif;letter-spacing:-.055em;margin:.15em 0}
 .legal-hero p,.legal-panel p{color:var(--muted);line-height:1.55;margin:.5rem 0;max-width:58ch}
 .legal-scales{position:absolute;z-index:-1;right:5%;top:50%;transform:translateY(-50%);width:clamp(110px,24vw,290px);color:var(--gold);opacity:.27}
-.legal-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.legal-tabs button{min-height:74px;padding:12px;text-align:left;border:1px solid #37445a;border-radius:13px;background:#151d2b;color:#e0e7f2;font:inherit;font-weight:680;cursor:pointer}
-.legal-tabs button span{display:block;color:var(--gold);font-size:.7rem;letter-spacing:.12em;margin-bottom:4px}
-.legal-tabs button:hover,.legal-tabs button[aria-selected=true]{border-color:var(--gold);background:#302a23;color:#fff}
-.legal-tabs button[aria-selected=true]{box-shadow:inset 0 -3px var(--gold)}
 .legal-workspace :is(button,a,input,[tabindex]):focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .legal-workspace [hidden]{display:none!important}
 .legal-panel{border:1px solid #37445a;border-radius:18px;background:#111926;padding:clamp(16px,4vw,34px)}
@@ -23,8 +18,7 @@
 .legal-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:center;gap:5px 12px;min-height:84px;padding:13px 15px;border:1px solid #37445a;border-radius:11px;background:#192435;color:#f5f6fa;text-decoration:none;overflow-wrap:anywhere}
 .legal-card strong{grid-column:1}.legal-card .legal-arrow{grid-column:2;grid-row:1/span 2;align-self:center;color:var(--gold);font-size:1.2rem}
 .legal-card:hover{border-color:var(--gold);background:#243148;color:#fff}.legal-card.primary{border-color:#a68654;background:#302a23}
-@media(max-width:720px){.legal-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.legal-scales{opacity:.14;right:3%}}
-
+@media(max-width:720px){
 .legal-file{padding:14px;border:1px solid #37445a;border-radius:14px;background:#192435;min-width:0;align-self:start}
 .legal-file button,.legal-file a,.legal-view button,.legal-view a{color:#f5e1bc;font:inherit;cursor:pointer}
 .legal-file button,.legal-view button{background:#111926;border:1px solid #52627b;border-radius:8px;padding:8px 12px}
@@ -50,6 +44,17 @@
 .legal-view h2{overflow-wrap:anywhere;margin:10px 0}
 .legal-preview-image{display:block;max-width:100%;height:auto;margin:10px auto;background:#fff}
 .legal-view [hidden]{display:none!important}
+
+.legal-launcher{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,2vw,22px);max-width:760px;margin:0 auto}
+.legal-tile{--ink:#f2d4a1;--glow:#594434;position:relative;aspect-ratio:1;display:grid;place-items:center;isolation:isolate;overflow:hidden;padding:12px;border:1px solid #536078;border-radius:clamp(12px,2vw,24px);background:radial-gradient(ellipse at 50% 42%,var(--glow),transparent 72%),linear-gradient(145deg,#222d40,#101622);color:#fff;text-decoration:none;transition:border-color .18s,box-shadow .18s}
+.legal-tile:hover,.legal-tile:focus-visible{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.legal-tile:nth-child(3){--ink:#b9d6fa;--glow:#304b6d}
+.legal-tile:nth-child(4){--ink:#a9e8d2;--glow:#24554f}
+.legal-tile-number{position:absolute;top:9%;left:9%;color:var(--ink);font-weight:750;letter-spacing:.12em;font-size:clamp(.75rem,2vw,1rem)}
+.legal-tile svg,.legal-tile img{width:57%;height:57%;margin-bottom:13%;object-fit:contain;color:var(--ink);filter:drop-shadow(0 8px 12px #0007)}
+.legal-tile img{border-radius:50%;background:#fff;padding:3%;box-sizing:border-box}
+.legal-tile strong{position:absolute;bottom:9%;left:5%;right:5%;text-align:center;font:600 clamp(.86rem,2.65vw,1.65rem)/1.12 Georgia,serif}
+.legal-return{display:inline-block;margin:0 0 14px;color:var(--gold)}
 </style></head><body data-th-page="legal">
 
 <div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
@@ -58,7 +63,6 @@
 <div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside>
 <div class="th-app-main"><header class="th-app-topbar"><div><strong>Legal</strong><small>Private legal records</small></div><span class="th-connection" id="th-connection">Connecting…</span></header>
 <main class="th-page-content"><div class="legal-workspace">
-<header class="legal-hero"><svg class="legal-scales" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 18v79M38 102h44M46 97h28M24 34h72M25 34 9 67h32L25 34Zm70 0L79 67h32L95 34ZM9 67a16 13 0 0 0 32 0m38 0a16 13 0 0 0 32 0"/><circle cx="60" cy="15" r="4"/></svg><span class="legal-kicker">TisZod / Private workspace</span><h1>Legal</h1><p>Case files, settlement records, and personal filings.</p></header>
 <p id="legal-status" role="status">Sign in to load your private records.</p><div id="legal-records" hidden></div>
 </div></main></div></div>
 <dialog class="legal-view" id="legal-view" aria-labelledby="legal-view-title">
@@ -303,35 +307,37 @@ const legalSections=[
  {id:'personal',key:'Personal Legal Records',title:'Personal Legal Records',description:'Find divorce records, child support materials, and rights restoration documents.'},
  {id:'record-sealing',key:'Record Sealing & Pardon',title:'Record Sealing & Pardon',description:'Find the petition draft, submission confirmation, and courthouse reference material.'}
 ];
+const legalTileArt={
+ bankruptcy:'<img src="alliance-law-logo.svg" alt="Alliance Law">',
+ settlements:'<svg viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M21 42 60 19l39 23H21Zm6 44h66M20 95h80M36 49v29m16-29v29m16-29v29m16-29v29"/><circle cx="94" cy="83" r="20" fill="#241c1b"/><path d="m85 83 6 6 12-12"/></svg>',
+ personal:'<svg viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M16 39h33l10 11h45v49H16z" fill="#24364e"/><path d="M31 39V19h53v31M42 28h30m-30 8h22"/><circle cx="60" cy="67" r="7"/><path d="M46 89a14 14 0 0 1 28 0"/></svg>',
+ 'record-sealing':'<svg viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M43 103h45m-37-7 6-25-5-11-14-14-5-24 7-2 7 21 15 11 12-2 13 9-4 14-5 23M57 72l16 7m12-18 14 8-8 16-10-5M32 21h13m-10-5c-5-5 3-10 4-14 5 5 6 10 1 14M60 46v-8a8 8 0 0 1 16 0v8m-16-7-7-4m10-3-3-7m8 5v-8m4 10 4-7m0 11 7-4"/></svg>'
+};
 window.thStart=async()=>{
  const status=document.getElementById('legal-status'),output=document.getElementById('legal-records');
- status.hidden=false;status.textContent='Loading your legal records…';output.hidden=true;
- try{
- const rows=await thValues("'Legal Portal Links'!A1:C100",'UNFORMATTED_VALUE');
- if(rows[0]?.[0]!=='Section')throw Error('Legal records could not load.');
- const tabs=document.createElement('div');tabs.className='legal-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Legal sections');
- const buttons=[],panels=[];
- function select(index,focus=false){
-  buttons.forEach((button,i)=>{button.setAttribute('aria-selected',String(i===index));button.tabIndex=i===index?0:-1;panels[i].hidden=i!==index});
-  if(focus)buttons[index].focus();
+ const selected=legalSections.slice(1).find(item=>item.id===location.hash.slice(1));
+ status.hidden=true;output.hidden=false;output.replaceChildren();
+ document.getElementById('th-connection').textContent='Private workbook connected';
+ if(!selected){
+  const launcher=document.createElement('nav');launcher.className='legal-launcher';launcher.setAttribute('aria-label','Legal sections');
+  legalSections.forEach(({id,title},index)=>{
+   const tile=document.createElement('a');tile.className='legal-tile';tile.href=id==='bankruptcy'?'bk.html':'#'+id;
+   const number=document.createElement('span');number.className='legal-tile-number';number.textContent=String(index+1);number.setAttribute('aria-hidden','true');
+   const label=document.createElement('strong');label.textContent=title;
+   tile.innerHTML=legalTileArt[id];tile.append(number,label);launcher.append(tile);
+  });
+  output.append(launcher);return;
  }
- legalSections.forEach(({id,key,title,description},index)=>{
-  const button=document.createElement('button');button.type='button';button.id='legal-tab-'+id;const number=document.createElement('span');number.textContent=String(index+1).padStart(2,'0');number.setAttribute('aria-hidden','true');button.append(number,title);button.setAttribute('role','tab');button.setAttribute('aria-controls','legal-panel-'+id);button.onclick=()=>select(index);tabs.append(button);buttons.push(button);
-  button.onkeydown=event=>{
-   const next={ArrowRight:(index+1)%legalSections.length,ArrowLeft:(index+legalSections.length-1)%legalSections.length,Home:0,End:legalSections.length-1}[event.key];
-   if(next!==undefined){event.preventDefault();select(next,true)}
-  };
-  const panel=document.createElement('section');panel.id='legal-panel-'+id;panel.className='legal-panel';panel.tabIndex=0;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',button.id);panels.push(panel);
+ status.hidden=false;status.textContent='Loading your legal records…';
+ try{
+  const rows=await thValues("'Legal Portal Links'!A1:C100",'UNFORMATTED_VALUE');
+  if(location.hash!=='#'+selected.id)return;
+  if(rows[0]?.[0]!=='Section')throw Error('Legal records could not load.');
+  const {key,title,description}=selected;
+  const back=document.createElement('a');back.className='legal-return';back.href='#';back.textContent='← Legal';
+  const panel=document.createElement('section');panel.className='legal-panel';
   const heading=document.createElement('h2'),summary=document.createElement('p'),cards=document.createElement('div');
   heading.textContent=title;summary.textContent=description;cards.className='legal-cards';
-  function addCard(name,url,label,primary=false){
-   const card=document.createElement('a'),kind=document.createElement('span'),caption=document.createElement('strong');
-   card.className='legal-card'+(primary?' primary':'');card.href=url;kind.className='legal-kind';kind.textContent=label;caption.textContent=name;
-   if(!primary){card.target='_blank';card.rel='noopener noreferrer'}
-   const arrow=document.createElement('span');arrow.className='legal-arrow';arrow.textContent=primary?'→':'↗';arrow.setAttribute('aria-hidden','true');
-   card.append(kind,caption,arrow);cards.append(card);
-  }
-  if(key==='BK')addCard('Open BK Workspace','bk.html','TisZod workspace',true);
   for(const [section,name,link] of rows.slice(1)){
    if(section!==key||!name)continue;
    let url;try{url=new URL(link)}catch{continue}
@@ -358,10 +364,8 @@ window.thStart=async()=>{
    }
    input.addEventListener('input',updateMatches);updateMatches();panel.append(filter,matches);
   }
-  panel.append(cards);
- });
- output.replaceChildren(tabs,...panels);select(1);output.hidden=false;status.hidden=true;
- document.getElementById('th-connection').textContent='Private workbook connected';
- }catch(error){status.textContent='Legal records could not load. Refresh this page to try again.';throw error}
+  panel.append(cards);output.replaceChildren(back,panel);status.hidden=true;
+ }catch(error){if(location.hash==='#'+selected.id)status.textContent='Legal records could not load. Refresh this page to try again.';throw error}
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261104-legal-scales"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
+window.addEventListener('hashchange',()=>{if(thAuthorized())window.thStart().catch(()=>{})});
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261104-legal-launcher"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
