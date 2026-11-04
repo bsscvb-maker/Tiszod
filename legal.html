@@ -28,7 +28,10 @@
 .legal-file{padding:12px;border:1px solid #37445a;border-radius:11px;background:#192435;min-width:0}
 .legal-file button,.legal-file a,.legal-view button,.legal-view a{color:#f5e1bc;font:inherit;cursor:pointer}
 .legal-file button,.legal-view button{background:#111926;border:1px solid #52627b;border-radius:8px;padding:8px 12px}
-.legal-file .legal-thumbnail{display:grid;place-items:center;width:100%;height:116px;overflow:hidden;position:relative;color:#edca86;font-size:1.8rem}
+.legal-file .legal-thumbnail{display:grid;place-items:center;width:100%;height:clamp(150px,20vw,210px);padding:0;overflow:hidden;position:relative;color:#edca86;font-size:1.8rem}
+.legal-file .legal-thumbnail:hover,.legal-file .legal-thumbnail:focus-visible{border-color:#edca86}
+.legal-thumbnail-label{position:absolute;inset:auto 0 0;padding:8px;background:#111926ed;color:#f5e1bc;font-size:.8rem;font-weight:700;text-align:center}
+.legal-thumbnail-art{position:absolute;inset:0 0 34px;display:grid;place-items:center;overflow:hidden}
 .legal-thumbnail img{position:absolute;inset:0;width:100%;height:100%;min-height:0;object-fit:contain}
 .legal-file strong{display:block;margin:8px 0;overflow-wrap:anywhere}
 .legal-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
@@ -71,8 +74,7 @@ function legalLink(label,url){
  link.textContent=label;link.href=url;link.target='_blank';link.rel='noopener noreferrer';
  return link;
 }
-function legalDriveActions(target,record){
- target.append(legalLink('Open in Drive ↗',record.url));
+function legalDownloadAction(target,record){
  if(record.folder||!record.id||record.canDownload===false)return;
  const nativeType=new URL(record.url).pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
  const base='https://docs.google.com/'+nativeType+'/d/'+record.id;
@@ -86,27 +88,30 @@ function legalFileCard(record,back){
  card.className='legal-file';caption.textContent=record.name;actions.className='legal-actions';
  if(record.id){
   const button=document.createElement('button');
-  button.type='button';button.className='legal-thumbnail';button.textContent=record.folder?'▰':'▤';
+  button.type='button';button.className='legal-thumbnail';
+  const art=document.createElement('span'),label=document.createElement('span');
+  art.className='legal-thumbnail-art';art.textContent=record.folder?'▰':'▤';art.setAttribute('aria-hidden','true');
+  label.className='legal-thumbnail-label';label.textContent=record.folder?'Browse files':'Preview';
+  button.append(art,label);
   button.setAttribute('aria-label',(record.folder?'Browse ':'Preview ')+record.name);
   button.onclick=()=>showLegalRecord(record,back);
   if(!record.folder){
    const img=document.createElement('img');
    img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';
    img.style.opacity='0';
-   img.onload=()=>{img.style.opacity='1';button.replaceChildren(img)};
+   img.onload=()=>{img.style.opacity='1';art.replaceChildren(img)};
    img.onerror=()=>{if(record.thumbnail&&img.src===record.thumbnail)img.src=fallback.href};
    const fallback=new URL('https://drive.google.com/thumbnail');
    fallback.searchParams.set('id',record.id);fallback.searchParams.set('sz','w320');
    if(record.resourceKey)fallback.searchParams.set('resourcekey',record.resourceKey);
    img.src=record.thumbnail||fallback.href;
    // Keep the placeholder visible until the thumbnail loads.
-   button.append(img);
+   art.append(img);
   }
   card.append(button);
-  const open=document.createElement('button');
-  open.type='button';open.textContent=record.folder?'Browse files':'Preview';open.onclick=button.onclick;actions.append(open);
  }
- legalDriveActions(actions,record);card.append(caption,actions);
+ legalDownloadAction(actions,record);card.append(caption);
+ if(actions.childElementCount)card.append(actions);
  return card;
 }
 async function showLegalRecord(record,back){
@@ -116,12 +121,12 @@ async function showLegalRecord(record,back){
  legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
  document.getElementById('legal-view-title').textContent=record.name;
  const actions=document.getElementById('legal-view-actions');
- actions.replaceChildren();legalDriveActions(actions,record);
+ actions.replaceChildren();legalDownloadAction(actions,record);
  const status=document.createElement('p');status.setAttribute('role','status');
  legalViewerBody.replaceChildren(status);
  if(!legalViewer.open)legalViewer.showModal();
  if(!record.folder){
-  status.textContent='If the preview is unavailable, open the file in Drive.';
+  status.remove();
   const frame=document.createElement('iframe');
   frame.title='Preview of '+record.name;frame.referrerPolicy='no-referrer';
   const url=new URL(record.url);
@@ -152,9 +157,12 @@ async function showLegalRecord(record,back){
     files.append(legalFileCard({id:file.id,name:file.name,folder,url:file.webViewLink||fallback+file.id,thumbnail:file.thumbnailLink,resourceKey:file.resourceKey,canDownload:file.capabilities?.canDownload},()=>showLegalRecord(record,back)));
    }
    status.textContent=files.children.length?'':'This folder is empty.';
-   more.hidden=!result.nextPageToken;more.onclick=()=>loadPage(result.nextPageToken);
+   more.textContent='Load more';more.hidden=!result.nextPageToken;more.onclick=()=>loadPage(result.nextPageToken);
   }catch{
-   if(!request.signal.aborted)status.textContent='Could not load this folder here. Use Open in Drive to view its files.';
+   if(!request.signal.aborted){
+    status.textContent='Could not load this folder.';
+    more.hidden=false;more.textContent='Try again';more.onclick=()=>loadPage(pageToken);
+   }
   }finally{more.disabled=false}
  }
  await loadPage();
