@@ -70,3 +70,10 @@
 .weight-dot{fill:#7ce6cb}.weight-latest{fill:#f4cd79;stroke:#fff0ba;stroke-width:2}.weight-note{font-size:.85rem}
 
 .medical-folder-tabs button:focus-visible{outline-offset:4px}
+.medical-folder-dashboard{margin:12px 0 20px;padding:14px;border:1px solid #416473;border-radius:12px;background:#152b3a;overflow:auto}
+.medical-folder-dashboard h3{color:#a4eee1;margin:0 0 8px}
+.medical-folder-dashboard table{width:100%;border-collapse:collapse;text-align:left}
+.medical-folder-dashboard :is(th,td){padding:8px;border-bottom:1px solid #416473;vertical-align:top}
+.medical-folder-dashboard :is(input,button){min-height:34px}
+.medical-folder-dashboard input{max-width:100%;padding:6px;color:#e4f4f8;background:#122432;border:1px solid #668696;border-radius:6px}
+#legal-view-body>details>summary{cursor:pointer;color:#a4eee1;padding:8px 0}

@@ -300,15 +300,21 @@ async function showLegalRecord(record,back){
   }catch(error){if(!request.signal.aborted)status.textContent=error.message||'Preview unavailable.'}
   return;
  }
+ const returnToFolder=()=>showLegalRecord(record,back);
+ if(record.dashboard)legalViewerBody.insertBefore(record.dashboard(returnToFolder),status);
+ const container=record.hideSupporting?document.createElement('details'):legalViewerBody;
+ if(record.hideSupporting){
+  const summary=document.createElement('summary');summary.textContent='Supporting documents';
+  container.append(summary,status);legalViewerBody.append(container);
+ }
  status.textContent='Loading folder…';
- const files=document.createElement('div');files.className='legal-cards';legalViewerBody.append(files);
- const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;legalViewerBody.append(more);
+ const files=document.createElement('div');files.className='legal-cards';container.append(files);
+ const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;
   try{
    const result=record.virtualFiles?{files:record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
-   const returnToFolder=()=>showLegalRecord(record,back);
    for(const file of result.files){
     if(record.indianCove){
      if(/^Original Communications Files$|^Duplicates - Review for Deletion$/i.test(file.name))continue;
@@ -330,7 +336,7 @@ async function showLegalRecord(record,back){
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
-     medicalArt:file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined,
+     medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'

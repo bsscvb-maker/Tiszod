@@ -28,7 +28,7 @@
   const folderMime = 'application/vnd.google-apps.folder';
   const escapeQuery = s => s.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
   let records = [], weights = [], review = {}, key = '', limit = 30, visitFilter = '';
-  let workbook, workbookWeights = [], manualWeights = [];
+  let workbook, workbookWeights = [], manualWeights = [], folderSummaries = {};
 
   async function list(query) {
     const files = [];
@@ -284,7 +284,7 @@
     updateWeights();
   }
   window.thStart = async () => {
-    workbookWeights = []; manualWeights = []; weights = [];
+    workbookWeights = []; manualWeights = []; weights = []; folderSummaries = {};
     $('medical-content').hidden = false;
     $('medical-dashboard').hidden = true;
     $('medical-status').textContent = 'Connecting to your Medical records…';
@@ -313,11 +313,10 @@
       const cards = folders.map(folder => {
         const category=canonical(folder.name);
         const [medicalArt,medicalCover] = collections[category] || ['providers','blue'];
-        return {...folder,name:folderLabels[category] || folder.name,medicalCover,medicalArt};
+        return thMedicalFolders.enrich({...folder,originalName:folder.name,name:folderLabels[category] || folder.name,medicalCover,medicalArt},{
+          records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
+        });
       }).sort((a,b)=>rank(a.name)-rank(b.name));
-      const rx = folders.find(folder=>folder.name==='Prescriptions');
-      const eyeFolder = rx && (await children(rx.id).catch(()=>[])).find(f=>f.folder && f.name==='Vision');
-      if (eyeFolder) cards.push({...eyeFolder,name:'Eyeglass Prescriptions',medicalCover:'blue',medicalArt:'vision'});
       if (workbook) cards.push({
         ...workbook,name:'Body Composition',folder:true,medicalCover:'teal',medicalArt:'weight',
         virtualFiles:[{...workbook,name:'Body Composition.xlsx',downloadOriginal:true}],
@@ -331,7 +330,7 @@
       $('weight-range').onchange = renderWeight;
       renderKpis(); renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       thMedicalAbout.start({
-        key, list, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
+        key, list, onFolderSummaries: value => {folderSummaries=value||{};}, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
         eventName, eventDate, confirmedEvents,
         current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
         open: record => thDriveRecords.open(record)
