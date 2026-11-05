@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 132">
+<path fill="#183947" stroke="#6ea7b0" stroke-width="2" d="M114 60C112 22 144 7 210 7s98 15 96 53c-4 48-43 64-96 64s-92-16-96-64Z"/>
+<g fill="#e8ffff" stroke="#91e7de" stroke-width="2"><path d="M130 58q30-31 60 0-30 28-60 0Z"/><path d="M230 58q30-31 60 0-30 28-60 0Z"/></g>
+<g fill="#176b77"><circle cx="160" cy="58" r="10"/><circle cx="260" cy="58" r="10"/></g>
+<g fill="#052931"><circle cx="160" cy="58" r="4"/><circle cx="260" cy="58" r="4"/></g>
+<g fill="none" stroke="#90dcd3" stroke-width="2"><path d="M130 58H57l-13 22M290 58h73l13 22M207 60l-6 20h17m-30 18q22 12 44 0"/></g>
+<g fill="#c9fff1" font-family="system-ui" font-size="14" text-anchor="middle"><text x="40" y="101">OD · Right</text><text x="380" y="101">OS · Left</text></g>
+</svg>

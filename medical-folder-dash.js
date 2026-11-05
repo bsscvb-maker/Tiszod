@@ -7,7 +7,10 @@ window.thMedicalFolders = (() => {
     const el=make('table'), head=make('thead'), body=make('tbody'), labels=make('tr');
     for(const header of headers){const th=make('th',header);th.scope='col';labels.append(th);}
     head.append(labels);el.append(head,body);
-    for(const row of rows){const tr=make('tr');for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
+    for(const row of rows){const tr=make('tr');
+      const link=row.find(item=>item?.tagName==='BUTTON');
+      if(link){tr.classList.add('medical-click-row');tr.onclick=event=>{if(!event.target.closest('button,a'))link.click();};}
+      for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
     return el;
   }
   const sorted=(records,date)=>[...records].sort((a,b)=>date(b).localeCompare(date(a))||a.name.localeCompare(b.name));
@@ -21,6 +24,7 @@ window.thMedicalFolders = (() => {
     ['Optima',/optima/i],
     ['CVS Caremark',/caremark/i]
   ];
+  const logoFiles={'Aetna':'aetna.svg','CVS Caremark':'caremark.svg','Delta Dental':'delta.png','UnitedHealthcare':'united.svg','Trustmark':'trustmark.png','Blue Cross Blue Shield':'bcbs.svg'};
   function carrier(record){return insuranceMatchers.find(([,pattern])=>pattern.test([record.name,...record.path].join(' ')))?.[0]||'Other insurance records';}
   function enrich(folder, options) {
     const {records,date,detail,summary,open} = options;
@@ -42,37 +46,51 @@ window.thMedicalFolders = (() => {
       box.append(make('p',(rx?.place||title(latest.name))+' · '+(rx?.date||date(latest)||'Date unlisted')+
         (rx?.expires?' · Expires '+rx.expires:'')));
       if(rx){
-        box.append(table(['Eye','Sphere','Add'],[['Right',rx.rightSphere,rx.rightAdd],['Left',rx.leftSphere,rx.leftAdd]]));
+        const face=make('div');face.className='medical-vision-face';
+        const diagram=make('img');diagram.src='assets/medical/eyes.svg';diagram.alt='Face shown from the front. Your right eye is on the left of the picture.';
+        face.append(diagram);
+        const values=make('div');values.className='medical-eye-values';
+        for(const [side,sphere,add] of [['Right eye (OD)',rx.rightSphere,rx.rightAdd],['Left eye (OS)',rx.leftSphere,rx.leftAdd]]){
+          const eye=make('section');eye.append(make('strong',side),make('p','Sphere '+sphere+' · Add '+add));values.append(eye);
+        }
+        face.append(values);box.append(face);
       }else box.append(make('p','Open the original for prescription values.'));
       box.append(source(latest,open,back,'Open latest prescription'));
       if(ordered.length>1){
         const older=make('details');older.append(make('summary','Previous prescriptions'),
-          table(['Date','Record','Source'],ordered.slice(1).map(record=>[date(record)||'Unlisted',title(record.name),source(record,open,back)])));
+          table(['Date','Prescription'],ordered.slice(1).map(record=>[date(record)||'Unlisted',source(record,open,back,title(record.name))])));
         box.append(older);
       }
       return box;
     }
     function medicationView(files,back){
       const med=sorted(files.filter(record=>record.kind==='Medication record'),date);
-      const box=shell('Medication history','Newest records first. Strengths may come from filenames. Schedules and duration are shown when documented in a review.');
+      const box=shell('Medication history','Newest records first. Select a medication to view the original. Schedules and duration appear when verified.');
+      const injections=summary().injections||[];
+      if(injections.length){
+        const log=make('details');log.open=true;
+        log.append(make('summary','Tirzepatide / Zepbound injection log'),
+          table(['Date','Time (Eastern)','Product','Reported dose'],[...injections].sort((a,b)=>b.date.localeCompare(a.date)).map(item=>[item.date,item.time,item.product,item.dose])));
+        box.append(log);
+      }
       const search=make('input');search.type='search';search.placeholder='Search medications';search.setAttribute('aria-label','Search medication history');
-      const area=make('div');area.className='medical-folder-table';box.append(search,area);
+      const area=make('div');area.className='medical-folder-table medical-medication-table';box.append(search,area);
       function show(){
         const q=search.value.trim().toLowerCase();
         const rows=med.map(record=>{
           const reviewed=detail(record);
           const label=title(record.name).replace(/^(?:(?:Kroger|Walgreens|CVS)\s*[-–]\s*)/i,'');
           const strength=label.match(/\b\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?\s*(?:mg|mcg|g|%)\b/i)?.[0];
-          return [date(record)||'Unlisted',reviewed.label||label.replace(/\s+[-–]\s+Scan(?: \d+)?$/i,''),reviewed.dose||strength||'See source',reviewed.schedule||'See source',source(record,open,back)];
-        }).filter(row=>row[1].toLowerCase().includes(q));
-        area.replaceChildren(rows.length?table(['Date','Medication','Strength','Directions / duration','Source'],rows):make('p','No matching medication records.'));
+          return [date(record)||'Unlisted',source(record,open,back,reviewed.label||label.replace(/\s+[-–]\s+Scan(?: \d+)?$/i,'')),reviewed.dose||strength||'Unverified',reviewed.schedule||'Unverified'];
+        }).filter(row=>row[1].textContent.toLowerCase().includes(q));
+        area.replaceChildren(rows.length?table(['Date','Medication','Strength','Directions / duration'],rows):make('p','No matching medication records.'));
       }
       search.oninput=show;show();return box;
     }
     function recordsView(files,heading,description,back){
       const box=shell(heading,description);
-      const rows=sorted(files,date).map(record=>[date(record)||'Unlisted',title(record.name),source(record,open,back)]);
-      box.append(rows.length?table(['Record date','Record','Source'],rows):make('p','No matching records were found.'));
+      const rows=sorted(files,date).map(record=>[date(record)||'Unlisted',source(record,open,back,title(record.name))]);
+      box.append(rows.length?table(['Record date','Record'],rows):make('p','No matching records were found.'));
       return box;
     }
     if(section==='Prescriptions'){
@@ -86,20 +104,59 @@ window.thMedicalFolders = (() => {
     if(section==='Insurance'){
       const groups=new Map(insuranceMatchers.slice(0,4).map(([name])=>[name,[]]));
       for(const record of children){const name=carrier(record);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(record);}
-      const carriers=[...groups].map(([name,files])=>virtual(name,files,back=>recordsView(files,'Coverage records',
-        'Coverage start and end are unverified. Dates below identify records; an ID card, claim, or authorization date may differ from policy dates.',back),'insurance'));
-      return {...folder,virtualFiles:[...carriers,{...folder,name:'Original insurance folders'}],
-        dashboard:back=>{
-          const box=shell('Insurance by carrier','Open a carrier to see the evidence. Coverage start and end require a policy or eligibility record that confirms those dates.');
-          box.append(table(['Carrier','Coverage start','Coverage end','Evidence'],carriers.map(item=>[
-            item.name,'Unverified','Unverified',source(item,open,back,item.virtualFiles.length+' records')
-          ])));return box;
-        }};
+      const carriers=[...groups].map(([name,files])=>({
+        ...virtual(name,files,back=>recordsView(files,'Coverage records','Record dates are shown below. Coverage start and end remain unverified.',back),'insurance'),
+        medicalLogo:Boolean(logoFiles[name]),medicalCoverImage:logoFiles[name]?'assets/medical/carriers/'+logoFiles[name]:undefined
+      }));
+      return {...folder,virtualFiles:[...carriers,{...folder,name:'Original insurance folders'}]};
+    }
+    if(section==='Test Result'){
+      const results=()=>children.filter(record=>!['Test order'].includes(record.kind));
+      return {...folder,virtualFiles:results,hideSupporting:true,dashboard:back=>{
+        const box=shell('Test results','Select a result to open its original report.');
+        const list=summary().tests||[];
+        const ids=new Set(list.flatMap(item=>item.ids));
+        const rows=list.flatMap(item=>{
+          const doc=children.find(record=>record.id===item.ids[0]);
+          return doc?[[item.date,source(doc,open,back,item.name),item.result]]:[];
+        });
+        for(const record of sorted(results().filter(item=>!ids.has(item.id)),date)){
+          rows.push([date(record)||'Unlisted',source(record,open,back,title(record.name)),'See report']);
+        }
+        if(rows.length)box.append(table(['Report date','Test','Result'],rows));
+        const orders=children.filter(record=>record.kind==='Test order');
+        if(orders.length){
+          const list=make('details');list.append(make('summary','Lab orders without a linked result'),recordsView(orders,'Lab orders','These are requests for testing.',back));box.append(list);
+        }
+        return box;
+      }};
+    }
+    if(section==='Billing'){
+      const visible=()=>children.filter(record=>!(summary().hiddenBillingIds||[]).includes(record.id));
+      return {...folder,virtualFiles:visible,hideSupporting:true,dashboard:back=>recordsView(visible(),'Billing records','Select a statement to review the original.',back)};
     }
     if(section==='Immunizations'){
       const vaccines=children.filter(record=>/vacci|immuniz|covid|booster/i.test(record.name));
-      return {...folder,dashboard:back=>recordsView(vaccines,'Immunization records',
-        'Card dates are shown as recorded in the file index. Several cards may show the same doses; open the source to check dose dates and manufacturer.',back),hideSupporting:true};
+      return {...folder,virtualFiles:vaccines,hideSupporting:true,dashboard:back=>{
+        const doses=summary().vaccines||[];
+        if(!doses.length)return recordsView(vaccines,'Immunization records','Open the card to see the doses.',back);
+        const box=shell('COVID-19 vaccination history','Each documented administration is shown once. The original cards are under Supporting documents.');
+        box.append(table(['Dose','Date','Vaccine','Location'],doses.map(item=>{
+          const record=vaccines.find(doc=>doc.id===item.id);
+          return [record?source(record,open,back,item.label):item.label,item.date,item.product,item.location];
+        })));
+        return box;
+      }};
+    }
+    if(section==='Providers'){
+      const groups=new Map();
+      for(const record of children){
+        const name=record.path[1]||'Other provider records';
+        if(!groups.has(name))groups.set(name,[]);
+        groups.get(name).push(record);
+      }
+      return {...folder,virtualFiles:[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,files])=>
+        virtual(name,files,back=>recordsView(files,name,'Visits, correspondence, and supporting records.',back),'providers'))};
     }
     return {...folder,dashboard:back=>recordsView(children,section+' overview','Newest dated records first. Open a supporting document for full details.',back),hideSupporting:true};
   }

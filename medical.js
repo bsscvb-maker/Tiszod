@@ -93,20 +93,6 @@
   const status = record => detail(record).status || (record.kind === 'Billing record' ? 'Needs review' : '');
   const eventDate = record => detail(record).date || record.date;
   const eventName = record => detail(record).label?.trim() || '';
-  function selectCategory(category, query = '', reviewStatus = '') {
-    $('medical-category').value = category;
-    $('medical-search').value = query;
-    $('medical-year').value = '';
-    $('medical-review').value = reviewStatus;
-    visitFilter = '';
-    resetResults();
-    $('timeline-title').scrollIntoView({block:'start', behavior:'smooth'});
-  }
-  function metric(title, detailText, action) {
-    const el = button('', action);
-    el.append(node('strong', title), node('small', detailText));
-    return el;
-  }
   function confirmedEvents(state) {
     const unique = new Map();
     for (const record of records.filter(r => status(r) === state)) {
@@ -115,30 +101,6 @@
       if (name && date.length === 10) unique.set(fingerprint,record);
     }
     return [...unique.values()];
-  }
-  function amountFor(record) {
-    const raw = detail(record).amount;
-    return raw != null && raw !== '' && Number.isFinite(Number(raw)) ? Number(raw) : null;
-  }
-  function renderKpis() {
-    const by = category => records.filter(r => r.category === category).length;
-    const count = (state) => records.filter(r => status(r) === state).length;
-    const current = new Set(records.filter(r => status(r) === 'Current').map(r => eventName(r).toLowerCase()).filter(Boolean)).size;
-    const bills = records.filter(r => status(r) === 'Confirmed open');
-    const balances = bills.map(amountFor).filter(v => v !== null);
-    const sum = balances.reduce((a,b) => a+b, 0);
-    const billText = balances.length ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sum) + ' across ' + balances.length + ' reviewed records' : 'No confirmed amounts entered';
-    const visit = confirmedEvents('Visit confirmed').sort((a,b) => eventDate(b).localeCompare(eventDate(a)))[0];
-    $('medical-kpis').replaceChildren(
-      metric('Current medications', current ? current + ' confirmed · click to view' : 'Review medication records to set your list', () => selectCategory('Prescriptions','','Current')),
-      metric('Medication history', confirmedEvents('Fill documented').length + ' confirmed fill events · ' + records.filter(r => r.kind === 'Medication record').length + ' source records', () => selectCategory('Prescriptions')),
-      metric('Provider visits', visit ? 'Last confirmed visit · ' + eventDate(visit) : by('Providers & Visits') + ' provider documents to explore', () => selectCategory('Providers & Visits')),
-      metric('Labs & screenings', records.filter(r => r.kind === 'Test result').length + ' result records · ' + records.filter(r => r.kind === 'Test order').length + ' order records', () => selectCategory('Tests')),
-      metric('Bills to review', count('Needs review') + ' records with status to verify', () => selectCategory('','','Needs review')),
-      metric('Confirmed open bills', billText, () => selectCategory('','','Confirmed open')),
-      metric('Dental', by('Dental') + ' dental records', () => selectCategory('Dental')),
-      metric('Insurance', by('Insurance') + ' coverage and claims records', () => selectCategory('Insurance'))
-    );
   }
   function statuses(record) {
     if (record.kind === 'Medication record') return ['Current','Past','Prescription written','Fill documented','Needs review'];
@@ -174,7 +136,7 @@
       const next = {...review,[record.id]:{status:select.value,label:label.value.trim(),date:date.value,amount:amount.value,dose:dose.value.trim(),schedule:schedule.value.trim()}};
       try {localStorage.setItem(key,JSON.stringify(next));}
       catch {error.textContent = 'This browser could not save the review.';return;}
-      review = next; renderKpis(); renderResults(); thMedicalAbout.refresh();
+      review = next; renderResults(); thMedicalAbout.refresh();
     };
     return form;
   }
@@ -249,7 +211,7 @@
   }
   function renderCollections(entries) {
     const tabs = $('medical-folder-tabs'), panel = $('medical-folders');
-    const choices = [['All files',entries],...entries.filter(entry=>entry.folder).map(entry=>[entry.name,[entry]])];
+    const choices = [['All files',entries],...entries.filter(entry=>entry.folder||entry.directReader).map(entry=>[entry.name,[entry]])];
     const controls = choices.map(([label,items],index) => {
       const tab=button(label,()=>select(index));
       tab.id='medical-folder-tab-'+index;
@@ -317,20 +279,28 @@
           records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
         });
       }).sort((a,b)=>rank(a.name)-rank(b.name));
-      if (workbook) cards.push({
-        ...workbook,name:'Body Composition',folder:true,medicalCover:'teal',medicalArt:'weight',
-        virtualFiles:[{...workbook,name:'Body Composition.xlsx',downloadOriginal:true}],
-        downloadReport:()=>thMedicalWeightChart.download(weights)
+      cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.svg'});
+      function revealTimeline(){
+        if(location.hash==='#timeline-title') $('medical-timeline-panel').hidden=false;
+      }
+      window.addEventListener('hashchange',revealTimeline);
+      $('medical-content').addEventListener('click',event=>{
+        if(event.target.closest('a[href="#timeline-title"]')) $('medical-timeline-panel').hidden=false;
       });
-      for (const file of rootFiles.filter(file=>file!==workbook)) cards.push(file);
+      revealTimeline();
       renderCollections(cards);
       $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
-      renderKpis(); renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
+      renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       thMedicalAbout.start({
-        key, list, onFolderSummaries: value => {folderSummaries=value||{};}, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
+        key, list, onFolderSummaries: value => {
+          folderSummaries=value||{};
+          const hidden = new Set(folderSummaries.hiddenBillingIds||[]);
+          records=records.filter(record=>!hidden.has(record.id));
+          renderResults();
+        }, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
         eventName, eventDate, confirmedEvents,
         current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
         open: record => thDriveRecords.open(record)

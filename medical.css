@@ -79,3 +79,13 @@
 #legal-view-body>details>summary{cursor:pointer;color:#a4eee1;padding:8px 0}
 
 .medical-folder-dashboard details{margin-top:12px}
+.medical-body-profile{display:grid;grid-template-columns:minmax(100px,170px) minmax(0,1fr);gap:16px;align-items:center}
+.medical-body-profile img{width:100%;max-height:235px}.medical-body-profile dd p{margin:5px 0}
+.medical-vision-face{max-width:580px;margin:12px 0}.medical-vision-face img{display:block;width:100%}
+.medical-eye-values{display:grid;grid-template-columns:1fr 1fr;gap:10px}.medical-eye-values section{padding:10px;background:#102430;border:1px solid #4a7482;border-radius:8px}.medical-eye-values p{margin:5px 0 0}
+.medical-folder-dashboard .medical-click-row{cursor:pointer}.medical-folder-dashboard .medical-click-row:hover{background:#254353}
+.medical-folder-dashboard .medical-click-row button{color:#b9faeb;background:transparent;border:0;padding:0;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.medical-folder-dashboard table :is(th,td):first-child{white-space:nowrap}
+.medical-medication-table td:nth-child(2){width:29%}
+.legal-thumbnail img.medical-carrier-logo{object-fit:contain;object-position:center;padding:22px;box-sizing:border-box;background:#f7f9fb}
+@media(max-width:550px){.medical-body-profile{grid-template-columns:1fr}.medical-body-profile img{width:100px;justify-self:center}}

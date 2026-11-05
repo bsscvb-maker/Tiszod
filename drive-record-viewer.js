@@ -168,23 +168,24 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- card.className='legal-file';if(record.medicalArt)card.classList.add('medical-photo-card');caption.textContent=record.name;actions.className='legal-actions';
- const type=document.createElement('span');type.className='legal-kind';type.textContent=record.map?'Map':record.directReader?'Rules':record.folder?'Folder':'Document';card.append(type,caption);
+ card.className='legal-file';if(record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.name;actions.className='legal-actions';
+ const type=document.createElement('span');type.className='legal-kind';type.textContent=record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document';card.append(type,caption);
  if(record.id||record.directReader){
   const button=document.createElement(record.directReader?'a':'button');
   if(record.directReader)button.href=record.readerUrl;else button.type='button';
   button.className='legal-thumbnail';
   const art=document.createElement('span'),label=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
-  label.className='legal-thumbnail-label';label.textContent=record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview';
+  label.className='legal-thumbnail-label';label.textContent=record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
-  if(record.folder||record.directReader||record.medicalArt){
+  if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const fallback=legalFolderCover(record.name,record.medicalCover);
-   if(record.cover||record.medicalArt){
+   if(record.cover||record.medicalArt||record.medicalCoverImage){
     const image=document.createElement('img');
     image.alt='';
-    image.src=record.medicalArt?'assets/medical/'+record.medicalArt+'.webp':'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
+    if(record.medicalLogo)image.classList.add('medical-carrier-logo');
+    image.src=record.medicalCoverImage||(record.medicalArt?'assets/medical/'+record.medicalArt+'.webp':'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':''));
     image.onerror=()=>art.replaceChildren(fallback);
     art.replaceChildren(image);
    }else art.replaceChildren(fallback);
@@ -313,7 +314,7 @@ async function showLegalRecord(record,back){
  async function loadPage(pageToken){
   more.disabled=true;
   try{
-   const result=record.virtualFiles?{files:record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
+   const result=record.virtualFiles?{files:typeof record.virtualFiles==='function'?record.virtualFiles():record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
    for(const file of result.files){
     if(record.indianCove){

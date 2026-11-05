@@ -13,78 +13,44 @@
   const profileFilename = 'TisZod Medical About Me.json';
   const fields = [
     ['height','Height'], ['age','Age'], ['ageAsOf','Age recorded on'],
-    ['pcp','Primary care physician'], ['pcpNote','Primary care notes'],
-    ['eyeCare','Ophthalmologist or eye-care practice'], ['eyeNote','Eye-care notes'],
+    ['pcp','Primary care physician'],
+    ['eyeCare','Ophthalmologist or eye-care practice'],
     ['conditions','Conditions and medical history']
   ];
-  let api, profile = {}, savedProfile = {}, loadMessage = '', request = 0;
+  let api, profile = {}, savedProfile = {}, loadMessage = '';
 
-  const normalize = text => String(text || '').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-  const aliases = [
-    ['azithromycin','z pak','zpak','z pack','zithromax'],
-    ['erythromycin','erythrocin']
-  ];
-  function matchMedication(record, query) {
-    if (!query) return true;
-    const terms = aliases.find(group => group.includes(query)) || [query];
-    const source = ' ' + normalize([record.name,api.eventName(record)].join(' ')) + ' ';
-    return terms.some(term => source.includes(' ' + term + ' '));
-  }
-  function sourceButton(record) {return action(record.name,() => api.open(record));}
-  function renderYears() {
-    const target = $('medical-about-years'), query = normalize($('medical-about-drug').value);
-    const yearOf = record => api.eventDate(record).slice(0,4);
-    const sources = api.records().filter(record => record.kind === 'Medication record' && matchMedication(record,query));
-    const written = api.confirmedEvents('Prescription written').filter(record => matchMedication(record,query));
-    const filled = api.confirmedEvents('Fill documented').filter(record => matchMedication(record,query));
-    const availableYears = api.records().filter(record => record.kind === 'Medication record').map(yearOf).filter(year => /^\d{4}$/.test(year));
-    const currentYear = new Date().getFullYear();
-    const oldest = Math.min(currentYear,...availableYears.map(Number));
-    const years = Array.from({length:currentYear-oldest+1},(_,i)=>String(currentYear-i));
-    if ([...sources,...written,...filled].some(record=>!yearOf(record))) years.push('');
-    target.replaceChildren();
-    target.append(make('p',sources.length+' matching source files · '+written.length+' reviewed prescriptions · '+filled.length+' reviewed fills'));
-    if (!years.length) return;
-    const table = make('table'), head = make('thead'), body = make('tbody'), header = make('tr');
-    for (const text of ['Year','Source files','Written','Filled']) {
-      const th = make('th',text); th.scope = 'col'; header.append(th);
-    }
-    head.append(header); table.append(head,body);
-    for (const year of years) {
-      const row = make('tr'), group = sources.filter(record => yearOf(record) === year);
-      const label = make('th',year || 'Undated'); label.scope = 'row';
-      const cell = make('td');
-      const detail = make('details'), summary = make('summary',String(group.length));
-      summary.setAttribute('aria-label','View '+group.length+' source files for '+(year || 'undated records'));
-      if (group.length) {detail.append(summary,...group.map(sourceButton)); cell.append(detail);}
-      else cell.textContent = '0';
-      row.append(label,cell,make('td',written.filter(record => yearOf(record)===year).length),
-        make('td',filled.filter(record => yearOf(record)===year).length));
-      body.append(row);
-    }
-    target.append(table);
-  }
   function renderProfile() {
     const target = $('medical-about-profile');
     const grid = make('dl');
+    const overview=make('div');overview.className='medical-body-profile';
+    const silhouette=make('img');silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body silhouette';
     const weight = api.weights().at(-1);
     const entries = [
       ['Height',profile.height],
       ['Age',profile.age && profile.age+(profile.ageAsOf ? ' as of '+profile.ageAsOf : '')],
       ['Latest recorded weight',weight && weight.weight.toFixed(1)+(weight.unit?' '+weight.unit:' (unit not listed)')+' · '+weight.date],
-      ['Primary care physician',[profile.pcp,profile.pcpNote].filter(Boolean).join(' · ')],
-      ['Ophthalmology',[profile.eyeCare,profile.eyeNote].filter(Boolean).join(' · ')],
+      ['Primary care physician',profile.pcp,profile.contacts?.pcp],
+      ['Ophthalmology',profile.eyeCare,profile.contacts?.eyeCare],
       ['Conditions and medical history',profile.conditions]
     ];
-    for (const [label,value] of entries) {
-      const item = make('div'); item.append(make('dt',label),make('dd',value || 'Needs confirmation')); grid.append(item);
+    for (const [label,value,contact] of entries) {
+      const item=make('div'), data=make('dd',value||'Needs confirmation');
+      if(contact?.address) data.append(make('p',contact.address));
+      if(contact?.phone){
+        const phone=make('a',contact.phone);phone.href='tel:'+contact.phone.replace(/[^+\d]/g,'');data.append(phone);
+      }
+      if(/^https:\/\//.test(contact?.url||'')){
+        const line=make('p'),link=make('a',contact.linkLabel||'Practice website');
+        link.href=contact.url;link.target='_blank';link.rel='noopener noreferrer';line.append(link);data.append(line);
+      }
+      item.append(make('dt',label),data);grid.append(item);
     }
     const med = make('ul');
     const reviewed = api.records().filter(record => record.kind === 'Medication record' && api.current(record));
     for (const item of Array.isArray(profile.medications) ? profile.medications : []) {
       med.append(make('li',[item.name,item.dose,item.note].filter(Boolean).join(' · ')));
     }
-    target.replaceChildren(grid,make('h3','Current medication list and recent reports'));
+    overview.append(silhouette,grid);target.replaceChildren(overview,make('h3','Current medications'));
     const userList = String(profile.currentList || '').split('\n').map(line=>line.trim()).filter(Boolean);
     target.append(make('p',reviewed.length || userList.length?'Current medications you marked in the portal:':'Your full current medication list still needs confirmation.'));
     if (reviewed.length || userList.length) {
@@ -98,19 +64,6 @@
       target.append(confirmed);
     }
     if (med.childElementCount) target.append(make('p','Recent reports and details to verify:'),med);
-    const shortcuts = make('div'); shortcuts.className = 'medical-about-shortcuts';
-    const quickSearch = (label, value) => action(label,() => {
-      $('medical-about-query').value = value;
-      $('medical-about-search').requestSubmit();
-      $('medical-about-query').focus();
-    });
-    if (profile.pcp) shortcuts.append(quickSearch('Find primary care records',profile.pcp.split(' ').at(-1)));
-    shortcuts.append(quickSearch('Find eye-care records','eyeglass prescription'));
-    if (api.workbook()) {
-      const link = make('a','Open weight source'); link.href = api.workbook().url;
-      link.target = '_blank'; link.rel = 'noopener'; shortcuts.append(link);
-    }
-    target.append(shortcuts);
     if (loadMessage) target.append(make('p',loadMessage));
   }
   function edit() {
@@ -144,32 +97,10 @@
       }).filter(item => item.name);
       try {localStorage.setItem(api.key+':about',JSON.stringify(next));}
       catch {message.textContent = 'This browser could not save the profile.';return;}
-      profile = next; renderProfile();
+      profile = {...savedProfile,...next}; renderProfile();
     };
     target.replaceChildren(form);
     inputs.height.focus();
-  }
-  async function search(event) {
-    event.preventDefault();
-    const serial = ++request;
-    const query = $('medical-about-query').value.trim(), target = $('medical-about-search-results');
-    const message = $('medical-about-search-status');
-    target.replaceChildren();
-    if (!query) {message.textContent = 'Enter a search term.';return;}
-    const local = api.records().filter(record => normalize([record.name,...record.path].join(' ')).includes(normalize(query)));
-    message.textContent = 'Checking record names and Drive’s text index…';
-    let matches = local, fallback = false;
-    try {
-      const escaped = query.replaceAll('\\','\\\\').replaceAll("'","\\'");
-      const files = await api.list("fullText contains '"+escaped+"'");
-      const ids = new Set([...files,...local].map(file => file.id));
-      matches = api.records().filter(record => ids.has(record.id));
-    } catch {fallback = true;}
-    if (serial !== request) return;
-    matches.sort((a,b)=>api.eventDate(b).localeCompare(api.eventDate(a)));
-    message.textContent = matches.length+' matching records'+(matches.length>30?' · first 30 shown':'')+
-      (fallback?' · filename matches only.':' · image-only scans may be missing from the text index.');
-    target.replaceChildren(...matches.slice(0,30).map(sourceButton));
   }
   async function loadProfile() {
     try {
@@ -191,14 +122,11 @@
     start(options) {
       api = options; profile = {}; savedProfile = {}; loadMessage = '';
       $('medical-about-edit').onclick = edit;
-      $('medical-about-drug').oninput = renderYears;
-      $('medical-about-search').onsubmit = search;
-      renderProfile(); renderYears(); void loadProfile();
+      renderProfile(); void loadProfile();
     },
     refresh() {
       if (!api) return;
       if (!$('medical-about-profile').querySelector('form')) renderProfile();
-      renderYears();
     }
   };
 })();
