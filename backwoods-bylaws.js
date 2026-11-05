@@ -1,8 +1,19 @@
 (() => {
 'use strict';
 
-const fileId = '1a9GMTWDqLLW_4uqxH1BeD3x3oM65LAO_';
-const concepts = [
+const campground = document.body.dataset.reader === 'campground';
+const backwoodsFileId = '1a9GMTWDqLLW_4uqxH1BeD3x3oM65LAO_';
+const concepts = campground ? [
+  ['Guests and check-in', /\b(guests?|friends?|visitors?|check in|check out|passes?)\b/, /\b(guests?|check in|check out)\b/],
+  ['Pets', /\b(dogs?|cats?|pets?|leash)\b/, /\b(pets?|leash\w*)\b/],
+  ['Campfires', /\b(campfires?|fires?|firewood)\b/, /\b(campfires?|firewood)\b/],
+  ['Pool and swimming', /\b(swim\w*|pool|lifeguard)\b/, /\b(swim\w*|pool|lifeguard)\b/],
+  ['Vehicles and parking', /\b(park\w*|cars?|vehicles?|trailers?)\b/, /\b(vehicles?|park\w*)\b/],
+  ['Golf carts', /\b(golf carts?|gas carts?)\b/, /\bgolf carts?\b/],
+  ['Quiet hours', /\b(quiet|noise|curfew)\b/, /\bquiet time\b/],
+  ['Electric hookups', /\b(hookups?|adapters?|amps?|electricity|power)\b/, /\b(electricity|adapters?|amps?)\b/],
+  ['Scooters and bikes', /\b(scooters?|bikes?|helmets?|bicycles?)\b/, /\b(scooters?|bikes?|helmets?)\b/]
+] : [
   ['Dues and late payments', /\b(dues|pay\w*|cost|price|late fee|deadline)\b/, /\b(dues|price|late fee)\b/],
   ['Guests and family', /\b(guests?|bring\w*|friend\w*|visitors?|spouses?|kids|family|children)\b/, /\b(guests?|spouses?|children|grandchildren)\b/],
   ['Stands and safety gear', /\b(stands?|climb\w*|saddles?|tree stand|harness\w*|elevated|fall)\b/, /\b(stands?|climbers?|harness\w*|saddle|elevated)\b/],
@@ -97,6 +108,34 @@ function renderReader(sections) {
   draw();
 }
 
+async function campgroundFiles() {
+  const rows = await thValues("'Hobbies & Recreation Links'!A2:B30", 'UNFORMATTED_VALUE');
+  const link = rows.find(([name]) => String(name).trim().toLowerCase() === 'indian cove resort')?.[1];
+  const root = link && new URL(link);
+  const id = root?.origin === 'https://drive.google.com' && root.pathname.match(/^\/drive\/folders\/([\w-]+)\/?$/)?.[1];
+  if (!id) throw new Error('Indian Cove Resort is missing from Hobbies & Recreation.');
+
+  async function children(parent, query) {
+    const params = new URLSearchParams({
+      q: "'" + parent + "' in parents and trashed = false and (" + query + ")",
+      fields: 'files(id,name)', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true'
+    });
+    const response = await fetch('https://www.googleapis.com/drive/v3/files?' + params, {
+      headers: { Authorization: 'Bearer ' + thToken }
+    });
+    if (!response.ok) throw new Error('Could not find the campground rules in Drive.');
+    return (await response.json()).files;
+  }
+
+  const [folder] = await children(id, "name = 'Campground Maps and Rules'");
+  if (!folder) throw new Error('Campground Maps and Rules folder is missing.');
+  const files = await children(folder.id, "name = 'Campground - Map and General Rules.pdf' or name = 'Campground Rules - Search Index.json'");
+  const pdf = files.find(file => file.name.endsWith('.pdf'));
+  const index = files.find(file => file.name.endsWith('.json'));
+  if (!pdf) throw new Error('The original campground rules PDF is missing.');
+  return { pdf: pdf.id, index: index?.id };
+}
+
 let pdfUrl;
 window.thStart = async () => {
   const status = document.getElementById('bylaws-status');
@@ -106,15 +145,25 @@ window.thStart = async () => {
   download.hidden = true;
   download.removeAttribute('href');
   if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-  status.textContent = 'Loading the original bylaws…';
+  status.textContent = campground ? 'Loading the campground rules…' : 'Loading the original bylaws…';
   try {
-    const response = await thDriveFetch(fileId);
+    const sources = campground ? await campgroundFiles() : { pdf: backwoodsFileId };
+    const response = await thDriveFetch(sources.pdf);
     if (!response.ok) throw new Error('Could not load the original PDF. Check that this Google account has access.');
     const blob = await response.blob();
     pdfUrl = URL.createObjectURL(blob);
     download.href = pdfUrl;
     download.hidden = false;
 
+    if (campground) {
+      if (!sources.index) throw new Error('Searchable rules are missing. The original PDF is available above.');
+      const index = await thDriveFetch(sources.index);
+      if (!index.ok) throw new Error('Could not load searchable rules. The original PDF is available above.');
+      renderReader(await index.json());
+      layout.hidden = false;
+      status.textContent = '';
+      return;
+    }
     const pdfjs = await import('./vendor/pdfjs/pdf.min.mjs');
     pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdfjs/pdf.worker.compat.mjs', location.href).href;
     const task = pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) });
@@ -133,7 +182,7 @@ window.thStart = async () => {
       await task.destroy();
     }
   } catch (error) {
-    status.textContent = error.message || 'Could not open the bylaws.';
+    status.textContent = error.message || (campground ? 'Could not open the campground rules.' : 'Could not open the bylaws.');
   }
 };
 })();

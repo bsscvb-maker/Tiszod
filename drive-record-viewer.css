@@ -25,3 +25,6 @@
 .legal-view h2{overflow-wrap:anywhere;margin:10px 0}
 .legal-preview-image{display:block;max-width:100%;height:auto;margin:10px auto;background:#fff}
 .legal-view [hidden]{display:none!important}
+
+.legal-file a.legal-thumbnail{box-sizing:border-box;border:1px solid #52627b;border-radius:8px;text-decoration:none}
+.legal-thumbnail img[data-map]{object-fit:contain;object-position:center;background:#f9fafb}
