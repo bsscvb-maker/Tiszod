@@ -1,4 +1,6 @@
 .bylaws-page{max-width:1180px;margin:auto}
+.bylaws-links{display:flex;flex-wrap:wrap;gap:8px 18px}
+.bylaws-links a{display:inline-flex;align-items:center;min-height:44px}
 .bylaws-page [hidden]{display:none!important}
 .bylaws-hero{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:18px 0;padding:clamp(16px,4vw,28px);border:1px solid #4c6858;border-radius:16px;background:linear-gradient(110deg,#233a32,#172336)}
 .bylaws-hero img{border-radius:12px}

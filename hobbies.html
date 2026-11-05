@@ -29,6 +29,7 @@ window.thStart=async()=>{
  try{
   const rows=await thValues("'Hobbies & Recreation Links'!A2:B30",'UNFORMATTED_VALUE');
   const cards=[];
+  let backwoodsFolder;
   for(const [name,link] of rows){
    if(!name||!link)continue;
    let url;
@@ -38,12 +39,18 @@ window.thStart=async()=>{
    if (!id) continue;
    const rawKey = url.searchParams.get('resourcekey');
    const resourceKey = /^[\w-]+$/.test(rawKey || '') ? rawKey : null;
-   const card = document.createElement('button');
-   card.type = 'button';
+   const isBackwoods = id === '1t_Vz7x1KGJyEm3-fcRNPZpe3RtJ511KK' ||
+     String(name).toLowerCase().replace(/\s+/g, '') === 'backwoodshuntclub';
+   const card = document.createElement(isBackwoods ? 'a' : 'button');
    card.className = 'hobby-card';
-   const readerUrl = id === '1t_Vz7x1KGJyEm3-fcRNPZpe3RtJ511KK' || String(name).toLowerCase().replace(/\s+/g, '') === 'backwoodshuntclub'
-     ? 'backwoods-bylaws.html' : null;
-   card.onclick = () => thDriveRecords.open({ name, id, folder: true, url: url.href, resourceKey, readerUrl });
+   const folder = { name, id, folder: true, url: url.href, resourceKey };
+   if (isBackwoods) {
+    card.href = 'backwoods-bylaws.html';
+    backwoodsFolder = { ...folder, readerUrl: card.href };
+   } else {
+    card.type = 'button';
+    card.onclick = () => thDriveRecords.open(folder);
+   }
    const art=document.createElement('span');art.className='hobby-art';art.setAttribute('aria-hidden','true');
    const logo = hobbyLogos.get(String(name).trim().toLowerCase());
    if (logo) {
@@ -59,6 +66,12 @@ window.thStart=async()=>{
    const label=document.createElement('strong');label.textContent=name;card.append(art,label);cards.push(card);
   }
   grid.replaceChildren(...cards);status.textContent=cards.length?'':'No folders are configured.';
+  const page = new URL(location.href);
+  if (backwoodsFolder && page.searchParams.get('folder') === 'backwoods') {
+   page.searchParams.delete('folder');
+   history.replaceState(history.state, '', page);
+   thDriveRecords.open(backwoodsFolder);
+  }
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
 </script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261105-hobbies-nav"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
