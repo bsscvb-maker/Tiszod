@@ -56,3 +56,5 @@
 #medical-about-years summary{cursor:pointer;color:#a6dcd5}
 
 .medical-about-shortcuts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+#medical-about-search button{align-self:end}
