@@ -68,3 +68,5 @@
 .weight-plot text{fill:#b6cad9;font:11px system-ui,sans-serif}
 .weight-grid{stroke:#365262;stroke-dasharray:3 4}.weight-line{fill:none;stroke:#55e2be;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .weight-dot{fill:#7ce6cb}.weight-latest{fill:#f4cd79;stroke:#fff0ba;stroke-width:2}.weight-note{font-size:.85rem}
+
+.medical-folder-tabs button:focus-visible{outline-offset:4px}
