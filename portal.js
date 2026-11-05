@@ -34,7 +34,7 @@
     link.className = 'th-nav-link' + (current ? ' active' : '');
     link.href = 'hobbies.html';
     if (current) link.setAttribute('aria-current', 'page');
-    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true"><img src="command-photos/recreation-icon.webp" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px"></span><span>Recreation</span>';
+    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true"></span><span>Recreation</span>';
     nav.append(link);
   }
   if (nav && !nav.querySelector('[href="black-mild.html"]')) {
@@ -69,6 +69,20 @@
   if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts &amp; Access</span>';nav.append(a);}
   // Keep navigation order and icon spacing consistent on every page.
   if (nav) {
+    const badges = [
+      ['education.html', '#234983', '<path d="m6 13 10-5 10 5-10 5-10-5Zm4 2v6q6 5 12 0v-6m4-2v8"/>'],
+      ['identification.html', '#17636b', '<rect x="6.5" y="9" width="19" height="14" rx="2.5"/><circle cx="12.5" cy="14" r="2"/><path d="M9.5 20q3-4 6 0m3-6h4m-4 4h4"/>'],
+      ['legal.html', '#654574', '<path d="M16 7v17m-5 0h10M8 11h16M9 11l-3 7h6l-3-7Zm14 0-3 7h6l-3-7ZM6 18a3 3 0 0 0 6 0m8 0a3 3 0 0 0 6 0"/>'],
+      ['pets.html', '#873f4c', '<g fill="#fff" stroke="none"><ellipse cx="9" cy="14" rx="2.1" ry="2.8" transform="rotate(-23 9 14)"/><ellipse cx="14" cy="10.7" rx="2" ry="2.8"/><ellipse cx="19" cy="10.7" rx="2" ry="2.8"/><ellipse cx="23.5" cy="14" rx="2.1" ry="2.8" transform="rotate(23 23.5 14)"/><path d="M16.3 15c-2.4 0-3.1 2.1-5.1 4-2.3 2.3-.5 5.5 2.1 4.7l3-1 3 1c2.6.8 4.4-2.4 2.1-4.7-2-1.9-2.7-4-5.1-4Z"/></g>'],
+      ['hobbies.html', '#2c6549', '<path d="m6 23 10-15 10 15H6Zm6 0 4-6 4 6m-4-6V8"/>']
+    ];
+    for (const [path, color, glyph] of badges) {
+      const icon = nav.querySelector(`[href="${path}"] .th-nav-icon`);
+      if (!icon) continue;
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.background = 'transparent';
+      icon.innerHTML = `<svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" focusable="false" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="${color}" stroke="#fff" stroke-width="1.5"/><g stroke="#fff" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`;
+    }
     const vehiclesLink=nav.querySelector('[href="vehicles.html"]');
     if(vehiclesLink){
       const icon=vehiclesLink.querySelector('.th-nav-icon');
