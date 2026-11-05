@@ -65,8 +65,8 @@
     const bmi=height>0&&pounds>0?(703*pounds/(height*height)).toFixed(1):'Needs height and weight with units';
     for(const [label,value] of [
       ['Height',profile.height],
-      ['Weight',weight&&Number(weight.weight.toFixed(1))+' '+(weight.unit||'(unit unlisted)')+' · '+weight.date+(weight.source?' · '+weight.source:'')],
-      ['Age',profile.age&&(profile.age+(profile.ageAsOf?' as of '+profile.ageAsOf:''))],
+      ['Weight',weight&&Number(weight.weight.toFixed(1))+' '+(weight.unit||'(unit unlisted)')],
+      ['Age',profile.age],
       ['BMI',bmi]
     ]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
@@ -102,7 +102,7 @@
         const visual=visuals.find(([match])=>match.test(name));
         if(visual){
           const picture=make('figure'),image=make('img');
-          image.src='assets/medical/'+visual[1]+'.webp';image.alt=visual[2];
+          image.src='assets/medical/'+visual[1]+'-detail.webp';image.alt=visual[2];
           picture.append(image);card.append(picture);
         }
         info.append(make('strong',name));
