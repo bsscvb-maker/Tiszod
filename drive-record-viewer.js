@@ -36,6 +36,23 @@ const stridersCovers=new Map([
  ['POWER Closeout and Trailer Return','striders-trailer'],
  ['Course Maps and Meeting Point','striders-maps']
 ]);
+const stridersSubfolderCovers=new Map([
+ ['Banquet','striders-banquet'],
+ ['Summer Picnic','striders-picnic'],
+ ['Summer Series','striders-summer-series'],
+ ['Working Calendar','striders-calendar'],
+ ['Membership Dues','striders-membership'],
+ ['Race Schedule','striders-race-schedule'],
+ ['Application','striders-application'],
+ ['Head Shots','striders-headshots']
+]);
+function stridersSubfolderCover(name, parentCover){
+ const matched=stridersSubfolderCovers.get(name);
+ if(matched)return matched;
+ if(/^20\d{2}$/.test(name)&&parentCover==='striders-board')return 'striders-archive';
+ if(parentCover==='striders-archive'&&/^\d{2}[ .-]20\d{2}$/.test(name))return 'striders-calendar';
+ return parentCover;
+}
 const legalMimePrefix='application/vnd.google-apps.';
 let legalPdfModule;
 async function legalDriveRequest(path,params,record,signal){
@@ -146,7 +163,7 @@ function legalFileCard(record,back){
    if(record.cover){
     const image=document.createElement('img');
     image.alt='';
-    image.src='assets/hobbies/'+record.cover+'.webp';
+    image.src='assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
     image.onerror=()=>art.replaceChildren(fallback);
     art.replaceChildren(image);
    }else art.replaceChildren(fallback);
@@ -279,8 +296,13 @@ async function showLegalRecord(record,back){
      }
     }
     if(record.indianCoveBilling&&file.name==='Original Invoices and Receipts')continue;
+    const stridersCollection=file.folder&&(record.stridersCollection||
+     (record.tidewaterStriders&&['Events','Board Records'].includes(file.name)));
+    const cover=record.indianCove?indianCoveCovers.get(file.name):
+     record.tidewaterStriders?stridersCovers.get(file.name):
+     stridersCollection?stridersSubfolderCover(file.name,record.cover):undefined;
     files.append(legalFileCard({...file,
-     cover:record.indianCove?indianCoveCovers.get(file.name):record.tidewaterStriders?stridersCovers.get(file.name):undefined,
+     cover,stridersCollection,
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'
