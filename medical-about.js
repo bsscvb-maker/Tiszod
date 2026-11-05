@@ -71,15 +71,45 @@
     ]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
-    overview.append(figure,grid);target.replaceChildren(overview,make('h3','Current medications'));
+    const measurements=make('div');measurements.className='medical-measurements';
+    measurements.append(make('h3','Vitals'),grid);
+    const composition=profile.bodyComposition;
+    if(composition?.date){
+      const readings=make('dl');
+      for(const [label,value,unit] of [
+        ['Scale weight',composition.weight,' lb'],['Scale BMI',composition.bmi,''],
+        ['Body fat',composition.bodyFat,'%'],['Muscle',composition.muscle,'%'],['Water',composition.water,'%']
+      ]){
+        if(!Number.isFinite(value))continue;
+        const item=make('div');item.append(make('dt',label),make('dd',value+unit));readings.append(item);
+      }
+      const date=make('time',composition.date);date.dateTime=composition.date;
+      const header=make('h3','Body composition');header.append(date);
+      measurements.append(header,readings);
+    }
+    overview.append(figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
       for(const entry of userList){
         const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
-        const card=make('section');card.append(make('strong',name));
-        if(dose)card.append(make('p',dose));
-        if(schedule)card.append(make('p',schedule));
+        const card=make('section'), info=make('div');
+        const visuals=[
+          [/citalopram/i,'citalopram','Illustration · tablet appearance varies by manufacturer'],
+          [/wellbutrin\s+xl/i,'wellbutrin-xl','Illustration · unmarked side of a round reference tablet'],
+          [/tirzepatide/i,'tirzepatide-vial','Illustration · example compounding vial']
+        ];
+        const visual=visuals.find(([match])=>match.test(name));
+        if(visual){
+          const picture=make('figure'),image=make('img');
+          image.src='assets/medical/'+visual[1]+'.webp';image.alt=visual[2];
+          picture.append(image);card.append(picture);
+        }
+        info.append(make('strong',name));
+        if(dose)info.append(make('p',dose));
+        if(schedule)info.append(make('p',schedule));
+        if(visual)info.append(make('small',visual[2]+' · Check your pharmacy label'));
+        card.append(info);
         grid.append(card);
       }
       target.append(grid);

@@ -109,3 +109,16 @@
 .legal-thumbnail img.medical-carrier-logo[src$="/optima.png"]{background:#103e63}
 
 .medical-photo-card .legal-thumbnail-label{overflow-wrap:anywhere}
+.medical-body-profile{align-items:start;padding:16px;background:#102432;border:1px solid #416473;border-radius:14px}
+.medical-measurements{display:grid;gap:8px;align-content:start}
+.medical-measurements h3{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0;color:#bdebe7}
+.medical-measurements h3 time{font-size:.78rem;font-weight:500;color:#b6cad9}
+#medical-about-profile .medical-measurements dl{margin:0 0 8px;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#medical-about-profile .medical-measurements dd{font-size:1.05rem;font-weight:650;overflow-wrap:anywhere}
+.medical-regimen{grid-template-columns:1fr}
+.medical-regimen section{display:grid;grid-template-columns:minmax(115px,170px) minmax(0,1fr);gap:16px;align-items:center;padding:0;overflow:hidden}
+.medical-regimen section>div{padding:12px 12px 12px 0}.medical-regimen figure{margin:0}
+.medical-regimen figure img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.medical-regimen strong{font-size:1.14rem;color:#bdebe7}.medical-regimen small{display:block;color:#b6cad9;margin-top:10px}
+.medical-regimen section>div:only-child{grid-column:1/-1;padding:14px}
+@media(max-width:420px){.medical-regimen section{grid-template-columns:minmax(90px,115px) minmax(0,1fr);gap:8px}.medical-body-profile{padding:10px}}
