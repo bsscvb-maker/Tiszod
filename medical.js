@@ -1,6 +1,15 @@
 (() => {
   const categories = ['Prescriptions', 'Providers & Visits', 'Labs & Screening', 'Dental', 'Insurance', 'Billing & Receipts', 'Immunizations', 'Body Composition'];
-  const tones = ['teal','blue','plum','teal','blue','gold','plum','teal'];
+  const collections = {
+    'Prescriptions': ['prescriptions','teal'],
+    'Providers & Visits': ['providers','blue'],
+    'Labs & Screening': ['labs','plum'],
+    'Dental': ['dental','teal'],
+    'Insurance': ['insurance','blue'],
+    'Billing & Receipts': ['billing','gold'],
+    'Immunizations': ['immunizations','plum'],
+    'Body Composition': ['weight','teal']
+  };
   const $ = id => document.getElementById(id);
   const node = (tag, text, className) => {
     const el = document.createElement(tag);
@@ -287,21 +296,21 @@
       $('medical-year').add(new Option('All years',''));
       for (const year of [...new Set(records.map(r=>eventDate(r).slice(0,4)).filter(Boolean))].sort().reverse()) $('medical-year').add(new Option(year,year));
       const cards = folders.sort((a,b) => ordered.indexOf(a.name)-ordered.indexOf(b.name)).map(folder => {
-        const theme = tones[ordered.indexOf(folder.name)%tones.length];
-        return thDriveRecords.card({...folder,medicalCover:theme});
+        const [medicalArt,medicalCover] = collections[folder.name] || ['providers','blue'];
+        return thDriveRecords.card({...folder,medicalCover,medicalArt});
       });
       const eyeFolder = await (async () => {
         const rx = folders.find(f => f.name === 'Prescriptions');
         return rx && (await children(rx.id).catch(()=>[])).find(f => f.folder && f.name === 'Vision');
       })();
-      if (eyeFolder) cards.splice(1,0,thDriveRecords.card({...eyeFolder,name:'Eyeglass Prescriptions',medicalCover:'blue'}));
-      for (const file of rootFiles) cards.push(thDriveRecords.card(file));
+      if (eyeFolder) cards.splice(1,0,thDriveRecords.card({...eyeFolder,name:'Eyeglass Prescriptions',medicalCover:'blue',medicalArt:'vision'}));
+      for (const file of rootFiles) cards.push(thDriveRecords.card({...file,medicalArt:'weight'}));
       $('medical-folders').replaceChildren(...cards);
       $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
-      renderKpis(); renderResults(); $('medical-dashboard').hidden = false;
+      renderKpis(); renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       void loadWeight();
     } catch(error) {
       if (error.status === 401) throw error;

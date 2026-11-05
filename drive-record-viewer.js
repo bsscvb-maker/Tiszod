@@ -124,6 +124,21 @@ const legalFolderThemes=[
  {pattern:/settlement|claims?|litigation|leasing|kroger|refund/i,tone:'blue',art:'<rect x="38" y="30" width="52" height="44" rx="4"/><path d="M47 41h21m-21 9h15m-15 9h10"/><circle cx="83" cy="70" r="15"/><path d="m76 70 5 5 9-10"/>'},
  {pattern:/bankruptcy|court|legal/i,tone:'gold',art:'<path d="M64 29v49m-14 0h28M42 40h44M43 40l-10 19h20L43 40Zm42 0L75 59h20L85 40ZM33 59a10 8 0 0 0 20 0m22 0a10 8 0 0 0 20 0"/>'}
 ];
+function medicalFolderArt(name, parentArt){
+ if (/vision|eyeglass|optometry|optical/i.test(name)) return 'vision';
+ if (/records by year|^\d{4}$/i.test(name)) return 'history';
+ if (/coverage history/i.test(name)) return 'coverage';
+ if (/past plans/i.test(name)) return 'plans';
+ if (/claims/i.test(name)) return 'claims';
+ if (/insurance|trustmark/i.test(name)) return 'insurance';
+ if (/notes|referrals/i.test(name)) return 'notes';
+ if (/immunization|vaccine/i.test(name)) return 'immunizations';
+ if (/billing|receipt|payment/i.test(name)) return 'billing';
+ if (/lab|screening/i.test(name)) return 'labs';
+ if (/dental|orthodont/i.test(name)) return 'dental';
+ if (/weight|composition|tracking/i.test(name)) return 'weight';
+ return parentArt;
+}
 function legalFolderCover(name,medicalTone){
  const medicalThemes={
   teal:'<path d="M58 32h12v15h15v12H70v18H58V59H43V47h15Z"/>',
@@ -153,7 +168,7 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- card.className='legal-file';caption.textContent=record.name;actions.className='legal-actions';
+ card.className='legal-file';if(record.medicalArt)card.classList.add('medical-photo-card');caption.textContent=record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.map?'Map':record.directReader?'Rules':record.folder?'Folder':'Document';card.append(type,caption);
  if(record.id||record.directReader){
   const button=document.createElement(record.directReader?'a':'button');
@@ -164,12 +179,12 @@ function legalFileCard(record,back){
   label.className='legal-thumbnail-label';label.textContent=record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview';
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
-  if(record.folder||record.directReader){
+  if(record.folder||record.directReader||record.medicalArt){
    const fallback=legalFolderCover(record.name,record.medicalCover);
-   if(record.cover){
+   if(record.cover||record.medicalArt){
     const image=document.createElement('img');
     image.alt='';
-    image.src='assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
+    image.src=record.medicalArt?'assets/medical/'+record.medicalArt+'.webp':'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
     image.onerror=()=>art.replaceChildren(fallback);
     art.replaceChildren(image);
    }else art.replaceChildren(fallback);
@@ -310,6 +325,7 @@ async function showLegalRecord(record,back){
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
+     medicalArt:file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined,
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'
