@@ -34,7 +34,7 @@
     link.className = 'th-nav-link' + (current ? ' active' : '');
     link.href = 'hobbies.html';
     if (current) link.setAttribute('aria-current', 'page');
-    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true"><img src="command-art/hobbies.svg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px"></span><span>Hobbies &amp; Recreation</span>';
+    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true"><img src="command-photos/recreation-icon.webp" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px"></span><span>Recreation</span>';
     nav.append(link);
   }
   if (nav && !nav.querySelector('[href="black-mild.html"]')) {
