@@ -89,3 +89,5 @@
 .medical-medication-table td:nth-child(2){width:29%}
 .legal-thumbnail img.medical-carrier-logo{object-fit:contain;object-position:center;padding:22px;box-sizing:border-box;background:#f7f9fb}
 @media(max-width:550px){.medical-body-profile{grid-template-columns:1fr}.medical-body-profile img{width:100px;justify-self:center}}
+
+.medical-folder-dashboard summary{cursor:pointer;color:#a4eee1}
