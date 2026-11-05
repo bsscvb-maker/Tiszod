@@ -43,3 +43,6 @@
 .medical-photo-card .legal-thumbnail-art img{object-position:center}
 .medical-photo-card>.legal-kind{color:#a6dcd5}
 .medical-photo-card>.legal-thumbnail{border-color:#416473}
+
+/* Leave room for the portal header when jumping to a section. */
+.medical :is(#medical-browse,#timeline-title){scroll-margin-top:5rem}
