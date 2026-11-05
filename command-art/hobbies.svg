@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#214d59"/>
+      <stop offset="1" stop-color="#e3a874"/>
+    </linearGradient>
+    <linearGradient id="lake" x2="0" y2="1">
+      <stop stop-color="#347b7e"/>
+      <stop offset="1" stop-color="#173c53"/>
+    </linearGradient>
+    <path id="pine" d="M0 0 24 42H15l18 25H21l19 27H5v13H-5V94h-35l19-27h-12l18-25h-9Z"/>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h720v420H0z"/>
+  <circle cx="466" cy="128" r="57" fill="#ffce87"/>
+  <path fill="#58736e" d="M0 208 128 101l79 65 101-79 140 126 98-61 174 60v208H0Z"/>
+  <path fill="#345e59" d="m0 216 111-59 71 50 69-38 91 59 154-45 57 26 82-45 85 51v205H0Z"/>
+  <path fill="url(#lake)" d="M0 230q241-19 382 4t338-15v201H0Z"/>
+  <path fill="#f3bd7d" opacity=".65" d="m415 246 102 2-24 4-105-1zm22 14 68 1-18 3-77-1zm-57 12 108 1-29 4-111-2z"/>
+  <path fill="#20392f" d="M0 260q119 7 187 53t229 107H0zm720 21q-96 29-164 139h164Z"/>
+  <g fill="#193c34">
+    <use href="#pine" transform="translate(44 119) scale(1.75)"/>
+    <use href="#pine" transform="translate(107 164) scale(1.25)"/>
+    <use href="#pine" transform="translate(160 202) scale(.9)"/>
+    <use href="#pine" transform="translate(684 119) scale(1.85)"/>
+    <use href="#pine" transform="translate(624 167) scale(1.22)"/>
+  </g>
+  <path fill="#102820" d="M0 342q119-38 223 17l91 61H0z"/>
+  <path fill="#d77a44" d="m137 347 73-88 58 88z"/>
+  <path fill="#f6b865" d="m210 259 79 12 65 76h-86z"/>
+  <path fill="#663c32" d="m177 347 33-63 37 63z"/>
+  <path fill="#ffdb96" d="m210 284 3 63h-17z"/>
+  <path fill="none" stroke="#ffd28a" stroke-width="3" stroke-linecap="round" d="m210 259-78 88m157-76 69 76"/>
+</svg>
