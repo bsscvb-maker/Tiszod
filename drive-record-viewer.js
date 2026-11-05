@@ -169,6 +169,12 @@ async function showLegalRecord(record,back){
  document.getElementById('legal-view-title').textContent=record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();legalDownloadAction(actions,record);
+ if(record.readerUrl){
+  const reader=document.createElement('a');
+  reader.href=record.readerUrl;
+  reader.textContent='Read digital bylaws';
+  actions.prepend(reader);
+ }
  const status=document.createElement('p');status.setAttribute('role','status');
  legalViewerBody.replaceChildren(status);
  if(!legalViewer.open)legalViewer.showModal();

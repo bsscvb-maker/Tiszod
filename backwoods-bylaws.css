@@ -1,0 +1,20 @@
+.bylaws-page{max-width:1180px;margin:auto}
+.bylaws-page [hidden]{display:none!important}
+.bylaws-hero{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:18px 0;padding:clamp(16px,4vw,28px);border:1px solid #4c6858;border-radius:16px;background:linear-gradient(110deg,#233a32,#172336)}
+.bylaws-hero img{border-radius:12px}
+.bylaws-hero h1{margin:4px 0 0;font-size:clamp(1.55rem,4vw,2.4rem)}
+.bylaws-hero p{margin:0;font-size:.78rem;font-weight:750;letter-spacing:.12em;color:#e9c888}
+.bylaws-download,.bylaws-toc nav a{display:flex;align-items:center;min-height:44px;padding:8px 12px;border:1px solid #527164;border-radius:8px;color:#f3dcad;background:#182b26;text-decoration:none;font-weight:650}
+.bylaws-download{margin-left:auto}
+.bylaws-layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);align-items:start;gap:18px}
+.bylaws-toc,.bylaws-article{min-width:0;padding:clamp(14px,3vw,22px);border:1px solid #34485f;border-radius:14px;background:#162232}
+.bylaws-toc{position:sticky;top:18px}
+.bylaws-toc label{display:block;margin-bottom:8px;font-weight:750}
+.bylaws-toc input{width:100%;box-sizing:border-box;min-height:44px;padding:8px 10px;border:1px solid #647a93;border-radius:8px;background:#0d1928;color:#f5f7fb;font:inherit}
+.bylaws-toc p{font-size:.9rem;color:#c1cede}
+.bylaws-toc nav{display:grid;gap:7px}
+.bylaws-article{margin-bottom:12px;scroll-margin-top:80px;overflow-wrap:anywhere}
+.bylaws-article h2{margin-top:0;color:#f3dcad}
+.bylaws-article p{line-height:1.6;margin:10px 0}
+.bylaws-evidence{padding:10px 14px;border-left:3px solid #bd9b65;background:#223346}
+@media(max-width:730px){.bylaws-layout{grid-template-columns:1fr}.bylaws-toc{position:static}.bylaws-download{margin-left:0}}

@@ -14,7 +14,7 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=1"></script>
+<script src="drive-record-viewer.js?v=2"></script>
 <script>
 const hobbyLogos = new Map([
  ['backwoods hunt club', { file: 'backwoods.svg', fallback: '🌲' }],
@@ -41,7 +41,9 @@ window.thStart=async()=>{
    const card = document.createElement('button');
    card.type = 'button';
    card.className = 'hobby-card';
-   card.onclick = () => thDriveRecords.open({ name, id, folder: true, url: url.href, resourceKey });
+   const readerUrl = id === '1t_Vz7x1KGJyEm3-fcRNPZpe3RtJ511KK' || String(name).toLowerCase().replace(/\s+/g, '') === 'backwoodshuntclub'
+     ? 'backwoods-bylaws.html' : null;
+   card.onclick = () => thDriveRecords.open({ name, id, folder: true, url: url.href, resourceKey, readerUrl });
    const art=document.createElement('span');art.className='hobby-art';art.setAttribute('aria-hidden','true');
    const logo = hobbyLogos.get(String(name).trim().toLowerCase());
    if (logo) {
