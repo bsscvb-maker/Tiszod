@@ -77,3 +77,5 @@
 .medical-folder-dashboard :is(input,button){min-height:34px}
 .medical-folder-dashboard input{max-width:100%;padding:6px;color:#e4f4f8;background:#122432;border:1px solid #668696;border-radius:6px}
 #legal-view-body>details>summary{cursor:pointer;color:#a4eee1;padding:8px 0}
+
+.medical-folder-dashboard details{margin-top:12px}
