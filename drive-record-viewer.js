@@ -124,8 +124,14 @@ const legalFolderThemes=[
  {pattern:/settlement|claims?|litigation|leasing|kroger|refund/i,tone:'blue',art:'<rect x="38" y="30" width="52" height="44" rx="4"/><path d="M47 41h21m-21 9h15m-15 9h10"/><circle cx="83" cy="70" r="15"/><path d="m76 70 5 5 9-10"/>'},
  {pattern:/bankruptcy|court|legal/i,tone:'gold',art:'<path d="M64 29v49m-14 0h28M42 40h44M43 40l-10 19h20L43 40Zm42 0L75 59h20L85 40ZM33 59a10 8 0 0 0 20 0m22 0a10 8 0 0 0 20 0"/>'}
 ];
-function legalFolderCover(name){
- const theme=legalFolderThemes.find(({pattern})=>pattern.test(name))||
+function legalFolderCover(name,medicalTone){
+ const medicalThemes={
+  teal:'<path d="M58 32h12v15h15v12H70v18H58V59H43V47h15Z"/>',
+  blue:'<rect x="43" y="33" width="42" height="48" rx="5"/><path d="M52 57h24m-24 9h24m-24-22h10"/>',
+  plum:'<path d="M56 32h16m-12 0v20l-13 24a5 5 0 0 0 4 7h26a5 5 0 0 0 4-7L68 52V32M54 68h20"/>',
+  gold:'<rect x="41" y="39" width="46" height="39" rx="4"/><path d="M48 50h31m-31 10h12m-12 9h19"/>'
+ };
+ const theme=medicalThemes[medicalTone]?{tone:medicalTone,art:medicalThemes[medicalTone]}:legalFolderThemes.find(({pattern})=>pattern.test(name))||
   {tone:'gold',art:'<path d="M36 43h22l6 6h28v25H36z"/><path d="M44 43V33h34v16m-25-8h16"/>'};
  const cover=document.createElement('span');
  cover.className='legal-folder-cover';cover.dataset.tone=theme.tone;
@@ -159,7 +165,7 @@ function legalFileCard(record,back){
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader){
-   const fallback=legalFolderCover(record.name);
+   const fallback=legalFolderCover(record.name,record.medicalCover);
    if(record.cover){
     const image=document.createElement('img');
     image.alt='';
@@ -301,8 +307,9 @@ async function showLegalRecord(record,back){
     const cover=record.indianCove?indianCoveCovers.get(file.name):
      record.tidewaterStriders?stridersCovers.get(file.name):
      stridersCollection?stridersSubfolderCover(file.name,record.cover):undefined;
+    if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
-     cover,stridersCollection,
+     cover,stridersCollection,medicalCover:record.medicalCover,
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'

@@ -1,0 +1,16 @@
+.medical{max-width:1320px;margin:auto;padding:clamp(14px,3vw,34px);color:#e4f4f8}
+.medical-hero,.medical-panel,.medical-kpis button{background:#121f2d;border:1px solid #315264;border-radius:16px}
+.medical-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:clamp(16px,4vw,44px);background:radial-gradient(ellipse at 84% 45%,#225866,#122231 60%)}
+.medical-hero h1{font-size:clamp(2.5rem,7vw,4.7rem);margin:0}.medical-hero p{margin:.35rem 0;color:#bddde5}.medical-hero img{width:clamp(68px,18vw,170px)}
+.medical h2{font-size:1.35rem;margin:1rem 0}.medical-panel{margin:20px 0;padding:clamp(12px,2vw,23px)}.medical-panel h2{margin-top:0}
+.medical-heading,.medical-filters{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;justify-content:space-between}
+.medical-filters label{flex:1 1 155px}.medical label{display:grid;gap:4px;color:#bddde5;font-size:.86rem}
+.medical select,.medical input,.medical button{font:inherit;color:#e5f5fa;background:#152b3a;border:1px solid #416777;border-radius:8px;padding:8px 11px}.medical button{cursor:pointer}.medical button:hover{border-color:#95e0d5}
+.medical-kpis,.medical-folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));gap:12px}
+.medical-kpis button{text-align:left;min-height:90px;padding:13px}.medical-kpis strong,.medical-kpis small{display:block}.medical-kpis strong{font-size:1.15rem;margin-bottom:6px}.medical-kpis small{color:#a9d4de}
+.medical-folders .legal-file{min-width:0}.medical-folders .legal-thumbnail{width:100%}
+.medical-record{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #304657}.medical-record small{display:block;color:#a7c9d6;margin-top:4px}.medical-record button{text-align:left;overflow-wrap:anywhere}.medical-record .medical-open{background:transparent;border-color:transparent;padding-left:0}
+.medical-review-form{display:flex;align-items:end;gap:8px;flex-wrap:wrap;grid-column:1/-1}.medical-review-form label{flex:1 1 150px}
+.medical-bars{display:grid;gap:4px;margin:12px 0}.medical-bars button{display:grid;grid-template-columns:minmax(95px,1fr) minmax(45px,2fr) auto;align-items:center;text-align:left;gap:10px}.medical-bars progress{width:100%;accent-color:#67d2c5}
+.medical-chart{display:block;width:100%;max-height:245px}.medical-chart polyline{stroke:#83e8d8;fill:none;stroke-width:2;vector-effect:non-scaling-stroke}
+@media(max-width:480px){.medical-record{grid-template-columns:1fr}.medical-record>button{justify-self:start}}
