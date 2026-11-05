@@ -58,3 +58,13 @@
 .medical-about-shortcuts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 
 #medical-about-search button{align-self:end}
+.medical-folder-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 16px}
+.medical-folder-tabs button[aria-selected=true]{background:#a4eee1;color:#102b34;border-color:#a4eee1;font-weight:750}
+.medical-folder-tabs button{min-height:40px}
+.weight-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px;margin:12px 0}
+.weight-scorecard>div{display:grid;gap:5px;padding:12px;background:#152f3b;border:1px solid #315463;border-radius:10px}
+.weight-scorecard span{font-weight:700;color:#bdebe7}.weight-scorecard strong{font-size:clamp(1.25rem,3vw,2rem);color:#9cf0d9}.weight-scorecard small,.weight-note{color:#b6cad9}
+.weight-plot{display:block;width:100%;max-height:345px;overflow:visible}
+.weight-plot text{fill:#b6cad9;font:11px system-ui,sans-serif}
+.weight-grid{stroke:#365262;stroke-dasharray:3 4}.weight-line{fill:none;stroke:#55e2be;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.weight-dot{fill:#7ce6cb}.weight-latest{fill:#f4cd79;stroke:#fff0ba;stroke-width:2}.weight-note{font-size:.85rem}

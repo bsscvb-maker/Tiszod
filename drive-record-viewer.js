@@ -17,7 +17,7 @@ function legalLink(label,url){
 }
 function legalDownloadAction(target,record){
  if(record.folder||!record.id||record.canDownload===false)return;
- const nativeType=new URL(record.url).pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
+ const nativeType=!record.downloadOriginal&&new URL(record.url).pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
  const base='https://docs.google.com/'+nativeType+'/d/'+record.id;
  const download=nativeType==='presentation'?base+'/export/pdf':nativeType?base+'/export?format=pdf':'https://drive.google.com/uc?export=download&id='+record.id;
  const url=new URL(download);
@@ -227,6 +227,11 @@ async function showLegalRecord(record,back){
  document.getElementById('legal-view-title').textContent=record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();legalDownloadAction(actions,record);
+ if(record.downloadReport){
+  const download=document.createElement('button');
+  download.type='button';download.textContent='Download PDF';
+  download.onclick=record.downloadReport;actions.append(download);
+ }
  if(record.readerUrl){
   const reader=document.createElement('a');
   reader.href=record.readerUrl;
@@ -301,7 +306,7 @@ async function showLegalRecord(record,back){
  async function loadPage(pageToken){
   more.disabled=true;
   try{
-   const result=await legalFolderPage(record,pageToken,request.signal);
+   const result=record.virtualFiles?{files:record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
    const returnToFolder=()=>showLegalRecord(record,back);
    for(const file of result.files){

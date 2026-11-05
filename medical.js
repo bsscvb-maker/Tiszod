@@ -1,5 +1,7 @@
 (() => {
   const categories = ['Prescriptions', 'Providers & Visits', 'Labs & Screening', 'Dental', 'Insurance', 'Billing & Receipts', 'Immunizations', 'Body Composition'];
+  const folderLabels = {'Billing & Receipts':'Billing','Labs & Screening':'Test Result','Providers & Visits':'Providers'};
+  const canonical = name => Object.keys(folderLabels).find(key => folderLabels[key] === name) || name;
   const collections = {
     'Prescriptions': ['prescriptions','teal'],
     'Providers & Visits': ['providers','blue'],
@@ -26,7 +28,7 @@
   const folderMime = 'application/vnd.google-apps.folder';
   const escapeQuery = s => s.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
   let records = [], weights = [], review = {}, key = '', limit = 30, visitFilter = '';
-  let workbook;
+  let workbook, workbookWeights = [], manualWeights = [];
 
   async function list(query) {
     const files = [];
@@ -83,7 +85,7 @@
     const found = [];
     for (const file of files) {
       if (file.folder) branches.push(walk(file, [...path,file.name], visited));
-      else found.push({ ...file, path, category: path[0], date: dateFromName(file.name), kind: kindOf(file,path) });
+      else found.push({ ...file, path, category: canonical(path[0]), date: dateFromName(file.name), kind: kindOf(file,path) });
     }
     return found.concat(...await Promise.all(branches));
   }
@@ -238,27 +240,37 @@
   }
   function resetResults() {limit = 30;renderResults();}
   function renderWeight() {
-    const target = $('weight-history');
-    const days = Number($('weight-range').value);
-    const last = weights.at(-1);
-    target.replaceChildren();
-    if (last) {
-      const firstDate = days ? last.time - days*86400000 : -Infinity;
-      const points = weights.filter(r => r.time >= firstDate);
-      const min = Math.min(...points.map(r=>r.weight)), max = Math.max(...points.map(r=>r.weight));
-      const first = points[0], change = last.weight-first.weight;
-      target.append(node('p',last.weight.toFixed(1)+(last.unit?' '+last.unit:' (unit not listed)')+' latest · '+last.date+' · '+(change>0?'+':'')+change.toFixed(1)+' '+last.unit+' in range · '+points.length+' readings'));
-      const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns,'svg');
-      svg.setAttribute('viewBox','0 0 600 180');svg.setAttribute('class','medical-chart');svg.setAttribute('role','img');
-      svg.setAttribute('aria-label','Weight trend. Low '+min.toFixed(1)+' and high '+max.toFixed(1)+' '+last.unit+'.');
-      const line = document.createElementNS(ns,'polyline');
-      line.setAttribute('points',points.map(r => [12+(r.time-first.time)/Math.max(1,last.time-first.time)*576,160-(r.weight-min)/Math.max(1,max-min)*142].join(',')).join(' '));
-      svg.append(line);target.append(svg,node('small',first.date+' through '+last.date+' · Range '+min.toFixed(1)+'–'+max.toFixed(1)+' '+last.unit));
-    } else target.append(node('p','No dated weight series could be read from the workbook.'));
-    if (workbook) {
-      const link = node('a','Open body composition workbook in Drive');
-      link.href = workbook.url;link.target = '_blank';link.rel = 'noopener';const item = node('p'); item.append(link); target.append(item);
+    thMedicalWeightChart.render($('weight-history'),weights,Number($('weight-range').value));
+  }
+  function updateWeights() {
+    weights = thMedicalWeightChart.merge(workbookWeights,manualWeights);
+    renderWeight();
+    thMedicalAbout.refresh();
+  }
+  function renderCollections(entries) {
+    const tabs = $('medical-folder-tabs'), panel = $('medical-folders');
+    const choices = [['All files',entries],...entries.filter(entry=>entry.folder).map(entry=>[entry.name,[entry]])];
+    const controls = choices.map(([label,items],index) => {
+      const tab=button(label,()=>select(index));
+      tab.id='medical-folder-tab-'+index;
+      tab.setAttribute('role','tab');
+      tab.setAttribute('aria-controls',panel.id);
+      tab.onkeydown=event=>{
+        const offsets={ArrowLeft:-1,ArrowRight:1,Home:-index,End:choices.length-index-1};
+        if(!Object.hasOwn(offsets,event.key))return;
+        event.preventDefault();
+        const next=(index+offsets[event.key]+choices.length)%choices.length;
+        select(next);controls[next].focus();
+      };
+      return tab;
+    });
+    function select(index) {
+      controls.forEach((control,i)=>{control.setAttribute('aria-selected',String(i===index));control.tabIndex=i===index?0:-1;});
+      panel.setAttribute('aria-labelledby',controls[index].id);
+      panel.replaceChildren(...choices[index][1].map(entry=>thDriveRecords.card(entry)));
     }
+    tabs.replaceChildren(...controls);
+    select(0);
   }
   async function loadWeight() {
     try {
@@ -266,13 +278,13 @@
         const response = await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(workbook.id)+'?alt=media&supportsAllDrives=true',{
           headers:{Authorization:'Bearer '+thToken},cache:'no-store'
         });
-        if (response.ok) weights = await readMedicalWeights(await response.arrayBuffer());
+        if (response.ok) workbookWeights = await readMedicalWeights(await response.arrayBuffer());
       }
     } catch (error) {console.warn('Could not read the weight series.',error.name);}
-    renderWeight();
-    thMedicalAbout.refresh();
+    updateWeights();
   }
   window.thStart = async () => {
+    workbookWeights = []; manualWeights = []; weights = [];
     $('medical-content').hidden = false;
     $('medical-dashboard').hidden = true;
     $('medical-status').textContent = 'Connecting to your Medical records…';
@@ -289,31 +301,37 @@
       const indexed = await Promise.allSettled(folders.map(folder => walk(folder,[folder.name],new Set())));
       records = indexed.flatMap(r => r.status === 'fulfilled' ? r.value : []);
       records.push(...rootFiles.map(file => ({...file,path:['Body Composition'],category:'Body Composition',kind:'Document',date:dateFromName(file.name)})));
-      workbook = rootFiles.find(f => /body composition.*\.xlsx$/i.test(f.name));
-      const ordered = [...new Set([...categories,...folders.map(f=>f.name)])];
+      workbook = rootFiles.find(f => /^body composition(?: metrics)?\.xlsx$/i.test(f.name));
+      const ordered = [...new Set([...categories,...folders.map(f=>canonical(f.name))])];
       $('medical-category').replaceChildren();
       $('medical-year').replaceChildren();
-      for (const [value,name] of [['','All categories'],...ordered.map(name=>[name,name]),['Tests','All test records'],['Eyeglass prescriptions','Eyeglass prescriptions']]) $('medical-category').add(new Option(name,value));
+      for (const [value,name] of [['','All categories'],...ordered.map(name=>[name,folderLabels[name] || name]),['Tests','All test records'],['Eyeglass prescriptions','Eyeglass prescriptions']]) $('medical-category').add(new Option(name,value));
       $('medical-year').add(new Option('All years',''));
       for (const year of [...new Set(records.map(r=>eventDate(r).slice(0,4)).filter(Boolean))].sort().reverse()) $('medical-year').add(new Option(year,year));
-      const cards = folders.sort((a,b) => ordered.indexOf(a.name)-ordered.indexOf(b.name)).map(folder => {
-        const [medicalArt,medicalCover] = collections[folder.name] || ['providers','blue'];
-        return thDriveRecords.card({...folder,medicalCover,medicalArt});
+      const order = ['Billing','Dental','Immunizations','Insurance','Test Result','Prescriptions','Providers'];
+      const rank = name => order.includes(name) ? order.indexOf(name) : order.length;
+      const cards = folders.map(folder => {
+        const category=canonical(folder.name);
+        const [medicalArt,medicalCover] = collections[category] || ['providers','blue'];
+        return {...folder,name:folderLabels[category] || folder.name,medicalCover,medicalArt};
+      }).sort((a,b)=>rank(a.name)-rank(b.name));
+      const rx = folders.find(folder=>folder.name==='Prescriptions');
+      const eyeFolder = rx && (await children(rx.id).catch(()=>[])).find(f=>f.folder && f.name==='Vision');
+      if (eyeFolder) cards.push({...eyeFolder,name:'Eyeglass Prescriptions',medicalCover:'blue',medicalArt:'vision'});
+      if (workbook) cards.push({
+        ...workbook,name:'Body Composition',folder:true,medicalCover:'teal',medicalArt:'weight',
+        virtualFiles:[{...workbook,name:'Body Composition.xlsx',downloadOriginal:true}],
+        downloadReport:()=>thMedicalWeightChart.download(weights)
       });
-      const eyeFolder = await (async () => {
-        const rx = folders.find(f => f.name === 'Prescriptions');
-        return rx && (await children(rx.id).catch(()=>[])).find(f => f.folder && f.name === 'Vision');
-      })();
-      if (eyeFolder) cards.splice(1,0,thDriveRecords.card({...eyeFolder,name:'Eyeglass Prescriptions',medicalCover:'blue',medicalArt:'vision'}));
-      for (const file of rootFiles) cards.push(thDriveRecords.card({...file,medicalArt:'weight'}));
-      $('medical-folders').replaceChildren(...cards);
+      for (const file of rootFiles.filter(file=>file!==workbook)) cards.push(file);
+      renderCollections(cards);
       $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
       renderKpis(); renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       thMedicalAbout.start({
-        key, list, records: () => records, weights: () => weights, workbook: () => workbook,
+        key, list, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
         eventName, eventDate, confirmedEvents,
         current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
         open: record => thDriveRecords.open(record)

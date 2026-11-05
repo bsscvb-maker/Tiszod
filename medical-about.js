@@ -181,6 +181,7 @@
       } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
+    api.onWeighIns?.(savedProfile.weighIns);
     try {profile = {...savedProfile,...JSON.parse(localStorage.getItem(api.key+':about') || '{}')};}
     catch {profile = savedProfile;}
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
