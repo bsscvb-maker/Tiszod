@@ -107,3 +107,5 @@
 @media(max-width:550px){.medical-body-profile{grid-template-columns:1fr}.medical-body-profile figure img{width:min(100%,210px)}}
 
 .legal-thumbnail img.medical-carrier-logo[src$="/optima.png"]{background:#103e63}
+
+.medical-photo-card .legal-thumbnail-label{overflow-wrap:anywhere}
