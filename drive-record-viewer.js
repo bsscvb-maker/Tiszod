@@ -1,0 +1,233 @@
+/* Shared Drive folder browser, thumbnail cards, and in-portal preview. */
+(() => {
+const legalViewer=document.getElementById('legal-view');
+const legalViewerBody=document.getElementById('legal-view-body');
+const legalViewerBack=document.getElementById('legal-view-back');
+let legalViewRequest;
+document.getElementById('legal-view-close').onclick=()=>legalViewer.close();
+legalViewer.addEventListener('close',()=>{
+ legalViewRequest?.abort();
+ legalViewerBody.replaceChildren();
+ legalViewerBack.onclick=null;
+});
+function legalLink(label,url){
+ const link=document.createElement('a');
+ link.textContent=label;link.href=url;link.target='_blank';link.rel='noopener noreferrer';
+ return link;
+}
+function legalDownloadAction(target,record){
+ if(record.folder||!record.id||record.canDownload===false)return;
+ const nativeType=new URL(record.url).pathname.match(/^\/(document|spreadsheets|presentation)\//)?.[1];
+ const base='https://docs.google.com/'+nativeType+'/d/'+record.id;
+ const download=nativeType==='presentation'?base+'/export/pdf':nativeType?base+'/export?format=pdf':'https://drive.google.com/uc?export=download&id='+record.id;
+ const url=new URL(download);
+ if(record.resourceKey&&!nativeType)url.searchParams.set('resourcekey',record.resourceKey);
+ target.append(legalLink(nativeType?'Download PDF':'Download',url.href));
+}
+const legalMimePrefix='application/vnd.google-apps.';
+let legalPdfModule;
+async function legalDriveRequest(path,params,record,signal){
+ if(!thAuthorized())throw Error('Sign in again to view this file.');
+ const headers={Authorization:'Bearer '+thToken};
+ if(record.resourceKey)headers['X-Goog-Drive-Resource-Keys']=record.id+'/'+record.resourceKey;
+ const response=await fetch('https://www.googleapis.com/drive/v3/files'+path+'?'+new URLSearchParams(params),{headers,signal});
+ if(!response.ok)throw Error('Drive could not load this record.');
+ return response;
+}
+async function legalFolderPage(record,pageToken,signal){
+ const params={q:"'"+record.id+"' in parents and trashed = false",fields:'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',pageSize:'50',orderBy:'folder,name_natural',supportsAllDrives:'true',includeItemsFromAllDrives:'true'};
+ if(pageToken)params.pageToken=pageToken;
+ const result=await (await legalDriveRequest('',params,record,signal)).json();
+ return {nextPageToken:result.nextPageToken,files:(result.files||[]).map(file=>{
+  const folder=file.mimeType===legalMimePrefix+'folder';
+  const fallback=folder?'https://drive.google.com/drive/folders/':'https://drive.google.com/file/d/';
+  return {id:file.id,name:file.name,folder,url:file.webViewLink||fallback+file.id,mime:file.mimeType,thumbnail:file.thumbnailLink,resourceKey:file.resourceKey,canDownload:file.capabilities?.canDownload};
+ })};
+}
+async function legalMedia(record,signal){
+ const path='/'+encodeURIComponent(record.id);
+ const mime=record.mime||(await (await legalDriveRequest(path,{fields:'mimeType',supportsAllDrives:'true'},record,signal)).json()).mimeType;
+ if(['document','spreadsheet','presentation'].some(type=>mime===legalMimePrefix+type)){
+  return (await legalDriveRequest(path+'/export',{mimeType:'application/pdf'},record,signal)).blob();
+ }
+ if(!/^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(mime)&&mime!=='application/pdf')throw Error('This file type does not have an in-portal preview.');
+ return (await legalDriveRequest(path,{alt:'media',supportsAllDrives:'true'},record,signal)).blob();
+}
+async function legalPdf(blob){
+ legalPdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
+ const pdfjs=await legalPdfModule;
+ pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',location.href).href;
+ return pdfjs.getDocument({data:new Uint8Array(await blob.arrayBuffer())});
+}
+async function legalPdfPage(pdf,number,width){
+ const page=await pdf.getPage(number);
+ const viewport=page.getViewport({scale:width/page.getViewport({scale:1}).width});
+ const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+ await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+ return canvas;
+}
+async function legalDocumentCover(record){
+ const blob=await legalMedia(record);
+ if(blob.type!=='application/pdf')return {blob,photo:true};
+ const task=await legalPdf(blob);
+ try{
+  const pdf=await task.promise;
+  for(let number=1;number<=Math.min(pdf.numPages,8);number++){
+   const canvas=await legalPdfPage(pdf,number,640);
+   const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+   let ink=0;
+   for(let offset=0;offset<pixels.length;offset+=16){
+    if(pixels[offset+3]>128&&Math.min(pixels[offset],pixels[offset+1],pixels[offset+2])<225)ink++;
+    if(ink>=48){
+     const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+     if(image)return {blob:image,photo:false};
+     break;
+    }
+   }
+  }
+  return null;
+ }finally{await task.destroy()}
+}
+const legalFolderThemes=[
+ {pattern:/divorce|dissolution|separation|marriage/i,tone:'plum',art:'<path d="M65 26 59 46l8 9-8 16 6 15" stroke-dasharray="4 5"/><circle cx="44" cy="57" r="13"/><circle cx="83" cy="57" r="13"/><path d="m35 43 4-7h10l4 7m21 0 4-7h10l4 7"/>'},
+ {pattern:/sealing|pardon|expungement|restoration/i,tone:'teal',art:'<rect x="42" y="48" width="44" height="31" rx="5"/><path d="M51 48V38a13 13 0 0 1 26 0v10m-13 12v7"/>'},
+ {pattern:/support|custody|family/i,tone:'teal',art:'<circle cx="48" cy="42" r="8"/><circle cx="80" cy="42" r="8"/><circle cx="64" cy="57" r="6"/><path d="M34 67v-3a14 14 0 0 1 20-13m40 16v-3a14 14 0 0 0-20-13M52 80v-3a12 12 0 0 1 24 0v3"/>'},
+ {pattern:/settlement|claims?|litigation|leasing|kroger|refund/i,tone:'blue',art:'<rect x="38" y="30" width="52" height="44" rx="4"/><path d="M47 41h21m-21 9h15m-15 9h10"/><circle cx="83" cy="70" r="15"/><path d="m76 70 5 5 9-10"/>'},
+ {pattern:/bankruptcy|court|legal/i,tone:'gold',art:'<path d="M64 29v49m-14 0h28M42 40h44M43 40l-10 19h20L43 40Zm42 0L75 59h20L85 40ZM33 59a10 8 0 0 0 20 0m22 0a10 8 0 0 0 20 0"/>'}
+];
+function legalFolderCover(name){
+ const theme=legalFolderThemes.find(({pattern})=>pattern.test(name))||
+  {tone:'gold',art:'<path d="M36 43h22l6 6h28v25H36z"/><path d="M44 43V33h34v16m-25-8h16"/>'};
+ const cover=document.createElement('span');
+ cover.className='legal-folder-cover';cover.dataset.tone=theme.tone;
+ cover.innerHTML='<svg viewBox="0 0 320 150" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'+
+  '<g opacity=".25"><path d="M15 36V17h19m252 0h19v19M15 114v19h19m252 0h19v-19"/><path d="M25 28h34m-34 7h20m216-7h34m-20 7h20M25 122h34m202 0h34"/><circle cx="160" cy="75" r="66" stroke-dasharray="1 5"/></g>'+
+  '<g opacity=".38" fill="#162130"><path d="M54 41h49v73H54z" transform="rotate(-15 78 77)"/><path d="M217 40h49v73h-49z" transform="rotate(15 241 77)"/><path d="M61 55h31m-31 8h25m-25 8h28m-28 8h19" transform="rotate(-15 78 77)"/><path d="M226 54h29m-29 8h22m-22 8h25m-25 8h18" transform="rotate(15 241 77)"/></g>'+
+  '<circle cx="160" cy="75" r="56" fill="#111b2a" fill-opacity=".8" stroke-opacity=".7"/><circle cx="160" cy="75" r="50" stroke-opacity=".3"/>'+
+  '<g transform="translate(96 21)" stroke-width="2.3">'+theme.art+'</g>'+
+  '<g fill="currentColor"><path d="m160 12 3 5-3 5-3-5zm0 116 3 5-3 5-3-5z"/><circle cx="38" cy="75" r="2"/><circle cx="282" cy="75" r="2"/></g></svg>';
+ return cover;
+}
+const legalCoverJobs=new WeakMap();
+const legalCoverObserver=new IntersectionObserver(entries=>{
+ for(const entry of entries){
+  if(!entry.isIntersecting)continue;
+  legalCoverObserver.unobserve(entry.target);
+  legalCoverJobs.get(entry.target)?.();
+ }
+});
+function legalFileCard(record,back){
+ const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
+ card.className='legal-file';caption.textContent=record.name;actions.className='legal-actions';
+ const type=document.createElement('span');type.className='legal-kind';type.textContent=record.folder?'Folder':'Document';card.append(type,caption);
+ if(record.id){
+  const button=document.createElement('button');
+  button.type='button';button.className='legal-thumbnail';
+  const art=document.createElement('span'),label=document.createElement('span');
+  art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
+  label.className='legal-thumbnail-label';label.textContent=record.folder?'Browse files':'Preview';
+  button.append(art,label);
+  button.setAttribute('aria-label',(record.folder?'Browse ':'Preview ')+record.name);
+  button.onclick=()=>showLegalRecord(record,back);
+  if(record.folder){
+   art.replaceChildren(legalFolderCover(record.name));
+  }else{
+   legalCoverJobs.set(button,async()=>{
+    const unavailable=()=>{art.textContent='Thumbnail unavailable · Tap to preview'};
+    const cover=await legalDocumentCover(record).catch(()=>null);
+    if(!button.isConnected)return;
+    const img=document.createElement('img');
+    img.alt='';img.referrerPolicy='no-referrer';
+    const objectUrl=cover?URL.createObjectURL(cover.blob):null;
+    const fallback=new URL('https://drive.google.com/thumbnail');
+    fallback.searchParams.set('id',record.id);
+    fallback.searchParams.set('sz','w640');
+    if(record.resourceKey)fallback.searchParams.set('resourcekey',record.resourceKey);
+    function release(){if(objectUrl)URL.revokeObjectURL(objectUrl)}
+    img.onload=()=>{art.replaceChildren(img);release()};
+    img.onerror=()=>{
+     if(img.src===objectUrl){release();img.src=record.thumbnail||fallback.href;return}
+     if(record.thumbnail&&img.src===record.thumbnail){img.src=fallback.href;return}
+     unavailable();
+    };
+    if(cover?.photo)img.dataset.photo='';
+    img.src=objectUrl||record.thumbnail||fallback.href;
+   });
+   legalCoverObserver.observe(button);
+  }
+  card.append(button);
+ }
+ legalDownloadAction(actions,record);
+ if(actions.childElementCount)card.append(actions);
+ return card;
+}
+async function showLegalRecord(record,back){
+ legalViewRequest?.abort();
+ const request=new AbortController();
+ legalViewRequest=request;
+ legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
+ document.getElementById('legal-view-title').textContent=record.name;
+ const actions=document.getElementById('legal-view-actions');
+ actions.replaceChildren();legalDownloadAction(actions,record);
+ const status=document.createElement('p');status.setAttribute('role','status');
+ legalViewerBody.replaceChildren(status);
+ if(!legalViewer.open)legalViewer.showModal();
+ if(!record.folder){
+  status.textContent='Loading preview…';
+  try{
+   const blob=await legalMedia(record,request.signal);
+   if(request.signal.aborted)return;
+   if(blob.type.startsWith('image/')){
+    const img=document.createElement('img'),url=URL.createObjectURL(blob);
+    img.className='legal-preview-image';img.alt=record.name;
+    request.signal.addEventListener('abort',()=>URL.revokeObjectURL(url),{once:true});
+    img.onerror=()=>{status.textContent='This image could not be displayed.';img.remove()};
+    img.src=url;status.textContent='';legalViewerBody.append(img);return;
+   }
+   const task=await legalPdf(blob);
+   if(request.signal.aborted){await task.destroy();return}
+   request.signal.addEventListener('abort',()=>{task.destroy().catch(()=>{})},{once:true});
+   const pdf=await task.promise;
+   const pages=document.createElement('div'),next=document.createElement('button');
+   next.type='button';legalViewerBody.append(pages,next);
+   let page=1;
+   async function render(){
+    next.disabled=true;
+    try{
+     const canvas=await legalPdfPage(pdf,page,Math.max(320,Math.min(1500,pages.clientWidth*2)));
+     if(request.signal.aborted)return;
+     canvas.className='legal-preview-image';canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Page '+page);
+     pages.append(canvas);status.textContent='Page '+page+' of '+pdf.numPages;
+     next.hidden=page>=pdf.numPages;next.textContent='Show page '+(page+1);page++;
+    }catch{if(!request.signal.aborted)status.textContent='Could not render this page.'}
+    finally{next.disabled=false}
+   }
+   next.textContent='Show page 1';next.onclick=render;await render();
+  }catch(error){if(!request.signal.aborted)status.textContent=error.message||'Preview unavailable.'}
+  return;
+ }
+ status.textContent='Loading folder…';
+ const files=document.createElement('div');files.className='legal-cards';legalViewerBody.append(files);
+ const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;legalViewerBody.append(more);
+ async function loadPage(pageToken){
+  more.disabled=true;
+  try{
+   const result=await legalFolderPage(record,pageToken,request.signal);
+   if(request.signal.aborted)return;
+   for(const file of result.files){
+    files.append(legalFileCard(file,()=>showLegalRecord(record,back)));
+   }
+   status.textContent=files.children.length?'':'This folder is empty.';
+   more.textContent='Load more';more.hidden=!result.nextPageToken;more.onclick=()=>loadPage(result.nextPageToken);
+  }catch{
+   if(!request.signal.aborted){
+    status.textContent='Could not load this folder.';
+    more.hidden=false;more.textContent='Try again';more.onclick=()=>loadPage(pageToken);
+   }
+  }finally{more.disabled=false}
+ }
+ await loadPage();
+}
+
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord };
+})();
