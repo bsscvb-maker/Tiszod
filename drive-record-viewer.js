@@ -24,11 +24,17 @@ function legalDownloadAction(target,record){
  if(record.resourceKey&&!nativeType)url.searchParams.set('resourcekey',record.resourceKey);
  target.append(legalLink(nativeType?'Download PDF':'Download',url.href));
 }
-const indianCoveRules={name:'Campground Rules',readerUrl:'indian-cove-rules.html',cover:'rules'};
+const indianCoveRules={name:'Campground Rules',readerUrl:'indian-cove-rules.html',cover:'indian-cove-rules'};
 const indianCoveCovers=new Map([
- ['Billing and Payments','billing'],
- ['Deeds','deed'],
- ['Resort Communications','communications']
+ ['Billing and Payments','indian-cove-billing'],
+ ['Deeds','indian-cove-deed'],
+ ['Resort Communications','indian-cove-communications']
+]);
+const stridersCovers=new Map([
+ ['Events','striders-events'],
+ ['Board Records','striders-board'],
+ ['POWER Closeout and Trailer Return','striders-trailer'],
+ ['Course Maps and Meeting Point','striders-maps']
 ]);
 const legalMimePrefix='application/vnd.google-apps.';
 let legalPdfModule;
@@ -140,7 +146,7 @@ function legalFileCard(record,back){
    if(record.cover){
     const image=document.createElement('img');
     image.alt='';
-    image.src='assets/hobbies/indian-cove-'+record.cover+'.webp';
+    image.src='assets/hobbies/'+record.cover+'.webp';
     image.onerror=()=>art.replaceChildren(fallback);
     art.replaceChildren(image);
    }else art.replaceChildren(fallback);
@@ -213,11 +219,11 @@ async function showLegalRecord(record,back){
     if(request.signal.aborted)return;
     canvas.className='legal-preview-image';
     canvas.setAttribute('role','img');
-    canvas.setAttribute('aria-label','Indian Cove Resort campground map');
+    canvas.setAttribute('aria-label',record.name);
     const frame=document.createElement('div'),zoom=document.createElement('button');
     frame.style.overflow='auto';
     frame.tabIndex=0;
-    frame.setAttribute('aria-label','Scrollable campground map');
+    frame.setAttribute('aria-label','Scrollable map');
     zoom.type='button';
     zoom.textContent='Zoom in';
     zoom.setAttribute('aria-pressed','false');
@@ -230,7 +236,7 @@ async function showLegalRecord(record,back){
      if(enlarged)frame.scrollTo(0,0);
     };
     frame.append(canvas);actions.prepend(zoom);legalViewerBody.append(frame);
-    status.textContent='Use Zoom in to read campsite numbers and map details.';
+    status.textContent='Use Zoom in to read map details.';
     return;
    }
    const pages=document.createElement('div'),next=document.createElement('button');
@@ -274,7 +280,9 @@ async function showLegalRecord(record,back){
     }
     if(record.indianCoveBilling&&file.name==='Original Invoices and Receipts')continue;
     files.append(legalFileCard({...file,
-     cover:record.indianCove?indianCoveCovers.get(file.name):undefined,
+     cover:record.indianCove?indianCoveCovers.get(file.name):record.tidewaterStriders?stridersCovers.get(file.name):undefined,
+     stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
+     map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'
     },returnToFolder));
    }

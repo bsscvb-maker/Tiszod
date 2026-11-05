@@ -14,7 +14,7 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=20261105-cove-covers"></script>
+<script src="drive-record-viewer.js?v=20261105-striders-covers"></script>
 <script>
 const hobbyLogos = new Map([
  ['backwoods hunt club', { file: 'backwoods.svg', fallback: '🌲' }],
@@ -29,7 +29,7 @@ window.thStart=async()=>{
  try{
   const rows=await thValues("'Hobbies & Recreation Links'!A2:B30",'UNFORMATTED_VALUE');
   const cards=[];
-  let backwoodsFolder,indianCoveFolder;
+  let backwoodsFolder,indianCoveFolder,tidewaterFolder;
   for(const [name,link] of rows){
    if(!name||!link)continue;
    let url;
@@ -44,7 +44,9 @@ window.thStart=async()=>{
    const card = document.createElement(isBackwoods ? 'a' : 'button');
    card.className = 'hobby-card';
    const indianCove = String(name).trim().toLowerCase() === 'indian cove resort';
-   const folder = { name, id, folder: true, url: url.href, resourceKey, indianCove };
+   const tidewaterStriders = String(name).trim().toLowerCase() === 'tidewater striders';
+   const folder = { name, id, folder: true, url: url.href, resourceKey, indianCove, tidewaterStriders };
+   if (tidewaterStriders) tidewaterFolder=folder;
    if (indianCove) indianCoveFolder=folder;
    if (isBackwoods) {
     card.href = 'backwoods-bylaws.html';
@@ -69,7 +71,7 @@ window.thStart=async()=>{
   }
   grid.replaceChildren(...cards);status.textContent=cards.length?'':'No folders are configured.';
   const page = new URL(location.href);
-  const selectedFolder={backwoods:backwoodsFolder,'indian-cove':indianCoveFolder}[page.searchParams.get('folder')];
+  const selectedFolder={backwoods:backwoodsFolder,'indian-cove':indianCoveFolder,'tidewater-striders':tidewaterFolder}[page.searchParams.get('folder')];
   if (selectedFolder) {
    page.searchParams.delete('folder');
    history.replaceState(history.state, '', page);
