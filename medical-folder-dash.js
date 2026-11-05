@@ -24,8 +24,8 @@ window.thMedicalFolders = (() => {
     ['Optima',/optima/i],
     ['CVS Caremark',/caremark/i]
   ];
-  const logoFiles={'Aetna':'aetna.svg','CVS Caremark':'caremark.svg','Delta Dental':'delta.png','UnitedHealthcare':'united.svg','Trustmark':'trustmark.png','Blue Cross Blue Shield':'bcbs.svg'};
-  function carrier(record){return insuranceMatchers.find(([,pattern])=>pattern.test([record.name,...record.path].join(' ')))?.[0]||'Other insurance records';}
+  const logoFiles={'Aetna':'aetna.svg','CVS Caremark':'caremark.svg','Delta Dental':'delta.png','UnitedHealthcare':'united.svg','Trustmark':'trustmark.png','Blue Cross Blue Shield':'bcbs.svg','Optima':'optima.png'};
+  function carrier(record){return insuranceMatchers.find(([,pattern])=>pattern.test([record.name,...record.path].join(' ')))?.[0]||'Unsorted insurance documents';}
   function enrich(folder, options) {
     const {records,date,detail,summary,open} = options;
     const section=folder.name;
@@ -102,13 +102,15 @@ window.thMedicalFolders = (() => {
       ]};
     }
     if(section==='Insurance'){
-      const groups=new Map(insuranceMatchers.slice(0,4).map(([name])=>[name,[]]));
+      const groups=new Map(insuranceMatchers.map(([name])=>[name,[]]));
       for(const record of children){const name=carrier(record);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(record);}
-      const carriers=[...groups].map(([name,files])=>({
+      const order=['UnitedHealthcare','Trustmark','Blue Cross Blue Shield','Optima','Delta Dental','Aetna','CVS Caremark','Unsorted insurance documents'];
+      const rank=name=>order.includes(name)?order.indexOf(name):order.length-2;
+      const carriers=[...groups].sort(([a],[b])=>rank(a)-rank(b)).filter(([name,files])=>files.length||insuranceMatchers.slice(0,4).some(([carrier])=>carrier===name)).map(([name,files])=>({
         ...virtual(name,files,back=>recordsView(files,'Coverage records','Record dates are shown below. Coverage start and end remain unverified.',back),'insurance'),
         medicalLogo:Boolean(logoFiles[name]),medicalCoverImage:logoFiles[name]?'assets/medical/carriers/'+logoFiles[name]:undefined
       }));
-      return {...folder,virtualFiles:[...carriers,{...folder,name:'Original insurance folders'}]};
+      return {...folder,virtualFiles:[...carriers,{...folder,name:'Original folder archive'}]};
     }
     if(section==='Test Result'){
       const results=()=>children.filter(record=>!['Test order'].includes(record.kind));

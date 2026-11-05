@@ -14,57 +14,86 @@
   const fields = [
     ['height','Height'], ['age','Age'], ['ageAsOf','Age recorded on'],
     ['pcp','Primary care physician'],
-    ['eyeCare','Ophthalmologist or eye-care practice'],
-    ['conditions','Conditions and medical history']
+    ['eyeCare','Ophthalmologist or eye-care practice']
   ];
   let api, profile = {}, savedProfile = {}, loadMessage = '';
 
-  function renderProfile() {
-    const target = $('medical-about-profile');
-    const grid = make('dl');
-    const overview=make('div');overview.className='medical-body-profile';
-    const silhouette=make('img');silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body silhouette';
-    const weight = api.weights().at(-1);
-    const entries = [
-      ['Height',profile.height],
-      ['Age',profile.age && profile.age+(profile.ageAsOf ? ' as of '+profile.ageAsOf : '')],
-      ['Latest recorded weight',weight && weight.weight.toFixed(1)+(weight.unit?' '+weight.unit:' (unit not listed)')+' · '+weight.date],
+  function careTeam() {
+    const team=make('section');team.className='medical-folder-dashboard medical-care-team';
+    team.append(make('h3','Care Team'));
+    for (const [role,name,contact] of [
       ['Primary care physician',profile.pcp,profile.contacts?.pcp],
-      ['Ophthalmology',profile.eyeCare,profile.contacts?.eyeCare],
-      ['Conditions and medical history',profile.conditions]
-    ];
-    for (const [label,value,contact] of entries) {
-      const item=make('div'), data=make('dd',value||'Needs confirmation');
-      if(contact?.address) data.append(make('p',contact.address));
+      ['Eye care',profile.eyeCare,profile.contacts?.eyeCare]
+    ]) {
+      const panel=make('details');
+      panel.append(make('summary',role+' · '+(name||'Needs confirmation')));
+      if(contact?.address) panel.append(make('p',contact.address));
       if(contact?.phone){
-        const phone=make('a',contact.phone);phone.href='tel:'+contact.phone.replace(/[^+\d]/g,'');data.append(phone);
+        const phone=make('a',contact.phone);phone.href='tel:'+contact.phone.replace(/[^+\d]/g,'');panel.append(phone);
       }
       if(/^https:\/\//.test(contact?.url||'')){
         const line=make('p'),link=make('a',contact.linkLabel||'Practice website');
-        link.href=contact.url;link.target='_blank';link.rel='noopener noreferrer';line.append(link);data.append(line);
+        link.href=contact.url;link.target='_blank';link.rel='noopener noreferrer';line.append(link);panel.append(line);
       }
-      item.append(make('dt',label),data);grid.append(item);
+      team.append(panel);
     }
-    const med = make('ul');
-    const reviewed = api.records().filter(record => record.kind === 'Medication record' && api.current(record));
-    for (const item of Array.isArray(profile.medications) ? profile.medications : []) {
-      med.append(make('li',[item.name,item.dose,item.note].filter(Boolean).join(' · ')));
+    return team;
+  }
+  function heightInches(value) {
+    const raw=String(value||'').trim();
+    const feet=raw.match(/^(\d+)\s*(?:ft|feet|foot|['′])\s*(\d+(?:\.\d+)?)?\s*(?:in|inches|["″])?$/i);
+    if(feet && Number(feet[2]||0)<12)return Number(feet[1])*12+Number(feet[2]||0);
+    const inches=raw.match(/^(\d+(?:\.\d+)?)\s*(?:in|inches|["″])$/i);
+    return inches?Number(inches[1]):0;
+  }
+  function renderProfile() {
+    const target=$('medical-about-profile'), stamp=$('medical-profile-updated');
+    const updated=Date.parse(profile.profileUpdatedAt);
+    stamp.hidden=!Number.isFinite(updated);
+    if(!stamp.hidden){
+      stamp.dateTime=new Date(updated).toISOString();
+      stamp.textContent='Profile as of '+new Intl.DateTimeFormat('en-US',{
+        timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'
+      }).format(updated);
     }
-    overview.append(silhouette,grid);target.replaceChildren(overview,make('h3','Current medications'));
-    const userList = String(profile.currentList || '').split('\n').map(line=>line.trim()).filter(Boolean);
-    target.append(make('p',reviewed.length || userList.length?'Current medications you marked in the portal:':'Your full current medication list still needs confirmation.'));
-    if (reviewed.length || userList.length) {
-      const confirmed = make('ul');
-      for (const item of userList) confirmed.append(make('li',item));
-      for (const record of reviewed) {
-        const li = make('li');
-        li.append(action(api.current(record),()=>api.open(record)));
-        confirmed.append(li);
+    const overview=make('div');overview.className='medical-body-profile';
+    const figure=make('figure'),silhouette=make('img');
+    silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body reference';
+    figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
+    const grid=make('dl'),weight=api.weights().at(-1),height=heightInches(profile.height);
+    const pounds=weight?.unit==='lb'?weight.weight:weight?.unit==='kg'?weight.weight*2.2046226218:0;
+    const bmi=height>0&&pounds>0?(703*pounds/(height*height)).toFixed(1):'Needs height and weight with units';
+    for(const [label,value] of [
+      ['Height',profile.height],
+      ['Weight',weight&&Number(weight.weight.toFixed(1))+' '+(weight.unit||'(unit unlisted)')+' · '+weight.date+(weight.source?' · '+weight.source:'')],
+      ['Age',profile.age&&(profile.age+(profile.ageAsOf?' as of '+profile.ageAsOf:''))],
+      ['BMI',bmi]
+    ]){
+      const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
+    }
+    overview.append(figure,grid);target.replaceChildren(overview,make('h3','Current medications'));
+    const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
+    if(userList.length){
+      const grid=make('div');grid.className='medical-regimen';
+      for(const entry of userList){
+        const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
+        const card=make('section');card.append(make('strong',name));
+        if(dose)card.append(make('p',dose));
+        if(schedule)card.append(make('p',schedule));
+        grid.append(card);
       }
-      target.append(confirmed);
+      target.append(grid);
+    }else{
+      const reviewed=api.records().filter(record=>record.kind==='Medication record'&&api.current(record));
+      if(reviewed.length){
+        const list=make('ul');
+        for(const record of reviewed){
+          const item=make('li');item.append(action(api.current(record),()=>api.open(record)));list.append(item);
+        }
+        target.append(list);
+      }else target.append(make('p','No current medications have been confirmed.'));
     }
-    if (med.childElementCount) target.append(make('p','Recent reports and details to verify:'),med);
-    if (loadMessage) target.append(make('p',loadMessage));
+    if(loadMessage)target.append(make('p',loadMessage));
   }
   function edit() {
     const target = $('medical-about-profile'), form = make('form');
@@ -77,13 +106,8 @@
       const field = make('label',label); field.append(input); form.append(field);
     }
     const current = make('textarea'); current.rows = 3; current.value = profile.currentList || '';
-    const currentField = make('label','Medications you confirm you take today (one per line)');
+    const currentField = make('label','Current medications: name | dose | schedule (one per line)');
     currentField.append(current); form.append(currentField);
-    const medicationInput = make('textarea');
-    medicationInput.rows = 5;
-    medicationInput.value = (profile.medications || []).map(item => [item.name,item.dose,item.note].join(' | ')).join('\n');
-    const label = make('label','Medication name | dose | notes (one per line)');
-    label.append(medicationInput); form.append(label);
     const submit = make('button','Save in this browser'), message = make('p');
     message.setAttribute('role','status');
     form.append(submit,action('Cancel',renderProfile),message);
@@ -91,10 +115,7 @@
       event.preventDefault();
       const next = Object.fromEntries(Object.entries(inputs).map(([key,input]) => [key,input.value.trim()]));
       next.currentList = current.value.trim();
-      next.medications = medicationInput.value.split('\n').map(line => {
-        const [name,dose,...notes] = line.split('|').map(value => value.trim());
-        return {name,dose,note:notes.join(' | ')};
-      }).filter(item => item.name);
+      next.profileUpdatedAt=new Date().toISOString();
       try {localStorage.setItem(api.key+':about',JSON.stringify(next));}
       catch {message.textContent = 'This browser could not save the profile.';return;}
       profile = {...savedProfile,...next}; renderProfile();
@@ -114,11 +135,16 @@
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
     api.onFolderSummaries?.(savedProfile.folderSummaries);
     api.onWeighIns?.(savedProfile.weighIns);
-    try {profile = {...savedProfile,...JSON.parse(localStorage.getItem(api.key+':about') || '{}')};}
+    try {
+      const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
+      if(savedProfile.currentList && !(Date.parse(local.profileUpdatedAt)>=Date.parse(savedProfile.profileUpdatedAt)))delete local.currentList;
+      profile={...savedProfile,...local};
+    }
     catch {profile = savedProfile;}
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
   }
   window.thMedicalAbout = {
+    careTeam,
     start(options) {
       api = options; profile = {}; savedProfile = {}; loadMessage = '';
       $('medical-about-edit').onclick = edit;

@@ -176,7 +176,7 @@ function legalFileCard(record,back){
   button.className='legal-thumbnail';
   const art=document.createElement('span'),label=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
-  label.className='legal-thumbnail-label';label.textContent=record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
+  label.className='legal-thumbnail-label';label.textContent=(record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
@@ -303,6 +303,7 @@ async function showLegalRecord(record,back){
  }
  const returnToFolder=()=>showLegalRecord(record,back);
  if(record.dashboard)legalViewerBody.insertBefore(record.dashboard(returnToFolder),status);
+ if(record.dashboardOnly){status.remove();return;}
  const container=record.hideSupporting?document.createElement('details'):legalViewerBody;
  if(record.hideSupporting){
   const summary=document.createElement('summary');summary.textContent='Supporting documents';

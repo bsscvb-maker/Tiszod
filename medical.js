@@ -279,7 +279,8 @@
           records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
         });
       }).sort((a,b)=>rank(a.name)-rank(b.name));
-      cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.svg'});
+      cards.push({id:'medical-care-team',name:'Care Team',folder:true,dashboardOnly:true,dashboard:()=>thMedicalAbout.careTeam(),medicalArt:'providers'});
+      cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.webp'});
       function revealTimeline(){
         if(location.hash==='#timeline-title') $('medical-timeline-panel').hidden=false;
       }
