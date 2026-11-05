@@ -46,3 +46,13 @@
 
 /* Leave room for the portal header when jumping to a section. */
 .medical :is(#medical-browse,#timeline-title){scroll-margin-top:5rem}
+#medical-about{scroll-margin-top:5rem}.medical-about-edit,#medical-about-profile dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
+#medical-about-profile dl>div{padding:12px;border:1px solid #416473;border-radius:10px;background:#142636}
+#medical-about-profile dt{color:#a6dcd5;font-weight:700}#medical-about-profile dd{margin:6px 0 0;white-space:pre-line}
+#medical-about textarea{font:inherit;color:#e5f5fa;background:#152b3a;border:1px solid #416777;border-radius:8px;padding:8px}
+#medical-about-years table{width:100%;border-collapse:collapse;text-align:left}
+#medical-about-years :is(th,td){padding:8px;border-bottom:1px solid #416473;vertical-align:top}
+#medical-about-years details button,#medical-about-search-results button{display:block;margin:4px 0;text-align:left;overflow-wrap:anywhere}
+#medical-about-years summary{cursor:pointer;color:#a6dcd5}
+
+.medical-about-shortcuts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}

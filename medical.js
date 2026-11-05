@@ -172,7 +172,7 @@
       const next = {...review,[record.id]:{status:select.value,label:label.value.trim(),date:date.value,amount:amount.value,dose:dose.value.trim(),schedule:schedule.value.trim()}};
       try {localStorage.setItem(key,JSON.stringify(next));}
       catch {error.textContent = 'This browser could not save the review.';return;}
-      review = next; renderKpis(); renderResults();
+      review = next; renderKpis(); renderResults(); thMedicalAbout.refresh();
     };
     return form;
   }
@@ -270,6 +270,7 @@
       }
     } catch (error) {console.warn('Could not read the weight series.',error.name);}
     renderWeight();
+    thMedicalAbout.refresh();
   }
   window.thStart = async () => {
     $('medical-content').hidden = false;
@@ -311,6 +312,12 @@
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
       renderKpis(); renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
+      thMedicalAbout.start({
+        key, list, records: () => records, weights: () => weights, workbook: () => workbook,
+        eventName, eventDate, confirmedEvents,
+        current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
+        open: record => thDriveRecords.open(record)
+      });
       void loadWeight();
     } catch(error) {
       if (error.status === 401) throw error;
