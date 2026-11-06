@@ -23,10 +23,12 @@ let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
 let documentOrders=new Map(),orderSaving=false,arrangeDocuments=false;
 let hiddenPeople=new Set(['Heather','Alexis']),showHiddenPeople=false,visibilitySaving=false;
 const visibilityRange="'Identification Records'!D1:E2000";
-let zachPortrait='';
+let personPortraits=new Map();
 function applyVisibility(rows){
- const portrait=rows.find(([key])=>key==='person-photo:Zach')?.[1];
- zachPortrait=typeof portrait==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(portrait)?portrait:'';
+ personPortraits=new Map(rows.flatMap(([key,value])=>
+  typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?
+   [[key.slice(13),value]]:[]
+ ));
  documentOrders=new Map();
  hiddenPeople=new Set(['Heather','Alexis']);
  for(const [key,value] of rows){if(typeof key==='string'&&key.startsWith('document-order:')){try{const ids=JSON.parse(value);if(Array.isArray(ids))documentOrders.set(key.slice(15),ids.filter(id=>typeof id==='string'))}catch{}}}
@@ -102,10 +104,10 @@ async function showSocialSecurityNumber(button){
  }finally{button.disabled=false}
 }
 function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
-const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son']};
+const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Fapula']};
 function groupCard(label,count,attribute,value){
  const profile=attribute==='data-person'?(personStyles[label]||['other',label.charAt(0),'Documents']):null;
- const portrait=label==='Zach'?zachPortrait:'';
+ const portrait=personPortraits.get(label)||'';
  const hasPhoto=portrait||['Todd','Aiden','Alexis','Tracy'].includes(label);
  const portraitStyle=portrait?' style="background-image:url('+portrait+');background-size:cover;background-position:center"':'';
  const avatar=profile?
@@ -184,7 +186,7 @@ pictureDialog.setAttribute('aria-labelledby','identity-pictures-title');
 pictureDialog.innerHTML='<header><h2 id="identity-pictures-title"></h2><button type="button" id="identity-pictures-close" aria-label="Close pictures">✕</button></header><p>Enhanced pictures · untouched originals are also available below.</p><div id="identity-picture-sides"></div>';
 document.body.append(pictureDialog);
 const pictureStyle=document.createElement('style');pictureStyle.textContent='#identity-pictures{width:min(1180px,95vw);max-width:95vw;max-height:92dvh;overflow:auto;background:#101d2c;color:#edf5ff;border:1px solid #57748f;border-radius:12px;padding:22px}#identity-pictures::backdrop{background:#000b}#identity-pictures header{display:flex;align-items:center;gap:16px;justify-content:space-between}#identity-pictures h2{margin:0}#identity-picture-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.identity-side{min-width:0;border:1px solid #45627c;border-radius:9px;padding:14px}.identity-side iframe,.identity-side img{width:100%;height:340px;object-fit:contain;border:0;background:#07111e}.identity-side footer{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}.identity-side a{color:#b9e5ff}.identity-side .side-download{padding:10px 14px;border-radius:6px;color:white;background:#285d83;text-decoration:none}.identity-picture-card{padding:0!important;width:100%;border:0!important;border-radius:0!important;text-align:left;color:inherit!important;background:transparent!important;cursor:pointer}.identity-picture-card .record-caption{padding:18px}.identity-picture-card .record-caption h3{margin:0 0 12px}.identity-picture-card:hover h3{text-decoration:underline}.identity-picture-card .record-preview{pointer-events:none}.identity-picture-card .picture-cover{position:relative}.identity-picture-card .picture-cover:after{content:"";position:absolute;inset:0}.identity-picture-card img{width:100%;height:270px;object-fit:contain;background:#091727;display:block}@media(max-width:760px){#identity-picture-sides{grid-template-columns:1fr}.identity-side iframe,.identity-side img{height:300px}}';document.head.append(pictureStyle);
-function pictureCard(r){const d=r.data;return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><button type="button" class="identity-picture-card" data-identity-open="'+esc(r.id)+'" aria-label="'+esc(title(d))+' — front and back"><div class="picture-cover">'+preview(d)+'</div><div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person)+' · '+(d.sides.length>1?'Front &amp; back':'Front picture')+'</small>'+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></button>'+socialSecurityDetails(r)+'<footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>'}
+function pictureCard(r){const d=r.data;return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><button type="button" class="identity-picture-card" data-identity-open="'+esc(r.id)+'" aria-label="'+esc(title(d))+(d.sides.length>1?' — front and back':' — front')+'"><div class="picture-cover">'+preview(d)+'</div><div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person)+' · '+(d.sides.length>1?'Front &amp; back':'Front picture')+'</small>'+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></button>'+socialSecurityDetails(r)+'<footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>'}
 function sideFileId(side){try{const u=new URL(side.url);return ['drive.google.com','docs.google.com'].includes(u.hostname)?u.pathname.match(/\/d\/([^/]+)/)?.[1]||'':''}catch{return ''}}
 async function loadOriginalImage(side,holder){
  const id=sideFileId(side);if(!id||typeof thPhotoObjectUrl!=='function')return;
