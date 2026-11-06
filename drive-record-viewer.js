@@ -101,20 +101,42 @@ async function legalDocumentCover(record){
  const task=await legalPdf(blob);
  try{
   const pdf=await task.promise;
+  let selected, sparsePage, sparseInk=0;
   for(let number=1;number<=Math.min(pdf.numPages,8);number++){
    const canvas=await legalPdfPage(pdf,number,640);
    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
-   let ink=0;
+   let darkInk=0, visibleInk=0;
    for(let offset=0;offset<pixels.length;offset+=16){
-    if(pixels[offset+3]>128&&Math.min(pixels[offset],pixels[offset+1],pixels[offset+2])<225)ink++;
-    if(ink>=48){
-     const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
-     if(image)return {blob:image,photo:false};
-     break;
-    }
+    if(pixels[offset+3]<=128)continue;
+    const shade=(pixels[offset]+pixels[offset+1]+pixels[offset+2])/3;
+    if(shade<180)darkInk++;
+    if(shade<235)visibleInk++;
+   }
+   // Skip sparse cover sheets when an early page has enough dark detail.
+   if(darkInk>=pixels.length/16*.0015){
+    selected=canvas;
+    break;
+   }
+   if(visibleInk>sparseInk){
+    sparsePage=canvas;
+    sparseInk=visibleInk;
    }
   }
-  return null;
+  if(!selected&&!sparsePage)return null;
+  if(!selected){
+   // Make faint scans easier to see in the thumbnail.
+   const context=sparsePage.getContext('2d');
+   const image=context.getImageData(0,0,sparsePage.width,sparsePage.height);
+   for(let offset=0;offset<image.data.length;offset+=4){
+    for(let channel=0;channel<3;channel++){
+     const index=offset+channel;
+     image.data[index]=255-3*Math.max(0,248-image.data[index]);
+    }
+   }
+   context.putImageData(image,0,0);
+  }
+  const image=await new Promise(resolve=>(selected||sparsePage).toBlob(resolve,'image/jpeg',.9));
+  return image?{blob:image,photo:false,fitPage:!selected}:null;
  }finally{await task.destroy()}
 }
 const legalFolderThemes=[
@@ -217,6 +239,7 @@ function legalFileCard(record,back){
      unavailable();
     };
     if(cover?.photo)img.dataset.photo='';
+    if(cover?.fitPage)img.style.objectFit='contain';
     if(record.map)img.dataset.map='';
     img.src=objectUrl||record.thumbnail||fallback.href;
    });
