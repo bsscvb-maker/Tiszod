@@ -28,7 +28,7 @@
   const folderMime = 'application/vnd.google-apps.folder';
   const escapeQuery = s => s.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
   let records = [], weights = [], review = {}, key = '', limit = 30, visitFilter = '';
-  let workbook, workbookWeights = [], manualWeights = [], folderSummaries = {};
+  let workbook, workbookWeights = [], manualWeights = [], browserWeights = [], folderSummaries = {};
 
   async function list(query) {
     const files = [];
@@ -205,7 +205,7 @@
     thMedicalWeightChart.render($('weight-history'),weights,Number($('weight-range').value));
   }
   function updateWeights() {
-    weights = thMedicalWeightChart.merge(workbookWeights,manualWeights);
+    weights = thMedicalWeightChart.merge(workbookWeights,[...(Array.isArray(manualWeights)?manualWeights:[]),...browserWeights]);
     renderWeight();
     thMedicalAbout.refresh();
   }
@@ -246,7 +246,7 @@
     updateWeights();
   }
   window.thStart = async () => {
-    workbookWeights = []; manualWeights = []; weights = []; folderSummaries = {};
+    workbookWeights = []; manualWeights = []; browserWeights = []; weights = []; folderSummaries = {};
     $('medical-content').hidden = false;
     $('medical-dashboard').hidden = true;
     $('medical-status').textContent = 'Connecting to your Medical records…';
@@ -294,6 +294,24 @@
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
+      const weighInKey=key+':weigh-ins', weighInForm=$('medical-add-weigh-in');
+      try {
+        const saved=JSON.parse(localStorage.getItem(weighInKey)||'[]');
+        if(Array.isArray(saved)) browserWeights=saved;
+      } catch {}
+      weighInForm.onsubmit=event=>{
+        event.preventDefault();
+        const fields=new FormData(weighInForm), date=fields.get('date'), weight=Number(fields.get('weight'));
+        const status=weighInForm.querySelector('[role="status"]');
+        if(!date || !Number.isFinite(weight) || weight<=0) return;
+        const next=[...browserWeights.filter(row=>row.date!==date),{date,weight,unit:'lb',source:'Self-reported weigh-in'}];
+        try {localStorage.setItem(weighInKey,JSON.stringify(next));}
+        catch {status.textContent='This browser could not save the weigh-in.';return;}
+        browserWeights=next;
+        updateWeights();
+        weighInForm.reset();
+        status.textContent='Weigh-in saved.';
+      };
       renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       thMedicalAbout.start({
         key, list, onFolderSummaries: value => {
