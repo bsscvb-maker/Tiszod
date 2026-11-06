@@ -31,3 +31,6 @@
 .education[data-person=Tracy] [data-family-collections=education]{display:none}
 @media(max-width:1050px){.education-people{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.education-people{grid-template-columns:1fr}}
+.education-books-nav{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 1rem}
+.education-books-nav a{padding:.45rem .65rem;border:1px solid #496680;border-radius:6px;color:#e4effa;text-decoration:none}
+.education-books-nav a[aria-current=page]{background:#234e70;border-color:#9bdce9}

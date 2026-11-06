@@ -352,6 +352,7 @@
 
   for (const link of document.querySelectorAll('.library-card, .library-breadcrumb a, .library-tabs a')) {
     link.addEventListener('click', event => {
+      if (new URL(link.href).pathname !== location.pathname) return;
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       if (link.href === location.href) return;
@@ -659,5 +660,12 @@
   get('library-home-retry').addEventListener('click', retry);
   more.addEventListener('click', () => { visible += pageSize; render(true); });
   showLocation();
-  window.thStart = loadLibrary;
+  window.thStart = async () => {
+    const count = get('library-count-Books');
+    const bookCount = thLibraryBooks.readRecords().then(records => {
+      const books = records.filter(({data}) => thLibraryBooks.isBook(data) && !data.deleted).length;
+      count.textContent = books.toLocaleString() + (books === 1 ? ' book' : ' books');
+    }).catch(() => { count.textContent = 'Book collection'; });
+    await Promise.all([loadLibrary(), bookCount]);
+  };
 })();

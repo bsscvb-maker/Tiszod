@@ -81,7 +81,7 @@
     link.innerHTML='<span class="th-nav-icon" aria-hidden="true"></span><span>Family</span>';
     nav.append(link);
   }
-  if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
+  if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html')&&document.body.dataset.thPage!=='home-library';a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts &amp; Access</span>';nav.append(a);}
   if (nav && !nav.querySelector('[href="home-library.html"]')) {
     const link = document.createElement('a');

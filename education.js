@@ -1,6 +1,23 @@
 'use strict';(()=>{
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let records=[],editing=null,ready=false,page=1;
+const bookMode=new URLSearchParams(location.search).get('view')==='books';
+const {owner,isBook,readRecords}=thLibraryBooks;
+if(bookMode){
+ document.title='TisZod · Library · Books';
+ document.body.dataset.thPage='home-library';
+ document.querySelector('.education').classList.add('education-books');
+ document.querySelector('.education-heading h1').textContent='Books';
+ document.querySelector('.education-heading p').textContent='Browse, search, and read your book collection.';
+ document.querySelector('.th-app-topbar strong').textContent='Library';
+ document.querySelector('.th-app-topbar small').textContent='Books';
+ document.querySelector('.education-heading').insertAdjacentHTML('beforebegin','<nav class="education-books-nav" aria-label="Library collections"><a href="home-library.html">← All collections</a><a href="home-library.html?collection=manuals">Manuals</a><a href="home-library.html?collection=recipes">Recipes</a><a href="home-library.html?collection=purchases">Purchases</a><a href="?view=books" aria-current="page">Books</a></nav>');
+ $('education-add').textContent='+ Add book';
+ $('education-category').closest('label').hidden=true;
+ $('education-form').elements.person.closest('label').hidden=true;
+ $('education-form').elements.category.closest('label').hidden=true;
+}
+
 const safe=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:''}catch{return ''}};
 const message=t=>$('education-status').textContent=t;
 async function save(r,d){if(!thAuthorized())throw Error('Sign in again to save.');d.updatedAt=new Date().toISOString();let range="'Education Records'!A:B",method='POST',suffix=':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',values=[[r?.id||crypto.randomUUID(),JSON.stringify(d)]];
@@ -18,7 +35,7 @@ async function loadPortraits(){
   }
  }catch{}
 }
-window.thStart=async()=>{const rows=await thValues("'Education Records'!A1:B2000",'UNFORMATTED_VALUE');if(rows[0]?.[0]!=='ID')throw Error('Education records could not load.');records=rows.slice(1).map((r,i)=>({id:r[0],row:i+2,data:JSON.parse(r[1]||'{}')})).filter(r=>r.id);const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();void loadPortraits();message('Private education records connected.');$('th-connection').textContent='Private workbook connected'};
+window.thStart=async()=>{records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!bookMode)void loadPortraits();message(bookMode?'Private book collection connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
@@ -30,8 +47,8 @@ try{
  if(Array.isArray(saved))hiddenPeople=new Set(saved.filter(name=>Object.hasOwn(personLabels,name)));
 }catch{}
 function renderPeople(){
- $('education-people').hidden=Boolean(selectedPerson);
- $('education-visibility').hidden=Boolean(selectedPerson)||!hiddenPeople.size;
+ $('education-people').hidden=bookMode||Boolean(selectedPerson);
+ $('education-visibility').hidden=bookMode||Boolean(selectedPerson)||!hiddenPeople.size;
  const toggle=$('education-show-hidden');
  toggle.textContent=showHiddenPeople?'Hide hidden people':'Show hidden people ('+hiddenPeople.size+')';
  toggle.setAttribute('aria-pressed',String(showHiddenPeople));
@@ -45,7 +62,6 @@ function renderPeople(){
  }
 }
 
-function owner(d){const name=String(d.person||'').trim().toLowerCase();return name==='aiden'?'Aiden':['alexis','alexa'].includes(name)?'Alexis':name==='tracy'?'Tracy':'Todd';}
 const isEducation=true;
 function title(d){
  let n=String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ');
@@ -124,18 +140,19 @@ function render(){
  const view=selectedPerson||'Todd';
  const q=$('education-search').value.trim().toLowerCase();
  renderPeople();
- $('education-person-heading').hidden=!selectedPerson;
+ $('education-person-heading').hidden=bookMode||!selectedPerson;
  $('education-person-title').textContent=personLabels[view];
- $('education-search-label').textContent='Search '+personLabels[view]+'’s documents';
+ $('education-search-label').textContent=bookMode?'Search books':'Search '+personLabels[view]+'’s documents';
+ $('education-category').querySelector('option[value=Books]').hidden=bookMode||view==='Todd';
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
  workspace.classList.toggle('education-landing',!selectedPerson);
- const showDocuments=Boolean(q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view)));
+ const showDocuments=Boolean(bookMode||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
  $('education-documents').hidden=!showDocuments;
  if(!showDocuments)return;
- const booksView=selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;
- const person=view,category=$('education-category').value,deleted=$('education-view').value==='deleted';
- const list=records.filter(r=>!!r.data.deleted===deleted&&owner(r.data)===person&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
+ const booksView=bookMode||selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;
+ const person=view,category=bookMode?'':$('education-category').value,deleted=$('education-view').value==='deleted';
+ const list=records.filter(r=>!!r.data.deleted===deleted&&(bookMode?isBook(r.data):owner(r.data)===person&&!isBook(r.data))&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
  $('education-pin-section').hidden=true;
  const grid=$('education-grid'),chosen=person;
  const heading=grid.previousElementSibling;
@@ -145,11 +162,11 @@ function render(){
  if(isEducation&&selectedFolder){shown=shown.filter(r=>(r.data.folder||'')===selectedFolder||r.data.folder?.startsWith(selectedFolder+'/'));html+='<button data-record-back="category">← '+esc(selectedCategory||'Categories')+'</button><strong>'+esc(selectedFolder)+'</strong>';}
  html+='</div>';
  if(!q&&!person&&!category&&!deleted&&!chosen&&!isEducation){heading.textContent='Choose a person';$('education-count').textContent=list.length+' documents';grid.innerHTML=[...new Set(['Todd','Aiden','Alexis','Heather','Tracy',...list.map(r=>r.data.person||'General')])].map(p=>groupCard(p,list.filter(r=>(r.data.person||'General')===p).length,'data-person',p)).join('');return}
- if(isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent=list.length?'Choose a category':'Documents';$('education-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('')||'<p class="record-empty">No documents here yet.</p>';return}
+ if(!bookMode&&isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent=list.length?'Choose a category':'Documents';$('education-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('')||'<p class="record-empty">No documents here yet.</p>';return}
  if(isEducation&&selectedCategory!=='Books'&&selectedCategory&&!selectedFolder&&!q&&!category&&!deleted){const groups=[...new Set(shown.map(r=>r.data.folder?.split('/')[0]).filter(Boolean))].sort();if(groups.length){heading.textContent=selectedCategory;const loose=shown.filter(r=>!r.data.folder);$('education-count').textContent=shown.length+' records';grid.innerHTML=html+groups.map(f=>groupCard(f,shown.filter(r=>r.data.folder===f||r.data.folder?.startsWith(f+'/')).length,'data-folder',f)).join('')+loose.map(card).join('');return}}
  heading.textContent=q?'Search results':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
  $('education-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
- if(booksView){renderBooks(shown,html);return}
+ if(booksView){if(bookMode)heading.textContent='Book collection';renderBooks(shown,bookMode?'':html);return}
  grid.innerHTML=html+shown.sort((a,b)=>title(a.data).localeCompare(title(b.data))).map(card).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
 }
 document.querySelector('.education').addEventListener('click',e=>{
@@ -175,7 +192,7 @@ document.querySelector('.education').addEventListener('click',e=>{
  if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedCategory='';$('education-person').value='';$('education-category').value='';$('education-search').value=''}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
-function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('education-form');f.reset();for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('education-save-status').textContent='';$('education-dialog').showModal()}
+function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('education-form');f.reset();for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:bookMode?'Books':selectedCategory||'Other'}[k]||'');$('education-save-status').textContent='';$('education-dialog').showModal()}
 document.querySelector('.education').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.id==='education-add')edit();else if(b.id==='education-prev'){page=Math.max(1,page-1);render()}else if(b.id==='education-next'){page++;render()}else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
 $('education-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;try{const d={...(editing?.data||{favorite:false,deleted:false})};for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])d[k]=f.elements.namedItem(k).value.trim();if(!safe(d.url))throw Error('Enter a complete https:// document link.');await save(editing,d);$('education-dialog').close();message('Document saved.')}catch(err){$('education-save-status').textContent=err.message}finally{b.disabled=false}};
 for(const id of ['education-search','education-person','education-category','education-folder','education-view'])$(id).addEventListener(id==='education-search'?'input':'change',()=>{page=1;recordPage=1;render()});$('education-refresh').onclick=()=>window.thStart().catch(e=>message(e.message));$('education-close').onclick=()=>$('education-dialog').close();

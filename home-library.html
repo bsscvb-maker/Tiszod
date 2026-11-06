@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="auth.css?v=20261030-in-page-loading-5">
 <link rel="stylesheet" href="portal-layout.css?v=20261028">
 <link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove">
-<link rel="stylesheet" href="home-library.css?v=20261106-book-view">
+<link rel="stylesheet" href="home-library.css?v=20261106-library-books">
 <script src="card-titles.js?v=20261106-manual-cards" defer></script>
 </head>
 <body data-th-page="home-library">
@@ -24,7 +24,7 @@
   <header class="library-hero">
    <div class="library-kicker">TISZOD / DOCUMENT LIBRARY</div>
    <h1 id="library-title" tabindex="-1">Library</h1>
-   <p>Manuals, recipes, and purchase records.</p>
+   <p>Manuals, recipes, purchase records, and books.</p>
   </header>
   <nav class="library-cards" aria-label="Document collections">
    <a class="library-card" data-collection="Manuals" href="?collection=manuals">
@@ -39,9 +39,13 @@
     <span class="library-cover" aria-hidden="true"></span>
     <span class="library-card-body"><strong>Purchases</strong><span>Receipts, invoices, and order records.</span><span class="library-card-footer"><span id="library-count-Purchases">Loading Drive…</span><span>Open collection →</span></span></span>
    </a>
+   <a class="library-card" data-collection="Books" href="education.html?view=books">
+    <span class="library-cover" aria-hidden="true"></span>
+    <span class="library-card-body"><strong>Books</strong><span>Browse and read your personal book collection.</span><span class="library-card-footer"><span id="library-count-Books">Loading books…</span><span>Open collection →</span></span></span>
+   </a>
   </nav>
   <form id="library-global-search" class="library-global-search" role="search">
-   <label for="library-global-query">Search across collections</label>
+   <label for="library-global-query">Search manuals, recipes, and purchases</label>
    <div class="library-search-row"><input id="library-global-query" type="search" maxlength="120" placeholder="Try heated blanket or banana bread" required><button type="submit">Search all</button></div>
   </form>
   <p id="library-home-status" role="status"></p>
@@ -57,6 +61,7 @@
    <a data-collection="Manuals" href="?collection=manuals">Manuals</a>
    <a data-collection="Recipes" href="?collection=recipes">Recipes</a>
    <a data-collection="Purchases" href="?collection=purchases">Purchases</a>
+   <a data-collection="Books" href="education.html?view=books">Books</a>
   </nav>
   <div class="library-workspace-layout">
    <aside class="library-rail" aria-label="Search and filters">
@@ -97,7 +102,8 @@
 <script src="drive-record-viewer.js?v=20261106-book-view"></script>
 <script src="library-catalog.js?v=20261106-distinct-manual-cards"></script>
 <script src="manual-reader.js?v=20261106-book-view"></script>
-<script src="home-library.js?v=20261106-book-view"></script>
+<script src="library-books.js?v=20261106-library-books"></script>
+<script src="home-library.js?v=20261106-library-books"></script>
 <script src="portal.js?v=20261106-library-name"></script>
 <script src="sheets.js?v=20261030-in-page-loading-5"></script>
 </body>
