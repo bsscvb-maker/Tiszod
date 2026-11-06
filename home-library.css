@@ -112,3 +112,9 @@
 .manual-source-page{margin-top:1rem;border-top:1px solid var(--library-line);padding-top:.7rem}
 .manual-source-page summary{color:var(--library-gold);cursor:pointer}
 .manual-art.manual-art-triptych{background-position:left center;background-size:300% auto}
+.manual-art.manual-art-triptych{background-image:url('assets/home-library/collection-covers.webp')}
+.manual-art.library-art-tile{background-size:500% 500%}
+.manual-art.library-art-label{display:grid;place-items:center;background:linear-gradient(145deg,#263a52,#172437)}
+.library-art-label span{color:#f0d3a0;font-size:clamp(1.2rem,4vw,2.3rem);font-weight:750;letter-spacing:.08em}
+.manual-art{position:relative}
+.manual-art img{position:absolute;inset:0}

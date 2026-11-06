@@ -120,14 +120,15 @@ async function legalPdfPage(pdf,number,width){
  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
  return canvas;
 }
-async function legalDocumentCover(record){
- const blob=await legalMedia(record);
+async function legalDocumentCover(record,signal){
+ const blob=await legalMedia(record,signal);
  if(blob.type!=='application/pdf')return {blob,photo:true};
  const task=await legalPdf(blob);
  try{
   const pdf=await task.promise;
   let selected, sparsePage, sparseInk=0;
   for(let number=1;number<=Math.min(pdf.numPages,8);number++){
+   if(signal?.aborted)return null;
    const canvas=await legalPdfPage(pdf,number,640);
    const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
    let darkInk=0, visibleInk=0;
@@ -433,5 +434,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, uniqueCover };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, uniqueCover, cover: legalDocumentCover };
 })();
