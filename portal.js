@@ -598,3 +598,47 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }`;
  document.head.append(style);
 })();
+
+/* Approved workspace consolidation: retain all original module pages and data. */
+(function(){
+ function consolidate(){
+  const nav=document.querySelector('.th-sidebar nav');
+  if(nav){
+   const groups=[
+    {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],icon:'▰'},
+    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],icon:'▣'}
+   ];
+   for(const group of groups){
+    const links=[...nav.querySelectorAll('a.th-nav-link')].filter(a=>group.members.some(m=>(a.getAttribute('href')||'').split('?')[0]===m));
+    const existing=nav.querySelector('a[href="'+group.href+'"]');
+    const active=group.members.some(m=>location.pathname.endsWith('/'+m))||location.pathname.endsWith('/'+group.href);
+    const link=existing||document.createElement('a');
+    link.href=group.href;link.className='th-nav-link'+(active?' active':'');
+    if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    link.innerHTML='<span class="th-nav-icon" aria-hidden="true">'+group.icon+'</span><span>'+group.name+'</span>';
+    if(!existing){
+     if(links.length)links[0].before(link);
+     else nav.querySelector('.th-nav-label')?.after(link);
+    }
+    links.forEach(a=>a.remove());
+   }
+  }
+  const cards=document.querySelectorAll('a.workspace');
+  if(cards.length){
+   const groups=[
+    {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],desc:'Vehicles, watercraft, and equipment',icon:'▰'},
+    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],desc:'Family, identification, education, and medical',icon:'▣'}
+   ];
+   for(const g of groups){
+    const matches=[...document.querySelectorAll('a.workspace')].filter(a=>g.members.includes(a.getAttribute('href')));
+    if(!matches.length)continue;
+    const card=matches[0];card.href=g.href;
+    const strong=card.querySelector('strong'),small=card.querySelector('small'),ico=card.querySelector('.workspace-icon');
+    if(strong)strong.textContent=g.name;if(small)small.textContent=g.desc;if(ico)ico.textContent=g.icon;
+    matches.slice(1).forEach(a=>a.remove());
+   }
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',consolidate);
+ else consolidate();
+})();
