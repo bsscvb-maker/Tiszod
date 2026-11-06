@@ -153,6 +153,12 @@
     const original = families.find(file => file.folder && file.name === name);
     const files = area === 'medical' && name === 'Todd' ? [] : await thDriveRecords.children(original);
     const records = (await recordsFor(name, files)).filter(Boolean).map(record => decorate(record, [area, name]));
+    if (records.length && area === 'education') {
+     const section = document.createElement('div');
+     section.dataset.educationFamily = name;
+     section.append(...records.map(record => thDriveRecords.card({...record, cardLabel: 'Browse school records'})));
+     return section;
+    }
     if (records.length) return personCard(name, original, records);
     throw Error('Collection unavailable.');
    }));

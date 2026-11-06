@@ -10,6 +10,8 @@ window.thStart=async()=>{const rows=await thValues("'Education Records'!A1:B2000
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
+const personLabels={Todd:'Ty',Aiden:'Aiden',Alexis:'Alexa'};
+function owner(d){const name=String(d.person||'').trim().toLowerCase();return name==='aiden'?'Aiden':['alexis','alexa'].includes(name)?'Alexis':'Todd';}
 const isEducation=true;
 function title(d){
  let n=String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ');
@@ -24,7 +26,7 @@ function preview(d){
  if(id&&['drive.google.com','docs.google.com'].includes(u.hostname))return '<iframe class="record-preview" src="https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview" title="'+esc(title(d))+' preview" loading="lazy" tabindex="-1" referrerpolicy="no-referrer"></iframe>';
  return '<span class="record-placeholder">'+esc(d.category||'Document')+'</span>';
 }
-function card(r){const d=r.data,u=safe(d.url),epub=/\.epub$/i.test(d.name||'');return '<article data-file-id="'+esc(r.id)+'" class="education-card visual-record">'+(u&&!d.deleted?'<a '+(epub?'data-read-book="'+esc(r.id)+'" ':'')+'class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+(d.category==='Books'?'<p class="book-tags">'+esc(bookInfo(d).kind)+' · '+esc(bookInfo(d).genre)+(bookInfo(d).suggested?' (suggested)':'')+'</p>':'')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
+function card(r){const d=r.data,u=safe(d.url),epub=/\.epub$/i.test(d.name||'');return '<article data-file-id="'+esc(r.id)+'" class="education-card visual-record">'+(u&&!d.deleted?'<a '+(epub?'data-read-book="'+esc(r.id)+'" ':'')+'class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3><small>'+esc(personLabels[owner(d)])+' · '+esc(d.category||'')+'</small>'+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+(d.category==='Books'?'<p class="book-tags">'+esc(bookInfo(d).kind)+' · '+esc(bookInfo(d).genre)+(bookInfo(d).suggested?' (suggested)':'')+'</p>':'')+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
 const schoolPhotos=[
  ['Trinity Lutheran','trinity','Trinity Lutheran church campus, Norfolk'],
  ['Lake Taylor','lake-taylor','Lake Taylor Senior High School entrance'],
@@ -74,7 +76,7 @@ bookTools.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)
 const fields=document.querySelector('.education-fields');
 fields.insertAdjacentHTML('beforeend','<label>Book author<input name="author" maxlength="300"></label><label>Fiction / nonfiction<select name="bookKind"><option value="">Suggested automatically</option><option>Fiction</option><option>Nonfiction</option><option>Uncategorized</option></select></label><label>Book genre<select name="genre"><option value="">Suggested automatically</option>'+genreOptions.map(g=>'<option>'+esc(g)+'</option>').join('')+'</select></label>');
 function renderBooks(shown,html){
- const authors=[...new Set(records.filter(r=>r.data.category==='Books').map(r=>bookInfo(r.data).author))].sort();const prior=$('book-author').value;
+ const authors=[...new Set(shown.map(r=>bookInfo(r.data).author))].sort();const prior=$('book-author').value;
  $('book-author').innerHTML='<option value="">All authors</option>'+authors.map(a=>'<option>'+esc(a)+'</option>').join('');$('book-author').value=prior;
  const kind=$('book-kind').value,genre=$('book-genre').value,author=$('book-author').value,format=$('book-format').value,sort=$('book-sort').value;
  const filtered=shown.filter(r=>{const i=bookInfo(r.data);return(!kind||i.kind===kind)&&(!genre||i.genre===genre)&&(!author||i.author===author)&&(!format||i.format===format)});
@@ -85,11 +87,23 @@ function renderBooks(shown,html){
 }
 
 function render(){
+ const view=selectedPerson||'Todd';
+ const q=$('education-search').value.trim().toLowerCase();
+ $('education-people').hidden=Boolean(selectedPerson);
+ $('education-person-heading').hidden=!selectedPerson;
+ $('education-person-title').textContent=personLabels[view];
+ $('education-search-label').textContent='Search '+personLabels[view]+'’s documents';
+ const workspace=document.querySelector('.education');
+ workspace.dataset.person=view;
+ workspace.classList.toggle('education-landing',!selectedPerson);
+ const showDocuments=Boolean(q||selectedPerson==='Todd'||(selectedPerson&&records.some(r=>owner(r.data)===view)));
+ $('education-documents').hidden=!showDocuments;
+ if(!showDocuments)return;
  const booksView=selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;
- const q=$('education-search').value.trim().toLowerCase(),person=$('education-person').value,category=$('education-category').value,deleted=$('education-view').value==='deleted';
- const list=records.filter(r=>!!r.data.deleted===deleted&&(!person||r.data.person===person)&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
+ const person=view,category=$('education-category').value,deleted=$('education-view').value==='deleted';
+ const list=records.filter(r=>!!r.data.deleted===deleted&&owner(r.data)===person&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
  $('education-pin-section').hidden=true;
- const grid=$('education-grid'),chosen=person||selectedPerson;
+ const grid=$('education-grid'),chosen=person;
  const heading=grid.previousElementSibling;
  let shown=list,html='<div class="record-breadcrumb"><button data-record-back="root">← '+(isEducation?'Education':'People')+'</button>';
  if(!isEducation&&chosen){shown=shown.filter(r=>(r.data.person||'General')===chosen);html+='<strong>'+esc(chosen)+'</strong>';}
@@ -107,10 +121,10 @@ function render(){
 document.querySelector('.education').addEventListener('click',e=>{
  const link=e.target.closest('[data-read-book]');if(link){e.preventDefault();const r=records.find(r=>r.id===link.dataset.readBook);const id=r?.data.url.match(/\/d\/([^/]+)/)?.[1];if(id&&window.thReadBook)window.thReadBook(id,title(r.data),r.data.url);return;}
  const b=e.target.closest('button');if(!b)return;
- if(b.dataset.person){selectedPerson=b.dataset.person;recordPage=1;render()}
+ if(b.dataset.person||b.hasAttribute('data-education-home')){selectedPerson=b.dataset.person||'';selectedCategory='';selectedFolder='';$('education-search').value='';$('education-category').value='';$('education-view').value='active';resetBookFilters();recordPage=1;render();if(selectedPerson)$('education-person-title').focus();else $('education-people').querySelector('button').focus();return;}
  if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
- if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('education-person').value='';$('education-category').value='';$('education-search').value=''}recordPage=1;render()}
+ if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedCategory='';$('education-person').value='';$('education-category').value='';$('education-search').value=''}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
 function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('education-form');f.reset();for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('education-save-status').textContent='';$('education-dialog').showModal()}
@@ -119,7 +133,7 @@ $('education-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.q
 for(const id of ['education-search','education-person','education-category','education-folder','education-view'])$(id).addEventListener(id==='education-search'?'input':'change',()=>{page=1;recordPage=1;render()});$('education-refresh').onclick=()=>window.thStart().catch(e=>message(e.message));$('education-close').onclick=()=>$('education-dialog').close();
 
 for(const id of ['education-prev','education-next','education-page','education-folder']){const el=document.getElementById(id);if(el)el.hidden=true;}document.querySelector('label:has(#education-folder)')?.setAttribute('hidden','');
-for(const id of ['education-person','education-category','education-view'])$(id).addEventListener('change',()=>{selectedPerson='';selectedCategory='';selectedFolder='';recordPage=1;render()});
+for(const id of ['education-category','education-view'])$(id).addEventListener('change',()=>{selectedCategory='';selectedFolder='';recordPage=1;render()});
 
 const jacketStyle=document.createElement('style');jacketStyle.textContent='.book-jacket{height:270px;background:linear-gradient(120deg,#17394c,#31635b);color:#fff;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:28px 24px;box-sizing:border-box;text-align:center;border-left:12px solid #0003;position:relative}.book-jacket-title{font:700 23px/1.4 Georgia,serif;overflow:hidden;max-height:190px}.book-jacket img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#10202c}.book-jacket small{color:#e0ebef}';document.head.append(jacketStyle);
 let coverBusy=0;const coverQueue=[];
