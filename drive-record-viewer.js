@@ -326,6 +326,7 @@ async function showLegalRecord(record,back){
    const result=record.virtualFiles?{files:typeof record.virtualFiles==='function'?record.virtualFiles():record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
    for(const file of result.files){
+    if(file.folder&&record.excludedFolderIds?.has(file.id))continue;
     if(record.indianCove){
      if(/^Original Communications Files$|^Duplicates - Review for Deletion$/i.test(file.name))continue;
      if(/^Campground Maps and Rules$/i.test(file.name)){
@@ -347,6 +348,7 @@ async function showLegalRecord(record,back){
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
      legalFolderPhotoFor:file.folder?record.legalFolderPhotoFor:undefined,
+     excludedFolderIds:record.excludedFolderIds,
      medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',

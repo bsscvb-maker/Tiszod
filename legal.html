@@ -56,7 +56,7 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=20261106-distinct-legal-covers"></script>
+<script src="drive-record-viewer.js?v=20261106-streamlined-legal-folders"></script>
 <script>
 const legalSections=[
  {id:'bankruptcy',key:'BK',title:'Bankruptcy',description:'Open the BK workspace to review case documents, creditors, and next steps.'},
@@ -69,12 +69,9 @@ const legalFolderCovers=new Map([
  ['consumer beef litigation','beef-litigation'],
  ['kroger savings club','kroger-savings'],
  ['iqvia','iqvia'],
- ['open personal legal records','personal-records'],
  ['divorce','divorce'],
  ['child support modification','child-support'],
- ['criminal records & rights restoration','rights-restoration'],
- ['open record sealing & pardon','record-sealing'],
- ['record sealing & pardon','record-sealing'],
+ ['criminal cases & rights','rights-restoration'],
  ['2022.09.23','divorce-2022'],
  ['2017.11.06','divorce-2017'],
  ['supporting correspondence & evidence','evidence'],
@@ -108,8 +105,9 @@ window.thStart=async()=>{
   const panel=document.createElement('section');panel.className='legal-panel';
   const heading=document.createElement('h2'),summary=document.createElement('p'),cards=document.createElement('div');
   heading.textContent=title;summary.textContent=description;cards.className='legal-cards';
-  for(const [section,name,link] of rows.slice(1)){
-   if(section!==key||!name)continue;
+  const recordsBySection=[];
+  for(const [section,sourceName,link] of rows.slice(1)){
+   if(!sourceName)continue;
    let url;try{url=new URL(link)}catch{continue}
    if(url.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(url.hostname))continue;
    const folder=url.pathname.includes('/folders/');
@@ -117,8 +115,20 @@ window.thStart=async()=>{
    const id=/^[\w-]+$/.test(rawId||'')?rawId:null;
    const rawKey=url.searchParams.get('resourcekey');
    const resourceKey=/^[\w-]+$/.test(rawKey||'')?rawKey:null;
-   cards.append(thDriveRecords.card({name,url:url.href,folder,id,resourceKey,
-    legalFolderPhotoFor:folder?legalFolderPhotoFor:undefined
+   const redundantLauncher=folder&&(
+    (section==='Personal Legal Records'&&sourceName==='Open Personal Legal Records')||
+    (section==='Record Sealing & Pardon'&&sourceName==='Open Record Sealing & Pardon')
+   );
+   const name=section==='Personal Legal Records'&&sourceName==='Criminal Records & Rights Restoration'
+    ?'Criminal Cases & Rights':sourceName;
+   recordsBySection.push({section,name,url:url.href,folder,id,resourceKey,redundantLauncher});
+  }
+  const linkedFolderIds=new Set(recordsBySection.filter(record=>record.folder&&record.id).map(record=>record.id));
+  for(const record of recordsBySection){
+   if(record.section!==key||record.redundantLauncher)continue;
+   cards.append(thDriveRecords.card({...record,
+    legalFolderPhotoFor:record.folder?legalFolderPhotoFor:undefined,
+    excludedFolderIds:linkedFolderIds
    }));
   }
   if(!cards.children.length){const empty=document.createElement('p');empty.textContent='No records are filed here yet.';cards.append(empty)}
