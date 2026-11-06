@@ -1,0 +1,46 @@
+.home-library{width:min(100%,1400px);margin-inline:auto;padding:clamp(16px,3vw,38px) clamp(14px,3vw,42px) 48px;color:#eef5ff}
+.home-library,.home-library *{box-sizing:border-box}
+.library-hero{position:relative;overflow:hidden;padding:clamp(22px,4vw,52px);border:1px solid #355375;border-radius:20px;background:radial-gradient(ellipse at 90% 0%,#244965,transparent 65%),linear-gradient(125deg,#13243b,#101a2b);box-shadow:0 22px 52px #050a134d}
+.library-kicker{font-size:.72rem;font-weight:800;letter-spacing:.18em;color:#a5d9e8}
+.library-hero h1{margin:.45rem 0 .35rem;font-size:clamp(2rem,5vw,3.6rem);line-height:1.08;letter-spacing:-.045em}
+.library-hero p{margin:.7rem 0 1.7rem;color:#c5d6e9;max-width:50ch}
+#library-search{max-width:710px}
+#library-search label,.library-controls label{display:block;font-size:.82rem;font-weight:700;color:#d4e3f5;margin-bottom:.4rem}
+.library-search-row{display:flex;gap:.55rem}
+.home-library :is(input[type=search],select){background:#101b2b;color:#f1f7ff;border:1px solid #5b789d;border-radius:9px;font:inherit;padding:.7rem .8rem}
+#library-query{flex:1;min-width:0}
+#library-query::placeholder{color:#9ab1cb}
+.home-library button{font:inherit;cursor:pointer}
+.home-library button:disabled{cursor:wait;opacity:.65}
+.library-search-row button{padding:.65rem 1.35rem;background:#a9e3e7;color:#112c39;border:1px solid #bdebef;border-radius:9px;font-weight:800}
+.library-catalog{margin-top:1.7rem}
+.library-collections{display:flex;flex-wrap:wrap;gap:.55rem;border:0;padding:0;margin:0 0 1.55rem;min-inline-size:0}
+.library-collections legend{color:#b2c7df;font-size:.82rem;font-weight:700;margin-bottom:.55rem}
+.library-collections label{position:relative;cursor:pointer}
+.library-collections input{position:absolute;opacity:0;width:1px;height:1px}
+.library-collections label>span{display:block;border:1px solid #3c5574;background:#151f30;border-radius:99px;color:#d0dff1;padding:.5rem .86rem;font-weight:700;font-size:.9rem}
+.library-collections input:checked+span{border-color:#9de3e5;background:#234552;color:#e3ffff}
+.library-collections small:not(:empty){margin-left:.3em;color:#bad3eb;font-variant-numeric:tabular-nums}
+.home-library :focus-visible,.library-collections input:focus-visible+span{outline:2px solid #a9e3e7;outline-offset:3px}
+.library-results-heading{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem}
+.library-results-heading h2{margin:0;font-size:1.45rem;letter-spacing:-.02em}
+.library-results-heading p{margin:.35rem 0 0;color:#b4c8df}
+.library-controls{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+.library-controls label{margin:0}
+.library-controls select{padding:.46rem .58rem}
+#library-refresh,#library-more{padding:.53rem .8rem;border:1px solid #496682;border-radius:8px;background:#17263a;color:#e1efff;font-weight:650}
+#library-notice{color:#ffe0a8;border:1px solid #84673c;background:#302719;border-radius:8px;padding:.7rem .9rem}
+.library-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,235px),1fr));gap:.85rem;margin:0;padding:0;list-style:none}
+.library-document{width:100%;height:100%;display:flex;flex-direction:column;align-items:flex-start;gap:.55rem;min-height:165px;padding:1rem;border:1px solid #38516e;border-radius:12px;background:#141f31;color:#edf5ff;text-align:left;overflow-wrap:anywhere}
+.library-document:hover{border-color:#8daed0;background:#1a2c42}
+.library-file-tag{border-radius:5px;background:#234c59;color:#bfeff2;padding:.19rem .45rem;font-size:.7rem;font-weight:800;letter-spacing:.07em}
+[data-collection=Recipes] .library-file-tag{background:#533c27;color:#ffe0b2}
+[data-collection=Purchases] .library-file-tag{background:#3d345e;color:#eadcff}
+.library-document strong{font-size:1rem;line-height:1.35}
+.library-path{color:#b1c4dc;font-size:.8rem}
+.library-open{margin-top:auto;padding-top:.35rem;color:#a9e3e7;font-weight:700;font-size:.82rem}
+#library-more{display:block;margin:1rem auto}
+#library-more[hidden],#library-notice[hidden]{display:none}
+.library-preview-frame{width:100%;min-height:65vh;background:#111b2a;border:1px solid #486383;border-radius:8px}
+.library-preview-text{white-space:pre-wrap;overflow-wrap:anywhere;padding:1rem;border-radius:8px;background:#0d1928;color:#e0efff}
+@media(max-width:520px){.library-search-row button{padding-inline:.7rem}.library-controls label{width:100%}}

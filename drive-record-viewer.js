@@ -56,11 +56,12 @@ function stridersSubfolderCover(name, parentCover){
 const legalMimePrefix='application/vnd.google-apps.';
 let legalPdfModule;
 async function legalDriveRequest(path,params,record,signal){
- if(!thAuthorized())throw Error('Sign in again to view this file.');
+ if(!thAuthorized())throw Object.assign(Error('Sign in again to view this file.'),{status:401});
  const headers={Authorization:'Bearer '+thToken};
- if(record.resourceKey)headers['X-Goog-Drive-Resource-Keys']=record.id+'/'+record.resourceKey;
+ const keys=record.resourceKeys||(record.resourceKey?[record.id+'/'+record.resourceKey]:[]);
+ if(keys.length)headers['X-Goog-Drive-Resource-Keys']=keys.join(',');
  const response=await fetch('https://www.googleapis.com/drive/v3/files'+path+'?'+new URLSearchParams(params),{headers,signal});
- if(!response.ok)throw Error('Drive could not load this record.');
+ if(!response.ok)throw Object.assign(Error('Drive could not load this record.'),{status:response.status});
  return response;
 }
 async function legalFolderPage(record,pageToken,signal){
@@ -293,6 +294,14 @@ async function showLegalRecord(record,back){
  actions.replaceChildren();
  if(record.driveAction&&record.url)actions.append(legalLink(record.folder?'Open full Drive folder':'Open in Drive',record.url));
  legalDownloadAction(actions,record);
+ if(record.libraryActions){
+  const email=document.createElement('a');
+  email.textContent='Email Drive link';
+  const url=new URL(record.url);
+  if(record.resourceKey)url.searchParams.set('resourcekey',record.resourceKey);
+  email.href='mailto:?subject='+encodeURIComponent(record.displayName)+'&body='+encodeURIComponent(url.href+'\n\nThe recipient will need access to the file in Google Drive.');
+  actions.append(email);
+ }
  if(record.downloadReport){
   const download=document.createElement('button');
   download.type='button';download.textContent='Download PDF';
@@ -310,6 +319,22 @@ async function showLegalRecord(record,back){
  if(!record.folder){
   status.textContent='Loading preview…';
   try{
+   const isText=record.libraryActions&&record.mime?.startsWith('text/')&&record.size<=1024*1024;
+   if(isText){
+    const response=await legalDriveRequest('/'+encodeURIComponent(record.id),{alt:'media',supportsAllDrives:'true'},record,request.signal);
+    const value=await response.text();
+    if(request.signal.aborted)return;
+    const preview=document.createElement('pre');preview.className='library-preview-text';preview.textContent=value;
+    status.textContent='';legalViewerBody.append(preview);return;
+   }
+   const supported=/^(application\/(pdf|vnd\.google-apps\.(document|spreadsheet|presentation))|image\/(jpeg|png|webp|gif|bmp|avif))$/;
+   if(record.libraryActions&&!supported.test(record.mime)){
+    const url=new URL('https://drive.google.com/file/d/'+encodeURIComponent(record.id)+'/preview');
+    if(record.resourceKey)url.searchParams.set('resourcekey',record.resourceKey);
+    const frame=document.createElement('iframe');frame.className='library-preview-frame';frame.title=record.displayName;
+    frame.src=url.href;status.textContent='If this format cannot be previewed here, use Open in Drive or Download.';
+    legalViewerBody.append(frame);return;
+   }
    const blob=await legalMedia(record,request.signal);
    if(request.signal.aborted)return;
    if(blob.type.startsWith('image/')){
@@ -426,5 +451,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest };
 })();
