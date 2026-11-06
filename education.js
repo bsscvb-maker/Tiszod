@@ -92,8 +92,7 @@ function renderPeople(){
   const hidden=hiddenPeople.has(person);
   tile.hidden=hidden&&!showHiddenPeople;
   const button=tile.querySelector('[data-education-hide]');
-  button.textContent=hidden?'Show':'Hide';
-  button.setAttribute('aria-label',(hidden?'Show ':'Hide ')+person);
+  button.setAttribute('aria-checked',String(hidden));
  }
 }
 
@@ -173,7 +172,8 @@ function renderBooks(shown,html){
 
 function render(){
  const view=selectedPerson||'Todd';
- const q=$('education-search').value.trim().toLowerCase();
+ const landing=!dedicated&&!selectedPerson;
+ const q=landing?'':$('education-search').value.trim().toLowerCase();
  renderPeople();
  $('education-person-heading').hidden=dedicated||!selectedPerson;
  $('education-person-title').textContent=personLabels[view];
@@ -181,7 +181,7 @@ function render(){
  for(const option of $('education-category').options)if(['Books','Career'].includes(option.value))option.hidden=dedicated||view==='Todd';
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
- workspace.classList.toggle('education-landing',!selectedPerson);
+ workspace.classList.toggle('education-landing',landing);
  const showDocuments=Boolean(dedicated||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
  $('education-documents').hidden=!showDocuments;
  if(!showDocuments)return;
@@ -212,13 +212,17 @@ document.querySelector('.education').addEventListener('click',e=>{
   renderPeople();
   return;
  }
- if(b.dataset.educationHide){
+ const unhideAll=b.id==='education-unhide-all';
+ if(unhideAll||b.dataset.educationHide){
   const person=b.dataset.educationHide;
-  if(hiddenPeople.has(person))hiddenPeople.delete(person);else hiddenPeople.add(person);
+  if(unhideAll)hiddenPeople.clear();
+  else if(hiddenPeople.has(person))hiddenPeople.delete(person);
+  else hiddenPeople.add(person);
   if(!hiddenPeople.size)showHiddenPeople=false;
   try{localStorage.setItem(visibilityKey,JSON.stringify([...hiddenPeople]));}catch{}
   renderPeople();
-  if(b.closest('[hidden]'))$('education-show-hidden').focus();
+  if(unhideAll)$('education-people').querySelector('[data-person]').focus();
+  else if(b.closest('[hidden]'))$('education-show-hidden').focus();
   return;
  }
  if(b.dataset.person||b.hasAttribute('data-education-home')){selectedPerson=b.dataset.person||'';selectedCategory='';selectedFolder='';$('education-search').value='';$('education-category').value='';$('education-view').value='active';resetBookFilters();recordPage=1;render();if(selectedPerson)$('education-person-title').focus();else ($('education-people').querySelector('[data-education-tile]:not([hidden]) [data-person]')||$('education-show-hidden')).focus();return;}
