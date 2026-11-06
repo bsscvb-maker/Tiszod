@@ -22,8 +22,30 @@ window.thStart=async()=>{const rows=await thValues("'Education Records'!A1:B2000
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
-const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexa'};
-function owner(d){const name=String(d.person||'').trim().toLowerCase();return name==='aiden'?'Aiden':['alexis','alexa'].includes(name)?'Alexis':'Todd';}
+const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexis',Tracy:'Tracy'};
+const visibilityKey='tiszod-education-hidden-people';
+let hiddenPeople=new Set(),showHiddenPeople=false;
+try{
+ const saved=JSON.parse(localStorage.getItem(visibilityKey)||'[]');
+ if(Array.isArray(saved))hiddenPeople=new Set(saved.filter(name=>Object.hasOwn(personLabels,name)));
+}catch{}
+function renderPeople(){
+ $('education-people').hidden=Boolean(selectedPerson);
+ $('education-visibility').hidden=Boolean(selectedPerson)||!hiddenPeople.size;
+ const toggle=$('education-show-hidden');
+ toggle.textContent=showHiddenPeople?'Hide hidden people':'Show hidden people ('+hiddenPeople.size+')';
+ toggle.setAttribute('aria-pressed',String(showHiddenPeople));
+ for(const tile of $('education-people').querySelectorAll('[data-education-tile]')){
+  const person=tile.dataset.educationTile;
+  const hidden=hiddenPeople.has(person);
+  tile.hidden=hidden&&!showHiddenPeople;
+  const button=tile.querySelector('[data-education-hide]');
+  button.textContent=hidden?'Show':'Hide';
+  button.setAttribute('aria-label',(hidden?'Show ':'Hide ')+person);
+ }
+}
+
+function owner(d){const name=String(d.person||'').trim().toLowerCase();return name==='aiden'?'Aiden':['alexis','alexa'].includes(name)?'Alexis':name==='tracy'?'Tracy':'Todd';}
 const isEducation=true;
 function title(d){
  let n=String(d.name||'Document').replace(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|rtf|epub|txt)$/i,'').replace(/_/g,' ');
@@ -101,14 +123,14 @@ function renderBooks(shown,html){
 function render(){
  const view=selectedPerson||'Todd';
  const q=$('education-search').value.trim().toLowerCase();
- $('education-people').hidden=Boolean(selectedPerson);
+ renderPeople();
  $('education-person-heading').hidden=!selectedPerson;
  $('education-person-title').textContent=personLabels[view];
  $('education-search-label').textContent='Search '+personLabels[view]+'’s documents';
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
  workspace.classList.toggle('education-landing',!selectedPerson);
- const showDocuments=Boolean(q||selectedPerson==='Todd'||(selectedPerson&&records.some(r=>owner(r.data)===view)));
+ const showDocuments=Boolean(q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view)));
  $('education-documents').hidden=!showDocuments;
  if(!showDocuments)return;
  const booksView=selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;
@@ -123,7 +145,7 @@ function render(){
  if(isEducation&&selectedFolder){shown=shown.filter(r=>(r.data.folder||'')===selectedFolder||r.data.folder?.startsWith(selectedFolder+'/'));html+='<button data-record-back="category">← '+esc(selectedCategory||'Categories')+'</button><strong>'+esc(selectedFolder)+'</strong>';}
  html+='</div>';
  if(!q&&!person&&!category&&!deleted&&!chosen&&!isEducation){heading.textContent='Choose a person';$('education-count').textContent=list.length+' documents';grid.innerHTML=[...new Set(['Todd','Aiden','Alexis','Heather','Tracy',...list.map(r=>r.data.person||'General')])].map(p=>groupCard(p,list.filter(r=>(r.data.person||'General')===p).length,'data-person',p)).join('');return}
- if(isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent='Choose a category';$('education-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('');return}
+ if(isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent=list.length?'Choose a category':'Documents';$('education-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('')||'<p class="record-empty">No documents here yet.</p>';return}
  if(isEducation&&selectedCategory!=='Books'&&selectedCategory&&!selectedFolder&&!q&&!category&&!deleted){const groups=[...new Set(shown.map(r=>r.data.folder?.split('/')[0]).filter(Boolean))].sort();if(groups.length){heading.textContent=selectedCategory;const loose=shown.filter(r=>!r.data.folder);$('education-count').textContent=shown.length+' records';grid.innerHTML=html+groups.map(f=>groupCard(f,shown.filter(r=>r.data.folder===f||r.data.folder?.startsWith(f+'/')).length,'data-folder',f)).join('')+loose.map(card).join('');return}}
  heading.textContent=q?'Search results':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
  $('education-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
@@ -133,7 +155,21 @@ function render(){
 document.querySelector('.education').addEventListener('click',e=>{
  const link=e.target.closest('[data-read-book]');if(link){e.preventDefault();const r=records.find(r=>r.id===link.dataset.readBook);const id=r?.data.url.match(/\/d\/([^/]+)/)?.[1];if(id&&window.thReadBook)window.thReadBook(id,title(r.data),r.data.url);return;}
  const b=e.target.closest('button');if(!b)return;
- if(b.dataset.person||b.hasAttribute('data-education-home')){selectedPerson=b.dataset.person||'';selectedCategory='';selectedFolder='';$('education-search').value='';$('education-category').value='';$('education-view').value='active';resetBookFilters();recordPage=1;render();if(selectedPerson)$('education-person-title').focus();else $('education-people').querySelector('button').focus();return;}
+ if(b.id==='education-show-hidden'){
+  showHiddenPeople=!showHiddenPeople;
+  renderPeople();
+  return;
+ }
+ if(b.dataset.educationHide){
+  const person=b.dataset.educationHide;
+  if(hiddenPeople.has(person))hiddenPeople.delete(person);else hiddenPeople.add(person);
+  if(!hiddenPeople.size)showHiddenPeople=false;
+  try{localStorage.setItem(visibilityKey,JSON.stringify([...hiddenPeople]));}catch{}
+  renderPeople();
+  if(b.closest('[hidden]'))$('education-show-hidden').focus();
+  return;
+ }
+ if(b.dataset.person||b.hasAttribute('data-education-home')){selectedPerson=b.dataset.person||'';selectedCategory='';selectedFolder='';$('education-search').value='';$('education-category').value='';$('education-view').value='active';resetBookFilters();recordPage=1;render();if(selectedPerson)$('education-person-title').focus();else ($('education-people').querySelector('[data-education-tile]:not([hidden]) [data-person]')||$('education-show-hidden')).focus();return;}
  if(b.dataset.recordCategory){selectedCategory=b.dataset.recordCategory;selectedFolder='';recordPage=1;render()}
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
  if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedCategory='';$('education-person').value='';$('education-category').value='';$('education-search').value=''}recordPage=1;render()}
