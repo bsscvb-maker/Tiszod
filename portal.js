@@ -83,13 +83,13 @@
   }
   if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html')&&document.body.dataset.thPage==='education';a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts &amp; Access</span>';nav.append(a);}
-  if (nav && !nav.querySelector('[href="education.html?view=career"]')) {
+  if (nav && !nav.querySelector('[href="career.html"]')) {
     const link = document.createElement('a');
-    const current = document.body.dataset.thPage === 'career-employment';
+    const current = document.body.dataset.thPage === 'career';
     link.className = 'th-nav-link' + (current ? ' active' : '');
-    link.href = 'education.html?view=career';
+    link.href = 'career.html';
     if (current) link.setAttribute('aria-current', 'page');
-    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true">▣</span><span>Career &amp; Employment</span>';
+    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true">▣</span><span>Career</span>';
     nav.append(link);
   }
   if (nav && !nav.querySelector('[href="home-library.html"]')) {
@@ -104,7 +104,7 @@
   // Keep navigation order and icon spacing consistent on every page.
   if (nav) {
     const badges = [
-      ['education.html?view=career', '#635038', '<rect x="6" y="11" width="20" height="13" rx="2"/><path d="M12 11V8h8v3M6 16h20m-10 0v3"/>'],
+      ['career.html', '#635038', '<rect x="6" y="11" width="20" height="13" rx="2"/><path d="M12 11V8h8v3M6 16h20m-10 0v3"/>'],
       ['home-library.html', '#28606e', '<path d="M6 10h7l2 3h11v11H6zM10 17h12m-12 3h8"/>'],
       ['family.html', '#575080', '<circle cx="11.5" cy="11.5" r="3"/><circle cx="21" cy="13" r="2.5"/><path d="M5.5 23v-2a6 6 0 0 1 12 0v2h-12Zm14.5-5.5a5 5 0 0 1 6.5 4.7V23H21"/>'],
       ['education.html', '#234983', '<path d="m6 13 10-5 10 5-10 5-10-5Zm4 2v6q6 5 12 0v-6m4-2v8"/>'],
@@ -131,7 +131,7 @@
     if(bm)bm.innerHTML='<span class="th-nav-icon th-bm-icon" aria-hidden="true">B&amp;M</span><span>Black &amp; Mild</span>';
     const groups=[
       ['Overview',['./','plan-tracker.html']],
-      ['Workspaces',['legal.html','identification.html','education.html?view=career','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','freebirds.html','hobbies.html','black-mild.html']],
+      ['Workspaces',['legal.html','identification.html','career.html','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','freebirds.html','hobbies.html','black-mild.html']],
       ['Vehicles & gear',['vehicles.html','equipment.html','watercraft.html']],
       ['System',['accounts.html','admin.html']]
     ];
@@ -255,7 +255,7 @@
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['black-mild.html','education.html?view=career','education.html','equipment.html','family.html','finance.html','freebirds.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
+  const order=[['Main',['./']],['Modules',['black-mild.html','career.html','education.html','equipment.html','family.html','finance.html','freebirds.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
@@ -266,8 +266,8 @@
  const heading=main.querySelector('.dash-heading');heading?.querySelector('h1')?.replaceChildren(document.createTextNode('Personal Command Center'));
  const h2=grid.querySelector('h2');if(h2)h2.textContent='Modules';
  grid.classList.add('th-module-grid');grid.setAttribute('aria-label','Personal modules');
- const modulePaths=['plan-tracker.html','finance.html','education.html?view=career','home-library.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','hobbies.html','medical.html','admin.html'];
- for(const path of ['plan-tracker.html','black-mild.html','home-library.html','education.html?view=career']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');const [name,description]={'plan-tracker.html':['Task Tracker','Your tasks, priorities, and next steps'],'black-mild.html':['Black & Mild','Your Black & Mild records'],'home-library.html':['Library','Find manuals, recipes, and purchase records'],'education.html?view=career':['Career & Employment','Employment history, résumé, and work records']}[path];strong.textContent=name;small.textContent=description;body.append(strong,small);a.append(icon,body);grid.append(a)}
+ const modulePaths=['plan-tracker.html','finance.html','career.html','home-library.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','hobbies.html','medical.html','admin.html'];
+ for(const path of ['plan-tracker.html','black-mild.html','home-library.html','career.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');const [name,description]={'plan-tracker.html':['Task Tracker','Your tasks, priorities, and next steps'],'black-mild.html':['Black & Mild','Your Black & Mild records'],'home-library.html':['Library','Find manuals, recipes, and purchase records'],'career.html':['Career','Employment history, résumé, and work records']}[path];strong.textContent=name;small.textContent=description;body.append(strong,small);a.append(icon,body);grid.append(a)}
  const cards=[...grid.querySelectorAll('a.workspace')];cards.sort((a,b)=>modulePaths.indexOf(a.getAttribute('href'))-modulePaths.indexOf(b.getAttribute('href'))).forEach(a=>{a.classList.add('th-module-card');const icon=a.querySelector('.workspace-icon'),body=[...a.children].find(c=>c.querySelector('strong'));const art=document.createElement('span');art.className='th-module-art';if(icon)art.append(icon);if(body)body.classList.add('th-module-body');a.prepend(art);grid.append(a)});
  const title=document.createElement('div');title.className='th-module-heading';const label=document.createElement('h2');label.textContent='Modules';title.append(label);
  const stats=main.querySelector('.stats');if(stats)heading?.after(stats);stats?.after(title,grid);

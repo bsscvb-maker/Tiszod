@@ -2,7 +2,8 @@
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let records=[],editing=null,ready=false,page=1;
 const viewMode=new URLSearchParams(location.search).get('view');
-const bookMode=viewMode==='books',careerMode=viewMode==='career';
+const careerMode=location.pathname.endsWith('/career.html');
+const bookMode=!careerMode&&viewMode==='books';
 const dedicated=bookMode||careerMode;
 const {owner,isBook,isCareer,readRecords}=thLibraryBooks;
 if(bookMode){
@@ -21,37 +22,41 @@ if(bookMode){
 }
 
 if(careerMode){
- document.title='TisZod · Career & Employment';
- document.body.dataset.thPage='career-employment';
- document.querySelector('.education-heading h1').textContent='Career & Employment';
- document.querySelector('.education-heading p').textContent='Career documents, employment history, and work records.';
- document.querySelector('.th-app-topbar strong').textContent='Career & Employment';
- document.querySelector('.th-app-topbar small').textContent='Personal workspace';
  $('education-add').textContent='+ Add career document';
  $('education-category').closest('label').hidden=true;
  for(const field of ['person','category'])$('education-form').elements[field].closest('label').hidden=true;
- $('education-status').before(Object.assign(document.createElement('section'),{id:'career-drive'}));
 }
 async function loadCareerFolder(){
  const host=$('career-drive');
  const status=document.createElement('p');
  status.setAttribute('role','status');
- status.textContent='Loading the Career & Employment folder…';
+ status.textContent='Loading your Career folders…';
  host.replaceChildren(status);
  try{
   const roots=await thDriveRecords.findFolders('TisZod');
   const folders=(await Promise.all(roots.map(root=>thDriveRecords.children(root)))).flat().filter(file=>file.folder);
   const current=folders.filter(file=>file.name==='Career');
   const matches=current.length?current:folders.filter(file=>file.name==='Career & Employment');
-  if(matches.length!==1)throw Error('Could not locate the Career & Employment folder.');
+  if(matches.length!==1)throw Error('Could not locate the Career folder.');
+  const root=matches[0];
+  const entries=await thDriveRecords.children(root);
+  if(!status.isConnected)return;
+  entries.sort((a,b)=>Number(b.folder)-Number(a.folder)||a.name.localeCompare(b.name));
   const heading=document.createElement('h2');
-  heading.textContent='Career & Employment in Drive';
+  heading.textContent='Browse Career';
   const cards=document.createElement('div');
   cards.className='legal-cards';
-  cards.append(thDriveRecords.card({...matches[0],driveAction:true,cardLabel:'Browse career folders'}));
-  host.replaceChildren(heading,cards);
+  cards.append(...entries.map(entry=>thDriveRecords.card({...entry,driveAction:true,cardLabel:entry.folder?'Browse '+entry.name:'Preview '+entry.name})));
+  const drive=document.createElement('a');
+  drive.className='education-open career-drive-link';
+  drive.href=root.url;
+  drive.target='_blank';
+  drive.rel='noopener';
+  drive.textContent='Open Career in Drive';
+  status.textContent=entries.length?'':'No folders or documents are available here yet.';
+  host.replaceChildren(heading,drive,cards,status);
  }catch{
-  status.textContent='The Career & Employment Drive folder could not load. Use Refresh to try again.';
+  status.textContent='The Career Drive folder could not load. Use Refresh to try again.';
  }
 }
 
@@ -72,7 +77,7 @@ async function loadPortraits(){
   }
  }catch{}
 }
-window.thStart=async()=>{records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(careerMode)void loadCareerFolder();else if(!bookMode)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
+window.thStart=async()=>{if(careerMode)void loadCareerFolder();records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
@@ -176,10 +181,12 @@ function render(){
  const view=selectedPerson||'Todd';
  const landing=!dedicated&&!selectedPerson;
  const q=landing?'':$('education-search').value.trim().toLowerCase();
- renderPeople();
- $('education-person-heading').hidden=dedicated||!selectedPerson;
- $('education-person-title').textContent=personLabels[view];
- $('education-search-label').textContent=bookMode?'Search books':careerMode?'Search career documents':'Search '+personLabels[view]+'’s documents';
+ if(!careerMode){
+  renderPeople();
+  $('education-person-heading').hidden=dedicated||!selectedPerson;
+  $('education-person-title').textContent=personLabels[view];
+ }
+ $('education-search-label').textContent=bookMode?'Search books':careerMode?'Search saved career documents':'Search '+personLabels[view]+'’s documents';
  for(const option of $('education-category').options)if(['Books','Career'].includes(option.value))option.hidden=dedicated||view==='Todd';
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
@@ -201,7 +208,7 @@ function render(){
  if(!q&&!person&&!category&&!deleted&&!chosen&&!isEducation){heading.textContent='Choose a person';$('education-count').textContent=list.length+' documents';grid.innerHTML=[...new Set(['Todd','Aiden','Alexis','Heather','Tracy',...list.map(r=>r.data.person||'General')])].map(p=>groupCard(p,list.filter(r=>(r.data.person||'General')===p).length,'data-person',p)).join('');return}
  if(!dedicated&&isEducation&&!selectedCategory&&!q&&!category&&!deleted){heading.textContent=list.length?'Choose a category':'Documents';$('education-count').textContent=list.length+' records';grid.innerHTML=['School','Certificates','Books','Career','Other'].filter(c=>list.some(r=>(r.data.category||'Other')===c)).map(c=>groupCard(c,list.filter(r=>(r.data.category||'Other')===c).length,'data-record-category',c)).join('')||'<p class="record-empty">No documents here yet.</p>';return}
  if(isEducation&&selectedCategory!=='Books'&&selectedCategory&&!selectedFolder&&!q&&!category&&!deleted){const groups=[...new Set(shown.map(r=>r.data.folder?.split('/')[0]).filter(Boolean))].sort();if(groups.length){heading.textContent=selectedCategory;const loose=shown.filter(r=>!r.data.folder);$('education-count').textContent=shown.length+' records';grid.innerHTML=html+groups.map(f=>groupCard(f,shown.filter(r=>r.data.folder===f||r.data.folder?.startsWith(f+'/')).length,'data-folder',f)).join('')+loose.map(card).join('');return}}
- heading.textContent=q?'Search results':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
+ heading.textContent=q?'Search results':careerMode?'Saved career documents':isEducation?(selectedFolder||selectedCategory||category||'Documents'):(chosen||'Documents');
  $('education-count').textContent=shown.length+' '+(shown.length===1?'document':'documents');
  if(booksView){if(bookMode)heading.textContent='Book collection';renderBooks(shown,bookMode?'':html);return}
  grid.innerHTML=(careerMode?'':html)+shown.sort((a,b)=>title(a.data).localeCompare(title(b.data))).map(card).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
