@@ -38,7 +38,7 @@ const careerCovers = new Map([
  ['Employers/Advance', 'assets/career/employers/advance.svg'],
  ['Employers/HireGenics', 'assets/career/employers/hiregenics.svg'],
  ['Employers/IQVIA', 'assets/career/employers/iqvia.svg'],
- ['Employers/PC Mobile One', 'assets/career/employers/pc-mobile-one.webp'],
+ ['Employers/PC Mobile One', 'assets/career/employers/pc-mobile-one-ad.png'],
  ['Career Development', 'assets/family-unique/education-award.webp'],
  ['Resumes and Job Search', 'command-photos/interview.jpg'],
  ['Employment Documents', 'assets/family-unique/folders.webp'],
