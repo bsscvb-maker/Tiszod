@@ -1,16 +1,5 @@
 /* Classify the signed-in Drive catalog by product, using the filename and its containing folder. */
 (() => {
-  const categories = {
-    Appliances: 'assets/home-library/collection-covers.webp',
-    Automotive: 'command-photos/vehicles.jpg',
-    Cycling: 'assets/family/riding.webp',
-    Electronics: 'command-photos/education.jpg',
-    Household: 'assets/hobbies/striders-board.webp',
-    'Outdoor & garden': 'assets/hobbies/indian-cove.webp',
-    Pets: 'command-photos/pets.jpg',
-    'Recovered files': 'assets/hobbies/striders-archive.webp',
-    Tools: 'command-photos/equipment.jpeg'
-  };
   const products = [
     {
       match: /\bwed4815ew1?\b/i, title: 'Whirlpool WED4815EW1 Dryer', category: 'Appliances', family: 'Dryers',
@@ -134,9 +123,9 @@
     }
     for (const file of files) {
       const meta = identify(file);
-      const category = node(root, meta.category, {art: categories[meta.category]});
-      const family = node(category, meta.family, {art: category.art});
-      const group = node(family, meta.title, {art: family.art, photo: meta.photo, source: meta.source, files: []});
+      const category = node(root, meta.category);
+      const family = node(category, meta.family);
+      const group = node(family, meta.title, {photo: meta.photo, source: meta.source, files: []});
       group.files.push(file);
       for (const item of [category, family, group]) item.count++;
       groups.set(group.id, group);

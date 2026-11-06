@@ -272,9 +272,12 @@
       for (const year of [...new Set(records.map(r=>eventDate(r).slice(0,4)).filter(Boolean))].sort().reverse()) $('medical-year').add(new Option(year,year));
       const order = ['Billing','Dental','Immunizations','Insurance','Test Result','Prescriptions','Providers'];
       const rank = name => order.includes(name) ? order.indexOf(name) : order.length;
+      const usedMedicalArt = new Set(['providers']);
       const cards = folders.map(folder => {
         const category=canonical(folder.name);
-        const [medicalArt,medicalCover] = collections[category] || ['providers','blue'];
+        const [art,medicalCover] = collections[category] || [null,'blue'];
+        const medicalArt = usedMedicalArt.has(art) ? undefined : art;
+        if (medicalArt) usedMedicalArt.add(medicalArt);
         return thMedicalFolders.enrich({...folder,originalName:folder.name,name:folderLabels[category] || folder.name,medicalCover,medicalArt},{
           records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
         });

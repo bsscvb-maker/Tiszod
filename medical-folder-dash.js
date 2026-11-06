@@ -30,9 +30,9 @@ window.thMedicalFolders = (() => {
     const {records,date,detail,summary,open} = options;
     const section=folder.name;
     const children=records.filter(record=>record.path[0]===folder.name || record.path[0]===folder.originalName);
-    const virtual=(name,files,dashboard,art)=>({
+    const virtual=(name,files,dashboard)=>({
       ...folder,id:folder.id+'-'+name.replace(/[^\w]+/g,'-'),name,virtualFiles:files,
-      medicalArt:art||folder.medicalArt,dashboard,hideSupporting:true
+      medicalArt:undefined,dashboard,hideSupporting:true
     });
     function shell(heading,description){
       const box=make('section');box.className='medical-folder-dashboard';
@@ -97,8 +97,8 @@ window.thMedicalFolders = (() => {
       const vision=children.filter(record=>record.kind==='Eyeglass prescription');
       const meds=children.filter(record=>record.kind!=='Eyeglass prescription');
       return {...folder,virtualFiles:[
-        {...virtual('Vision',vision,back=>visionView(vision,back),'vision'),hideSupporting:true},
-        virtual('Medications',meds,back=>medicationView(meds,back),'prescriptions')
+        {...virtual('Vision',vision,back=>visionView(vision,back)),hideSupporting:true},
+        virtual('Medications',meds,back=>medicationView(meds,back))
       ]};
     }
     if(section==='Insurance'){
@@ -107,7 +107,7 @@ window.thMedicalFolders = (() => {
       const order=['UnitedHealthcare','Trustmark','Blue Cross Blue Shield','Optima','Delta Dental','Aetna','CVS Caremark','Unsorted insurance documents'];
       const rank=name=>order.includes(name)?order.indexOf(name):order.length-2;
       const carriers=[...groups].sort(([a],[b])=>rank(a)-rank(b)).filter(([name,files])=>files.length||insuranceMatchers.slice(0,4).some(([carrier])=>carrier===name)).map(([name,files])=>({
-        ...virtual(name,files,back=>recordsView(files,'Coverage records','Record dates are shown below. Coverage start and end remain unverified.',back),'insurance'),
+        ...virtual(name,files,back=>recordsView(files,'Coverage records','Record dates are shown below. Coverage start and end remain unverified.',back)),
         medicalLogo:Boolean(logoFiles[name]),medicalCoverImage:logoFiles[name]?'assets/medical/carriers/'+logoFiles[name]:undefined
       }));
       return {...folder,virtualFiles:[...carriers,{...folder,name:'Original folder archive'}]};
@@ -158,7 +158,7 @@ window.thMedicalFolders = (() => {
         groups.get(name).push(record);
       }
       return {...folder,virtualFiles:[...groups].sort(([a],[b])=>a.localeCompare(b)).map(([name,files])=>
-        virtual(name,files,back=>recordsView(files,name,'Visits, correspondence, and supporting records.',back),'providers'))};
+        virtual(name,files,back=>recordsView(files,name,'Visits, correspondence, and supporting records.',back)))};
     }
     return {...folder,dashboard:back=>recordsView(children,section+' overview','Newest dated records first. Open a supporting document for full details.',back),hideSupporting:true};
   }

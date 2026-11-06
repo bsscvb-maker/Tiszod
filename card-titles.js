@@ -14,6 +14,7 @@
   '.task-title-button > strong',
   '.focus-card > :is(h2,button)',
   '.library-card-body > strong',
+  '.manual-card > strong',
   '.library-document > strong',
   '.fd-folder > strong',
   '.fd-file h3',

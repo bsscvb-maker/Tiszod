@@ -53,13 +53,6 @@ const stridersSubfolderCovers=new Map([
  ['Application','striders-application'],
  ['Head Shots','striders-headshots']
 ]);
-function stridersSubfolderCover(name, parentCover){
- const matched=stridersSubfolderCovers.get(name);
- if(matched)return matched;
- if(/^20\d{2}$/.test(name)&&parentCover==='striders-board')return 'striders-archive';
- if(parentCover==='striders-archive'&&/^\d{2}[ .-]20\d{2}$/.test(name))return 'striders-calendar';
- return parentCover;
-}
 const legalMimePrefix='application/vnd.google-apps.';
 let legalPdfModule;
 async function legalDriveRequest(path,params,record,signal){
@@ -171,46 +164,22 @@ async function legalDocumentCover(record){
   return image?{blob:image,photo:false,fitPage:!selected}:null;
  }finally{await task.destroy()}
 }
-const legalFolderThemes=[
- {pattern:/divorce|dissolution|separation|marriage/i,tone:'plum',art:'<path d="M65 26 59 46l8 9-8 16 6 15" stroke-dasharray="4 5"/><circle cx="44" cy="57" r="13"/><circle cx="83" cy="57" r="13"/><path d="m35 43 4-7h10l4 7m21 0 4-7h10l4 7"/>'},
- {pattern:/sealing|pardon|expungement|restoration/i,tone:'teal',art:'<rect x="42" y="48" width="44" height="31" rx="5"/><path d="M51 48V38a13 13 0 0 1 26 0v10m-13 12v7"/>'},
- {pattern:/support|custody|family/i,tone:'teal',art:'<circle cx="48" cy="42" r="8"/><circle cx="80" cy="42" r="8"/><circle cx="64" cy="57" r="6"/><path d="M34 67v-3a14 14 0 0 1 20-13m40 16v-3a14 14 0 0 0-20-13M52 80v-3a12 12 0 0 1 24 0v3"/>'},
- {pattern:/settlement|claims?|litigation|leasing|kroger|refund/i,tone:'blue',art:'<rect x="38" y="30" width="52" height="44" rx="4"/><path d="M47 41h21m-21 9h15m-15 9h10"/><circle cx="83" cy="70" r="15"/><path d="m76 70 5 5 9-10"/>'},
- {pattern:/bankruptcy|court|legal/i,tone:'gold',art:'<path d="M64 29v49m-14 0h28M42 40h44M43 40l-10 19h20L43 40Zm42 0L75 59h20L85 40ZM33 59a10 8 0 0 0 20 0m22 0a10 8 0 0 0 20 0"/>'}
-];
-function medicalFolderArt(name, parentArt){
- if (/vision|eyeglass|optometry|optical/i.test(name)) return 'vision';
- if (/records by year|^\d{4}$/i.test(name)) return 'history';
- if (/coverage history/i.test(name)) return 'coverage';
- if (/past plans/i.test(name)) return 'plans';
- if (/claims/i.test(name)) return 'claims';
- if (/insurance|trustmark/i.test(name)) return 'insurance';
- if (/notes|referrals/i.test(name)) return 'notes';
- if (/immunization|vaccine/i.test(name)) return 'immunizations';
- if (/billing|receipt|payment/i.test(name)) return 'billing';
- if (/lab|screening/i.test(name)) return 'labs';
- if (/dental|orthodont/i.test(name)) return 'dental';
- if (/weight|composition|tracking/i.test(name)) return 'weight';
- return parentArt;
-}
-function legalFolderCover(name,medicalTone){
- const medicalThemes={
-  teal:'<path d="M58 32h12v15h15v12H70v18H58V59H43V47h15Z"/>',
-  blue:'<rect x="43" y="33" width="42" height="48" rx="5"/><path d="M52 57h24m-24 9h24m-24-22h10"/>',
-  plum:'<path d="M56 32h16m-12 0v20l-13 24a5 5 0 0 0 4 7h26a5 5 0 0 0 4-7L68 52V32M54 68h20"/>',
-  gold:'<rect x="41" y="39" width="46" height="39" rx="4"/><path d="M48 50h31m-31 10h12m-12 9h19"/>'
- };
- const theme=medicalThemes[medicalTone]?{tone:medicalTone,art:medicalThemes[medicalTone]}:legalFolderThemes.find(({pattern})=>pattern.test(name))||
-  {tone:'gold',art:'<path d="M36 43h22l6 6h28v25H36z"/><path d="M44 43V33h34v16m-25-8h16"/>'};
- const cover=document.createElement('span');
- cover.className='legal-folder-cover';cover.dataset.tone=theme.tone;
- cover.innerHTML='<svg viewBox="0 0 320 150" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'+
-  '<g opacity=".25"><path d="M15 36V17h19m252 0h19v19M15 114v19h19m252 0h19v-19"/><path d="M25 28h34m-34 7h20m216-7h34m-20 7h20M25 122h34m202 0h34"/><circle cx="160" cy="75" r="66" stroke-dasharray="1 5"/></g>'+
-  '<g opacity=".38" fill="#162130"><path d="M54 41h49v73H54z" transform="rotate(-15 78 77)"/><path d="M217 40h49v73h-49z" transform="rotate(15 241 77)"/><path d="M61 55h31m-31 8h25m-25 8h28m-28 8h19" transform="rotate(-15 78 77)"/><path d="M226 54h29m-29 8h22m-22 8h25m-25 8h18" transform="rotate(15 241 77)"/></g>'+
-  '<circle cx="160" cy="75" r="56" fill="#111b2a" fill-opacity=".8" stroke-opacity=".7"/><circle cx="160" cy="75" r="50" stroke-opacity=".3"/>'+
-  '<g transform="translate(96 21)" stroke-width="2.3">'+theme.art+'</g>'+
-  '<g fill="currentColor"><path d="m160 12 3 5-3 5-3-5zm0 116 3 5-3 5-3-5z"/><circle cx="38" cy="75" r="2"/><circle cx="282" cy="75" r="2"/></g></svg>';
- return cover;
+function uniqueCover(key){
+ // Each location gets an original composition, including archives with no usable preview.
+ let state=2166136261;
+ for(const ch of key)state=Math.imul(state^ch.codePointAt(0),16777619)>>>0;
+ const random=max=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return Math.floor(state/4294967296*max);};
+ const hue=random(360), accent=(hue+65+random(155))%360, focus=100+random(310);
+ const bg=`hsl(${hue} 39% 16%)`, paper=`hsl(${accent} 62% 78%)`;
+ const panels=Array.from({length:4+random(5)},(_,i)=>{
+  const x=38+i*57+random(60),y=44+random(142),w=75+random(127),h=53+random(96),angle=random(64)-32;
+  const tone=(hue+i*17+random(57))%360;
+  const marks=Array.from({length:2+random(6)},(_,j)=>`<path d="M14 ${18+j*7}h${15+random(w-30)}"/>`).join('');
+  return `<g transform="translate(${x} ${y}) rotate(${angle})"><rect width="${w}" height="${h}" rx="${4+random(10)}" fill="hsl(${tone} 40% ${24+random(36)}%)" stroke="${paper}" stroke-opacity=".37"/><g stroke="${paper}" stroke-opacity=".55">${marks}</g></g>`;
+ }).join('');
+ const signature=Array.from(key,ch=>ch.codePointAt(0).toString(16)).join('.');
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><desc>${signature}</desc><defs><radialGradient id="light" cx="${focus/6.4}%" cy="39%" r="70%"><stop stop-color="hsl(${hue} 40% 42%)"/><stop offset="1" stop-color="${bg}"/></radialGradient><pattern id="grid" width="19" height="19" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${paper}" opacity=".17"/></pattern></defs><rect width="640" height="360" fill="url(#light)"/><rect width="640" height="360" fill="url(#grid)"/><circle cx="${focus}" cy="170" r="${70+random(90)}" fill="none" stroke="${paper}" stroke-opacity=".37"/><g transform="translate(20 22)">${panels}</g><rect x="24" y="24" width="592" height="312" rx="15" fill="none" stroke="${paper}" stroke-opacity=".25"/></svg>`;
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 const legalCoverJobs=new WeakMap();
 const legalCoverObserver=new IntersectionObserver(entries=>{
@@ -222,7 +191,7 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- card.className='legal-file';if(record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
+ card.className='legal-file';if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.kindLabel??(record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document');card.append(type,caption);
  if(record.id||record.directReader||record.virtualFiles){
   const button=document.createElement(record.directReader?'a':'button');
@@ -233,37 +202,26 @@ function legalFileCard(record,back){
   button.className='legal-thumbnail';
   const art=document.createElement('span'),label=document.createElement('span'),labelTitle=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
-  label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=(record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
+  label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
   label.append(labelTitle);
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
-   const fallback=legalFolderCover(record.name,record.medicalCover);
-   const folderPhoto=record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto;
-   if(record.portrait){
-    const portrait=document.createElement('span');
-    portrait.className='legal-person-cover';
-    portrait.dataset.person=record.portrait;
-    art.replaceChildren(portrait);
-   }else if(folderPhoto){
-    const image=document.createElement('img');
-    image.alt='';
-    image.dataset.photo='';
-    image.onerror=()=>art.replaceChildren(fallback);
-    image.src=folderPhoto;
-    art.replaceChildren(image);
-   }else if(record.cover||record.medicalArt||record.medicalCoverImage){
-    const image=document.createElement('img');
-    image.alt='';
-    if(record.medicalLogo)image.classList.add('medical-carrier-logo');
-    image.src=record.medicalCoverImage||(record.medicalArt?'assets/medical/'+record.medicalArt+'.webp':'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':''));
-    image.onerror=()=>art.replaceChildren(fallback);
-    art.replaceChildren(image);
-   }else art.replaceChildren(fallback);
+   const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
+   const fallback=()=>uniqueCover(JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]));
+   const image=document.createElement('img');
+   image.alt='';
+   if(record.medicalLogo)image.classList.add('medical-carrier-logo');
+   image.dataset.photo='';
+   const medicalImage=record.medicalArt&&'assets/medical/'+record.medicalArt+'.webp';
+   const recreationImage=record.cover&&'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
+   image.onerror=()=>{image.onerror=null;image.src=fallback();};
+   image.src=folderPhoto||record.medicalCoverImage||medicalImage||recreationImage||fallback();
+   art.replaceChildren(image);
   }else{
    legalCoverJobs.set(button,async()=>{
     const unavailable=()=>{art.textContent='Thumbnail unavailable · Tap to preview'};
-    const fallbackPhoto=record.folderFallbackPhoto&&(record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto);
+    const fallbackPhoto=record.coverPath&&uniqueCover(JSON.stringify([...record.coverPath,record.id]));
     const cover=await legalDocumentCover(record).catch(()=>null);
     if(!button.isConnected)return;
     const img=document.createElement('img');
@@ -424,7 +382,6 @@ async function showLegalRecord(record,back){
  }
  status.textContent='Loading folder…';
  const files=document.createElement('div');files.className='legal-cards';container.append(files);
- const childFallbackPhoto=record.folderFallbackPhoto&&(record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto);
  const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;
@@ -445,20 +402,20 @@ async function showLegalRecord(record,back){
      }
     }
     if(record.indianCoveBilling&&file.name==='Original Invoices and Receipts')continue;
-    const stridersCollection=file.folder&&(record.stridersCollection||
-     (record.tidewaterStriders&&['Events','Board Records'].includes(file.name)));
+    const stridersCollection=file.folder&&record.tidewaterStriders&&['Events','Board Records'].includes(file.name);
     const cover=record.indianCove?indianCoveCovers.get(file.name):
      record.tidewaterStriders?stridersCovers.get(file.name):
-     stridersCollection?stridersSubfolderCover(file.name,record.cover):undefined;
+     record.stridersCollection?stridersSubfolderCovers.get(file.name):undefined;
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
      displayName:file.displayName??(file.folder?record.childFolderLabel?.(file.name):undefined),
      childFolderLabel:record.childFolderLabel,driveAction:file.driveAction??record.driveAction,
-     legalFolderPhotoFor:file.legalFolderPhotoFor??(file.folder||childFallbackPhoto?record.legalFolderPhotoFor:undefined),
-     folderFallbackPhoto:childFallbackPhoto??file.folderFallbackPhoto,
+     legalFolderPhotoFor:file.legalFolderPhotoFor??(file.folder?record.legalFolderPhotoFor:undefined),
+     coverFor:file.coverFor??record.coverFor,
+     coverPath:file.coverPath??[...(record.coverPath??[document.body.dataset.thPage,record.id,record.name]),file.name],
      excludedFolderIds:record.excludedFolderIds,
-     medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
+     medicalArt:file.medicalArt,
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'
@@ -476,5 +433,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, uniqueCover };
 })();

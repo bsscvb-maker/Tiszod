@@ -2,16 +2,3 @@
 .family-collections h2{margin-bottom:12px}
 .family-collections .legal-cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr))}
 .family-collections .legal-file{min-width:0}
-
-.legal-person-cover{
- width:min(68%,166px);aspect-ratio:1;border-radius:50%;
- background:#343637 url('command-photos/family-portraits.jpg') no-repeat;
- background-size:460% auto;
- box-shadow:0 0 0 4px #ffffff15,0 12px 25px #0005;
-}
-.legal-person-cover[data-person="aiden"]{background-image:url('command-photos/aiden-portrait.jpg');background-size:cover;background-position:center}
-.legal-person-cover[data-person="todd"]{background-position:34.0278% 41%}
-.legal-person-cover[data-person="alexis"]{background-position:65.9722% 41%}
-.legal-person-cover[data-person="tracy"]{background-position:97.9167% 41%}
-.family-collections .legal-thumbnail-art{background:radial-gradient(ellipse at 50% 45%,#40516b,#141e2e)}
-@media(max-width:600px){.legal-person-cover{width:min(68%,136px)}}

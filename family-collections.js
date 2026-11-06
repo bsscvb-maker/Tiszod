@@ -7,56 +7,76 @@
   family: 'Family records', education: 'School records by person', medical: 'Medical records by person',
   hobbies: 'Family activities', identification: 'Family identification records'
  };
- const familyPhoto = name => 'assets/family/' + name + '.webp';
- const medicalPhoto = name => 'assets/medical/' + name + '.webp';
- const folderPhotos = [
-  [/verified duplicate|retired folder|archives? (?:&|and) onenote|recovered exports/i, familyPhoto('archive')],
-  [/dmv|driver|personal records|proof of birth|accessibility placard/i, familyPhoto('identification')],
-  [/medicaid|insurance|cigna|notice of approval/i, medicalPhoto('insurance')],
-  [/immuniz|vaccin/i, medicalPhoto('immunizations')],
-  [/dental|orthodont/i, medicalPhoto('dental')],
-  [/vision|optometry|eyeglass/i, medicalPhoto('vision')],
-  [/prescriptions?|^rx$|supplements/i, medicalPhoto('prescriptions')],
-  [/syringomyelia|mri|radiolog|dicom|efilmlite|pacscube|diagnosis and letters/i, familyPhoto('imaging')],
-  [/test results|labs?|screening results/i, medicalPhoto('labs')],
-  [/bills?|receipts?|billing/i, medicalPhoto('billing')],
-  [/doctors?|providers?|therapy|health|adaptive equipment|disability|allergies|diet|medical|toilet training/i, medicalPhoto('providers')],
-  [/^\d{2} school(?: & iep)?$/i, familyPhoto('school')],
-  [/report cards?|progress reports?|sol results|iep|evaluations|assessments|schoolwork|worksheets/i, familyPhoto('school-reports')],
-  [/school awards?|honors|certificates|graduation/i, familyPhoto('awards')],
-  [/school|plan bee|special education|preschool|enrollment|trantwood|linkhorn|laskin|kings grant/i, familyPhoto('school')],
-  [/ice skat/i, familyPhoto('skating')],
-  [/horse|riding/i, familyPhoto('riding')],
-  [/running|striders/i, familyPhoto('running')],
-  [/volunteer|autism awareness|light it up blue/i, familyPhoto('volunteering')],
-  [/scout/i, familyPhoto('scouts')],
-  [/busch gardens/i, familyPhoto('theme-park')],
-  [/kayak|surf|swim/i, 'command-photos/watercraft.jpg'],
-  [/activities|sports|basketball|baseball|ymca/i, familyPhoto('sports')],
-  [/tickets?|events?/i, familyPhoto('tickets')],
-  [/photo|keepsake|voice recording/i, familyPhoto('keepsakes')],
-  [/cards|letters/i, familyPhoto('cards')],
-  [/archive|recovery|game codes|storage/i, familyPhoto('archive')],
-  [/freebird/i, 'freebird-boot.jpg']
- ];
- const photoFor = name => folderPhotos.find(([pattern]) => pattern.test(name))?.[1];
- const decorated = record => ({
+ const photo = name => name.startsWith('assets/') ? name : 'assets/family-unique/' + name + '.webp';
+ // A photograph is assigned to one location only. The viewer illustrates all other locations individually.
+ const photos = new Map(Object.entries({
+  'family/Aiden': 'aiden-family', 'family/Alexis': 'alexis-family',
+  'family/Tracy': 'tracy-family', 'family/Todd': 'todd-family',
+  'education/Aiden': 'aiden-education', 'education/Alexis': 'alexis-education',
+  'medical/Aiden': 'aiden-medical', 'medical/Alexis': 'alexis-medical',
+  'medical/Tracy': 'tracy-medical', 'medical/Todd': 'todd-medical',
+  'hobbies/Aiden': 'aiden-recreation', 'hobbies/Alexis': 'alexis-recreation',
+  'hobbies/Todd': 'todd-recreation', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
+  'family/Aiden/01 School & IEP': 'classroom', 'family/Alexis/01 School': 'alexis-school',
+  'family/Aiden/01 School & IEP/Early Childhood Special Education': 'early-childhood',
+  'family/Aiden/01 School & IEP/Preschool Screening & Assessment': 'preschool',
+  'family/Aiden/01 School & IEP/Report Cards & Progress': 'progress',
+  'family/Aiden/02 Health & Support': 'health-forms',
+  'family/Aiden/02 Health & Support/Syringomyelia': 'mri',
+  'family/Aiden/02 Health & Support/Medicaid & Health Insurance': 'coverage',
+  'family/Aiden/03 Activities & Sports': 'basketball',
+  'family/Aiden/04 Photos & Keepsakes': 'keepsakes',
+  'family/Aiden/05 Personal Records': 'archive-boxes',
+  'family/Alexis/02 Health': 'assets/medical/providers.webp',
+  'family/Alexis/02 Health/Dental': 'dental',
+  'family/Alexis/02 Health/Vision Care': 'vision',
+  'family/Alexis/02 Health/Prescriptions': 'prescription',
+  'family/Alexis/03 Activities & Volunteering': 'volunteering',
+  'family/Alexis/03 Activities & Volunteering/Girl Scouts': 'scouts',
+  'family/Alexis/03 Activities & Volunteering/Horseback Riding': 'horse',
+  'family/Alexis/03 Activities & Volunteering/Ice Skating': 'skating',
+  'family/Alexis/03 Activities & Volunteering/Running': 'running',
+  'family/Alexis/03 Activities & Volunteering/Busch Gardens': 'coaster',
+  'family/Alexis/03 Activities & Volunteering/Tidewater Striders - Youth Advisory Committee': 'race-medal',
+  'family/Alexis/01 School/School Awards & Honors': 'graduation',
+  'family/Alexis/04 Personal Records': 'folders',
+  'family/Alexis/04 Personal Records/DMV & Driver Records': 'driver',
+  'family/Todd/Cards': 'greetings', 'family/Todd/Tickets': 'assets/family/tickets.webp',
+  'medical/Aiden/02 Health & Support': 'therapy',
+  'medical/Alexis/02 Health': 'medical-lab',
+  'medical/Todd/About Me': 'health-envelopes',
+  'family/Aiden/02 Health & Support/Immunization Records': 'vaccination',
+  'family/Aiden/02 Health & Support/Syringomyelia/Diagnosis and Letters': 'radiographs',
+  'family/Aiden/02 Health & Support/Syringomyelia/Diagnosis and Letters/Test Results': 'scanner',
+  'family/Aiden/05 Personal Records/Archives & OneNote Recovery': 'scan-disc',
+  'family/Alexis/04 Personal Records/Letters, Photos & Keepsakes': 'film',
+  'education/Alexis/01 School/School Awards & Honors': 'education-award',
+  'education/Aiden/01 School & IEP': 'assets/family/school.webp',
+  'education/Alexis/01 School': 'assets/family/school-reports.webp',
+  'hobbies/Aiden/03 Activities & Sports': 'assets/family/sports.webp',
+  'hobbies/Alexis/03 Activities & Volunteering': 'assets/family/volunteering.webp',
+  'hobbies/Todd/Tickets': 'assets/family/archive.webp'
+ }));
+ const coverFor = path => {
+  const name = photos.get(path.join('/'));
+  return name ? photo(name) : undefined;
+ };
+ const decorate = (record, parent) => ({
   ...record,
   displayName: record.name.replace(/^\d{2} /, ''),
-  legalFolderPhotoFor: photoFor,
-  folderFallbackPhoto: familyPhoto('archive'),
+  coverPath: [...parent, record.name],
+  coverFor,
   childFolderLabel: name => name.replace(/^\d{2} /, ''),
   driveAction: true
  });
  const exact = name => file => file.name.replace(/^\d{2} /, '') === name;
- const link = (name, readerUrl, image) => ({
-  name, readerUrl, directReader: true, closeOnOpen: true, kindLabel: 'Section', cardLabel: 'Open section',
-  legalFolderPhotoFor: () => image
+ const link = (name, readerUrl) => ({
+  name, readerUrl, directReader: true, closeOnOpen: true, kindLabel: 'Section', cardLabel: 'Open section'
  });
  const toddMedical = [
-  link('Weight history', 'medical.html#weight-title', 'assets/medical/weight.webp'),
-  link('About Me', 'medical.html#medical-about', 'assets/medical/notes.webp'),
-  link('Browse medical records', 'medical.html#medical-browse', 'assets/medical/history.webp')
+  link('Weight history', 'medical.html#weight-title'),
+  link('About Me', 'medical.html#medical-about'),
+  link('Browse medical records', 'medical.html#medical-browse')
  ];
 
  async function readFamily() {
@@ -108,7 +128,8 @@
    ...original, name, folder: true, driveAction: area === 'family',
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
-   portrait: name.toLowerCase(),
+   coverPath: [area, name],
+   coverFor,
    virtualFiles: records
   });
  }
@@ -131,8 +152,7 @@
    const results = await Promise.allSettled(members.map(async name => {
     const original = families.find(file => file.folder && file.name === name);
     const files = area === 'medical' && name === 'Todd' ? [] : await thDriveRecords.children(original);
-    const records = (await recordsFor(name, files)).filter(Boolean).map(record =>
-     record.directReader ? record : decorated(record));
+    const records = (await recordsFor(name, files)).filter(Boolean).map(record => decorate(record, [area, name]));
     if (records.length) return personCard(name, original, records);
     throw Error('Collection unavailable.');
    }));

@@ -252,7 +252,10 @@
       const [description, tip] = collectionInfo[activeSection] || ['Search manuals, recipes, and purchases together.', 'Try a product, recipe, retailer, or order number.'];
       workspaceTitle.textContent = activeSection || 'All documents';
       get('library-collection-description').textContent = description;
-      get('library-collection-cover').dataset.collection = activeSection;
+      const cover = get('library-collection-cover');
+      cover.dataset.collection = activeSection;
+      cover.style.backgroundImage = 'url("' + thDriveRecords.uniqueCover('library-hero/' + activeSection) + '")';
+      cover.style.backgroundSize = 'cover';
       get('library-search-label').textContent = activeSection ? 'Search ' + activeSection.toLowerCase() : 'Search all documents';
       get('library-search-tip').textContent = tip;
       for (const tab of collections.querySelectorAll('a')) {
@@ -347,12 +350,11 @@
     get('library-results-title').focus();
   }
 
-  function cardArt(entry) {
+  function cardArt(entry, placement = "card") {
     const cover = document.createElement('span');
     cover.className = 'manual-art';
-    cover.style.backgroundImage = 'url("' + entry.art + '")';
-    if (entry.art.endsWith('/collection-covers.webp')) cover.classList.add('manual-art-triptych');
-    if (entry.photo) {
+    cover.style.backgroundImage = 'url("' + thDriveRecords.uniqueCover('manual/' + placement + entry.id) + '")';
+    if (entry.photo && placement === 'card') {
       const photo = new Image();
       photo.alt = '';
       photo.loading = 'lazy';
@@ -404,7 +406,7 @@
       }
     }
     if (entry.files && !searching) {
-      manualProduct.append(cardArt(entry));
+      manualProduct.append(cardArt(entry, 'detail'));
       if (entry.source) {
         const source = document.createElement('a');
         source.href = entry.source;
@@ -414,7 +416,7 @@
         manualProduct.append(source);
       } else {
         const caption = document.createElement('small');
-        caption.textContent = 'Category cover · Product photo unavailable';
+        caption.textContent = 'Illustrated product cover';
         manualProduct.append(caption);
       }
     } else manualProduct.hidden = true;
