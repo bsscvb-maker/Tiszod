@@ -4,6 +4,7 @@ let records=[],editing=null,ready=false,page=1;
 const viewMode=new URLSearchParams(location.search).get('view');
 const careerMode=location.pathname.endsWith('/career.html');
 const bookMode=!careerMode&&viewMode==='books';
+const careerLanding=careerMode&&viewMode!=='saved';
 const dedicated=bookMode||careerMode;
 const {owner,isBook,isCareer,readRecords}=thLibraryBooks;
 if(bookMode){
@@ -22,6 +23,11 @@ if(bookMode){
 }
 
 if(careerMode){
+ document.body.classList.toggle('career-landing',careerLanding);
+ $('career-drive').hidden=!careerLanding;
+ $('career-view-link').href=careerLanding?'?view=saved':'career.html';
+ $('career-view-link').textContent=careerLanding?'Saved documents':'Back to Career';
+ $('education-add').hidden=careerLanding;
  $('education-add').textContent='+ Add career document';
  $('education-category').closest('label').hidden=true;
  for(const field of ['person','category'])$('education-form').elements[field].closest('label').hidden=true;
@@ -64,7 +70,14 @@ async function loadCareerFolder(){
   heading.textContent='Browse Career';
   const cards=document.createElement('div');
   cards.className='legal-cards';
-  cards.append(...entries.map(entry=>thDriveRecords.card({...entry,driveAction:true,coverPath:[entry.name],coverFor:careerCover,cardLabel:entry.folder?'Browse '+entry.name:'Preview '+entry.name})));
+  for(const entry of entries){
+   const card=thDriveRecords.card({...entry,driveAction:true,coverPath:[entry.name],coverFor:careerCover});
+   if(entry.folder){
+    card.classList.add('career-folder-tile');
+    card.querySelector('.legal-thumbnail').setAttribute('aria-label','Open '+entry.name);
+   }
+   cards.append(card);
+  }
   const drive=document.createElement('a');
   drive.className='education-open career-drive-link';
   drive.href=root.url;
@@ -73,7 +86,10 @@ async function loadCareerFolder(){
   drive.textContent='Open Career in Drive';
   status.textContent=entries.length?'':'No folders or documents are available here yet.';
   host.replaceChildren(heading,drive,cards,status);
+  $('th-connection').textContent='Private Drive connected';
  }catch{
+  if(!status.isConnected)return;
+  $('th-connection').textContent='Drive unavailable';
   status.textContent='The Career Drive folder could not load. Use Refresh to try again.';
  }
 }
@@ -95,7 +111,7 @@ async function loadPortraits(){
   }
  }catch{}
 }
-window.thStart=async()=>{if(careerMode)void loadCareerFolder();records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
+window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
@@ -209,7 +225,7 @@ function render(){
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
  workspace.classList.toggle('education-landing',landing);
- const showDocuments=Boolean(dedicated||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
+ const showDocuments=!careerLanding&&Boolean(dedicated||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
  $('education-documents').hidden=!showDocuments;
  if(!showDocuments)return;
  const booksView=bookMode||selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;

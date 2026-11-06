@@ -150,3 +150,33 @@ body[data-th-page="career"] {
 [data-th-page="career"] .legal-thumbnail img[data-photo] {
   object-position: center;
 }
+
+.career-landing :is(#education-status, .education-toolbar, #education-documents) {
+  display: none;
+}
+
+[data-th-page="career"] #career-view-link {
+  padding: 10px 14px;
+  font: 600 13px system-ui;
+}
+
+#career-drive .career-folder-tile > .legal-kind,
+#career-drive .career-folder-tile .legal-thumbnail-label {
+  display: none;
+}
+
+#career-drive .career-folder-tile > strong {
+  margin: .85rem 1rem;
+}
+
+#career-drive .career-folder-tile .legal-thumbnail {
+  height: auto;
+  display: block;
+}
+
+#career-drive .career-folder-tile .legal-thumbnail-art {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
