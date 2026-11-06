@@ -40,7 +40,9 @@ async function loadCareerFolder(){
  host.replaceChildren(status);
  try{
   const roots=await thDriveRecords.findFolders('TisZod');
-  const matches=(await Promise.all(roots.map(root=>thDriveRecords.children(root)))).flat().filter(file=>file.folder&&file.name==='Career & Employment');
+  const folders=(await Promise.all(roots.map(root=>thDriveRecords.children(root)))).flat().filter(file=>file.folder);
+  const current=folders.filter(file=>file.name==='Career');
+  const matches=current.length?current:folders.filter(file=>file.name==='Career & Employment');
   if(matches.length!==1)throw Error('Could not locate the Career & Employment folder.');
   const heading=document.createElement('h2');
   heading.textContent='Career & Employment in Drive';
