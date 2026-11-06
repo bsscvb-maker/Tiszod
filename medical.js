@@ -304,7 +304,7 @@
         const fields=new FormData(weighInForm), date=fields.get('date'), weight=Number(fields.get('weight'));
         const status=weighInForm.querySelector('[role="status"]');
         if(!date || !Number.isFinite(weight) || weight<=0) return;
-        const next=[...browserWeights.filter(row=>row.date!==date),{date,weight,unit:'lb',source:'Self-reported weigh-in'}];
+        const next=[...browserWeights.filter(row=>row.date!==date || Number.isFinite(row.time)),{date,weight,unit:'lb',source:'Self-reported weigh-in'}];
         try {localStorage.setItem(weighInKey,JSON.stringify(next));}
         catch {status.textContent='This browser could not save the weigh-in.';return;}
         browserWeights=next;
@@ -313,6 +313,35 @@
         status.textContent='Weigh-in saved.';
       };
       renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
+      const importForm=$('medical-import-weigh-ins');
+      importForm.onsubmit=async event=>{
+        event.preventDefault();
+        const file=new FormData(importForm).get('history');
+        const status=importForm.querySelector('[role="status"]');
+        const button=importForm.querySelector('button');
+        button.disabled=true;
+        try {
+          const [header,...lines]=(await file.text()).trim().split(/\r?\n/);
+          const columns=header.split(',').map(value=>value.trim().replace(/^"|"$/g,''));
+          const weightColumn=columns.indexOf('Weight (lb)'), dateColumn=columns.indexOf('Date/Time');
+          if(weightColumn<0 || dateColumn<0) throw Error();
+          const imported=new Map();
+          for(const line of lines){
+            const values=line.split(',').map(value=>value.trim().replace(/^"|"$/g,''));
+            const weight=Number(values[weightColumn]), time=Date.parse(values[dateColumn]+' UTC');
+            if(values.length!==columns.length || !Number.isFinite(weight) || weight<=0 || !Number.isFinite(time)) continue;
+            imported.set(time,{date:new Date(time).toISOString().slice(0,10),time,weight,unit:'lb',source:'Scale CSV'});
+          }
+          if(!imported.size) throw Error();
+          const next=[...browserWeights.filter(row=>!imported.has(row.time)),...imported.values()];
+          localStorage.setItem(weighInKey,JSON.stringify(next));
+          browserWeights=next;
+          updateWeights();
+          importForm.reset();
+          status.textContent=imported.size+' readings imported.';
+        } catch {status.textContent='Could not import the file. Use a scale CSV with Weight (lb) and Date/Time columns.';}
+        finally {button.disabled=false;}
+      };
       thMedicalAbout.start({
         key, list, onFolderSummaries: value => {
           folderSummaries=value||{};
