@@ -123,3 +123,27 @@
 .medical-regimen section>div:only-child{grid-column:1/-1;padding:14px}
 @media(max-width:760px){.medical-regimen{grid-template-columns:1fr}.medical-regimen section{grid-template-columns:minmax(65px,80px) minmax(0,1fr);grid-template-rows:auto;align-items:center}.medical-regimen figure img{height:auto;aspect-ratio:1}}
 @media(max-width:420px){.medical-body-profile{padding:10px}}
+
+/* Compact Medical layout for phones. */
+@media (max-width: 600px) {
+  .medical { padding: 12px 10px 28px; }
+  .medical-hero { min-height: 245px; padding: 20px; }
+  .medical-panel { min-width: 0; margin: 14px 0; padding: 12px; }
+  .medical-folders, .medical-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .medical-kpis button { min-width: 0; min-height: 76px; overflow-wrap: anywhere; }
+  .medical-photo-card .legal-thumbnail-label { padding-inline: 6px; }
+  .medical :is(button, select, input, textarea) { max-width: 100%; box-sizing: border-box; }
+  .medical :is(button, select, input), .medical-jump a { min-height: 44px; }
+  .medical :is(select, input, textarea) { min-width: 0; font-size: 16px; }
+  .medical :is(.medical-filters, .medical-review-form, .medical-about-edit) { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .medical-body-profile { grid-template-columns: minmax(0, 1fr); }
+  .medical-body-profile figure img { width: min(100%, 120px); }
+  .weight-scorecard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .weight-scorecard > div { padding: 8px; }
+  .weight-scorecard > div:first-child { grid-column: 1 / -1; }
+  .weight-plot text { font-size: 12px; }
+  .medical [aria-labelledby="weight-title"] details + details { margin-top: 6px; }
+  .medical [aria-labelledby="weight-title"] summary { box-sizing: border-box; min-height: 44px; padding-block: 10px; cursor: pointer; }
+  .medical :is(#medical-add-weigh-in, #medical-import-weigh-ins) { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  body[data-th-page="medical"] .medical-folder-dashboard table :is(th, td):first-child { white-space: normal; }
+}
