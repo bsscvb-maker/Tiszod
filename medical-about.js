@@ -95,20 +95,19 @@
         const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
         const card=make('section'), info=make('div');
         const visuals=[
-          [/citalopram/i,'citalopram','Reference illustration · 0 and 6 separated by a score line'],
-          [/wellbutrin\s+xl/i,'wellbutrin-xl','Reference illustration · G 785 imprint'],
-          [/tirzepatide/i,'tirzepatide-vial','Illustration · example compounding vial']
+          [/citalopram/i,'citalopram','Tablet marked 0 and 6 separated by a score line'],
+          [/wellbutrin\s+xl/i,'wellbutrin-xl','Tablet marked G 785'],
+          [/tirzepatide/i,'tirzepatide-vial','Vial labeled Tirzepatide + B12']
         ];
         const visual=visuals.find(([match])=>match.test(name));
         if(visual){
           const picture=make('figure'),image=make('img');
-          image.src='assets/medical/'+visual[1]+(visual[1]==='tirzepatide-vial'?'-detail.webp':'-imprint.webp');image.alt=visual[2];
+          image.src='assets/medical/'+visual[1]+(visual[1]==='tirzepatide-vial'?'-pink.svg':'-imprint.webp');image.alt=visual[2];
           picture.append(image);card.append(picture);
         }
         info.append(make('strong',name));
         if(dose)info.append(make('p',dose));
         if(schedule)info.append(make('p',schedule));
-        if(visual)info.append(make('small',visual[2]+' · Check your pharmacy label'));
         card.append(info);
         grid.append(card);
       }
