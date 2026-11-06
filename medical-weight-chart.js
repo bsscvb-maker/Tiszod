@@ -66,6 +66,10 @@
     const defs=svgNode('defs'), gradient=svgNode('linearGradient',{id:'medical-weight-fill',x1:'0',x2:'0',y1:'0',y2:'1'});
     gradient.append(svgNode('stop',{offset:'0%', 'stop-color':'#35d6b1','stop-opacity':'.30'}),svgNode('stop',{offset:'100%','stop-color':'#35d6b1','stop-opacity':'.02'}));
     defs.append(gradient);svg.append(defs);
+    for (let i=1;i<g.segments.length;i++) {
+      const from=g.segments[i-1].at(-1), to=g.segments[i][0];
+      svg.append(svgNode('line',{x1:x(from),y1:y(from.weight),x2:x(to),y2:y(to.weight),stroke:'#75b9af','stroke-width':2,'stroke-dasharray':'6 5'}));
+    }
     for (const segment of g.segments) {
       const coords=segment.map(row=>[x(row),y(row.weight)].join(',')).join(' ');
       if (segment.length>1) svg.append(
@@ -79,7 +83,7 @@
     }
     target.append(svg);
     const note=document.createElement('p');note.className='weight-note';
-    note.textContent=(g.segments.length>1?'Breaks mark gaps of more than 45 days. ':'')+
+    note.textContent=(g.segments.length>1?'Dashed lines connect readings more than 45 days apart. ':'')+
       (points.some(row=>!row.unit)?'Historical workbook readings have no unit label. Values are plotted as recorded.':'Weights shown in pounds.');
     target.append(note);
   }
@@ -91,11 +95,15 @@
       label(48,366,11,'Latest: '+number(g.last.weight)+' '+(g.last.unit||'(unit unlisted)')+'  |  '+g.last.date)+
       label(48,347,10,g.first.date+' to '+g.last.date+'  |  '+rows.length+' recorded readings');
     for (const tick of g.ticks) stream+='0.80 0.86 0.89 RG 0.5 w '+`55 ${y(tick)} m 564 ${y(tick)} l S\n`+label(25,y(tick)-3,8,number(tick));
+    for (let i=1;i<g.segments.length;i++) {
+      const from=g.segments[i-1].at(-1), to=g.segments[i][0];
+      stream+=`0.32 0.54 0.51 RG 1 w [6 5] 0 d ${g.x(from)} ${y(from.weight)} m ${g.x(to)} ${y(to.weight)} l S [] 0 d\n`;
+    }
     for (const segment of g.segments) {
       stream+='0.04 0.45 0.39 RG 2 w '+segment.map((r,i)=>`${g.x(r).toFixed(2)} ${y(r.weight).toFixed(2)} ${i?'l':'m'}`).join(' ')+' S\n';
       for(const row of segment) if(segment.length===1||row===g.last) stream+=`${g.x(row)-2} ${y(row.weight)-2} 4 4 re f\n`;
     }
-    stream+=label(48,22,9,rows.some(row=>!row.unit)?'Historical workbook units unlisted. Gaps over 45 days are left open.':'Weights in pounds. Gaps over 45 days are left open.');
+    stream+=label(48,22,9,rows.some(row=>!row.unit)?'Historical workbook units unlisted. Dashed lines mark gaps over 45 days.':'Weights in pounds. Dashed lines mark gaps over 45 days.');
     const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 440] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
       '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',`<< /Length ${stream.length} >>\nstream\n${stream}endstream`];
