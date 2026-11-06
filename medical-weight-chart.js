@@ -6,7 +6,7 @@
     const rows = new Map(history.map(row=>[row.time,row]));
     for (const row of Array.isArray(manual) ? manual : []) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date) || row.unit !== 'lb' || !Number.isFinite(row.weight) || row.weight <= 0) continue;
-      const time = Date.parse(row.date+'T00:00:00Z');
+      const time = Number.isFinite(row.time) ? row.time : Date.parse(row.date+'T00:00:00Z');
       if (Number.isFinite(time)) rows.set(time,{...row,time});
     }
     return [...rows.values()].sort((a,b)=>a.time-b.time).map(row=>row.unit==='kg'?{...row,weight:row.weight*2.2046226218,unit:'lb'}:row);
