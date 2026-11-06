@@ -76,8 +76,6 @@ async function loadCareerFolder(){
   const entries=await thDriveRecords.children(root);
   if(!status.isConnected)return;
   entries.sort((a,b)=>Number(b.folder)-Number(a.folder)||a.name.localeCompare(b.name));
-  const heading=document.createElement('h2');
-  heading.textContent='Browse Career';
   const cards=document.createElement('div');
   cards.className='legal-cards';
   for(const entry of entries){
@@ -88,14 +86,8 @@ async function loadCareerFolder(){
    }
    cards.append(card);
   }
-  const drive=document.createElement('a');
-  drive.className='education-open career-drive-link';
-  drive.href=root.url;
-  drive.target='_blank';
-  drive.rel='noopener';
-  drive.textContent='Open Career in Drive';
   status.textContent=entries.length?'':'No folders or documents are available here yet.';
-  host.replaceChildren(heading,drive,cards,status);
+  host.replaceChildren(cards,status);
   $('th-connection').textContent='Private Drive connected';
  }catch{
   if(!status.isConnected)return;
