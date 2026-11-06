@@ -3,11 +3,15 @@
 .family-collections .legal-cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr))}
 .family-collections .legal-file{min-width:0}
 
-
-.legal-person-cover{position:relative}
-.legal-person-cover::after{content:attr(data-mark);display:grid;place-items:center;position:absolute;inset:0;font:700 clamp(2rem,6vw,3.6rem)/1 Georgia,serif;text-shadow:0 2px 4px #0d1320}
-.legal-person-cover svg{opacity:.36}
-.legal-person-cover[data-person="aiden"]{color:#a9cafa;background:radial-gradient(ellipse,#294d76,#131d31)}
-.legal-person-cover[data-person="alexis"]{color:#f3c7f0;background:radial-gradient(ellipse,#603c6b,#21182e)}
-.legal-person-cover[data-person="tracy"]{color:#a9ebda;background:radial-gradient(ellipse,#25615e,#13292d)}
-.legal-person-cover[data-person="todd"]{color:#f7d498;background:radial-gradient(ellipse,#705034,#29202a)}
+.legal-person-cover{
+ width:min(68%,166px);aspect-ratio:1;border-radius:50%;
+ background:#343637 url('command-photos/family-portraits.jpg') no-repeat;
+ background-size:460% auto;
+ box-shadow:0 0 0 4px #ffffff15,0 12px 25px #0005;
+}
+.legal-person-cover[data-person="aiden"]{background-image:url('command-photos/aiden-portrait.jpg');background-size:cover;background-position:center}
+.legal-person-cover[data-person="todd"]{background-position:34.0278% 41%}
+.legal-person-cover[data-person="alexis"]{background-position:65.9722% 41%}
+.legal-person-cover[data-person="tracy"]{background-position:97.9167% 41%}
+.family-collections .legal-thumbnail-art{background:radial-gradient(ellipse at 50% 45%,#40516b,#141e2e)}
+@media(max-width:600px){.legal-person-cover{width:min(68%,136px)}}

@@ -231,12 +231,12 @@ function legalFileCard(record,back){
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const fallback=legalFolderCover(record.name,record.medicalCover);
-   const folderPhoto=record.legalFolderPhotoFor?.(record.name);
-   if(record.coverMark){
-    fallback.classList.add("legal-person-cover");
-    fallback.dataset.mark=record.coverMark;
-    fallback.dataset.person=record.name.toLowerCase();
-    art.replaceChildren(fallback);
+   const folderPhoto=record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto;
+   if(record.portrait){
+    const portrait=document.createElement('span');
+    portrait.className='legal-person-cover';
+    portrait.dataset.person=record.portrait;
+    art.replaceChildren(portrait);
    }else if(folderPhoto){
     const image=document.createElement('img');
     image.alt='';
@@ -255,6 +255,7 @@ function legalFileCard(record,back){
   }else{
    legalCoverJobs.set(button,async()=>{
     const unavailable=()=>{art.textContent='Thumbnail unavailable · Tap to preview'};
+    const fallbackPhoto=record.folderFallbackPhoto&&(record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto);
     const cover=await legalDocumentCover(record).catch(()=>null);
     if(!button.isConnected)return;
     const img=document.createElement('img');
@@ -269,6 +270,13 @@ function legalFileCard(record,back){
     img.onerror=()=>{
      if(img.src===objectUrl){release();img.src=record.thumbnail||fallback.href;return}
      if(record.thumbnail&&img.src===record.thumbnail){img.src=fallback.href;return}
+     if(fallbackPhoto&&!img.hasAttribute('data-cover-fallback')){
+      img.dataset.coverFallback='';
+      img.dataset.photo='';
+      img.style.objectFit='cover';
+      img.src=fallbackPhoto;
+      return;
+     }
      unavailable();
     };
     if(cover?.photo)img.dataset.photo='';
@@ -401,6 +409,7 @@ async function showLegalRecord(record,back){
  }
  status.textContent='Loading folder…';
  const files=document.createElement('div');files.className='legal-cards';container.append(files);
+ const childFallbackPhoto=record.folderFallbackPhoto&&(record.legalFolderPhotoFor?.(record.name)??record.folderFallbackPhoto);
  const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;
@@ -431,7 +440,8 @@ async function showLegalRecord(record,back){
      cover,stridersCollection,medicalCover:record.medicalCover,
      displayName:file.displayName??(file.folder?record.childFolderLabel?.(file.name):undefined),
      childFolderLabel:record.childFolderLabel,driveAction:file.driveAction??record.driveAction,
-     legalFolderPhotoFor:file.legalFolderPhotoFor??(file.folder?record.legalFolderPhotoFor:undefined),
+     legalFolderPhotoFor:file.legalFolderPhotoFor??(file.folder||childFallbackPhoto?record.legalFolderPhotoFor:undefined),
+     folderFallbackPhoto:childFallbackPhoto??file.folderFallbackPhoto,
      excludedFolderIds:record.excludedFolderIds,
      medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',

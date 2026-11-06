@@ -7,17 +7,36 @@
   family: 'Family records', education: 'School records by person', medical: 'Medical records by person',
   hobbies: 'Family activities', identification: 'Family identification records'
  };
+ const familyPhoto = name => 'assets/family/' + name + '.webp';
+ const medicalPhoto = name => 'assets/medical/' + name + '.webp';
  const folderPhotos = [
-  [/school|iep|report card|honors/i, 'command-photos/education.jpg'],
-  [/medicaid|insurance|cigna/i, 'assets/medical/insurance.webp'],
-  [/dental/i, 'assets/medical/dental.webp'],
-  [/vision/i, 'assets/medical/vision.webp'],
-  [/prescription/i, 'assets/medical/prescriptions.webp'],
-  [/health|doctor|therapy|immunization/i, 'assets/medical/hero.webp'],
-  [/activities|sports|running|skating|volunteer/i, 'command-photos/recreation.webp'],
-  [/ticket/i, 'assets/hobbies/striders-events.webp'],
-  [/photo|keepsake|letters|^cards$/i, 'command-photos/family-portraits.jpg'],
-  [/personal records|dmv|driver|birth/i, 'command-photos/identification.jpg'],
+  [/verified duplicate|retired folder|archives? (?:&|and) onenote|recovered exports/i, familyPhoto('archive')],
+  [/dmv|driver|personal records|proof of birth|accessibility placard/i, familyPhoto('identification')],
+  [/medicaid|insurance|cigna|notice of approval/i, medicalPhoto('insurance')],
+  [/immuniz|vaccin/i, medicalPhoto('immunizations')],
+  [/dental|orthodont/i, medicalPhoto('dental')],
+  [/vision|optometry|eyeglass/i, medicalPhoto('vision')],
+  [/prescriptions?|^rx$|supplements/i, medicalPhoto('prescriptions')],
+  [/syringomyelia|mri|radiolog|dicom|efilmlite|pacscube|diagnosis and letters/i, familyPhoto('imaging')],
+  [/test results|labs?|screening results/i, medicalPhoto('labs')],
+  [/bills?|receipts?|billing/i, medicalPhoto('billing')],
+  [/doctors?|providers?|therapy|health|adaptive equipment|disability|allergies|diet|medical|toilet training/i, medicalPhoto('providers')],
+  [/^\d{2} school(?: & iep)?$/i, familyPhoto('school')],
+  [/report cards?|progress reports?|sol results|iep|evaluations|assessments|schoolwork|worksheets/i, familyPhoto('school-reports')],
+  [/school awards?|honors|certificates|graduation/i, familyPhoto('awards')],
+  [/school|plan bee|special education|preschool|enrollment|trantwood|linkhorn|laskin|kings grant/i, familyPhoto('school')],
+  [/ice skat/i, familyPhoto('skating')],
+  [/horse|riding/i, familyPhoto('riding')],
+  [/running|striders/i, familyPhoto('running')],
+  [/volunteer|autism awareness|light it up blue/i, familyPhoto('volunteering')],
+  [/scout/i, familyPhoto('scouts')],
+  [/busch gardens/i, familyPhoto('theme-park')],
+  [/kayak|surf|swim/i, 'command-photos/watercraft.jpg'],
+  [/activities|sports|basketball|baseball|ymca/i, familyPhoto('sports')],
+  [/tickets?|events?/i, familyPhoto('tickets')],
+  [/photo|keepsake|voice recording/i, familyPhoto('keepsakes')],
+  [/cards|letters/i, familyPhoto('cards')],
+  [/archive|recovery|game codes|storage/i, familyPhoto('archive')],
   [/freebird/i, 'freebird-boot.jpg']
  ];
  const photoFor = name => folderPhotos.find(([pattern]) => pattern.test(name))?.[1];
@@ -25,6 +44,7 @@
   ...record,
   displayName: record.name.replace(/^\d{2} /, ''),
   legalFolderPhotoFor: photoFor,
+  folderFallbackPhoto: familyPhoto('archive'),
   childFolderLabel: name => name.replace(/^\d{2} /, ''),
   driveAction: true
  });
@@ -35,8 +55,8 @@
  });
  const toddMedical = [
   link('Weight history', 'medical.html#weight-title', 'assets/medical/weight.webp'),
-  link('About Me', 'medical.html#medical-about', 'assets/medical/body-profile.svg'),
-  link('Browse medical records', 'medical.html#medical-browse', 'assets/medical/hero.webp')
+  link('About Me', 'medical.html#medical-about', 'assets/medical/notes.webp'),
+  link('Browse medical records', 'medical.html#medical-browse', 'assets/medical/history.webp')
  ];
 
  async function readFamily() {
@@ -88,7 +108,7 @@
    ...original, name, folder: true, driveAction: area === 'family',
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
-   coverMark: name[0],
+   portrait: name.toLowerCase(),
    virtualFiles: records
   });
  }
