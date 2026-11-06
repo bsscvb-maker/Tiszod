@@ -108,7 +108,7 @@
     try {
       const rootFields = 'id,name,resourceKey';
       const rootType = 'mimeType = ' + quote(folderMime);
-      const libraryFolder = rootType + " and (name = 'Library' or name = 'Home & Purchases')";
+      const libraryFolder = rootType + " and name = 'Library'";
       const parents = await listDrive(rootType + " and name = 'TisZod'", {}, rootFields, signal);
       const roots = (await Promise.all(parents.map(parent => listDrive(
         libraryFolder + " and " + parentClause(parent.id), parent, rootFields, signal
