@@ -99,9 +99,6 @@
 .manual-card small{color:var(--library-muted);margin-top:auto}
 .manual-art{display:block;width:100%;aspect-ratio:16/10;background:#22334b center/cover no-repeat;overflow:hidden}
 .manual-art img{display:block;width:100%;height:100%;object-fit:contain;background:#f4f5f6}
-#manual-product{display:flex;flex-direction:column;align-items:start;gap:.4rem;margin-bottom:.85rem}
-#manual-product .manual-art{max-width:300px;border:1px solid var(--library-line);border-radius:10px}
-#manual-product a{color:var(--library-gold);font-size:.83rem}
 .manual-reader-tools{margin:1rem 0;padding:.8rem 1rem;border:1px solid var(--library-line);border-radius:9px;background:#192940}
 .manual-reader-tools label{display:grid;gap:.4rem;max-width:34rem;font-weight:700}
 .manual-reader-tools p{margin:.5rem 0 0;color:var(--library-muted);font-size:.85rem}
@@ -118,3 +115,9 @@
 .library-art-label span{color:#f0d3a0;font-size:clamp(1.2rem,4vw,2.3rem);font-weight:750;letter-spacing:.08em}
 .manual-art{position:relative}
 .manual-art img{position:absolute;inset:0}
+#library-reader-item{display:flex;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin:.85rem 0 1rem}
+#library-reader-item figure{margin:0;width:min(100%,240px)}
+#library-reader-item .manual-art{border:1px solid var(--library-line);border-radius:8px}
+#library-reader-item figcaption{margin:.25rem 0 0;color:var(--library-muted);font-size:.8rem}
+#library-reader-item label{display:grid;gap:.4rem;flex:1;min-width:min(100%,215px);font-weight:700}
+#library-reader-item select{width:100%;min-width:0}

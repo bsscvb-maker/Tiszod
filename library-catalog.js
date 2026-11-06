@@ -178,8 +178,47 @@
     return {category, family, title};
   }
 
+  const featuredRecipes = [
+    [/banana bread/i, 76, 'Desserts & baking', 'Breads'],
+    [/^biscuits!?$/i, 77, 'Desserts & baking', 'Breads'],
+    [/hardee.*biscuits/i, 78, 'Desserts & baking', 'Breads'],
+    [/howard johnson.*boston brown bread/i, 79, 'Desserts & baking', 'Breads'],
+    [/kenny rogers.*corn muffins/i, 80, 'Desserts & baking', 'Breads'],
+    [/twisted lemonade/i, 81, 'Drinks', 'Beverages'],
+    [/burger king.*breakfast/i, 82, 'Main dishes', 'Breakfast'],
+    [/mcdonald.*ham.*bagel/i, 126, 'Main dishes', 'Breakfast'],
+    [/mcdonald.*steak.*bagel/i, 127, 'Main dishes', 'Breakfast'],
+    [/mcdonald.*omelet.*bagel/i, 128, 'Main dishes', 'Breakfast'],
+    [/yogurt parfait/i, 129, 'Main dishes', 'Breakfast'], [/apple muffin/i, 130],
+    [/egg mcmuffin/i, 83, 'Main dishes', 'Breakfast'],
+    [/quiche/i, 84, 'Main dishes', 'Breakfast'],
+    [/bacon cheeseburger dip/i, 85, 'Sides & appetizers', 'Dips'],
+    [/apple pie pops/i, 86], [/fondue/i, 87], [/buffalo chicken crescent/i, 88],
+    [/cinnamon.*bundt/i, 89], [/pumpkin.*che[ez]+[sc]ecake/i, 90],
+    [/mac and cheese|macaroni.*cheese/i, 91], [/chicken wings/i, 92],
+    [/tex mex casserole|tex-mex casserole/i, 93], [/pulled pork/i, 94],
+    [/sundried tomato.*pasta/i, 95], [/whipped cream/i, 96], [/pink punch/i, 97],
+    [/sugar cookies/i, 98], [/mashed potato casserole/i, 99], [/cinnamon carrots/i, 100],
+    [/barbecue ribs|bbq ribs/i, 111], [/taco dip/i, 112], [/lemonade/i, 113],
+    [/smoothie/i, 114], [/milkshake|mcdonald.*shakes/i, 115, 'Drinks', 'Beverages'],
+    [/pancakes?/i, 116], [/waffles?/i, 117], [/omele[tt]+e?/i, 118], [/french toast/i, 119],
+    [/breakfast burrito/i, 120, 'Main dishes', 'Breakfast'], [/brownies/i, 121],
+    [/chocolate cake/i, 122], [/\bpie\b/i, 123], [/muffins?/i, 124],
+    [/biscuits.*gravy/i, 150, 'Main dishes', 'Breakfast'],
+    [/biscuits/i, 77, 'Desserts & baking', 'Breads'],
+    [/ribs/i, 131], [/\b(?:cheeseburger|big king|bigxtra|arch deluxe)\b/i, 132, 'Main dishes', 'Meat, fish & poultry'],
+    [/pot pie/i, 133, 'Main dishes', 'Casseroles'], [/\bchili\b/i, 135, 'Main dishes', 'Soups & stews'],
+    [/coleslaw/i, 137], [/ranch dressing/i, 138], [/\b(?:bbq|barbecue) sauce\b/i, 139], [/mustard/i, 140, 'Sides & appetizers', 'Salads & sides'],
+    [/fudge/i, 143], [/pudding/i, 144], [/ice cream/i, 145], [/stir.fry/i, 146], [/seafood/i, 147], [/steak/i, 148], [/carrot cake/i, 149]
+  ];
+  const recipeFamilyArt = {
+    Beverages: 113, 'Books & collections': 75, Cookies: 98, 'Cakes & pies': 123, Breads: 125,
+    Dips: 112, 'Salads & sides': 100, Pasta: 95, 'Soups & stews': 39, Breakfast: 116,
+    Casseroles: 99, 'Meat, fish & poultry': 71, 'Other recipes': 65
+  };
+
   function identifyRecipe(file) {
-    const title = file.displayName.replace(/[_]+/g, ' ').replace(/\s*-\s*Printer Friendly\b/ig, '')
+    const title = file.displayName.replace(/[«»]/g, '').replace(/[_]+/g, ' ').replace(/\s*-\s*Printer Friendly\b/ig, '')
       .replace(/\s+(?:recipe|recipes)(?=\s+-|$)/ig, '').replace(/\s+-\s+Allrecipes$/i, '').trim() || file.displayName;
     const rules = [
       ['Drinks','Beverages', /\b(punch|lemonade|smoothie|cocktail|milkshake|sangria|mojito|beverage|drink)\b/i],
@@ -195,8 +234,14 @@
       ['Main dishes','Casseroles', /\b(casserole|pasta bake|pot pie|crescent ring)\b/i],
       ['Main dishes','Meat, fish & poultry', /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|steak|burger|ribs|barbecue|meatloaf)\b/i]
     ];
-    const [category, family] = rules.find(([, , pattern]) => pattern.test(title)) || ['Cookbooks & reference', 'Other recipes'];
-    return {category, family, title};
+    const example = featuredRecipes.find(([pattern]) => pattern.test(title));
+    const [category, family] = example?.[2] ? example.slice(2) : rules.find(([, , pattern]) => pattern.test(title)) || ['Cookbooks & reference', 'Other recipes'];
+    if (/howard johnson.*boston brown bread/i.test(title)) return {
+      category, family, title, art: 41,
+      photo: 'https://images.squarespace-cdn.com/content/v1/63cdc8f90de33a009e0349bf/3801fbbf-cb1f-4500-b88e-fbd556e8ede0/Boston%2BBrown%2BBread.JPG',
+      source: 'https://www.tastinghistory.com/recipes/bostonbrownbread', illustrative: true
+    };
+    return {category, family, title, art: example?.[1] ?? recipeFamilyArt[family]};
   }
 
   function identifyPurchase(file) {
@@ -227,7 +272,23 @@
       family = 'Recovered & supporting records';
     }
     const title = exported.trim() || original;
-    return {category, family, title};
+    if (/amazon.*samsonite luggage/i.test(original)) return {
+      category, family, title: 'Samsonite Evolve SE Army Green Luggage Set',
+      art: 103, photo: 'https://m.media-amazon.com/images/I/81Gpylnvs-L._AC_SL1500_.jpg',
+      source: 'https://www.amazon.com/dp/B0CPGWJ6NX'
+    };
+    if (/mopar transmission oil filter/i.test(original)) return {
+      category, family, title: 'Mopar 68224232AA Transmission Oil Filter',
+      art: 104, photo: 'https://www.wheelerfleet.com/ProductImage/get-file/ProductImages/1567166226.jpg',
+      source: 'https://www.wheelerfleet.com/product/filter/454274'
+    };
+    const art = [
+      [/\bfedex\b/i, 101], [/\bdoggie gate\b/i, 105], [/\bboots?\b/i, 106],
+      [/\bshirts?\b/i, 107], [/\b(?:shoes|cole haan)\b/i, 108], [/\b(?:cleaning|cleaners)\b/i, 109],
+      [/\b(?:home depot|lowe['’]?s|ace hardware|harbor freight|northern tool)\b/i, 110]
+    ].find(([pattern]) => pattern.test(title))?.[1] ??
+      ({Amazon: 102, Carriers: 48, 'Hardware stores': 110, Footwear: 46, Retailers: 47, 'Other sellers': 57, 'Recovered & supporting records': 58})[family];
+    return {category, family, title, art};
   }
 
   function build(files, section) {
@@ -249,7 +310,7 @@
       const meta = classify(file);
       const category = node(root, meta.category, {art: covers[meta.category]});
       const family = node(category, meta.family, {art: covers[meta.family]});
-      const group = node(family, meta.title, {art: meta.art, photo: meta.photo, source: meta.source, files: []});
+      const group = node(family, meta.title, {art: meta.art, photo: meta.photo, source: meta.source, illustrative: meta.illustrative, files: []});
       group.files.push(file);
       for (const item of [root, category, family, group]) item.count++;
       byFile.set(file.id, group);

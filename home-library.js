@@ -25,11 +25,10 @@
   let reading;
   let catalogs;
   const currentCatalog = () => catalogs?.[activeSection];
-  let coverRequest;
+  let readingGroup;
   let catalogPath = '';
-  let catalogSearchGroup = false;
   const manualBreadcrumb = get('manual-breadcrumb');
-  const manualProduct = get('manual-product');
+  const readerItem = get('library-reader-item');
   let ranked = [];
   let previewTrigger;
   const folderMime = 'application/vnd.google-apps.folder';
@@ -200,8 +199,7 @@
     const label = document.createElement('h2');
     label.textContent = 'In these results';
     fragment.append(label);
-    const inGroup = currentCatalog()?.nodes.get(catalogPath)?.files;
-    const railFiles = inGroup || ranked.map(({file}) => file);
+    const railFiles = ranked.map(({file}) => file);
     const selected = railFiles.find(file => file.id === reading);
     const nearby = railFiles.slice(0, visible);
     if (selected && !nearby.includes(selected)) nearby.unshift(selected);
@@ -216,23 +214,71 @@
     matches.replaceChildren(fragment);
   }
 
-  function openPreview(file, trigger) {
+  function openPreview(file, trigger, group = readingGroup) {
     reading = file.id;
     if (trigger) previewTrigger = trigger;
     catalogPanel.hidden = true;
-    matches.hidden = false;
-    drawMatchRail();
+    matches.hidden = Boolean(group);
+    if (!group) drawMatchRail();
+    if (readingGroup !== group || !readerItem.hasChildNodes()) {
+      readingGroup = group;
+      renderReaderItem(group);
+    }
+    const picker = readerItem.querySelector('select');
+    if (picker) picker.value = file.id;
     thDriveRecords.open({...file, readingMode: true});
+  }
+
+  function renderReaderItem(group) {
+    readerItem.replaceChildren();
+    readerItem.hidden = !group;
+    if (!group) return;
+    const figure = document.createElement('figure');
+    figure.append(cardArt(group));
+    const caption = document.createElement('figcaption');
+    if (group.source) {
+      const source = document.createElement('a');
+      source.href = group.source;
+      source.target = '_blank';
+      source.rel = 'noopener noreferrer';
+      source.textContent = group.illustrative ? 'Illustrative photo source ↗' : 'Product photo source ↗';
+      caption.append(source);
+    } else if (group.art) {
+      caption.textContent = 'Illustrative image';
+    }
+    figure.append(caption);
+    readerItem.append(figure);
+    if (group.files.length > 1) {
+      const label = document.createElement('label');
+      label.textContent = 'Documents for ' + group.title;
+      const select = document.createElement('select');
+      for (const file of group.files) select.add(new Option(file.displayName, file.id));
+      select.addEventListener('change', () => {
+        const file = group.files.find(item => item.id === select.value);
+        if (file) openPreview(file, null, group);
+      });
+      label.append(select);
+      readerItem.append(label);
+    }
+  }
+
+  function openGroup(entry, trigger, fromSearch) {
+    const match = fromSearch && ranked.find(({file}) => entry.files.includes(file))?.file;
+    const preferred = entry.files.find(file => file.mime === 'application/pdf' && /(?:user|owner.s) manual/i.test(file.name)) ||
+      entry.files.find(file => file.mime === 'application/pdf') || entry.files[0];
+    openPreview(match || preferred, trigger, entry);
   }
 
   reader.addEventListener('close', () => {
     reading = null;
+    readingGroup = null;
+    renderReaderItem(null);
     matches.hidden = true;
     matches.replaceChildren();
     catalogPanel.hidden = false;
     if (reader.dataset.restoreFocus === 'yes') {
-      const fallback = previewTrigger?.dataset.file;
-      const button = fallback && results.querySelector('[data-file="' + CSS.escape(fallback) + '"]');
+      const key = previewTrigger?.dataset.group || previewTrigger?.dataset.file;
+      const button = key && results.querySelector('[data-group="' + CSS.escape(key) + '"], [data-file="' + CSS.escape(key) + '"]');
       (button || query).focus();
     }
     delete reader.dataset.restoreFocus;
@@ -243,7 +289,6 @@
   function showLocation(focus = false) {
     const params = new URLSearchParams(location.search);
     catalogPath = '';
-    catalogSearchGroup = false;
     activeSection = sections.find(name => name.toLowerCase() === params.get('collection')) || '';
     const across = params.get('view') === 'search';
     closePreview();
@@ -341,9 +386,8 @@
     return li;
   }
 
-  function moveCatalog(entry, fromSearch = false) {
+  function moveCatalog(entry) {
     catalogPath = entry?.id || '';
-    catalogSearchGroup = fromSearch;
     visible = pageSize;
     closePreview();
     render();
@@ -390,63 +434,22 @@
     caption.textContent = entry.count.toLocaleString() + (entry.count === 1 ? ' file' : ' files');
     if (fromSearch) caption.textContent = entry.parent.parent.title + ' / ' + entry.parent.title + ' · ' + caption.textContent;
     button.append(cardArt(entry), title, caption);
-    button.addEventListener('click', () => moveCatalog(entry, fromSearch));
+    button.dataset.group = entry.id;
+    button.addEventListener('click', () => {
+      if (entry.files) openGroup(entry, button, fromSearch);
+      else moveCatalog(entry, fromSearch);
+    });
     li.append(button);
     return li;
   }
 
 
-  function showProduct(entry) {
-    const key = entry ? activeSection + entry.id : '';
-    if (manualProduct.dataset.entry === key) return;
-    coverRequest?.abort();
-    if (manualProduct.dataset.objectUrl) {
-      URL.revokeObjectURL(manualProduct.dataset.objectUrl);
-      delete manualProduct.dataset.objectUrl;
-    }
-    manualProduct.dataset.entry = key;
-    manualProduct.replaceChildren();
-    manualProduct.hidden = !entry;
-    if (!entry) return;
-
-    const cover = cardArt(entry);
-    manualProduct.append(cover);
-    if (entry.source) {
-      const source = document.createElement('a');
-      source.href = entry.source;
-      source.target = '_blank';
-      source.rel = 'noopener noreferrer';
-      source.textContent = 'Product photo source ↗';
-      manualProduct.append(source);
-      return;
-    }
-    const candidate = entry.files.find(file => file.mime === 'application/pdf' || /^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(file.mime));
-    const caption = document.createElement('small');
-    caption.textContent = entry.art ? 'Illustrative photo' : activeSection === 'Manuals' ? 'Product photo unavailable' : 'Document cover unavailable';
-    manualProduct.append(caption);
-    if (!candidate || entry.art) return;
-
-    const controller = new AbortController();
-    coverRequest = controller;
-    thDriveRecords.cover(candidate, controller.signal).then(result => {
-      if (!result || controller.signal.aborted) return;
-      const img = new Image();
-      img.alt = 'Cover from ' + candidate.displayName;
-      const url = URL.createObjectURL(result.blob);
-      manualProduct.dataset.objectUrl = url;
-      img.src = url;
-      cover.replaceChildren(img);
-      caption.textContent = 'From your original document';
-    }).catch(() => {});
-  }
-
   function renderCatalog(catalog, words, append) {
     const title = get('library-results-title');
     const entry = catalog.nodes.get(catalogPath) || catalog.root;
-    const searching = words.length && !catalogSearchGroup;
+    const searching = words.length;
     manualBreadcrumb.replaceChildren();
     manualBreadcrumb.hidden = searching || !entry.id;
-    showProduct(entry.files && !searching ? entry : null);
     if (!manualBreadcrumb.hidden) {
       const addCrumb = (label, action) => {
         const button = document.createElement('button');
@@ -455,28 +458,24 @@
         button.addEventListener('click', action);
         manualBreadcrumb.append(button);
       };
-      if (catalogSearchGroup) addCrumb('← Search results', () => moveCatalog(null));
-      else {
-        const trail = [];
-        for (let current = entry.parent; current; current = current.parent) trail.unshift(current);
-        for (const ancestor of trail) addCrumb(ancestor.title, () => moveCatalog(ancestor));
-      }
+      const trail = [];
+      for (let current = entry.parent; current; current = current.parent) trail.unshift(current);
+      for (const ancestor of trail) addCrumb(ancestor.title, () => moveCatalog(ancestor));
     }
     let entries;
     if (searching) {
       entries = [...new Set(ranked.map(({file}) => catalog.byFile.get(file.id)).filter(Boolean))];
     } else {
-      entries = entry.files || [...entry.children.values()].sort((a, b) => thLibraryCatalog.compare(a.title, b.title));
+      entries = [...entry.children.values()].sort((a, b) => thLibraryCatalog.compare(a.title, b.title));
     }
-    const fileLevel = Boolean(entry.files && !searching);
-    results.classList.toggle('manual-card-grid', !fileLevel);
+    results.classList.add('manual-card-grid');
     title.textContent = searching ? (activeSection === 'Manuals' ? 'Matching products and groups' : 'Matching groups') : entry.id ? entry.title : 'Browse by category';
     const count = entry.count.toLocaleString() + (entry.count === 1 ? ' file' : ' files');
     status.textContent = searching ? (entries.length ? entries.length.toLocaleString() + ' matching groups' : 'No matching documents.') + (contentStatus ? ' ' + contentStatus : '') :
       count;
     if (!append) results.replaceChildren();
     const start = results.children.length;
-    results.append(...entries.slice(start, visible).map(item => fileLevel ? fileCard(item, [], 0) : catalogCard(item, searching)));
+    results.append(...entries.slice(start, visible).map(item => catalogCard(item, searching)));
     more.hidden = visible >= entries.length;
     if (append) results.children[start]?.querySelector('button')?.focus();
     drawMatchRail();
@@ -494,7 +493,6 @@
     if (section) { renderCatalog(currentCatalog(), words, append); return; }
     results.classList.remove('manual-card-grid');
     manualBreadcrumb.hidden = true;
-    showProduct(null);
     get('library-results-title').textContent = words.length ? 'Search results' : 'Browse documents';
     const shown = Math.min(ranked.length, visible);
     const count = ranked.length === 1 ? '1 document' : ranked.length.toLocaleString() + ' documents';
@@ -560,14 +558,12 @@
   query.addEventListener('input', () => {
     closePreview();
     catalogPath = '';
-    catalogSearchGroup = false;
     search(true);
   });
   get('library-search').addEventListener('submit', event => {
     event.preventDefault();
     closePreview();
     catalogPath = '';
-    catalogSearchGroup = false;
     search(false);
   });
   category.addEventListener('change', () => { closePreview(); visible = pageSize; render(); });
