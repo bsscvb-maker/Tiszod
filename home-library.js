@@ -108,14 +108,15 @@
     try {
       const rootFields = 'id,name,resourceKey';
       const rootType = 'mimeType = ' + quote(folderMime);
+      const libraryFolder = rootType + " and (name = 'Library' or name = 'Home & Purchases')";
       const parents = await listDrive(rootType + " and name = 'TisZod'", {}, rootFields, signal);
       const roots = (await Promise.all(parents.map(parent => listDrive(
-        rootType + " and name = 'Home & Purchases' and " + parentClause(parent.id), parent, rootFields, signal
+        libraryFolder + " and " + parentClause(parent.id), parent, rootFields, signal
       )))).flat();
-      // A directly shared Home & Purchases folder may be visible without its parent.
-      const candidates = roots.length ? roots : await listDrive(rootType + " and name = 'Home & Purchases'", {}, rootFields, signal);
+      // A directly shared Library folder may be visible without its parent.
+      const candidates = roots.length ? roots : await listDrive(libraryFolder, {}, rootFields, signal);
       if (candidates.length !== 1) {
-        throw new Error(candidates.length ? 'More than one Home & Purchases folder matched. Check which copy is available in this Google account.' : 'Home & Purchases was not found. Sign in with the Google account that can open the Drive folder.');
+        throw new Error(candidates.length ? 'More than one Library folder matched. Check which copy is available in this Google account.' : 'The Library folder was not found. Sign in with the Google account that can open the Drive folder.');
       }
       const root = candidates[0];
       const childFolders = await listDrive(rootType + ' and ' + parentClause(root.id), root, rootFields, signal);
