@@ -367,6 +367,10 @@ async function showLegalRecord(record,back){
    if(request.signal.aborted){await task.destroy();return}
    request.signal.addEventListener('abort',()=>{task.destroy().catch(()=>{})},{once:true});
    const pdf=await task.promise;
+   if(record.readingMode&&window.thManualReader){
+    await thManualReader.render(pdf,legalViewerBody,status,number=>legalPdfPage(pdf,number,Math.max(320,Math.min(1500,legalViewerBody.clientWidth*2))),request.signal);
+    return;
+   }
    if(record.map){
     const canvas=await legalPdfPage(pdf,1,2400);
     if(request.signal.aborted)return;

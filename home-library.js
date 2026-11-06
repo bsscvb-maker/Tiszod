@@ -23,6 +23,11 @@
   const globalQuery = get('library-global-query');
   let activeSection = '';
   let reading;
+  let manualCatalog;
+  let manualPath = '';
+  let manualSearchGroup = false;
+  const manualBreadcrumb = get('manual-breadcrumb');
+  const manualProduct = get('manual-product');
   let ranked = [];
   let previewTrigger;
   const folderMime = 'application/vnd.google-apps.folder';
@@ -153,6 +158,8 @@
       if (signal.aborted) return;
       if (!scanned.length) throw new Error('The document folders could not be read. Check your Drive access and try again.');
       documents = [...catalog.values()];
+      manualCatalog = thManualCatalog.build(documents.filter(file => file.section === 'Manuals'));
+      if (!manualCatalog.nodes.has(manualPath)) manualPath = '';
       folders = scanned;
       loaded = true;
       if (failures.length) {
@@ -190,7 +197,12 @@
     const label = document.createElement('h2');
     label.textContent = 'In these results';
     fragment.append(label);
-    for (const {file} of ranked.slice(0, visible)) {
+    const inGroup = activeSection === 'Manuals' && manualCatalog?.nodes.get(manualPath)?.files;
+    const railFiles = inGroup || ranked.map(({file}) => file);
+    const selected = railFiles.find(file => file.id === reading);
+    const nearby = railFiles.slice(0, visible);
+    if (selected && !nearby.includes(selected)) nearby.unshift(selected);
+    for (const file of nearby) {
       const item = document.createElement('button');
       item.type = 'button';
       item.textContent = file.displayName;
@@ -207,7 +219,7 @@
     catalogPanel.hidden = true;
     matches.hidden = false;
     drawMatchRail();
-    thDriveRecords.open(file);
+    thDriveRecords.open({...file, readingMode: file.section === 'Manuals'});
   }
 
   reader.addEventListener('close', () => {
@@ -227,6 +239,8 @@
 
   function showLocation(focus = false) {
     const params = new URLSearchParams(location.search);
+    manualPath = '';
+    manualSearchGroup = false;
     activeSection = sections.find(name => name.toLowerCase() === params.get('collection')) || '';
     const across = params.get('view') === 'search';
     closePreview();
@@ -268,6 +282,7 @@
   });
   window.addEventListener('popstate', () => showLocation(true));
   function updateCategories() {
+    category.closest('.library-controls').classList.toggle('manual-controls', activeSection === 'Manuals');
     const selection = category.value;
     const names = new Set(documents.filter(file => !selectedSection() || file.section === selectedSection()).flatMap(file => file.topics));
     category.replaceChildren(new Option('All categories', ''));
@@ -316,11 +331,111 @@
     }
     const action = document.createElement('span');
     action.className = 'library-open';
-    action.textContent = 'Preview document →';
+    action.textContent = file.section === 'Manuals' ? 'Read document →' : 'Preview document →';
     button.append(badge, title, path, action);
     button.addEventListener('click', () => openPreview(file, button));
     li.append(button);
     return li;
+  }
+
+  function moveManual(entry, fromSearch = false) {
+    manualPath = entry?.id || '';
+    manualSearchGroup = fromSearch;
+    visible = pageSize;
+    closePreview();
+    render();
+    get('library-results-title').focus();
+  }
+
+  function cardArt(entry) {
+    const cover = document.createElement('span');
+    cover.className = 'manual-art';
+    cover.style.backgroundImage = 'url("' + entry.art + '")';
+    if (entry.art.endsWith('/collection-covers.webp')) cover.classList.add('manual-art-triptych');
+    if (entry.photo) {
+      const photo = new Image();
+      photo.alt = '';
+      photo.loading = 'lazy';
+      photo.referrerPolicy = 'no-referrer';
+      photo.addEventListener('error', () => photo.remove(), {once: true});
+      photo.src = entry.photo;
+      cover.append(photo);
+    }
+    return cover;
+  }
+
+  function manualCard(entry, fromSearch) {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'manual-card';
+    const title = document.createElement('strong');
+    title.textContent = entry.title;
+    const caption = document.createElement('small');
+    caption.textContent = entry.count.toLocaleString() + (entry.count === 1 ? ' file' : ' files');
+    if (fromSearch) caption.textContent = entry.parent.parent.title + ' / ' + entry.parent.title + ' · ' + caption.textContent;
+    button.append(cardArt(entry), title, caption);
+    button.addEventListener('click', () => moveManual(entry, fromSearch));
+    li.append(button);
+    return li;
+  }
+
+  function renderManuals(words, append) {
+    const title = get('library-results-title');
+    const entry = manualCatalog.nodes.get(manualPath) || manualCatalog.root;
+    const searching = words.length && !manualSearchGroup;
+    manualBreadcrumb.replaceChildren();
+    manualProduct.replaceChildren();
+    manualBreadcrumb.hidden = searching || !entry.id;
+    manualProduct.hidden = !entry.files;
+    if (!manualBreadcrumb.hidden) {
+      const addCrumb = (label, action) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.addEventListener('click', action);
+        manualBreadcrumb.append(button);
+      };
+      if (manualSearchGroup) addCrumb('← Search results', () => moveManual(null));
+      else {
+        const trail = [];
+        for (let current = entry.parent; current; current = current.parent) trail.unshift(current);
+        for (const ancestor of trail) addCrumb(ancestor.title, () => moveManual(ancestor));
+      }
+    }
+    if (entry.files && !searching) {
+      manualProduct.append(cardArt(entry));
+      if (entry.source) {
+        const source = document.createElement('a');
+        source.href = entry.source;
+        source.target = '_blank';
+        source.rel = 'noopener noreferrer';
+        source.textContent = 'Product photo source ↗';
+        manualProduct.append(source);
+      } else {
+        const caption = document.createElement('small');
+        caption.textContent = 'Category cover · Product photo unavailable';
+        manualProduct.append(caption);
+      }
+    } else manualProduct.hidden = true;
+
+    let entries;
+    if (searching) {
+      entries = [...new Set(ranked.map(({file}) => manualCatalog.byFile.get(file.id)).filter(Boolean))];
+    } else {
+      entries = entry.files || [...entry.children.values()].sort((a, b) => thManualCatalog.compare(a.title, b.title));
+    }
+    const fileLevel = Boolean(entry.files && !searching);
+    results.classList.toggle('manual-card-grid', !fileLevel);
+    title.textContent = searching ? 'Matching products and groups' : entry.id ? entry.title : 'Browse by category';
+    status.textContent = searching ? (entries.length ? entries.length.toLocaleString() + ' matching groups' : 'No matching manuals.') + (contentStatus ? ' ' + contentStatus : '') :
+      (entry.count ?? documents.filter(file => file.section === 'Manuals').length).toLocaleString() + ' files';
+    if (!append) results.replaceChildren();
+    const start = results.children.length;
+    results.append(...entries.slice(start, visible).map(item => fileLevel ? fileCard(item, [], 0) : manualCard(item, searching)));
+    more.hidden = visible >= entries.length;
+    if (append) results.children[start]?.querySelector('button')?.focus();
+    drawMatchRail();
   }
 
   function render(append = false) {
@@ -328,10 +443,14 @@
     const words = terms();
     const section = selectedSection();
     ranked = documents
-      .filter(file => (!section || file.section === section) && (!category.value || file.topics.includes(category.value)))
+      .filter(file => (!section || file.section === section) && (section === 'Manuals' || !category.value || file.topics.includes(category.value)))
       .map(file => ({file, rank: score(file, words)}))
       .filter(item => item.rank >= 0)
       .sort((a, b) => b.rank - a.rank || a.file.displayName.localeCompare(b.file.displayName, undefined, {numeric: true}));
+    if (section === 'Manuals') { renderManuals(words, append); return; }
+    results.classList.remove('manual-card-grid');
+    manualBreadcrumb.hidden = true;
+    manualProduct.hidden = true;
     get('library-results-title').textContent = words.length ? 'Search results' : 'Browse documents';
     const shown = Math.min(ranked.length, visible);
     const count = ranked.length === 1 ? '1 document' : ranked.length.toLocaleString() + ' documents';
@@ -394,10 +513,17 @@
     else searchContent(words, controller);
   }
 
-  query.addEventListener('input', () => { closePreview(); search(true); });
+  query.addEventListener('input', () => {
+    closePreview();
+    manualPath = '';
+    manualSearchGroup = false;
+    search(true);
+  });
   get('library-search').addEventListener('submit', event => {
     event.preventDefault();
     closePreview();
+    manualPath = '';
+    manualSearchGroup = false;
     search(false);
   });
   category.addEventListener('change', () => { closePreview(); visible = pageSize; render(); });

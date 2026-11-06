@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="auth.css?v=20261030-in-page-loading-5">
 <link rel="stylesheet" href="portal-layout.css?v=20261028">
 <link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove">
-<link rel="stylesheet" href="home-library.css?v=20261106-strider">
+<link rel="stylesheet" href="home-library.css?v=20261106-manuals">
 <script src="card-titles.js?v=20261106-home" defer></script>
 </head>
 <body data-th-page="home-library">
@@ -77,7 +77,9 @@
    <div class="library-reading-pane">
     <p id="library-notice" role="status" hidden></p>
     <section id="library-catalog" aria-labelledby="library-results-title">
-     <div class="library-results-heading"><h2 id="library-results-title">Browse documents</h2><p id="library-status" role="status">Sign in to load your Drive collection.</p></div>
+     <div class="library-results-heading"><h2 id="library-results-title" tabindex="-1">Browse documents</h2><p id="library-status" role="status">Sign in to load your Drive collection.</p></div>
+     <nav id="manual-breadcrumb" aria-label="Manual categories" hidden></nav>
+     <div id="manual-product" hidden></div>
      <ul id="library-results" class="library-grid"></ul>
      <button type="button" id="library-more" hidden>Show more documents</button>
     </section>
@@ -92,8 +94,10 @@
  </section>
 </main></div></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="drive-record-viewer.js?v=20261106-strider"></script>
-<script src="home-library.js?v=20261106-strider"></script>
+<script src="drive-record-viewer.js?v=20261106-manuals"></script>
+<script src="manual-catalog.js?v=20261106-manuals"></script>
+<script src="manual-reader.js?v=20261106-manuals"></script>
+<script src="home-library.js?v=20261106-manuals"></script>
 <script src="portal.js?v=20261106-library-name"></script>
 <script src="sheets.js?v=20261030-in-page-loading-5"></script>
 </body>
