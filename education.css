@@ -13,3 +13,9 @@
 
 .education-landing .education-toolbar label:not(:first-child){display:none}
 [data-family-collections=education] .legal-cards{grid-template-columns:minmax(0,1fr)}
+.education-people button{position:relative}
+.education-people .education-portrait{position:absolute;top:.65rem;right:.65rem;margin:0;width:clamp(47px,7vw,74px);aspect-ratio:1;border:2px solid #e7f2fd;border-radius:50%;background:#172638 url('command-photos/family-portraits.jpg') no-repeat;background-size:460% auto;box-shadow:0 3px 12px #0008}
+.education-people [data-person=Todd] .education-portrait{background-position:34.0278% 41%}
+.education-people [data-person=Alexis] .education-portrait{background-position:65.9722% 41%}
+.education-people [data-person=Aiden] .education-portrait{background-image:url('command-photos/aiden-portrait.jpg?v=2')}
+.education-people [data-person=Aiden] .education-portrait,.education-people .education-portrait.has-custom-portrait{background-size:cover;background-position:center}

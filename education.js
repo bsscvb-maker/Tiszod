@@ -6,11 +6,23 @@ const message=t=>$('education-status').textContent=t;
 async function save(r,d){if(!thAuthorized())throw Error('Sign in again to save.');d.updatedAt=new Date().toISOString();let range="'Education Records'!A:B",method='POST',suffix=':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',values=[[r?.id||crypto.randomUUID(),JSON.stringify(d)]];
 if(r){const live=await thValues("'Education Records'!A"+r.row+":B"+r.row,'UNFORMATTED_VALUE');if(live[0]?.[0]!==r.id||JSON.parse(live[0][1]).updatedAt!==r.data.updatedAt)throw Error('This record changed elsewhere. Refresh before saving.');range="'Education Records'!A"+r.row+":B"+r.row;method='PUT';suffix='?valueInputOption=RAW'}
 const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+suffix,{method,headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},body:JSON.stringify({values})});if(!res.ok)throw Error('Save failed. Check your connection and retry.');await window.thStart()}
-window.thStart=async()=>{const rows=await thValues("'Education Records'!A1:B2000",'UNFORMATTED_VALUE');if(rows[0]?.[0]!=='ID')throw Error('Education records could not load.');records=rows.slice(1).map((r,i)=>({id:r[0],row:i+2,data:JSON.parse(r[1]||'{}')})).filter(r=>r.id);const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();message('Private education records connected.');$('th-connection').textContent='Private workbook connected'};
+async function loadPortraits(){
+ try{
+  const rows=await thValues("'Identification Records'!D1:E2000",'UNFORMATTED_VALUE');
+  const photos=new Map(rows.filter(([key,value])=>typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)));
+  for(const badge of $('education-people').querySelectorAll('.education-portrait')){
+   const person=badge.closest('[data-person]').dataset.person;
+   const source=photos.get('person-photo:'+person);
+   badge.style.backgroundImage=source?'url("'+source+'")':'';
+   badge.classList.toggle('has-custom-portrait',Boolean(source));
+  }
+ }catch{}
+}
+window.thStart=async()=>{const rows=await thValues("'Education Records'!A1:B2000",'UNFORMATTED_VALUE');if(rows[0]?.[0]!=='ID')throw Error('Education records could not load.');records=rows.slice(1).map((r,i)=>({id:r[0],row:i+2,data:JSON.parse(r[1]||'{}')})).filter(r=>r.id);const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();void loadPortraits();message('Private education records connected.');$('th-connection').textContent='Private workbook connected'};
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
-const personLabels={Todd:'Ty',Aiden:'Aiden',Alexis:'Alexa'};
+const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexa'};
 function owner(d){const name=String(d.person||'').trim().toLowerCase();return name==='aiden'?'Aiden':['alexis','alexa'].includes(name)?'Alexis':'Todd';}
 const isEducation=true;
 function title(d){
