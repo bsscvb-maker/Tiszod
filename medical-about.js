@@ -46,6 +46,14 @@
     const inches=raw.match(/^(\d+(?:\.\d+)?)\s*(?:in|inches|["″])$/i);
     return inches?Number(inches[1]):0;
   }
+  function loggedMedicationAmount(name, dose) {
+    const compound = /^compounded tirzepatide (?:with|\+) b12$/i;
+    if (!compound.test(name) || dose !== 'Current dose to confirm') return dose;
+    const latest = (savedProfile.folderSummaries?.injections || [])
+      .filter(entry => compound.test(entry.product) && /^\d{4}-\d{2}-\d{2}$/.test(entry.date))
+      .sort((a,b) => b.date.localeCompare(a.date))[0];
+    return latest?.dose?.match(/^(\d+(?:\.\d+)? mL)(?: reported)?$/i)?.[1] || dose;
+  }
   function renderProfile() {
     const target=$('medical-about-profile'), stamp=$('medical-profile-updated');
     const updated=Date.parse(profile.profileUpdatedAt);
@@ -106,7 +114,8 @@
           picture.append(image);card.append(picture);
         }
         info.append(make('strong',name));
-        if(dose)info.append(make('p',dose));
+        const amount=loggedMedicationAmount(name,dose);
+        if(amount)info.append(make('p',amount));
         if(schedule)info.append(make('p',schedule));
         card.append(info);
         grid.append(card);
