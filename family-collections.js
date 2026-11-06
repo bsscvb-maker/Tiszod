@@ -22,44 +22,45 @@
   'family/Aiden/01 School & IEP/Early Childhood Special Education': 'early-childhood',
   'family/Aiden/01 School & IEP/Preschool Screening & Assessment': 'preschool',
   'family/Aiden/01 School & IEP/Report Cards & Progress': 'progress',
-  'family/Aiden/02 Health & Support': 'health-forms',
-  'family/Aiden/02 Health & Support/Syringomyelia': 'mri',
-  'family/Aiden/02 Health & Support/Medicaid & Health Insurance': 'coverage',
-  'family/Aiden/03 Activities & Sports': 'basketball',
-  'family/Aiden/04 Photos & Keepsakes': 'keepsakes',
-  'family/Aiden/05 Personal Records': 'archive-boxes',
-  'family/Alexis/02 Health': 'assets/medical/providers.webp',
-  'family/Alexis/02 Health/Dental': 'dental',
-  'family/Alexis/02 Health/Vision Care': 'vision',
-  'family/Alexis/02 Health/Prescriptions': 'prescription',
-  'family/Alexis/03 Activities & Volunteering': 'volunteering',
-  'family/Alexis/03 Activities & Volunteering/Girl Scouts': 'scouts',
-  'family/Alexis/03 Activities & Volunteering/Horseback Riding': 'horse',
-  'family/Alexis/03 Activities & Volunteering/Ice Skating': 'skating',
-  'family/Alexis/03 Activities & Volunteering/Running': 'running',
-  'family/Alexis/03 Activities & Volunteering/Busch Gardens': 'coaster',
-  'family/Alexis/03 Activities & Volunteering/Tidewater Striders - Youth Advisory Committee': 'race-medal',
+  'family/Aiden/Health & Support': 'health-forms',
+  'family/Aiden/Health & Support/Syringomyelia': 'mri',
+  'family/Aiden/Health & Support/Medicaid & Health Insurance': 'coverage',
+  'family/Aiden/Activities & Sports': 'basketball',
+  'family/Aiden/Photos & Keepsakes': 'keepsakes',
+  'family/Aiden/Personal Records': 'archive-boxes',
+  'family/Alexis/Health': 'assets/medical/providers.webp',
+  'family/Alexis/Health/Dental': 'dental',
+  'family/Alexis/Health/Vision Care': 'vision',
+  'family/Alexis/Health/Prescriptions': 'prescription',
+  'family/Alexis/Activities & Volunteering': 'volunteering',
+  'family/Alexis/Activities & Volunteering/Girl Scouts': 'scouts',
+  'family/Alexis/Activities & Volunteering/Horseback Riding': 'horse',
+  'family/Alexis/Activities & Volunteering/Ice Skating': 'skating',
+  'family/Alexis/Activities & Volunteering/Running': 'running',
+  'family/Alexis/Activities & Volunteering/Busch Gardens': 'coaster',
+  'family/Alexis/Activities & Volunteering/Tidewater Striders - Youth Advisory Committee': 'race-medal',
   'family/Alexis/01 School/School Awards & Honors': 'graduation',
-  'family/Alexis/04 Personal Records': 'folders',
-  'family/Alexis/04 Personal Records/DMV & Driver Records': 'driver',
+  'family/Alexis/Personal Records': 'folders',
+  'family/Alexis/Personal Records/DMV & Driver Records': 'driver',
   'family/Todd/Cards': 'greetings', 'family/Todd/Tickets': 'assets/family/tickets.webp',
-  'medical/Aiden/02 Health & Support': 'therapy',
-  'medical/Alexis/02 Health': 'medical-lab',
+  'medical/Aiden/Health & Support': 'therapy',
+  'medical/Alexis/Health': 'medical-lab',
   'medical/Todd/About Me': 'health-envelopes',
-  'family/Aiden/02 Health & Support/Immunization Records': 'vaccination',
-  'family/Aiden/02 Health & Support/Syringomyelia/Diagnosis and Letters': 'radiographs',
-  'family/Aiden/02 Health & Support/Syringomyelia/Diagnosis and Letters/Test Results': 'scanner',
-  'family/Aiden/05 Personal Records/Archives & OneNote Recovery': 'scan-disc',
-  'family/Alexis/04 Personal Records/Letters, Photos & Keepsakes': 'film',
+  'family/Aiden/Health & Support/Immunization Records': 'vaccination',
+  'family/Aiden/Health & Support/Syringomyelia/Diagnosis and Letters': 'radiographs',
+  'family/Aiden/Health & Support/Syringomyelia/Diagnosis and Letters/Test Results': 'scanner',
+  'family/Aiden/Personal Records/Archives & OneNote Recovery': 'scan-disc',
+  'family/Alexis/Personal Records/Letters, Photos & Keepsakes': 'film',
   'education/Alexis/01 School/School Awards & Honors': 'education-award',
   'education/Aiden/01 School & IEP': 'assets/family/school.webp',
   'education/Alexis/01 School': 'assets/family/school-reports.webp',
-  'hobbies/Aiden/03 Activities & Sports': 'assets/family/sports.webp',
-  'hobbies/Alexis/03 Activities & Volunteering': 'assets/family/volunteering.webp',
+  'hobbies/Aiden/Activities & Sports': 'assets/family/sports.webp',
+  'hobbies/Alexis/Activities & Volunteering': 'assets/family/volunteering.webp',
   'hobbies/Todd/Tickets': 'assets/family/archive.webp'
  }));
  const coverFor = path => {
-  const name = photos.get(path.join('/'));
+  const key = path.join('/').replace(/^((?:family|medical|hobbies)\/(?:Aiden|Alexis)\/)0[2-5] /, '$1');
+  const name = photos.get(key);
   return name ? photo(name) : undefined;
  };
  const decorate = (record, parent) => ({
@@ -96,8 +97,8 @@
  async function recordsFor(name, files) {
   const get = title => files.find(exact(title));
   const school = files.find(file => file.folder && /^01 School\b/.test(file.name));
-  const health = files.find(file => file.folder && /^02 Health\b/.test(file.name));
-  const activities = files.find(file => file.folder && /^03 Activities\b/.test(file.name));
+  const health = files.find(file => file.folder && /^(?:02 )?Health\b/.test(file.name));
+  const activities = files.find(file => file.folder && /^(?:03 )?Activities\b/.test(file.name));
   const personal = get('Personal Records');
   const keep = name === 'Alexis' && personal && ['family', 'identification'].includes(area)
    ? await thDriveRecords.children(personal) : [];
