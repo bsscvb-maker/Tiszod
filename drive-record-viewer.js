@@ -86,7 +86,8 @@ async function legalPdf(blob){
  legalPdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
  const pdfjs=await legalPdfModule;
  pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',location.href).href;
- return pdfjs.getDocument({data:new Uint8Array(await blob.arrayBuffer())});
+ const wasmUrl=new URL('./vendor/pdfjs/wasm/',location.href).href;
+ return pdfjs.getDocument({data:new Uint8Array(await blob.arrayBuffer()),wasmUrl});
 }
 async function legalPdfPage(pdf,number,width){
  const page=await pdf.getPage(number);
