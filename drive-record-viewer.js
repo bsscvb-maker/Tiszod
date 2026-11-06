@@ -181,7 +181,14 @@ function legalFileCard(record,back){
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const fallback=legalFolderCover(record.name,record.medicalCover);
-   if(record.cover||record.medicalArt||record.medicalCoverImage){
+   if(record.legalFolderPhoto){
+    const image=document.createElement('img');
+    image.alt='';
+    image.src=record.legalFolderPhoto;
+    image.onerror=()=>{card.classList.remove('legal-folder-photo');art.replaceChildren(fallback)};
+    card.classList.add('legal-folder-photo');
+    art.replaceChildren(image,fallback);
+   }else if(record.cover||record.medicalArt||record.medicalCoverImage){
     const image=document.createElement('img');
     image.alt='';
     if(record.medicalLogo)image.classList.add('medical-carrier-logo');
@@ -338,6 +345,7 @@ async function showLegalRecord(record,back){
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
+     legalFolderPhoto:file.folder&&!/^bankruptcy$/i.test(file.name.trim())?record.legalFolderPhoto:undefined,
      medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
