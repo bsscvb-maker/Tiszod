@@ -104,7 +104,7 @@ async function showSocialSecurityNumber(button){
  }finally{button.disabled=false}
 }
 function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
-const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Fapula']};
+const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Tracy’s Father']};
 function groupCard(label,count,attribute,value){
  const profile=attribute==='data-person'?(personStyles[label]||['other',label.charAt(0),'Documents']):null;
  const portrait=personPortraits.get(label)||'';
