@@ -56,7 +56,7 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=20261106-streamlined-legal-folders"></script>
+<script src="drive-record-viewer.js?v=20261106-divorce-folder-labels"></script>
 <script>
 const legalSections=[
  {id:'bankruptcy',key:'BK',title:'Bankruptcy',description:'Open the BK workspace to review case documents, creditors, and next steps.'},
@@ -83,6 +83,10 @@ const legalFolderCovers=new Map([
  ['financial records','financial-records'],
  ['mediation','mediation'],
  ['court case','court-case']
+]);
+const divorceFolderLabels=new Map([
+ ['2017.11.06','Divorce Records · Nov 6, 2017'],
+ ['2022.09.23','Divorce Records · Sep 23, 2022']
 ]);
 function legalFolderPhotoFor(name){
  const cover=legalFolderCovers.get(name.trim().toLowerCase());
@@ -128,6 +132,8 @@ window.thStart=async()=>{
    if(record.section!==key||record.redundantLauncher)continue;
    cards.append(thDriveRecords.card({...record,
     legalFolderPhotoFor:record.folder?legalFolderPhotoFor:undefined,
+    childFolderLabel:record.folder&&record.section==='Personal Legal Records'&&record.name==='Divorce'
+     ?name=>divorceFolderLabels.get(name):undefined,
     excludedFolderIds:linkedFolderIds
    }));
   }
