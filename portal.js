@@ -78,7 +78,7 @@
     const link=document.createElement('a');
     link.href='family.html';link.className='th-nav-link';
     if(document.body.dataset.thPage==='family'){link.classList.add('active');link.setAttribute('aria-current','page');}
-    link.innerHTML='<span class="th-nav-icon" aria-hidden="true">♧</span><span>Family</span>';
+    link.innerHTML='<span class="th-nav-icon" aria-hidden="true"></span><span>Family</span>';
     nav.append(link);
   }
   if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
@@ -96,6 +96,7 @@
   if (nav) {
     const badges = [
       ['home-library.html', '#28606e', '<path d="M6 10h7l2 3h11v11H6zM10 17h12m-12 3h8"/>'],
+      ['family.html', '#575080', '<circle cx="11.5" cy="11.5" r="3"/><circle cx="21" cy="13" r="2.5"/><path d="M5.5 23v-2a6 6 0 0 1 12 0v2h-12Zm14.5-5.5a5 5 0 0 1 6.5 4.7V23H21"/>'],
       ['education.html', '#234983', '<path d="m6 13 10-5 10 5-10 5-10-5Zm4 2v6q6 5 12 0v-6m4-2v8"/>'],
       ['identification.html', '#17636b', '<rect x="6.5" y="9" width="19" height="14" rx="2.5"/><circle cx="12.5" cy="14" r="2"/><path d="M9.5 20q3-4 6 0m3-6h4m-4 4h4"/>'],
       ['legal.html', '#654574', '<path d="M16 7v17m-5 0h10M8 11h16M9 11l-3 7h6l-3-7Zm14 0-3 7h6l-3-7ZM6 18a3 3 0 0 0 6 0m8 0a3 3 0 0 0 6 0"/>'],
