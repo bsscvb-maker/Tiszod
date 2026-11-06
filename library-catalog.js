@@ -239,6 +239,41 @@
     'Other equipment': 220, 'Bikes & accessories': 198
   };
 
+  const recoveredProducts = [
+    [/merit badge pamphlet.*35866/i, 'Camping Merit Badge Pamphlet', 'Outdoor & garden', 'Camping & gear', 251],
+    [/kastking waterproof bag/i, 'KastKing Waterproof Bag', 'Outdoor & garden', 'Camping & gear', 252],
+    [/folding bag chair/i, 'Folding Camping Chair', 'Outdoor & garden', 'Camping & gear', 253],
+    [/storage box/i, 'Outdoor Storage Box', 'Outdoor & garden', 'Camping & gear', 254],
+    [/golds gym stride trainer 410/i, 'Gold’s Gym Stride Trainer 410 Elliptical', 'Household', 'Fitness equipment', 256],
+    [/impex marcy diamond md-2109/i, 'IMPEX Marcy Diamond MD-2109 Home Gym', 'Household', 'Fitness equipment', 257],
+    [/chefman.*toast.air/i, 'Chefman Toast-Air Oven', 'Appliances', 'Kitchen appliances', 258],
+    [/craftsman cmec6150/i, 'Craftsman CMEC6150 Air Compressor', 'Tools', 'Shop equipment', 259],
+    [/chamberlain (?:rjo20|garage door opener.*quick start)/i, 'Chamberlain RJO20 Garage Door Opener', 'Household', 'Safety & security', 260],
+    [/first alert smoke alarm/i, 'First Alert Smoke Alarm', 'Household', 'Safety & security', 261],
+    [/carbon monoxide alarm.*installation and user instructions scan/i, 'Carbon Monoxide Alarm', 'Household', 'Safety & security', 262],
+    [/cobra.*cxt645/i, 'Cobra CXT645 Two-Way Radios', 'Electronics', 'Computers & audio', 263],
+    [/poly blackwire 3300/i, 'Poly Blackwire 3300 USB Headset', 'Electronics', 'Computers & audio', 264],
+    [/bayco glass food storage/i, 'BAYCO Glass Food Storage Containers', 'Appliances', 'Kitchen appliances', 265],
+    [/merkury.*led strip lights/i, 'Merkury LED Strip Lights', 'Electronics', 'Lighting & power', 266],
+    [/electric salt and pepper grinder/i, 'Electric Salt and Pepper Grinder', 'Appliances', 'Kitchen appliances', 267],
+    [/rechargeable salt and pepper grinder/i, 'Rechargeable Salt and Pepper Grinder Set', 'Appliances', 'Kitchen appliances', 268],
+    [/watch battery replacement/i, 'Watch Battery Replacement', 'Household', 'Other equipment', 269],
+    [/registration cookbook/i, 'Registration Cookbook', 'Appliances', 'Kitchen appliances', 270],
+    [/\b3640 fuel injection pressure tester/i, 'Innova 3640 Fuel Injection Pressure Tester', 'Tools', 'Automotive tools', 272],
+    [/bolt depot.*fastener basics/i, 'Bolt Depot Fastener Basics', 'Tools', 'Shop equipment', 202],
+    [/bissell spotbot.*33n8/i, 'Bissell SpotBot 33N8 Portable Deep Cleaner', 'Appliances', 'Laundry & cleaning', 191],
+    [/\bsc164vs\b/i, 'SC164VS 16-Inch Scroll Saw', 'Tools', 'Shop equipment', 201],
+    [/craftsman 113\.197602/i, 'Craftsman 113.197602 Radial Arm Saw', 'Tools', 'Shop equipment', 226],
+    [/craftsman 137\.248481/i, 'Craftsman 137.248481 Table Saw', 'Tools', 'Shop equipment', 227],
+    [/innova carscan/i, 'Innova CarScan with RepairSolutions 2', 'Tools', 'Automotive tools', 230],
+    [/ilive ihb23/i, 'iLive IHB23 Speaker System', 'Electronics', 'Computers & audio', 168],
+    [/ilive isbw157/i, 'iLive ISBW157 Waterproof Speaker', 'Electronics', 'Computers & audio', null],
+    [/vtech cs6719/i, 'VTech CS6719 Cordless Phone', 'Electronics', 'Computers & audio', 206],
+    [/frigidaire.*2020211a1112/i, 'Frigidaire 2020211A1112 Room Air Conditioner', 'Appliances', 'Heating & cooling', 192],
+    [/ge 49-7805-3/i, 'GE Window Air Conditioner Guide 49-7805-3', 'Appliances', 'Heating & cooling', null],
+    [/honeywell salermo 10285/i, 'Honeywell Salermo 10285 Ceiling Fan', 'Household', 'Other equipment', 233]
+  ];
+
   function identifyManual(file) {
     const name = file.displayName;
     const folder = file.path.split(' / ').at(-1);
@@ -250,6 +285,11 @@
     }
     const known = products.find(product => product.match.test(name + ' ' + folder));
     if (known) return {...known, art: known.art ?? manualArt.find(([pattern]) => pattern.test(name + ' ' + folder))?.[1] ?? manualFallbackArt[known.family] ?? covers[known.family] ?? 220};
+    const recoveredProduct = recoveredProducts.find(([pattern]) => pattern.test(name + ' ' + folder));
+    if (recoveredProduct) {
+      const [, title, category, family, art] = recoveredProduct;
+      return {title, category, family, art};
+    }
     const productFolder = !/^(?:Manuals|Recovered Manuals|Other Product Documents|Camping and Outdoor Gear|Exercise Equipment|Smoke and Carbon Monoxide Alarms|Garage Door Openers)$/.test(folder);
     const cleanTitle = name.replace(/\s*\[[a-f\d]{8}\]$/i, '').replace(prefix, '').replace(suffix, '').replace(date, '');
     const title = (productFolder ? folder : cleanTitle).trim() || name;
@@ -398,6 +438,20 @@
       file.index += ' ' + keyOf([meta.title, meta.category, meta.family].join(' '));
     }
     for (const entry of nodes.values()) entry.files?.sort((a, b) => compare(a.displayName, b.displayName));
+    if (section === 'Manuals') {
+      const used = new Set([...nodes.values()].filter(entry => !entry.files && entry.art).map(entry => entry.art));
+      const items = [...nodes.values()].filter(entry => entry.files).sort((a, b) => compare(a.title, b.title));
+      for (const item of items) {
+        if (used.has(item.photo)) {
+          delete item.photo;
+          delete item.source;
+        }
+        if (item.photo) used.add(item.photo);
+        if (used.has(item.art)) delete item.art;
+        if (item.art) used.add(item.art);
+        item.documentCover = !item.art;
+      }
+    }
     return {root, nodes, byFile};
   }
   window.thLibraryCatalog = {build, compare};

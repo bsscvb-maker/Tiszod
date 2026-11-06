@@ -421,6 +421,48 @@
     get('library-results-title').focus();
   }
 
+  const coverJobs = new WeakMap();
+  const coverQueue = [];
+  let activeCovers = 0;
+  const coverObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      coverObserver.unobserve(entry.target);
+      coverQueue.push(entry.target);
+    }
+    loadDocumentCovers();
+  }, {rootMargin: '100px'});
+
+  function loadDocumentCovers() {
+    while (activeCovers < 3 && coverQueue.length) {
+      const cover = coverQueue.shift();
+      const file = coverJobs.get(cover);
+      if (!cover.isConnected || !file) continue;
+      activeCovers++;
+      thDriveRecords.cover(file, AbortSignal.timeout(20000)).then(result => {
+        if (!result || !cover.isConnected) return;
+        const url = URL.createObjectURL(result.blob);
+        const image = new Image();
+        image.alt = 'Original document preview';
+        image.addEventListener('load', () => URL.revokeObjectURL(url), {once: true});
+        image.addEventListener('error', () => URL.revokeObjectURL(url), {once: true});
+        image.src = url;
+        cover.replaceChildren(image);
+      }).catch(() => {}).finally(() => {
+        activeCovers--;
+        loadDocumentCovers();
+      });
+    }
+  }
+
+  function observeDocumentCover(cover, entry) {
+    const file = entry.files?.find(file => /^image\/(?:jpeg|png|webp|gif|bmp|avif)$/.test(file.mime)) ||
+      entry.files?.find(file => file.mime === 'application/pdf');
+    if (!file) return;
+    coverJobs.set(cover, file);
+    coverObserver.observe(cover);
+  }
+
   function cardArt(entry) {
     const cover = document.createElement('span');
     cover.className = 'manual-art';
@@ -443,10 +485,13 @@
       photo.alt = '';
       photo.loading = 'lazy';
       photo.referrerPolicy = 'no-referrer';
-      photo.addEventListener('error', () => photo.remove(), {once: true});
+      photo.addEventListener('error', () => {
+        photo.remove();
+        if (entry.documentCover) observeDocumentCover(cover, entry);
+      }, {once: true});
       photo.src = entry.photo;
       cover.append(photo);
-    }
+    } else if (entry.documentCover) observeDocumentCover(cover, entry);
     return cover;
   }
 
