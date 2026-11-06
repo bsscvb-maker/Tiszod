@@ -33,7 +33,7 @@ if(careerMode){
  for(const field of ['person','category'])$('education-form').elements[field].closest('label').hidden=true;
 }
 const careerCovers = new Map([
- ['Employers', 'assets/schools/computer-training.jpg'],
+ ['Employers', 'assets/career/employers-cover.webp'],
  ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
  ['Employers/Advance', 'assets/career/employers/advance.svg'],
  ['Employers/HireGenics', 'assets/career/employers/hiregenics.svg'],
