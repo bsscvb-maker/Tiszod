@@ -168,7 +168,7 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- card.className='legal-file';if(record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.name;actions.className='legal-actions';
+ card.className='legal-file';if(record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document';card.append(type,caption);
  if(record.id||record.directReader){
   const button=document.createElement(record.directReader?'a':'button');
@@ -233,7 +233,7 @@ async function showLegalRecord(record,back){
  const request=new AbortController();
  legalViewRequest=request;
  legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
- document.getElementById('legal-view-title').textContent=record.name;
+ document.getElementById('legal-view-title').textContent=record.displayName??record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();legalDownloadAction(actions,record);
  if(record.downloadReport){
@@ -347,6 +347,7 @@ async function showLegalRecord(record,back){
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
+     displayName:file.folder?record.childFolderLabel?.(file.name):undefined,
      legalFolderPhotoFor:file.folder?record.legalFolderPhotoFor:undefined,
      excludedFolderIds:record.excludedFolderIds,
      medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
