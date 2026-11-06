@@ -128,6 +128,48 @@
       photo: 'https://www.wyze.com/cdn/shop/files/wyze-cam-pan-v4-wyze-labs-inc-6982259.jpg?v=1775153016&width=1946',
       source: 'https://www.wyze.com/products/wyze-cam-pan-v4'
     },
+    {
+      match: /wolfbox megaflow 24 pro/i, title: 'WOLFBOX MegaFlow 24 Pro Tire Inflator', category: 'Tools', family: 'Automotive tools',
+      photo: 'https://3wliners.com/cdn/shop/files/15_a25f1250-ee80-4479-b00a-2bf546db563d.jpg?v=1725440094&width=640',
+      source: 'https://3wliners.com/products/wolfbox-megaflow-24-pro-tire-inflator'
+    },
+    {
+      match: /\bw87031\b/i, title: 'Performance Tool W87031 Vacuum Pump Kit', category: 'Tools', family: 'Automotive tools',
+      photo: 'https://i.ebayimg.com/images/g/0uUAAOSwJtBmgElU/s-l1200.png',
+      source: 'https://www.ebay.com/itm/204861017979'
+    },
+    {
+      match: /bissell crosswave 1785/i, title: 'Bissell CrossWave 1785 Series', category: 'Appliances', family: 'Laundry & cleaning',
+      photo: 'https://d3j17a2r8lnfte.cloudfront.net/lam/2024/5/medium/plJBA2B6nqV-lidwrzmPWwWI.jpeg',
+      source: 'https://www.laibids.com/auctions/31301/lot/257187-bissell-crosswave-model-1785a', illustrative: true
+    },
+    {
+      match: /\bdxaec2\b/i, title: 'DeWalt DXAEC2 Battery Charger & Maintainer', category: 'Tools', family: 'Automotive tools',
+      photo: 'https://static.wixstatic.com/media/217982_369052cc1a3b4e5ead01eff0b5bc04a5~mv2.jpg',
+      source: 'https://www.dewalt12volt.com/dxaec2'
+    },
+    {
+      match: /motion pro 08-0609/i, title: 'Motion Pro 08-0609 Cable Luber V3', category: 'Tools', family: 'Automotive tools',
+      photo: 'https://i5.walmartimages.com/seo/motion-pro-08-0609-cable-luber-v3-orange-cycle-parts_4c8ac378-ad7a-462f-9765-ed18753a2c3b_1.9a23948c9a4f92019dc0b14f3610f448.jpeg',
+      source: 'https://www.walmart.com/ip/593108304'
+    },
+    {
+      match: /holt industries 64381/i, title: 'Holt Industries 64381 Pistol-Grip Grease Gun', category: 'Tools', family: 'Automotive tools',
+      photo: 'https://www.harborfreight.com/media/catalog/product/6/4/64381_W3.jpg',
+      source: 'https://www.harborfreight.com/professional-pistol-grip-grease-gun-64381.html'
+    },
+    {
+      match: /lansky lkclx/i, title: 'Lansky LKCLX Deluxe Knife Sharpening System', category: 'Tools', family: 'Shop equipment',
+      photo: 'https://m.media-amazon.com/images/I/81UfK2lZhUL._AC_SL1500_.jpg',
+      source: 'https://tacticalgear.com.au/products/lansky-deluxe-sharpening-system'
+    },
+    {
+      match: /dymo letratag 100-h/i, title: 'DYMO LetraTag 100H Label Maker', category: 'Household', family: 'Office & home',
+      photo: 'https://assets.cdn.jula.com/v2/w%3A828/184136?lastmodified=20230428134851',
+      source: 'https://www.jula.no/catalog/hjem-og-husholdning/kontor/kontormaskiner/merkemaskiner/merkemaskin-945220/'
+    },
+    {match: /atomi ac smart adaptor/i, title: 'Atomi AC Smart Adaptor', category: 'Electronics', family: 'Lighting & power', art: 213},
+    {match: /haul.master 58116/i, title: 'Haul-Master 58116 Aluminum Loading Ramps', category: 'Tools', family: 'Automotive tools', art: 158},
     {match: /bicycle helmet/i, title: 'Bell Bicycle Helmet', category: 'Cycling', family: 'Bikes & accessories', art: 61},
     {match: /headlight warning buzzer/i, title: 'Headlight Warning Buzzer', category: 'Automotive', family: 'Vehicle accessories'},
     {match: /heated blanket/i, title: 'Heated Blanket', category: 'Household', family: 'Bedding'}
@@ -144,7 +186,7 @@
     ['Appliances','Kitchen appliances', /\b(?:kitchen|refrigerator|air fryer|toaster|blender|oven|thermometer|coffee maker)\b/i],
     ['Automotive','RV accessories', /^(?:rv|motorhome)\s+-|\b(?:recreational vehicle|camper)\b/i],
     ['Automotive','Vehicle accessories', /\b(?:automotive|headlight|dash cam|backup camera|vehicle|motorcycle)\b/i],
-    ['Tools','Shop equipment', /\b(?:tools?|hoist|paint sprayer|multimeter|air compressor|ultrasonic cleaner|rotary tool|soldering|weller)\b/i],
+    ['Tools','Shop equipment', /\b(?:tools?|hoist|paint sprayer|multimeter|air compressor|ultrasonic cleaner|rotary tool|soldering|weller|radial saw|table saw|scroll saw|ladder|fastener)\b/i],
     ['Electronics','Lighting & power', /\b(?:electrical|floodlight|lights?|lighting|flashlight|power strip|extension cord|battery charger)\b/i],
     ['Electronics','Computers & audio', /\b(?:computers?|electronics|webcam|speaker|hdmi|mouse|radios?|television|dvd|router)\b/i],
     ['Outdoor & garden','Camping & gear', /\b(?:camping|outdoors?|cooler|lantern|kastking)\b/i],
@@ -160,6 +202,43 @@
   const keyOf = value => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const compare = (a, b) => a.localeCompare(b, undefined, {numeric: true});
 
+  const manualArt = [
+    [/battery load|voltage tester/i, 151], [/battery charger|trickle charger|battery maintainer/i, 152],
+    [/fuel.*pressure.*test/i, 153], [/steering.*puller/i, 154], [/timing light/i, 155],
+    [/electric hoist/i, 156], [/paint sprayer/i, 157], [/loading ramps/i, 158],
+    [/tire inflator|portable air pump/i, 159], [/ultrasonic cleaner/i, 160],
+    [/multi.tool pen/i, 161], [/rotary tool.*accessor/i, 162], [/extension cord reel/i, 163],
+    [/flashlight/i, 164], [/remote control outlet/i, 165], [/wireless charger/i, 166],
+    [/kvm switch/i, 167], [/wireless speaker/i, 168], [/rfid/i, 169], [/plaud/i, 170],
+    [/smoke|carbon monoxide/i, 171], [/disc padlock|combination padlock/i, 172],
+    [/gun safe/i, 173], [/showerhead/i, 174], [/water heater/i, 175],
+    [/lantern/i, 176], [/waterproof bag/i, 177], [/storage box/i, 178],
+    [/cooler/i, 179], [/keychain tool/i, 180], [/meat thermometer/i, 181],
+    [/salt and pepper grinder/i, 182], [/air fryer|coolifqu/i, 183],
+    [/smoker/i, 184], [/smart oven|toast.air|toaster/i, 185],
+    [/fireplace/i, 186], [/heated blanket/i, 187], [/cleaning kit/i, 188],
+    [/shredder/i, 189], [/sewing machine/i, 190], [/spotbot|crosswave/i, 191],
+    [/air conditioner/i, 192], [/garage door/i, 193], [/exercise equipment/i, 194],
+    [/kennel/i, 195], [/backup camera/i, 10], [/refrigerator fan/i, 197],
+    [/bicycle helmet/i, 198], [/surge protector|power strip/i, 199], [/warning buzzer/i, 200],
+    [/scroll saw/i, 201], [/fastener/i, 202], [/air compressor/i, 203],
+    [/vacuum pump/i, 204], [/ratchet/i, 205], [/cordless phone|vtech/i, 206],
+    [/\bmouse\b/i, 207], [/webcam/i, 208], [/dvd player/i, 209], [/cobra.*radio/i, 210],
+    [/icrate|dog crate/i, 211], [/oneblade|face and body/i, 212], [/smart.ac.adaptor/i, 213],
+    [/honeywell.*heater/i, 214], [/floodlight/i, 215],
+    [/radial saw/i, 226], [/table saw/i, 227], [/shop.vac.*filter/i, 228], [/sharpening/i, 229],
+    [/car.?scan|obd/i, 230], [/grease gun/i, 231], [/label maker|letratag/i, 232], [/ceiling fan/i, 233],
+    [/laminator/i, 234], [/ladder/i, 235], [/cable luber/i, 236], [/brookstone.*lock/i, 237],
+    [/led display/i, 238], [/talking pen/i, 239], [/purchase receipt/i, 240], [/two.way radio/i, 210]
+  ];
+  const manualFallbackArt = {
+    'Automotive tools': 219, 'Vehicle accessories': 10, 'RV accessories': 197,
+    'Shop equipment': 30, 'Lighting & power': 199, 'Computers & audio': 218,
+    'Laundry & cleaning': 191, 'Heating & cooling': 214, 'Kitchen appliances': 185,
+    'Safety & security': 171, 'Office & home': 189, 'Camping & gear': 177,
+    'Other equipment': 220, 'Bikes & accessories': 198
+  };
+
   function identifyManual(file) {
     const name = file.displayName;
     const folder = file.path.split(' / ').at(-1);
@@ -167,15 +246,17 @@
     if (recovered || /^(?:Unidentified Scans|OneNote Indexes and Notes)$/.test(folder)) {
       const source = recovered?.[1].replace(/\.one$/i, '') || folder;
       const kind = /image\//.test(file.mime) ? 'Images' : 'Documents';
-      return {category: 'Recovered files', family: source, title: source + ' ' + kind.toLowerCase()};
+      return {category: 'Recovered files', family: source, title: source + ' ' + kind.toLowerCase(), art: kind === 'Images' ? 221 : 222};
     }
     const known = products.find(product => product.match.test(name + ' ' + folder));
-    if (known) return known;
+    if (known) return {...known, art: known.art ?? manualArt.find(([pattern]) => pattern.test(name + ' ' + folder))?.[1] ?? manualFallbackArt[known.family] ?? covers[known.family] ?? 220};
     const productFolder = !/^(?:Manuals|Recovered Manuals|Other Product Documents|Camping and Outdoor Gear|Exercise Equipment|Smoke and Carbon Monoxide Alarms|Garage Door Openers)$/.test(folder);
-    const title = (productFolder ? folder : name.replace(prefix, '').replace(suffix, '').replace(date, '')).trim() || name;
+    const cleanTitle = name.replace(/\s*\[[a-f\d]{8}\]$/i, '').replace(prefix, '').replace(suffix, '').replace(date, '');
+    const title = (productFolder ? folder : cleanTitle).trim() || name;
     const context = name + ' ' + folder;
     const [category, family] = rules.find(([, , pattern]) => pattern.test(context)) || ['Household', 'Other equipment'];
-    return {category, family, title};
+    const art = manualArt.find(([pattern]) => pattern.test(context))?.[1] ?? manualFallbackArt[family] ?? covers[family] ?? 220;
+    return {category, family, title, art};
   }
 
   const featuredRecipes = [
