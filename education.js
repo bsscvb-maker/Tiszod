@@ -34,6 +34,11 @@ if(careerMode){
 }
 const careerCovers = new Map([
  ['Employers', 'assets/schools/computer-training.jpg'],
+ ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
+ ['Employers/Advance', 'assets/career/employers/advance.svg'],
+ ['Employers/HireGenics', 'assets/career/employers/hiregenics.svg'],
+ ['Employers/IQVIA', 'assets/career/employers/iqvia.svg'],
+ ['Employers/PC Mobile One', 'assets/career/employers/pc-mobile-one.webp'],
  ['Career Development', 'assets/family-unique/education-award.webp'],
  ['Resumes and Job Search', 'command-photos/interview.jpg'],
  ['Employment Documents', 'assets/family-unique/folders.webp'],

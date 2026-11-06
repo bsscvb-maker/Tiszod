@@ -180,3 +180,17 @@ body[data-th-page="career"] {
   width: 100%;
   aspect-ratio: 16 / 9;
 }
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src^="assets/career/employers/"]) {
+  background: #f5f7fb;
+}
+
+[data-th-page="career"] .legal-thumbnail-art:has(img:is([src$="/iqvia.svg"], [src$="/advance.svg"])) {
+  background: #111c2c;
+}
+
+[data-th-page="career"] .legal-thumbnail img[src^="assets/career/employers/"] {
+  box-sizing: border-box;
+  padding: clamp(16px, 3vw, 32px);
+  object-fit: contain;
+}
