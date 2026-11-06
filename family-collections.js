@@ -80,13 +80,16 @@
   link('Browse medical records', 'medical.html#medical-browse')
  ];
 
- async function readFamily() {
+ const sourceFolder = area === 'education' ? 'Education' : 'Family';
+ const sourcePeople = area === 'education' ? people.slice(0, 2) : people;
+
+ async function readPeopleFolders() {
   const roots = await thDriveRecords.findFolders('TisZod');
   const candidates = await Promise.all(roots.map(root => thDriveRecords.children(root)));
-  const families = candidates.flat().filter(file => file.folder && file.name === 'Family');
-  const contents = await Promise.all(families.map(folder => thDriveRecords.children(folder)));
-  const matches = contents.filter(files => people.every(name => files.some(file => file.folder && file.name === name)));
-  if (matches.length !== 1) throw Error('Could not uniquely locate TisZod / Family.');
+  const folders = candidates.flat().filter(file => file.folder && file.name === sourceFolder);
+  const contents = await Promise.all(folders.map(folder => thDriveRecords.children(folder)));
+  const matches = contents.filter(files => sourcePeople.every(name => files.some(file => file.folder && file.name === name)));
+  if (matches.length !== 1) throw Error('Could not uniquely locate TisZod / ' + sourceFolder + '.');
   return matches[0];
  }
 
@@ -142,16 +145,16 @@
   heading.textContent = labels[area];
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
-  status.textContent = 'Loading family collections…';
+  status.textContent = 'Loading ' + sourceFolder.toLowerCase() + ' collections…';
   const cards = document.createElement('div');
   cards.className = 'legal-cards';
   mount.append(heading, status, cards);
   try {
-   const families = await readFamily();
+   const personFolders = await readPeopleFolders();
    const members = ['education', 'identification'].includes(area) ? people.slice(0, 2)
     : area === 'hobbies' ? people.filter(name => name !== 'Tracy') : people;
    const results = await Promise.allSettled(members.map(async name => {
-    const original = families.find(file => file.folder && file.name === name);
+    const original = personFolders.find(file => file.folder && file.name === name);
     const files = area === 'medical' && name === 'Todd' ? [] : await thDriveRecords.children(original);
     const records = (await recordsFor(name, files)).filter(Boolean).map(record => decorate(record, [area, name]));
     if (records.length && area === 'education') {
@@ -167,7 +170,7 @@
    const unavailable = members.filter((_, i) => results[i].status === 'rejected');
    status.textContent = unavailable.length ? 'Could not load collections for ' + unavailable.join(', ') + '.' : '';
   } catch {
-   status.textContent = 'Could not load the TisZod Family folder. Check that your signed-in Google account has access.';
+   status.textContent = 'Could not load the TisZod ' + sourceFolder + ' folder. Check that your signed-in Google account has access.';
   }
  }
 
