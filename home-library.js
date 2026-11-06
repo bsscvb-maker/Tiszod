@@ -24,6 +24,7 @@
   let activeSection = '';
   let reading;
   let catalogs;
+  let manualIndexUnavailable = false;
   const currentCatalog = () => catalogs?.[activeSection];
   let readingGroup;
   let catalogPath = '';
@@ -88,6 +89,25 @@
     return files;
   }
 
+  async function loadEnglishManualIndex(signal) {
+    const response = await fetch('manual-english-index.json?v=20261106-english', {signal});
+    if (!response.ok) throw new Error('Could not load the English manuals index. Refresh Drive to retry.');
+    const hashes = await response.json();
+    if (!Array.isArray(hashes) || !hashes.length || hashes.some(hash => !/^[a-f0-9]{64}$/.test(hash))) {
+      throw new Error('The English manuals index is invalid.');
+    }
+    return new Set(hashes);
+  }
+
+  async function isAuditedEnglish(index, path, file) {
+    const size = Number(file.size);
+    if (file.size == null || !Number.isSafeInteger(size) || size < 1) return false;
+    const identity = JSON.stringify([...path, file.name].map(name => name.normalize('NFC')).concat(size));
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
+    const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    return index.has(hash);
+  }
+
   async function loadLibrary() {
     indexing?.abort();
     contentSearch?.abort();
@@ -105,6 +125,10 @@
     more.hidden = true;
     status.textContent = 'Reading your Drive folders…';
     try {
+      const englishManuals = await loadEnglishManualIndex(signal).catch(error => {
+        if (signal.aborted) throw error;
+        return null;
+      });
       const rootFields = 'id,name,resourceKey';
       const rootType = 'mimeType = ' + quote(folderMime);
       const libraryFolder = rootType + " and name = 'Library'";
@@ -139,6 +163,7 @@
                 continue;
               }
               if (file.mimeType === 'application/vnd.google-apps.shortcut' || /^(?:~\$|desktop\.ini$|thumbs\.db$)/i.test(file.name)) continue;
+              if (folder.section === 'Manuals' && (!englishManuals || !await isAuditedEnglish(englishManuals, folder.path, file))) continue;
               const title = file.name.replace(/\.[a-z0-9]{1,6}$/i, '');
               const path = [folder.section, ...folder.path].join(' / ');
               const titleKey = normalize(title);
@@ -159,6 +184,7 @@
       }
       if (signal.aborted) return;
       if (!scanned.length) throw new Error('The document folders could not be read. Check your Drive access and try again.');
+      manualIndexUnavailable = !englishManuals;
       documents = [...catalog.values()];
       catalogs = Object.fromEntries(sections.map(section => [section, thLibraryCatalog.build(documents.filter(file => file.section === section), section)]));
       if (!currentCatalog()?.nodes.has(catalogPath)) catalogPath = '';
@@ -170,7 +196,8 @@
       }
       for (const name of sections) {
         const count = documents.filter(file => file.section === name).length;
-        get('library-count-' + name).textContent = count.toLocaleString() + (count === 1 ? ' document' : ' documents');
+        get('library-count-' + name).textContent = name === 'Manuals' && manualIndexUnavailable ? 'Index unavailable' :
+          count.toLocaleString() + (count === 1 ? ' document' : ' documents');
       }
       if (failures.length) get('library-home-status').textContent = notice.textContent;
       updateCategories();
@@ -471,7 +498,8 @@
     results.classList.add('manual-card-grid');
     title.textContent = searching ? (activeSection === 'Manuals' ? 'Matching products and groups' : 'Matching groups') : entry.id ? entry.title : 'Browse by category';
     const count = entry.count.toLocaleString() + (entry.count === 1 ? ' file' : ' files');
-    status.textContent = searching ? (entries.length ? entries.length.toLocaleString() + ' matching groups' : 'No matching documents.') + (contentStatus ? ' ' + contentStatus : '') :
+    status.textContent = activeSection === 'Manuals' && manualIndexUnavailable ? 'The English manuals index is unavailable. Refresh Drive to retry.' :
+      searching ? (entries.length ? entries.length.toLocaleString() + ' matching groups' : 'No matching documents.') + (contentStatus ? ' ' + contentStatus : '') :
       count;
     if (!append) results.replaceChildren();
     const start = results.children.length;
