@@ -15,7 +15,7 @@
  </header>
  <p id="medical-status" role="status"></p>
  <div id="medical-dashboard" hidden>
-  <section class="medical-panel" aria-labelledby="weight-title"><div class="medical-heading"><h2 id="weight-title">Weight history</h2><label>Range <select id="weight-range"><option value="0">All time</option><option value="365">Last year of records</option><option value="90">Last 90 days of records</option></select></label></div><div id="weight-history" role="status">Loading body composition records…</div></section>
+  <section class="medical-panel" aria-labelledby="weight-title"><div class="medical-heading"><h2 id="weight-title">Weight history</h2><label>Range <select id="weight-range"><option value="0">All time</option><option value="365">Last year of records</option><option value="90">Last 90 days of records</option></select></label></div><div id="weight-history" role="status">Loading body composition records…</div><details><summary>Add a past weigh-in</summary><form id="medical-add-weigh-in"><label>Date <input name="date" type="date" required></label> <label>Weight (lb) <input name="weight" type="number" min="0.1" step="0.1" required></label> <button>Save in this browser</button> <span role="status"></span></form></details></section>
   <section class="medical-panel" id="medical-about" aria-labelledby="medical-about-title">
    <div class="medical-heading"><div><time id="medical-profile-updated" class="medical-profile-updated" hidden></time><h2 id="medical-about-title">About Me</h2></div><button type="button" id="medical-about-edit">Edit profile</button></div>
    <div id="medical-about-profile"></div>
@@ -33,4 +33,4 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=20261105-medical-cards"></script><script src="medical-weight.js?v=1"></script><script src="medical-weight-chart.js?v=1"></script><script src="medical-about.js?v=11"></script><script src="medical-folder-dash.js?v=3"></script><script src="medical.js?v=7"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261105-medical"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
+<script src="drive-record-viewer.js?v=20261105-medical-cards"></script><script src="medical-weight.js?v=1"></script><script src="medical-weight-chart.js?v=2"></script><script src="medical-about.js?v=11"></script><script src="medical-folder-dash.js?v=3"></script><script src="medical.js?v=8"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261105-medical"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
