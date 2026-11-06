@@ -68,7 +68,7 @@
     article.append(source);
   }
 
-  async function render(pdf, host, status, renderPage, signal) {
+  async function renderText(pdf, host, status, renderPage, signal) {
     const tools = create('div', '', 'manual-reader-tools');
     const label = create('label', 'Find in this manual');
     const input = create('input');
@@ -133,5 +133,76 @@
     draw(true);
   }
 
-  window.thManualReader = {render};
+  function book(host, numbers, renderPage, signal) {
+    const output = create('div', '', 'manual-book');
+    const pending = [];
+    let working = 0;
+    function fill() {
+      while (!signal.aborted && working < 2 && pending.length) {
+        const slot = pending.shift();
+        working++;
+        renderPage(Number(slot.dataset.page), signal).then(page => {
+          if (signal.aborted) return;
+          page.classList.add('legal-preview-image');
+          if (page.tagName === 'CANVAS') {
+            page.setAttribute('role', 'img');
+            page.setAttribute('aria-label', 'Original page ' + slot.dataset.page);
+          }
+          slot.replaceChildren(page);
+        }).catch(() => {
+          if (!signal.aborted) slot.textContent = 'This page could not be displayed. Use the download link above to open the source.';
+        }).finally(() => {
+          working--;
+          fill();
+        });
+      }
+    }
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        pending.push(entry.target);
+      }
+      fill();
+    }, {rootMargin: '450px'});
+    signal.addEventListener('abort', () => observer.disconnect(), {once: true});
+    for (const number of numbers) {
+      const article = create('article', '', 'manual-reader-page');
+      article.append(create('h3', 'Page ' + number));
+      const slot = create('div', 'Loading page ' + number + '…', 'manual-book-slot');
+      slot.dataset.page = number;
+      article.append(slot);
+      output.append(article);
+      observer.observe(slot);
+    }
+    host.append(output);
+  }
+
+  function render(pdf, host, status, renderPage, signal, startInBook) {
+    if (!startInBook) return renderText(pdf, host, status, renderPage, signal);
+    const toolbar = create('div', '', 'manual-reader-tools manual-book-toolbar');
+    const bookButton = create('button', 'Book view');
+    const textButton = create('button', 'Searchable text');
+    const count = create('span', pdf.numPages + (pdf.numPages === 1 ? ' page' : ' pages'));
+    toolbar.append(bookButton, textButton, count);
+    const content = create('div');
+    host.append(toolbar, content);
+    let mode;
+    function show(isBook) {
+      mode?.abort();
+      mode = new AbortController();
+      const viewSignal = AbortSignal.any([signal, mode.signal]);
+      content.replaceChildren();
+      status.textContent = '';
+      bookButton.setAttribute('aria-pressed', String(isBook));
+      textButton.setAttribute('aria-pressed', String(!isBook));
+      if (isBook) book(content, Array.from({length: pdf.numPages}, (_, i) => i + 1), renderPage, viewSignal);
+      else renderText(pdf, content, status, renderPage, viewSignal);
+    }
+    bookButton.onclick = () => { if (bookButton.getAttribute('aria-pressed') !== 'true') show(true); };
+    textButton.onclick = () => { if (textButton.getAttribute('aria-pressed') !== 'true') show(false); };
+    show(true);
+  }
+
+  window.thManualReader = {render, book};
 })();

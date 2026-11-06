@@ -253,7 +253,17 @@
     }
     const picker = readerItem.querySelector('select');
     if (picker) picker.value = file.id;
-    thDriveRecords.open({...file, readingMode: true});
+    const pages = new Map();
+    if (file.section === 'Manuals' && file.mime.startsWith('image/') && group) {
+      for (const scan of group.files) {
+        if (!scan.mime.startsWith('image/')) continue;
+        const match = scan.displayName.match(/\bpages?\s+(\d+)\s*(?:\[|$)/i);
+        if (match && !pages.has(Number(match[1]))) pages.set(Number(match[1]), scan);
+      }
+    }
+    const bookPages = pages.size > 1 && [...pages.values()].includes(file) ?
+      [...pages].sort(([a], [b]) => a - b).map(([number, scan]) => ({number, file: scan})) : null;
+    thDriveRecords.open({...file, readingMode: true, bookMode: file.section === 'Manuals', bookPages});
   }
 
   function renderReaderItem(group) {

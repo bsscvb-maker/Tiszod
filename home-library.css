@@ -121,3 +121,7 @@
 #library-reader-item figcaption{margin:.25rem 0 0;color:var(--library-muted);font-size:.8rem}
 #library-reader-item label{display:grid;gap:.4rem;flex:1;min-width:min(100%,215px);font-weight:700}
 #library-reader-item select{width:100%;min-width:0}
+.manual-book-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem}
+.manual-book-toolbar button[aria-pressed=true]{background:#263f60;border-color:var(--library-gold)}
+.manual-book-slot{min-height:40vh;display:grid;place-items:center;color:var(--library-muted)}
+.manual-book-slot:has(.legal-preview-image){min-height:0}

@@ -297,6 +297,20 @@ async function showLegalRecord(record,back){
  if(!record.folder){
   status.textContent='Loading preview…';
   try{
+   if(record.bookPages?.length&&window.thManualReader){
+    status.textContent=record.bookPages.length+' available scanned pages';
+    const files=new Map(record.bookPages.map(page=>[page.number,page.file]));
+    thManualReader.book(legalViewerBody,[...files.keys()],async(number,signal)=>{
+     const blob=await legalMedia(files.get(number),signal);
+     if(signal.aborted)return;
+     const url=URL.createObjectURL(blob);
+     const img=new Image();
+     img.alt='Original page '+number;
+     img.src=url;
+     try{await img.decode();return img;}finally{URL.revokeObjectURL(url);}
+    },request.signal);
+    return;
+   }
    const isText=record.libraryActions&&record.mime?.startsWith('text/')&&record.size<=1024*1024;
    if(isText){
     const response=await legalDriveRequest('/'+encodeURIComponent(record.id),{alt:'media',supportsAllDrives:'true'},record,request.signal);
@@ -327,7 +341,7 @@ async function showLegalRecord(record,back){
    request.signal.addEventListener('abort',()=>{task.destroy().catch(()=>{})},{once:true});
    const pdf=await task.promise;
    if(record.readingMode&&window.thManualReader){
-    await thManualReader.render(pdf,legalViewerBody,status,number=>legalPdfPage(pdf,number,Math.max(320,Math.min(1500,legalViewerBody.clientWidth*2))),request.signal);
+    await thManualReader.render(pdf,legalViewerBody,status,number=>legalPdfPage(pdf,number,Math.max(320,Math.min(1500,legalViewerBody.clientWidth*2))),request.signal,record.bookMode);
     return;
    }
    if(record.map){
