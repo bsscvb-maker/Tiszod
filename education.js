@@ -79,10 +79,11 @@ async function loadCareerFolder(){
   const cards=document.createElement('div');
   cards.className='legal-cards';
   for(const entry of entries){
-   const card=thDriveRecords.card({...entry,driveAction:true,coverPath:[entry.name],coverFor:careerCover});
+   const displayName=entry.folder&&entry.name==='Resumes and Job Search'?'Resume':entry.name;
+   const card=thDriveRecords.card({...entry,displayName,driveAction:true,coverPath:[entry.name],coverFor:careerCover});
    if(entry.folder){
     card.classList.add('career-folder-tile');
-    card.querySelector('.legal-thumbnail').setAttribute('aria-label','Open '+entry.name);
+    card.querySelector('.legal-thumbnail').setAttribute('aria-label','Open '+displayName);
    }
    cards.append(card);
   }
