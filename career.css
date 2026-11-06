@@ -202,3 +202,11 @@ body[data-th-page="career"] {
 [data-th-page="career"] .legal-thumbnail img[src="assets/career/development/insights-discovery.webp"] {
   object-fit: contain;
 }
+
+[data-th-page="career"] .legal-thumbnail:has(img[src$="/pc-mobile-one-ad.png"]) .legal-thumbnail-art {
+  aspect-ratio: 425 / 400;
+}
+
+[data-th-page="career"] .legal-thumbnail img[src$="/pc-mobile-one-ad.png"] {
+  padding: 0;
+}
