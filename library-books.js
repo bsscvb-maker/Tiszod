@@ -26,5 +26,9 @@
     });
   }
 
-  window.thLibraryBooks = {owner, isBook, readRecords};
+  function isCareer(data) {
+    return data.category === 'Career' && owner(data) === 'Todd';
+  }
+
+  window.thLibraryBooks = {owner, isBook, isCareer, readRecords};
 })();

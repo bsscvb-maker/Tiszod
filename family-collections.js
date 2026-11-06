@@ -2,7 +2,7 @@
 (() => {
  const mount = document.querySelector('[data-family-collections]');
  const area = mount.dataset.familyCollections;
- if (area === 'education' && new URLSearchParams(location.search).get('view') === 'books') return;
+ if (area === 'education' && ['books','career'].includes(new URLSearchParams(location.search).get('view'))) return;
  const people = ['Aiden', 'Alexis', 'Tracy', 'Todd'];
  const labels = {
   family: 'Family records', education: 'School records by person', medical: 'Medical records by person',
