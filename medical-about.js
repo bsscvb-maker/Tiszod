@@ -91,9 +91,7 @@
         if(!Number.isFinite(value))continue;
         const item=make('div');item.append(make('dt',label),make('dd',value+unit));readings.append(item);
       }
-      const date=make('time',composition.date);date.dateTime=composition.date;
-      const header=make('h3','Body composition');header.append(date);
-      measurements.append(header,readings);
+      measurements.append(make('h3','Body composition'),readings);
     }
     overview.append(figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
