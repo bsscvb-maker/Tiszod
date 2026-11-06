@@ -1,0 +1,126 @@
+/* Career shares the Strider palette and card rhythm used by Library. */
+body[data-th-page="career"] {
+  --career-ink: #edf3fb;
+  --career-muted: #b8c6d7;
+  --career-line: #3a506a;
+  --career-gold: #f0d3a0;
+  --career-panel: #172437;
+}
+
+[data-th-page="career"] .education {
+  width: min(100%, 1320px);
+  color: var(--career-ink);
+}
+
+[data-th-page="career"] .education > .education-heading:first-child {
+  padding: clamp(20px, 4vw, 44px);
+  border: 1px solid var(--career-line);
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 100% 0%, #2c4263, transparent 65%),
+    linear-gradient(125deg, #192e48, #121c2b);
+}
+
+[data-th-page="career"] .education-heading h1 {
+  font-size: clamp(2rem, 5vw, 3.35rem);
+  line-height: 1.08;
+  letter-spacing: -.045em;
+}
+
+[data-th-page="career"] .education-heading > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+[data-th-page="career"] :is(.education, .legal-view, #education-dialog) :focus-visible {
+  outline: 2px solid var(--career-gold);
+  outline-offset: 3px;
+}
+
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-cards {
+  gap: clamp(10px, 2vw, 18px);
+}
+
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file,
+[data-th-page="career"] .education-card {
+  background: var(--career-panel);
+  border-color: var(--career-line);
+  border-radius: 13px;
+  box-shadow: 0 9px 24px #03081240;
+}
+
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file {
+  padding: 0;
+  overflow: hidden;
+  transition: background-color .15s, border-color .15s;
+}
+
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file:focus-within,
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file:hover {
+  background: #1c2c41;
+  border-color: var(--career-gold);
+}
+
+[data-th-page="career"] .legal-file > .legal-kind {
+  margin: .85rem 1rem .2rem;
+  color: var(--career-gold);
+}
+
+[data-th-page="career"] .legal-file > strong {
+  margin: 0 1rem .85rem;
+  font-size: 1.08rem;
+}
+
+[data-th-page="career"] .legal-file .legal-thumbnail {
+  height: clamp(145px, 21vw, 205px);
+  border: 0;
+  border-top: 1px solid var(--career-line);
+  border-radius: 0;
+}
+
+[data-th-page="career"] .legal-file .legal-thumbnail:focus-visible {
+  outline-offset: -3px;
+}
+
+[data-th-page="career"] .legal-thumbnail-label {
+  color: var(--career-gold);
+  background: #121c2b;
+  border-color: var(--career-line);
+}
+
+[data-th-page="career"] .legal-file > .legal-actions {
+  padding-inline: 1rem;
+}
+
+[data-th-page="career"] :is(.education-toolbar, #legal-view, #education-dialog) {
+  background: #14263c;
+  border-color: var(--career-line);
+  color: var(--career-ink);
+}
+
+[data-th-page="career"] :is(#education-status, #education-count, #legal-view-body [role="status"]) {
+  color: var(--career-muted);
+}
+
+[data-th-page="career"] :is(#education-add, #education-dialog button[type="submit"]) {
+  background: var(--career-gold);
+  border-color: var(--career-gold);
+  color: #152337;
+}
+
+[data-th-page="career"] #legal-view {
+  width: min(1120px, calc(100% - 20px));
+}
+
+[data-th-page="career"] #legal-view > .legal-actions:first-child {
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+[data-th-page="career"] #legal-view-close {
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-th-page="career"] .legal-file { transition: none; }
+}
