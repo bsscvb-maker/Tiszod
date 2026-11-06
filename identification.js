@@ -72,12 +72,34 @@ function preview(d){
  if(id&&['drive.google.com','docs.google.com'].includes(u.hostname))return '<div class="record-preview private-document-preview" data-document-id="'+esc(id)+'" data-document-title="'+esc(title(d))+'"><span class="record-placeholder">Loading document…</span></div>';
  return '<span class="record-placeholder">'+esc(d.category||'Document')+'</span>';
 }
-function socialSecurityNumber(d){
- return !isEducation&&d.category==='Social Security Card'&&/^\d{3}-\d{2}-\d{4}$/.test(d.ssn||'')?d.ssn:'';
-}
+const ssnFormat=/^\d{3}-\d{2}-\d{4}$/;
 function socialSecurityDetails(r){
- const number=socialSecurityNumber(r.data);
- return number&&!r.data.deleted?'<details class="identity-ssn"><summary>Show Social Security number</summary><div><code>'+esc(number)+'</code><button type="button" data-copy-ssn="'+esc(r.id)+'">Copy</button></div></details>':'';
+ const d=r.data;
+ return !isEducation&&!d.deleted&&d.category==='Social Security Card'&&/^[\w-]+$/.test(d.ssnSource||'')?
+  '<div class="identity-ssn"><button type="button" data-show-ssn="'+esc(r.id)+'">Show Social Security number</button></div>':'';
+}
+async function showSocialSecurityNumber(button){
+ const record=records.find(r=>r.id===button.dataset.showSsn);
+ if(!record||!thAuthorized())return;
+ button.disabled=true;
+ try{
+  const source=record.data.ssnSource;
+  const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(source)+'?alt=media&supportsAllDrives=true',{
+   headers:{Authorization:'Bearer '+thToken},cache:'no-store'
+  });
+  if(!response.ok)throw Error('This Google account could not open the private copy data.');
+  const number=(await response.json())[record.id];
+  if(!ssnFormat.test(number||''))throw Error('No verified Social Security number is available.');
+  if(!button.isConnected)return;
+  const code=document.createElement('code'),copy=document.createElement('button');
+  code.textContent=number;copy.type='button';copy.textContent='Copy';
+  copy.onclick=async()=>{
+   try{await navigator.clipboard.writeText(number);message('Social Security number copied.')}
+   catch{message('Clipboard unavailable. Select the number to copy it manually.')}
+  };
+  const actions=document.createElement('div');
+  actions.append(code,copy);button.replaceWith(actions);
+ }finally{button.disabled=false}
 }
 function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
 const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son']};
@@ -149,12 +171,7 @@ document.querySelector('.identification').addEventListener('click',e=>{
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
 function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('identity-form');f.reset();for(const k of ['name','person','category','url','expires','notes'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('identity-save-status').textContent='';$('identity-dialog').showModal()}
-document.querySelector('.identification').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.dataset.copySsn){
- const record=records.find(r=>r.id===b.dataset.copySsn);
- const number=record&&!record.data.deleted&&socialSecurityNumber(record.data);
- if(number){await navigator.clipboard.writeText(number);message('Social Security number copied.')}
- return;
- }if(b.dataset.hideDocument){const r=records.find(r=>r.id===b.dataset.hideDocument);if(!r)return;b.disabled=true;await save(r,{...r.data,hidden:!r.data.hidden});message(r.data.hidden?'Document is visible again.':'Document hidden. Find it under Show → Hidden documents.')}else if(b.id==='identity-add')edit();else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
+document.querySelector('.identification').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.dataset.showSsn){await showSocialSecurityNumber(b);return;} if(b.dataset.hideDocument){const r=records.find(r=>r.id===b.dataset.hideDocument);if(!r)return;b.disabled=true;await save(r,{...r.data,hidden:!r.data.hidden});message(r.data.hidden?'Document is visible again.':'Document hidden. Find it under Show → Hidden documents.')}else if(b.id==='identity-add')edit();else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
 $('identity-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;try{const d={...(editing?.data||{favorite:false,deleted:false})};for(const k of ['name','person','category','url','expires','notes'])d[k]=f.elements.namedItem(k).value.trim();if(d.sides?.length)d.sides=d.sides.map((side,i)=>i===0?{...side,url:d.url}:side);if(!safe(d.url))throw Error('Enter a complete https:// document link.');await save(editing,d);$('identity-dialog').close();message('Document saved.')}catch(err){$('identity-save-status').textContent=err.message}finally{b.disabled=false}};
 for(const id of ['identity-search','identity-person','identity-category','identity-view'])$(id).addEventListener(id==='identity-search'?'input':'change',()=>{recordPage=1;render()});$('identity-refresh').onclick=()=>window.thStart().catch(e=>message(e.message));$('identity-close').onclick=()=>$('identity-dialog').close();
 
