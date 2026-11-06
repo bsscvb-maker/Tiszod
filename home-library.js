@@ -8,7 +8,23 @@
   const status = get('library-status');
   const notice = get('library-notice');
   const more = get('library-more');
-  const sections = ['Manuals', 'Recipes', 'Purchases'];
+  const collectionInfo = {
+    Manuals: ['Find owner’s guides, model numbers, and setup instructions.', 'Try heated blanket, desk lamp, or a model number.'],
+    Recipes: ['Find saved recipes by dish, ingredient, or occasion.', 'Try banana bread, chicken, or pumpkin.'],
+    Purchases: ['Find receipts, invoices, and records of past orders.', 'Try a retailer, product, or order number.']
+  };
+  const sections = Object.keys(collectionInfo);
+  const home = get('library-home');
+  const workspace = get('library-workspace');
+  const workspaceTitle = get('library-collection-title');
+  const catalogPanel = get('library-catalog');
+  const reader = get('legal-view');
+  const matches = get('library-matches');
+  const globalQuery = get('library-global-query');
+  let activeSection = '';
+  let reading;
+  let ranked = [];
+  let previewTrigger;
   const folderMime = 'application/vnd.google-apps.folder';
   const pageSize = 24;
   const topicRules = [
@@ -18,6 +34,9 @@
     ['Electronics', /\b(electronics|computer|laptop|tablet|camera|router|bluetooth|headphones|speaker|monitor|charger|usb|television|tv)\b/],
     ['Tools & outdoors', /\b(tools?|outdoors?|camping|cycling|saw|drill|generator|mower|trimmer|grill)\b/],
     ['Household', /\b(household|blanket|bedding|furniture|heater|thermostat|fan)\b/],
+    ['Main dishes', /\b(chicken|pork|beef|steak|salmon|casserole|pasta)\b/],
+    ['Desserts & baking', /\b(desserts?|cookies?|cake|cheesecake|brownies?|banana bread|muffins?|pie)\b/],
+    ['Sides & appetizers', /\b(appetizers?|dip|dips|salad|slaw|side dish|sweet potatoes)\b/],
     ['Receipts & orders', /\b(receipts?|orders?|invoices?|confirmation|packing slip|purchases?)\b/]
   ];
   const synonyms = [
@@ -71,6 +90,9 @@
     indexing = controller;
     const {signal} = controller;
     refresh.disabled = true;
+    get('library-home-retry').hidden = true;
+    get('library-home-status').textContent = '';
+    closePreview();
     loaded = false;
     notice.hidden = true;
     results.replaceChildren();
@@ -137,21 +159,114 @@
         notice.textContent = failures.length + ' Drive folder(s) could not be read. Refresh to retry them.';
         notice.hidden = false;
       }
-      for (const name of ['', ...sections]) {
-        get('library-count-' + (name || 'all')).textContent = documents.filter(file => !name || file.section === name).length.toLocaleString();
+      for (const name of sections) {
+        const count = documents.filter(file => file.section === name).length;
+        get('library-count-' + name).textContent = count.toLocaleString() + (count === 1 ? ' document' : ' documents');
       }
+      if (failures.length) get('library-home-status').textContent = notice.textContent;
       updateCategories();
       search(false);
     } catch (error) {
       if (signal.aborted) return;
       if (error.status === 401) throw error;
       status.textContent = error.message || 'Drive could not be reached. Refresh to try again.';
+      get('library-home-status').textContent = status.textContent;
+      get('library-home-retry').hidden = false;
+      for (const name of sections) get('library-count-' + name).textContent = 'Drive unavailable';
     } finally {
       if (indexing === controller) refresh.disabled = false;
     }
   }
 
-  const selectedSection = () => collections.querySelector('input:checked').value;
+  const selectedSection = () => activeSection;
+
+  function closePreview() {
+    if (reading) thDriveRecords.close();
+  }
+
+  function drawMatchRail() {
+    if (!reading) return;
+    const fragment = document.createDocumentFragment();
+    const label = document.createElement('h2');
+    label.textContent = 'In these results';
+    fragment.append(label);
+    for (const {file} of ranked.slice(0, visible)) {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.textContent = file.displayName;
+      if (file.id === reading) item.setAttribute('aria-current', 'true');
+      item.addEventListener('click', () => openPreview(file));
+      fragment.append(item);
+    }
+    matches.replaceChildren(fragment);
+  }
+
+  function openPreview(file, trigger) {
+    reading = file.id;
+    if (trigger) previewTrigger = trigger;
+    catalogPanel.hidden = true;
+    matches.hidden = false;
+    drawMatchRail();
+    thDriveRecords.open(file);
+  }
+
+  reader.addEventListener('close', () => {
+    reading = null;
+    matches.hidden = true;
+    matches.replaceChildren();
+    catalogPanel.hidden = false;
+    if (reader.dataset.restoreFocus === 'yes') {
+      const fallback = previewTrigger?.dataset.file;
+      const button = fallback && results.querySelector('[data-file="' + CSS.escape(fallback) + '"]');
+      (button || query).focus();
+    }
+    delete reader.dataset.restoreFocus;
+    previewTrigger = null;
+  });
+  get('legal-view-close').addEventListener('click', () => { reader.dataset.restoreFocus = 'yes'; }, {capture: true});
+
+  function showLocation(focus = false) {
+    const params = new URLSearchParams(location.search);
+    activeSection = sections.find(name => name.toLowerCase() === params.get('collection')) || '';
+    const across = params.get('view') === 'search';
+    closePreview();
+    home.hidden = Boolean(activeSection || across);
+    workspace.hidden = !home.hidden;
+    query.value = across ? globalQuery.value : '';
+    category.value = '';
+    if (home.hidden) {
+      const [description, tip] = collectionInfo[activeSection] || ['Search manuals, recipes, and purchases together.', 'Try a product, recipe, retailer, or order number.'];
+      workspaceTitle.textContent = activeSection || 'All documents';
+      get('library-collection-description').textContent = description;
+      get('library-collection-cover').dataset.collection = activeSection;
+      get('library-search-label').textContent = activeSection ? 'Search ' + activeSection.toLowerCase() : 'Search all documents';
+      get('library-search-tip').textContent = tip;
+      for (const tab of collections.querySelectorAll('a')) {
+        if (tab.dataset.collection === activeSection) tab.setAttribute('aria-current', 'page');
+        else tab.removeAttribute('aria-current');
+      }
+    }
+    updateCategories();
+    search(false);
+    if (focus) (home.hidden ? workspaceTitle : home.querySelector('h1')).focus();
+  }
+
+  for (const link of document.querySelectorAll('.library-card, .library-breadcrumb a, .library-tabs a')) {
+    link.addEventListener('click', event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (link.href === location.href) return;
+      history.pushState(null, '', link.href);
+      showLocation(true);
+    });
+  }
+  get('library-global-search').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!globalQuery.value.trim()) return;
+    history.pushState(null, '', '?view=search');
+    showLocation(true);
+  });
+  window.addEventListener('popstate', () => showLocation(true));
   function updateCategories() {
     const selection = category.value;
     const names = new Set(documents.filter(file => !selectedSection() || file.section === selectedSection()).flatMap(file => file.topics));
@@ -176,7 +291,7 @@
     return variants.reduce((total, value) => total + value, 0) + (file.titleKey.includes(words.join(' ')) ? 30 : 0);
   }
 
-  function fileCard(file) {
+  function fileCard(file, words, rank) {
     const li = document.createElement('li');
     const button = document.createElement('button');
     button.type = 'button';
@@ -192,11 +307,18 @@
     const path = document.createElement('span');
     path.className = 'library-path';
     path.textContent = file.path;
+    if (words.length) {
+      const evidence = document.createElement('span');
+      evidence.className = 'library-evidence';
+      evidence.textContent = rank === 1 ? 'Matched by Drive search' :
+        words.every(word => file.titleKey.includes(word)) ? 'Title match' : 'Related terms or file details';
+      path.append(evidence);
+    }
     const action = document.createElement('span');
     action.className = 'library-open';
     action.textContent = 'Preview document →';
     button.append(badge, title, path, action);
-    button.addEventListener('click', () => thDriveRecords.open(file));
+    button.addEventListener('click', () => openPreview(file, button));
     li.append(button);
     return li;
   }
@@ -205,7 +327,7 @@
     if (!loaded) return;
     const words = terms();
     const section = selectedSection();
-    const ranked = documents
+    ranked = documents
       .filter(file => (!section || file.section === section) && (!category.value || file.topics.includes(category.value)))
       .map(file => ({file, rank: score(file, words)}))
       .filter(item => item.rank >= 0)
@@ -218,7 +340,8 @@
     const focused = results.contains(document.activeElement) ? document.activeElement.dataset.file : null;
     if (!append) results.replaceChildren();
     const start = results.children.length;
-    results.append(...ranked.slice(start, shown).map(({file}) => fileCard(file)));
+    results.append(...ranked.slice(start, shown).map(({file, rank}) => fileCard(file, words, rank)));
+    drawMatchRail();
     more.hidden = shown >= ranked.length;
     if (append) results.children[start]?.querySelector('button')?.focus();
     else if (focused) (results.querySelector('[data-file="' + CSS.escape(focused) + '"]') || query).focus({preventScroll: true});
@@ -264,26 +387,28 @@
     visible = pageSize;
     render();
     const words = terms();
-    if (!loaded || !words.length) return;
+    if (!loaded || workspace.hidden || !words.length) return;
     const controller = new AbortController();
     contentSearch = controller;
     if (wait) timer = setTimeout(() => searchContent(words, controller), 500);
     else searchContent(words, controller);
   }
 
-  query.addEventListener('input', () => search(true));
+  query.addEventListener('input', () => { closePreview(); search(true); });
   get('library-search').addEventListener('submit', event => {
     event.preventDefault();
+    closePreview();
     search(false);
   });
-  collections.addEventListener('change', () => {
-    updateCategories();
-    search(false);
+  category.addEventListener('change', () => { closePreview(); visible = pageSize; render(); });
+  const retry = () => loadLibrary().catch(() => {
+    const message = 'Your Google session expired. Reload this page to sign in again.';
+    status.textContent = message;
+    get('library-home-status').textContent = message;
   });
-  category.addEventListener('change', () => { visible = pageSize; render(); });
-  refresh.addEventListener('click', () => loadLibrary().catch(() => {
-    status.textContent = 'Your Google session expired. Reload this page to sign in again.';
-  }));
+  refresh.addEventListener('click', retry);
+  get('library-home-retry').addEventListener('click', retry);
   more.addEventListener('click', () => { visible += pageSize; render(true); });
+  showLocation();
   window.thStart = loadLibrary;
 })();

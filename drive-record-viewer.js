@@ -4,7 +4,14 @@ const legalViewer=document.getElementById('legal-view');
 const legalViewerBody=document.getElementById('legal-view-body');
 const legalViewerBack=document.getElementById('legal-view-back');
 let legalViewRequest;
-document.getElementById('legal-view-close').onclick=()=>legalViewer.close();
+const inlineViewer=legalViewer.tagName!=='DIALOG';
+function closeLegalRecord(){
+ if(!inlineViewer){legalViewer.close();return;}
+ if(legalViewer.hidden)return;
+ legalViewer.hidden=true;
+ legalViewer.dispatchEvent(new Event('close'));
+}
+document.getElementById('legal-view-close').onclick=closeLegalRecord;
 legalViewer.addEventListener('close',()=>{
  legalViewRequest?.abort();
  legalViewerBody.replaceChildren();
@@ -324,7 +331,10 @@ async function showLegalRecord(record,back){
  }
  const status=document.createElement('p');status.setAttribute('role','status');
  legalViewerBody.replaceChildren(status);
- if(!legalViewer.open)legalViewer.showModal();
+ if(inlineViewer){
+  legalViewer.hidden=false;
+  document.getElementById('legal-view-title').focus();
+ }else if(!legalViewer.open)legalViewer.showModal();
  if(!record.folder){
   status.textContent='Loading preview…';
   try{
@@ -462,5 +472,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord };
 })();
