@@ -160,21 +160,21 @@ body[data-th-page="career"] {
   font: 600 13px system-ui;
 }
 
-#career-drive .career-folder-tile > .legal-kind,
-#career-drive .career-folder-tile .legal-thumbnail-label {
+[data-th-page="career"] .career-folder-tile > .legal-kind,
+[data-th-page="career"] .career-folder-tile .legal-thumbnail-label {
   display: none;
 }
 
-#career-drive .career-folder-tile > strong {
+[data-th-page="career"] .career-folder-tile > strong {
   margin: .85rem 1rem;
 }
 
-#career-drive .career-folder-tile .legal-thumbnail {
+[data-th-page="career"] .career-folder-tile .legal-thumbnail {
   height: auto;
   display: block;
 }
 
-#career-drive .career-folder-tile .legal-thumbnail-art {
+[data-th-page="career"] .career-folder-tile .legal-thumbnail-art {
   position: relative;
   inset: auto;
   width: 100%;

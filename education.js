@@ -81,10 +81,6 @@ async function loadCareerFolder(){
   for(const entry of entries){
    const displayName=entry.folder&&entry.name==='Resumes and Job Search'?'Resume':entry.name;
    const card=thDriveRecords.card({...entry,displayName,driveAction:true,coverPath:[entry.name],coverFor:careerCover});
-   if(entry.folder){
-    card.classList.add('career-folder-tile');
-    card.querySelector('.legal-thumbnail').setAttribute('aria-label','Open '+displayName);
-   }
    cards.append(card);
   }
   status.textContent=entries.length?'':'No folders or documents are available here yet.';

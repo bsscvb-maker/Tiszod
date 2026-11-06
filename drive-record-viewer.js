@@ -165,7 +165,26 @@ async function legalDocumentCover(record,signal){
   return image?{blob:image,photo:false,fitPage:!selected}:null;
  }finally{await task.destroy()}
 }
-function uniqueCover(key){
+const careerFolderSymbols=[
+ [/résum|resume|cover letter|application|references|job search|job postings/i,'M7 3h7l4 4v14H7zM14 3v5h4M10 12h5m-5 4h5'],
+ [/benefits|retirement|pension|payroll|401k|fidelity|schwab|cobra/i,'M12 2v20m4-15H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H7'],
+ [/reviews|performance|reports|analytics|metrics|insights/i,'M4 4v16h16M8 16v-4m4 4V8m4 8V6'],
+ [/training|plans|instructions|resources|education/i,'M3 5c4-1 7 0 9 2 2-2 5-3 9-2v14c-4-1-7 0-9 2-2-2-5-3-9-2zM12 7v14'],
+ [/photos|pictures|images|screenshots|media|video/i,'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M16 9h.01'],
+ [/archive|backup|recovered|duplicate/i,'M4 8h16v12H4zM3 4h18v4H3zM9 12h6'],
+ [/drafting|machine|engineering|shop|tools/i,'M4 19L19 4v15zM10 16l6-6v6z'],
+ [/travel|expenses|transport/i,'M12 22s7-5 7-12a7 7 0 0 0-14 0c0 7 7 12 7 12zM12 10h.01'],
+ [/employers|company|operations|projects/i,'M3 7h18v13H3zM8 7V4h8v3M3 12h18m-11 0v3h4v-3']
+];
+function careerFolderSymbol(path){
+ for(const part of [...path].reverse()){
+  if(/^(19|20)\d{2}$/.test(part))return 'M4 6h16v14H4zM8 3v6m8-6v6M4 10h16';
+  const match=careerFolderSymbols.find(([pattern])=>pattern.test(part));
+  if(match)return match[1];
+ }
+ return 'M3 6h7l2 3h9v11H3z';
+}
+function uniqueCover(key,symbol){
  // Each location gets an original composition, including archives with no usable preview.
  let state=2166136261;
  for(const ch of key)state=Math.imul(state^ch.codePointAt(0),16777619)>>>0;
@@ -179,7 +198,8 @@ function uniqueCover(key){
   return `<g transform="translate(${x} ${y}) rotate(${angle})"><rect width="${w}" height="${h}" rx="${4+random(10)}" fill="hsl(${tone} 40% ${24+random(36)}%)" stroke="${paper}" stroke-opacity=".37"/><g stroke="${paper}" stroke-opacity=".55">${marks}</g></g>`;
  }).join('');
  const signature=Array.from(key,ch=>ch.codePointAt(0).toString(16)).join('.');
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><desc>${signature}</desc><defs><radialGradient id="light" cx="${focus/6.4}%" cy="39%" r="70%"><stop stop-color="hsl(${hue} 40% 42%)"/><stop offset="1" stop-color="${bg}"/></radialGradient><pattern id="grid" width="19" height="19" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${paper}" opacity=".17"/></pattern></defs><rect width="640" height="360" fill="url(#light)"/><rect width="640" height="360" fill="url(#grid)"/><circle cx="${focus}" cy="170" r="${70+random(90)}" fill="none" stroke="${paper}" stroke-opacity=".37"/><g transform="translate(20 22)">${panels}</g><rect x="24" y="24" width="592" height="312" rx="15" fill="none" stroke="${paper}" stroke-opacity=".25"/></svg>`;
+ const emblem=symbol?`<g transform="translate(320 180)"><circle r="78" fill="${bg}" fill-opacity=".95" stroke="${paper}" stroke-width="2"/><path transform="translate(-46 -46) scale(3.8)" d="${symbol}" fill="none" stroke="${paper}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></g>`:'';
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><desc>${signature}</desc><defs><radialGradient id="light" cx="${focus/6.4}%" cy="39%" r="70%"><stop stop-color="hsl(${hue} 40% 42%)"/><stop offset="1" stop-color="${bg}"/></radialGradient><pattern id="grid" width="19" height="19" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${paper}" opacity=".17"/></pattern></defs><rect width="640" height="360" fill="url(#light)"/><rect width="640" height="360" fill="url(#grid)"/><circle cx="${focus}" cy="170" r="${70+random(90)}" fill="none" stroke="${paper}" stroke-opacity=".37"/><g transform="translate(20 22)">${panels}</g>${emblem}<rect x="24" y="24" width="592" height="312" rx="15" fill="none" stroke="${paper}" stroke-opacity=".25"/></svg>`;
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 const legalCoverJobs=new WeakMap();
@@ -192,7 +212,10 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- card.className='legal-file';if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
+ const careerFolder=record.folder&&document.body.dataset.thPage==='career';
+ card.className='legal-file';
+ if(careerFolder)card.classList.add('career-folder-tile');
+ if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.kindLabel??(record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document');card.append(type,caption);
  if(record.id||record.directReader||record.virtualFiles){
   const button=document.createElement(record.directReader?'a':'button');
@@ -201,6 +224,7 @@ function legalFileCard(record,back){
    if(record.closeOnOpen)button.addEventListener('click',()=>legalViewer.close());
   }else button.type='button';
   button.className='legal-thumbnail';
+  if(careerFolder)button.setAttribute('aria-label','Open '+(record.displayName??record.name));
   const art=document.createElement('span'),label=document.createElement('span'),labelTitle=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
   label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
@@ -209,7 +233,10 @@ function legalFileCard(record,back){
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
-   const fallback=()=>uniqueCover(JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]));
+   const fallback=()=>uniqueCover(
+    JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]),
+    careerFolder?careerFolderSymbol(record.coverPath??[record.name]):undefined
+   );
    const image=document.createElement('img');
    image.alt='';
    if(record.medicalLogo)image.classList.add('medical-carrier-logo');
