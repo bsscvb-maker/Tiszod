@@ -124,3 +124,29 @@ body[data-th-page="career"] {
 @media (prefers-reduced-motion: reduce) {
   [data-th-page="career"] .legal-file { transition: none; }
 }
+
+[data-th-page="career"] #career-drive .legal-cards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-thumbnail:has(img[data-photo]) {
+  height: auto;
+  display: block;
+}
+
+[data-th-page="career"] .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-art {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+[data-th-page="career"] .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-label {
+  position: relative;
+  inset: auto;
+  gap: .5rem;
+}
+
+[data-th-page="career"] .legal-thumbnail img[data-photo] {
+  object-position: center;
+}

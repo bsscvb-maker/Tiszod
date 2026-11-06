@@ -26,6 +26,24 @@ if(careerMode){
  $('education-category').closest('label').hidden=true;
  for(const field of ['person','category'])$('education-form').elements[field].closest('label').hidden=true;
 }
+const careerCovers = new Map([
+ ['Employers', 'assets/schools/computer-training.jpg'],
+ ['Career Development', 'assets/family-unique/education-award.webp'],
+ ['Resumes and Job Search', 'command-photos/interview.jpg'],
+ ['Employment Documents', 'assets/family-unique/folders.webp'],
+ ['Benefits and Retirement', 'assets/family-unique/coverage.webp'],
+ ['Archive', 'assets/family-unique/archive-boxes.webp'],
+ ['Resumes and Job Search/2026 Job Search', 'command-photos/tasks.webp'],
+ ['Resumes and Job Search/Resume and Executive Bio', 'command-photos/education.jpg'],
+ ['Resumes and Job Search/References and Work Samples', 'assets/family-unique/health-envelopes.webp'],
+ ['Resumes and Job Search/Career Fair and Highlights', 'assets/family-unique/graduation.webp'],
+ ['Resumes and Job Search/Previous Resumes and Profiles', 'assets/family/archive.webp'],
+ ['Career Development/Training and Resources', 'assets/family-unique/classroom.webp'],
+ ['Career Development/Development Plans', 'assets/family-unique/progress.webp'],
+ ['Career Development/Accomplishments', 'assets/family-unique/race-medal.webp']
+]);
+const careerCover = path => careerCovers.get(path.join('/'));
+
 async function loadCareerFolder(){
  const host=$('career-drive');
  const status=document.createElement('p');
@@ -46,7 +64,7 @@ async function loadCareerFolder(){
   heading.textContent='Browse Career';
   const cards=document.createElement('div');
   cards.className='legal-cards';
-  cards.append(...entries.map(entry=>thDriveRecords.card({...entry,driveAction:true,cardLabel:entry.folder?'Browse '+entry.name:'Preview '+entry.name})));
+  cards.append(...entries.map(entry=>thDriveRecords.card({...entry,driveAction:true,coverPath:[entry.name],coverFor:careerCover,cardLabel:entry.folder?'Browse '+entry.name:'Preview '+entry.name})));
   const drive=document.createElement('a');
   drive.className='education-open career-drive-link';
   drive.href=root.url;
