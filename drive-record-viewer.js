@@ -73,6 +73,29 @@ async function legalFolderPage(record,pageToken,signal){
   return {id:file.id,name:file.name,folder,url:file.webViewLink||fallback+file.id,mime:file.mimeType,thumbnail:file.thumbnailLink,resourceKey:file.resourceKey,canDownload:file.capabilities?.canDownload};
  })};
 }
+async function findDriveFolders(name){
+ const escaped=name.replace(/['\\]/g,'\\async function legalMedia(record,signal){');
+ const params={q:"name = '"+escaped+"' and mimeType = '"+legalMimePrefix+"folder' and trashed = false",
+  fields:'nextPageToken,files(id,name,resourceKey)',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true'};
+ const folders=[];
+ do{
+  const result=await (await legalDriveRequest('',params,{},AbortSignal.timeout(15000))).json();
+  folders.push(...(result.files||[]));
+  if(!result.nextPageToken)break;
+  params.pageToken=result.nextPageToken;
+ }while(true);
+ return folders;
+}
+async function driveChildren(record){
+ const files=[];
+ let pageToken;
+ do{
+  const page=await legalFolderPage(record,pageToken,AbortSignal.timeout(15000));
+  files.push(...page.files);
+  pageToken=page.nextPageToken;
+ }while(pageToken);
+ return files;
+}
 async function legalMedia(record,signal){
  const path='/'+encodeURIComponent(record.id);
  const mime=record.mime||(await (await legalDriveRequest(path,{fields:'mimeType',supportsAllDrives:'true'},record,signal)).json()).mimeType;
@@ -192,10 +215,13 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
  card.className='legal-file';if(record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;actions.className='legal-actions';
- const type=document.createElement('span');type.className='legal-kind';type.textContent=record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document';card.append(type,caption);
- if(record.id||record.directReader){
+ const type=document.createElement('span');type.className='legal-kind';type.textContent=record.kindLabel??(record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document');card.append(type,caption);
+ if(record.id||record.directReader||record.virtualFiles){
   const button=document.createElement(record.directReader?'a':'button');
-  if(record.directReader)button.href=record.readerUrl;else button.type='button';
+  if(record.directReader){
+   button.href=record.readerUrl;
+   if(record.closeOnOpen)button.addEventListener('click',()=>legalViewer.close());
+  }else button.type='button';
   button.className='legal-thumbnail';
   const art=document.createElement('span'),label=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
@@ -205,7 +231,12 @@ function legalFileCard(record,back){
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const fallback=legalFolderCover(record.name,record.medicalCover);
    const folderPhoto=record.legalFolderPhotoFor?.(record.name);
-   if(folderPhoto){
+   if(record.coverMark){
+    fallback.classList.add("legal-person-cover");
+    fallback.dataset.mark=record.coverMark;
+    fallback.dataset.person=record.name.toLowerCase();
+    art.replaceChildren(fallback);
+   }else if(folderPhoto){
     const image=document.createElement('img');
     image.alt='';
     image.dataset.photo='';
@@ -259,7 +290,9 @@ async function showLegalRecord(record,back){
  legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
  document.getElementById('legal-view-title').textContent=record.displayName??record.name;
  const actions=document.getElementById('legal-view-actions');
- actions.replaceChildren();legalDownloadAction(actions,record);
+ actions.replaceChildren();
+ if(record.driveAction&&record.url)actions.append(legalLink(record.folder?'Open full Drive folder':'Open in Drive',record.url));
+ legalDownloadAction(actions,record);
  if(record.downloadReport){
   const download=document.createElement('button');
   download.type='button';download.textContent='Download PDF';
@@ -371,8 +404,9 @@ async function showLegalRecord(record,back){
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
     files.append(legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
-     displayName:file.folder?record.childFolderLabel?.(file.name):undefined,
-     legalFolderPhotoFor:file.folder?record.legalFolderPhotoFor:undefined,
+     displayName:file.displayName??(file.folder?record.childFolderLabel?.(file.name):undefined),
+     childFolderLabel:record.childFolderLabel,driveAction:file.driveAction??record.driveAction,
+     legalFolderPhotoFor:file.legalFolderPhotoFor??(file.folder?record.legalFolderPhotoFor:undefined),
      excludedFolderIds:record.excludedFolderIds,
      medicalArt:file.medicalArt||(file.folder&&record.medicalArt?medicalFolderArt(file.name,record.medicalArt):undefined),
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
@@ -392,5 +426,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders };
 })();

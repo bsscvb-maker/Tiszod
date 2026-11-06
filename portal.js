@@ -74,6 +74,13 @@
   nav?.querySelectorAll('[href="bk.html"]').forEach(link=>link.remove());
   if(nav&&!nav.querySelector('[href="identification.html"]')){const a=document.createElement('a');a.href='identification.html';const active=location.pathname.endsWith('/identification.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▣</span><span>Identification</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="legal.html"]')){const a=document.createElement('a');a.href='legal.html';const active=/\/(legal|bk)\.html$/.test(location.pathname);a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v17m-5 1h10M4 6h16M5 6l-3 7h6L5 6zm14 0-3 7h6l-3-7zM2 13a3 3 0 0 0 6 0m8 0a3 3 0 0 0 6 0"/></svg></span><span>Legal</span>';nav.append(a);}
+  if(nav&&!nav.querySelector('[href="family.html"]')){
+    const link=document.createElement('a');
+    link.href='family.html';link.className='th-nav-link';
+    if(document.body.dataset.thPage==='family'){link.classList.add('active');link.setAttribute('aria-current','page');}
+    link.innerHTML='<span class="th-nav-icon" aria-hidden="true">♧</span><span>Family</span>';
+    nav.append(link);
+  }
   if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts &amp; Access</span>';nav.append(a);}
   // Keep navigation order and icon spacing consistent on every page.
@@ -103,7 +110,7 @@
     if(bm)bm.innerHTML='<span class="th-nav-icon th-bm-icon" aria-hidden="true">B&amp;M</span><span>Black &amp; Mild</span>';
     const groups=[
       ['Overview',['./','plan-tracker.html']],
-      ['Workspaces',['legal.html','identification.html','education.html','finance.html','medical.html','pets.html','freebirds.html','hobbies.html','black-mild.html']],
+      ['Workspaces',['legal.html','identification.html','education.html','family.html','finance.html','medical.html','pets.html','freebirds.html','hobbies.html','black-mild.html']],
       ['Vehicles & gear',['vehicles.html','equipment.html','watercraft.html']],
       ['System',['accounts.html','admin.html']]
     ];
@@ -227,7 +234,7 @@
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['black-mild.html','education.html','equipment.html','finance.html','freebirds.html','hobbies.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
+  const order=[['Main',['./']],['Modules',['black-mild.html','education.html','equipment.html','family.html','finance.html','freebirds.html','hobbies.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
