@@ -194,3 +194,11 @@ body[data-th-page="career"] {
   padding: clamp(16px, 3vw, 32px);
   object-fit: contain;
 }
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src="assets/career/development/insights-discovery.webp"]) {
+  background: #fff;
+}
+
+[data-th-page="career"] .legal-thumbnail img[src="assets/career/development/insights-discovery.webp"] {
+  object-fit: contain;
+}

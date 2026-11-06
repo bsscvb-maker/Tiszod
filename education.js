@@ -51,7 +51,12 @@ const careerCovers = new Map([
  ['Resumes and Job Search/Previous Resumes and Profiles', 'assets/family/archive.webp'],
  ['Career Development/Training and Resources', 'assets/family-unique/classroom.webp'],
  ['Career Development/Development Plans', 'assets/family-unique/progress.webp'],
- ['Career Development/Accomplishments', 'assets/family-unique/race-medal.webp']
+ ['Career Development/Accomplishments', 'assets/family-unique/race-medal.webp'],
+ ['Career Development/Insights Discovery', 'assets/career/development/insights-discovery.webp'],
+ ['Career Development/Performance Reviews', 'assets/family/school-reports.webp'],
+ ['Career Development/Development Plans/2024', 'assets/hobbies/striders-calendar.webp'],
+ ['Career Development/Development Plans/2025', 'command-photos/tasks.webp'],
+ ['Career Development/Development Plans/Instructions', 'assets/home-library/books-cover.webp']
 ]);
 const careerCover = path => careerCovers.get(path.join('/'));
 
