@@ -5,13 +5,64 @@ const legalViewerBody=document.getElementById('legal-view-body');
 const legalViewerBack=document.getElementById('legal-view-back');
 let legalViewRequest;
 const inlineViewer=legalViewer.tagName!=='DIALOG';
+const navigationCards=new WeakMap();
+let openTrail=[], navigationVersion=0;
+function saveTrail(trail){
+ const state={...history.state,thDriveTrail:trail};
+ if(window.portalNavigation)window.portalNavigation.push(state,location.href);
+ else history.pushState(state,'');
+}
+function closeFromNavigation(){
+ if(!inlineViewer&&openTrail.length){
+  navigationVersion++;
+  openTrail=[];
+  saveTrail([]);
+ }
+ closeLegalRecord();
+}
+async function restoreNavigation(){
+ if(inlineViewer)return;
+ const trail=history.state?.thDriveTrail||[];
+ if(JSON.stringify(trail)===JSON.stringify(openTrail))return;
+ const version=++navigationVersion;
+ if(!trail.length){
+  openTrail=[];
+  if(legalViewer.open)closeLegalRecord();
+  return;
+ }
+ if(typeof thAuthorized==='function'&&!thAuthorized())return;
+ for(let depth=0;depth<trail.length;depth++){
+  const selector='[data-th-drive-id="'+CSS.escape(trail[depth])+'"]';
+  const root=depth?legalViewerBody:document;
+  let button=root.querySelector(selector);
+  while(!button&&depth&&version===navigationVersion){
+   const more=legalViewerBody.querySelector('[data-th-drive-more]:not([hidden]):not(:disabled)');
+   if(!more||more.textContent!=='Load more')break;
+   await more.onclick();
+   button=root.querySelector(selector);
+  }
+  if(version!==navigationVersion||!button)return;
+  const entry=navigationCards.get(button);
+  if(!entry)return;
+  openTrail=trail.slice(0,depth+1);
+  await showLegalRecord(entry.record,entry.back);
+ }
+}
+if(!inlineViewer){
+ addEventListener('popstate',()=>void restoreNavigation());
+ addEventListener('pageshow',event=>{if(event.persisted)void restoreNavigation()});
+ legalViewer.addEventListener('cancel',event=>{
+  event.preventDefault();
+  closeFromNavigation();
+ });
+}
 function closeLegalRecord(){
  if(!inlineViewer){legalViewer.close();return;}
  if(legalViewer.hidden)return;
  legalViewer.hidden=true;
  legalViewer.dispatchEvent(new Event('close'));
 }
-document.getElementById('legal-view-close').onclick=closeLegalRecord;
+document.getElementById('legal-view-close').onclick=closeFromNavigation;
 legalViewer.addEventListener('close',()=>{
  legalViewRequest?.abort();
  legalViewerBody.replaceChildren();
@@ -266,7 +317,20 @@ function legalFileCard(record,back){
   if(careerFolder)labelTitle.textContent=record.displayName??record.name;
   label.append(labelTitle);
   button.append(art,label);
-  if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);
+  if(!record.directReader){
+   if(!inlineViewer&&record.id){
+    button.dataset.thDriveId=record.id;
+    navigationCards.set(button,{record,back});
+   }
+   button.onclick=()=>{
+    if(!inlineViewer&&record.id){
+     navigationVersion++;
+     openTrail=legalViewerBody.contains(button)?[...openTrail,record.id]:[record.id];
+     saveTrail(openTrail);
+    }
+    return showLegalRecord(record,back);
+   };
+  }
   if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
@@ -345,7 +409,7 @@ async function showLegalRecord(record,back){
  legalViewRequest?.abort();
  const request=new AbortController();
  legalViewRequest=request;
- legalViewerBack.hidden=!back;legalViewerBack.onclick=back||null;
+ legalViewerBack.hidden=!back;legalViewerBack.onclick=!inlineViewer&&openTrail.length>1?()=>history.back():back||null;
  document.getElementById('legal-view-title').textContent=record.displayName??record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();
@@ -480,7 +544,7 @@ async function showLegalRecord(record,back){
  }
  status.textContent='Loading folder…';
  const files=document.createElement('div');files.className='legal-cards';container.append(files);
- const more=document.createElement('button');more.type='button';more.textContent='Load more';more.hidden=true;container.append(more);
+ const more=document.createElement('button');more.type='button';more.dataset.thDriveMore='';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;
   try{
@@ -531,5 +595,5 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, uniqueCover, cover: legalDocumentCover };
+window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, restoreNavigation, uniqueCover, cover: legalDocumentCover };
 })();

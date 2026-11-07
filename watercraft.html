@@ -802,8 +802,26 @@ function assetPhoto(a){
 function show(view){if(view==='menuView'){view='categoryView';if(!category)category='All Watercraft';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
 // Navigation restores display state without replaying data-changing actions.
 window.thViewAdapter={
- capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
- restore:s=>{category=s.category;status=s.status;asset=assets.find(a=>a.id===s.asset)||null;if(s.view==='categoryView')renderCategory();if(s.view==='assetView'&&asset)renderAsset(s.assetTab);show(s.view);}
+ capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,yearOrder,vehicleQuery,missingFilter,appliedReport,reportVehicle:document.getElementById('reportVehicle').value,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
+ restore(s){
+  category=s.category||category;
+  status=s.status||'current';
+  yearOrder=s.yearOrder||yearOrder;
+  vehicleQuery=s.vehicleQuery||'';
+  missingFilter=s.missingFilter||'all';
+  asset=assets.find(a=>a.id===s.asset)||null;
+  const view=s.view==='assetView'&&!asset?'categoryView':s.view||'categoryView';
+  if(view==='categoryView')renderCategory();
+  if(view==='assetView')renderAsset(s.assetTab);
+  if(view==='reportsView'){
+   if(s.appliedReport)appliedReport=s.appliedReport;
+   updateReportVehicles();
+   if(s.reportVehicle)document.getElementById('reportVehicle').value=s.reportVehicle;
+   document.getElementById('reportWindowLabel').hidden=document.getElementById('reportType').value!=='due';
+   renderReport();
+  }
+  show(view);
+ }
 };
 
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Watercraft',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Watercraft'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
@@ -1551,5 +1569,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-consolidated"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
 

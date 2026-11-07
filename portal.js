@@ -177,7 +177,7 @@
 
 /* Browser-style portal navigation. Only view state is restored; writes are never replayed. */
 (() => {
-  const main=document.querySelector('.th-app-main')||document.querySelector('.th-app > main');
+  const main=document.querySelector('.th-app-main,.th-app > main,[data-th-navigation-main]');
   if(!main)return;
   let header=main.querySelector('.th-app-topbar');
   if(!header){header=document.createElement('header');header.className='th-app-topbar th-navigation-header';header.innerHTML='<div><strong>TisZod</strong><small>Personal workspace</small></div>';main.prepend(header);}
@@ -185,7 +185,13 @@
   const paths={back:'m14 6-6 6 6 6M8 12h12',forward:'m10 6 6 6-6 6M16 12H4',refresh:'M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1',home:'m3 11 9-8 9 8M5 10v11h5v-7h4v7h5V10'};
   for(const [action,label] of [['back','Back one page'],['forward','Forward one page'],['refresh','Refresh this page'],['home','Portal Home']]){const b=document.createElement('button');b.type='button';b.dataset.thNavigate=action;b.title=label;b.setAttribute('aria-label',label);b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+paths[action]+'"/></svg>';controls.append(b);}
   header.insertBefore(controls,header.children[1]||null);
-  const style=document.createElement('style');style.textContent=`.th-browser-controls{display:flex;align-items:center;gap:5px;flex:none;margin:0 16px}.th-browser-controls button{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-width:36px;padding:7px;margin:0;border:1px solid #53677f;border-radius:8px;background:#172b45;color:#eef5ff;cursor:pointer}.th-browser-controls svg{width:20px;height:20px}.th-browser-controls button:hover:not(:disabled){background:#25477d;border-color:#8cc9ff}.th-browser-controls button:disabled{opacity:.32;cursor:default}.th-browser-controls button:focus-visible{outline:3px solid #8cc9ff;outline-offset:3px}.th-navigation-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #35465a;margin-bottom:24px}.th-navigation-header strong,.th-navigation-header small{display:block}.th-navigation-header small{font-size:12px;color:#a9b8ca}@media(max-width:900px){.th-app-topbar{height:auto;min-height:76px;flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}.th-browser-controls{order:3;flex-basis:100%;margin:0}.th-account{margin-left:auto}}`;document.head.append(style);
+  const driveDialog=document.querySelector('dialog#legal-view');
+  if(driveDialog){
+    const dialogControls=controls.cloneNode(true);
+    dialogControls.classList.add('th-dialog-navigation');
+    driveDialog.prepend(dialogControls);
+  }
+  const style=document.createElement('style');style.textContent=`.th-dialog-navigation.th-browser-controls{margin:0 0 12px}.th-browser-controls{display:flex;align-items:center;gap:5px;flex:none;margin:0 16px}.th-browser-controls button{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-width:36px;padding:7px;margin:0;border:1px solid #53677f;border-radius:8px;background:#172b45;color:#eef5ff;cursor:pointer}.th-browser-controls svg{width:20px;height:20px}.th-browser-controls button:hover:not(:disabled){background:#25477d;border-color:#8cc9ff}.th-browser-controls button:disabled{opacity:.32;cursor:default}.th-browser-controls button:focus-visible{outline:3px solid #8cc9ff;outline-offset:3px}.th-navigation-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid #35465a;margin-bottom:24px}.th-navigation-header strong,.th-navigation-header small{display:block}.th-navigation-header small{font-size:12px;color:#a9b8ca}@media(max-width:900px){.th-app-topbar{height:auto;min-height:76px;flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}.th-browser-controls{order:3;flex-basis:100%;margin:0}.th-account{margin-left:auto}}`;document.head.append(style);
   const key='th-navigation-next',maxKey='th-navigation-max';
   const portalHome=new URL('./',location.href).href;
   const viewControls=()=>[...document.querySelectorAll('input[type=search][id],select[id],.history-filters input[type=date][id]')].filter(e=>!e.closest('form,dialog,.th-module-search,#th-auth'));
@@ -211,7 +217,6 @@
       if(s.workspace&&window.thViewAdapter)window.thViewAdapter.restore(s.workspace);
       else if(s.controls){for(const el of viewControls()){if(Object.hasOwn(s.controls,el.id))el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}))}}
       setControls(s.controls);
-      if(s.workspace&&window.thViewAdapter)window.thViewAdapter.restore(s.workspace);
       if(window.thReaderAdapter)window.thReaderAdapter.restore(s.reader);
       try{if(s.tasks)document.querySelector('iframe[src*="tracker-tasks"]')?.contentWindow?.portalTaskNavigation?.restore(s.tasks)}catch{}
       if(s.pet)document.getElementById(s.pet)?.click();
@@ -221,11 +226,22 @@
     }finally{restoring=false;update();}
   }
   const current=()=>history.state?.thNav;
-  function update(){controls.querySelector('[data-th-navigate="back"]').disabled=window.navigation?!navigation.canGoBack:history.length<=1;controls.querySelector('[data-th-navigate="forward"]').disabled=window.navigation?!navigation.canGoForward:!(current()?.index<Number(sessionStorage.getItem(maxKey)||0));}
+  function push(state,url){
+    const index=(current()?.index||0)+1;
+    history.pushState({...state,thNav:{index,view:capture()}},'',url);
+    sessionStorage.setItem(maxKey,index);
+    update();
+  }
+  function update(){
+    const canBack=window.navigation?navigation.canGoBack:history.length>1;
+    const canForward=window.navigation?navigation.canGoForward:current()?.index<Number(sessionStorage.getItem(maxKey)||0);
+    for(const button of document.querySelectorAll('.th-browser-controls [data-th-navigate="back"]'))button.disabled=!canBack;
+    for(const button of document.querySelectorAll('.th-browser-controls [data-th-navigate="forward"]'))button.disabled=!canForward;
+  }
   function replace(view=capture()){history.replaceState({...history.state,thNav:{index:current()?.index||0,view}},'');}
-  function record(before){const after=capture();const comparable=s=>JSON.stringify({...s,scroll:0});if(comparable(before)===comparable(after))return;replace(before);const index=(current()?.index||0)+1;history.pushState({...history.state,thNav:{index,view:after}},'');sessionStorage.setItem(maxKey,index);update();}
+  function record(before){const after=capture();const comparable=s=>JSON.stringify({...s,scroll:0});if(comparable(before)===comparable(after))return;replace(before);push(history.state,location.href);}
   function init(){const prior=current();if(prior){ready=true;if(dataReady||typeof window.thStart!=='function')restore(prior.view);}else{const index=Number(sessionStorage.getItem(key)||0);sessionStorage.removeItem(key);history.replaceState({...history.state,thNav:{index,view:capture()}},'');sessionStorage.setItem(maxKey,index);ready=true;}update();}
-  controls.addEventListener('click',e=>{const action=e.target.closest('[data-th-navigate]')?.dataset.thNavigate;if(!action)return;if(action==='back')history.back();if(action==='forward')history.forward();if(action==='refresh'){replace();location.reload();}if(action==='home'){replace();sessionStorage.setItem(key,(current()?.index||0)+1);location.href=portalHome;}});
+  document.addEventListener('click',e=>{const action=e.target.closest('.th-browser-controls [data-th-navigate]')?.dataset.thNavigate;if(!action)return;if(action==='back')history.back();if(action==='forward')history.forward();if(action==='refresh'){replace();location.reload();}if(action==='home'){replace();sessionStorage.setItem(key,(current()?.index||0)+1);location.href=portalHome;}});
   addEventListener('popstate',()=>{clearTimeout(inputTimer);restore(current()?.view);});
   addEventListener('pagehide',()=>{if(ready&&!restoring)replace()});
   window.navigation?.addEventListener('currententrychange',update);
@@ -236,19 +252,18 @@
   document.addEventListener('click',e=>{
     if(!ready||restoring||e.target.closest('.th-browser-controls'))return;
     if(e.target.closest('#identity-refresh,#education-refresh,#tax-refresh,#history-refresh'))replace();
-    if(e.target.closest('#backReports,#backDashboard,#backCategory')&&current()?.index>0){e.preventDefault();e.stopImmediatePropagation();history.back();return;}
     const link=e.target.closest('a[href]');
     if(link&&!link.target&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){const url=new URL(link.href);if(url.origin===location.origin&&url.pathname.startsWith(new URL('./',location.href).pathname)&&!url.hash){replace();sessionStorage.setItem(key,(current()?.index||0)+1);}}
-    if(document.body.dataset.thPage==='home-library' && e.target.closest('#library-results,#manual-breadcrumb'))return;
+    if(document.body.dataset.thPage==='home-library' && e.target.closest('#library-results,#manual-breadcrumb,.library-card,.library-breadcrumb,.library-tabs'))return;
     if(e.target.closest('form,#th-auth,.th-module-search,.sidebar-order-open,.sidebar-drag-handle'))return;
-    const before=capture();setTimeout(()=>{if(!restoring)record(before)},0);
+    const before=capture(),index=current()?.index;setTimeout(()=>{if(!restoring&&current()?.index===index)record(before)},0);
   },true);
   // Embedded tracker sends view snapshots, never task mutations.
   let frameBefore=null;
-  window.portalNavigation={before:(fromChange=false)=>{if(ready&&!restoring)frameBefore=fromChange?(current()?.view||capture()):capture()},after:()=>{if(!ready||restoring||!frameBefore)return;const before=frameBefore;frameBefore=null;record(before)}};
+  window.portalNavigation={push,replace,before:(fromChange=false)=>{if(ready&&!restoring)frameBefore=fromChange?(current()?.view||capture()):capture()},after:()=>{if(!ready||restoring||!frameBefore)return;const before=frameBefore;frameBefore=null;record(before)}};
   function connectFrame(){const frame=document.querySelector('iframe[src*="tracker-tasks"]');if(!frame)return;frame.addEventListener('load',()=>{if(current()?.view?.tasks)restore(current().view);else if(ready)replace()})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{init();connectFrame()},{once:true});else{init();connectFrame();}
-  const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const saved=dataReady?capture():current()?.view;const result=await start(...args);dataReady=true;ready=true;if(saved)restore(saved);replace();return result;};
+  const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const saved=dataReady?capture():current()?.view;const result=await start(...args);dataReady=true;ready=true;if(saved)restore(saved);await window.thDriveRecords?.restoreNavigation?.();replace();return result;};
 })();
 
 /* Unified personal portal presentation. Moves existing elements; never copies club records. */
@@ -407,7 +422,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  const shade=document.createElement('button');shade.type='button';shade.className='th-mobile-shade';shade.setAttribute('aria-label','Close navigation menu');document.body.append(shade);
  const close=document.createElement('button');close.type='button';close.className='th-mobile-close';close.textContent='Close ✕';side.prepend(close);
  const actions=document.createElement('div');actions.className='th-mobile-actions';
- for(const [label,fn] of [['Refresh page',()=>location.reload()],['Sign out',()=>document.querySelector('.th-account .th-sign-out')?.click()]]){
+ for(const [label,fn] of [['Refresh page',()=>document.querySelector('.th-browser-controls [data-th-navigate=refresh]')?.click()],['Sign out',()=>document.querySelector('.th-account .th-sign-out')?.click()]]){
  const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=fn;actions.append(b);
  }side.append(actions);
  const bottom=document.createElement('nav');bottom.className='th-mobile-bottom';bottom.setAttribute('aria-label','Quick navigation');

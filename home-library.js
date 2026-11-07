@@ -350,21 +350,31 @@
     if (focus) (home.hidden ? workspaceTitle : home.querySelector('h1')).focus();
   }
 
+  function pushLibrary(state, url) {
+    if (window.portalNavigation) {
+      window.portalNavigation.replace();
+      window.portalNavigation.push(state, url);
+    }
+    else history.pushState(state, '', url);
+  }
+
   for (const link of document.querySelectorAll('.library-card, .library-breadcrumb a, .library-tabs a')) {
     link.addEventListener('click', event => {
       if (new URL(link.href).pathname !== location.pathname) return;
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       if (link.href === location.href) return;
-      history.pushState(null, '', link.href);
+      pushLibrary({}, link.href);
       showLocation(true);
+      window.portalNavigation?.replace();
     });
   }
   get('library-global-search').addEventListener('submit', event => {
     event.preventDefault();
     if (!globalQuery.value.trim()) return;
-    history.pushState(null, '', '?view=search');
+    pushLibrary({}, '?view=search');
     showLocation(true);
+    window.portalNavigation?.replace();
   });
   window.addEventListener('popstate', () => {
     showLocation(true);
@@ -435,13 +445,14 @@
     if (!fromHistory && nextPath !== catalogPath) {
       // Each folder is a distinct browser-history entry, including its parent.
       history.replaceState({...history.state, libraryCatalog: catalogPath}, '');
-      history.pushState({...history.state, libraryCatalog: nextPath}, '', location.href);
+      pushLibrary({...history.state, libraryCatalog: nextPath}, location.href);
     }
     catalogPath = nextPath;
     visible = pageSize;
     closePreview();
     render();
     get('library-results-title').focus();
+    if (!fromHistory) window.portalNavigation?.replace();
   }
 
   const coverJobs = new WeakMap();
@@ -671,6 +682,18 @@
   refresh.addEventListener('click', retry);
   get('library-home-retry').addEventListener('click', retry);
   more.addEventListener('click', () => { visible += pageSize; render(true); });
+  window.thViewAdapter = {
+    capture: () => ({catalogPath, query: query.value, category: category.value, globalQuery: globalQuery.value, visible}),
+    restore(state) {
+      catalogPath = state?.catalogPath || '';
+      query.value = state?.query || '';
+      category.value = state?.category || '';
+      globalQuery.value = state?.globalQuery || '';
+      search(false);
+      visible = Math.max(pageSize, state?.visible || 0);
+      render();
+    }
+  };
   showLocation();
   window.thStart = async () => {
     const count = get('library-count-Books');

@@ -278,12 +278,18 @@ bookTools.addEventListener('change',()=>render());
 bookTools.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='book-reset'){resetBookFilters();$('education-search').value=''}if(b.dataset.bookPreset){resetBookFilters();const p=b.dataset.bookPreset;if(['Fiction','Nonfiction'].includes(p))$('book-kind').value=p;else if(p!=='All books')$('book-genre').value=p}render()});
 const fields=document.querySelector('.education-fields');
 fields.insertAdjacentHTML('beforeend','<label>Book author<input name="author" maxlength="300"></label><label>Fiction / nonfiction<select name="bookKind"><option value="">Suggested automatically</option><option>Fiction</option><option>Nonfiction</option><option>Uncategorized</option></select></label><label>Book genre<select name="genre"><option value="">Suggested automatically</option>'+genreOptions.map(g=>'<option>'+esc(g)+'</option>').join('')+'</select></label>');
+function bookSortGroup(data){
+ const name=data.name||'';
+ if(!/\.m4a$/i.test(name)&&!/\.m4a(?:[?#]|$)/i.test(data.url||''))return 0;
+ if(/chapter\s*0*1\s*[-–—]\s*28\b/i.test(name))return 3;
+ return /chapter\s*0*(?:[1-9]|1\d|2[0-8])\b/i.test(name)?2:1;
+}
 function renderBooks(shown,html){
  const authors=[...new Set(shown.map(r=>bookInfo(r.data).author))].sort();const prior=$('book-author').value;
  $('book-author').innerHTML='<option value="">All authors</option>'+authors.map(a=>'<option>'+esc(a)+'</option>').join('');$('book-author').value=prior;
  const kind=$('book-kind').value,genre=$('book-genre').value,author=$('book-author').value,format=$('book-format').value,sort=$('book-sort').value;
  const filtered=shown.filter(r=>{const i=bookInfo(r.data);return(!kind||i.kind===kind)&&(!genre||i.genre===genre)&&(!author||i.author===author)&&(!format||i.format===format)});
- filtered.sort((a,b)=>{const chapterAudio=d=>/chapter\s*0*([1-9]|1\d|2[0-8])\b/i.test(d.name||'')&&/\.m4a(?:$|\?)/i.test((d.name||'')+' '+(d.url||''));const bottom=Number(chapterAudio(a.data))-Number(chapterAudio(b.data));if(bottom)return bottom;const x=bookInfo(a.data),y=bookInfo(b.data);if(sort==='reverse')return title(b.data).localeCompare(title(a.data));if(sort!=='title'){const c=String(x[sort]).localeCompare(String(y[sort]));if(c)return c}return title(a.data).localeCompare(title(b.data),undefined,{numeric:true})});
+ filtered.sort((a,b)=>{const bottom=bookSortGroup(a.data)-bookSortGroup(b.data);if(bottom)return bottom;const x=bookInfo(a.data),y=bookInfo(b.data);if(sort==='reverse')return title(b.data).localeCompare(title(a.data));if(sort!=='title'){const c=String(x[sort]).localeCompare(String(y[sort]));if(c)return c}return title(a.data).localeCompare(title(b.data),undefined,{numeric:true})});
  $('education-count').textContent=filtered.length+' of '+shown.length+' books · one scrolling page';
  $('education-grid').innerHTML=html+filtered.map(card).join('')+(filtered.length?'':'<p>No books match these filters.</p>');
  for(const b of bookTools.querySelectorAll('[data-book-preset]')){const p=b.dataset.bookPreset;b.setAttribute('aria-pressed',String(p===kind||p===genre||(p==='All books'&&!kind&&!genre&&!author&&!format)))}

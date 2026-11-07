@@ -56,7 +56,7 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script src="drive-record-viewer.js?v=20261106-unique-covers"></script>
+<script src="drive-record-viewer.js?v=20261106-portal-navigation"></script>
 <script>
 const legalSections=[
  {id:'bankruptcy',key:'BK',title:'Bankruptcy',description:'Open the BK workspace to review case documents, creditors, and next steps.'},
@@ -156,4 +156,4 @@ window.thStart=async()=>{
  }catch(error){if(location.hash==='#'+selected.id)status.textContent='Legal records could not load. Refresh this page to try again.';throw error}
 };
 window.addEventListener('hashchange',()=>{if(thAuthorized())window.thStart().catch(()=>{})});
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-career-module"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
