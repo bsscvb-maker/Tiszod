@@ -34,16 +34,16 @@ if(careerMode){
  $('education-category').closest('label').hidden=true;
  $('education-form').elements.person.closest('label').hidden=true;
 }
-const employerOrder = new Map(["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "Berkley", "IQVIA", "Advance", "AbbVie", "Amazon"].map((name, index) => [name, index]));
+const employerOrder = new Map(["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "HireGenics", "Advance", "AbbVie", "Amazon"].map((name, index) => [name, index]));
 const careerCovers = new Map([
- ['Employers/Food Lion', 'assets/career/employers/food-lion.png'],
- ['Employers/Sadler Foods', 'assets/career/employers/sadler-foods.svg'],
- ['Employers/Checkered Flag Volkswagen', 'assets/career/employers/checkered-flag-volkswagen.jpg'],
- ['Employers/Haley Toyota of Richmond', 'assets/career/employers/haley-toyota.png'],
- ['Employers/Kimnach Ford', 'assets/career/employers/kimnach-ford.svg'],
- ['Employers/Hall Mazda', 'assets/career/employers/hall-mazda.jpg'],
- ['Employers/Charles Barker Toyota', 'assets/career/employers/charles-barker-toyota.png'],
- ['Employers/Superior Marble and Stone', 'assets/career/employers/superior-marble-and-stone.webp'],
+ ['Employers/Food Lion', 'assets/career/employers/full-tile/food-lion.png'],
+ ['Employers/Sadler Foods', 'assets/career/employers/full-tile/sadler-foods.svg'],
+ ['Employers/Checkered Flag Volkswagen', 'assets/career/employers/full-tile/checkered-flag-volkswagen.jpg'],
+ ['Employers/Haley Toyota of Richmond', 'assets/career/employers/full-tile/haley-toyota.png'],
+ ['Employers/Kimnach Ford', 'assets/career/employers/full-tile/kimnach-ford.svg'],
+ ['Employers/Hall Mazda', 'assets/career/employers/full-tile/hall-mazda.jpg'],
+ ['Employers/Charles Barker Toyota', 'assets/career/employers/full-tile/charles-barker-toyota.png'],
+ ['Employers/Superior Marble and Stone', 'assets/career/employers/full-tile/superior-marble-and-stone.webp'],
  ['Employers/PC Mobile One/Advetising Ads', 'assets/career/folders/pc-advertising.webp'],
  ['Employers/PC Mobile One/Business Cards', 'assets/career/folders/pc-business-cards.webp'],
  ['Employers/PC Mobile One/Business Taxes', 'assets/career/folders/pc-tax.webp'],
