@@ -51,6 +51,10 @@ const careerCovers = new Map([
  ['Employers/IQVIA/Yearbook', 'assets/career/folders/iqvia-yearbook.webp'],
  ['Employers/AbbVie/Benefits and Retirement', 'assets/career/folders/benefits.webp'],
  ['Employers/AbbVie/Onboarding and Agreements', 'assets/career/folders/onboarding.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Expense Card', 'assets/career/folders/pc-payment-terminal.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Identity and Background Checks', 'assets/family/identification.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Offers and Agreements', 'assets/legal/separation-agreements.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Orientation and Policies', 'assets/legal/reference.webp'],
  ['Employers/AbbVie/Separation', 'assets/career/folders/separation.webp'],
  ['Employers/AbbVie/Travel and Expenses', 'assets/career/folders/travel.webp'],
  ['Employers/AbbVie/Verification', 'assets/career/folders/verification.webp'],
@@ -111,6 +115,8 @@ const defaultCareerCover = 'assets/family-unique/folders.webp';
 function careerCover(path){
  const dedicatedCover=careerCovers.get(path.join('/'));
  if(dedicatedCover)return dedicatedCover;
+ // AbbVie folders without a dedicated photo get the viewer's folder-specific artwork.
+ if(path[0]==='Employers'&&path[1]==='AbbVie')return undefined;
  for(let index=path.length-1;index>=0;index--){
   const subject=careerCoverSubjects.find(([pattern])=>pattern.test(path[index]));
   if(subject)return subject[1];
