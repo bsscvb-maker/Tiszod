@@ -43,7 +43,7 @@ window.TiszodVehicleDocuments = (() => {
     if(folder)return 'https://drive.google.com/drive/folders/'+encodeURIComponent(folder)+(id?'?select='+encodeURIComponent(id):'');
     return 'https://drive.google.com/drive/u/0/search?q='+encodeURIComponent(record.name||id||'');
   }
-  function create({assets,getAsset,filingShortcut=false,onChange=async()=>{}}){
+  function create({assets,getAsset,filingShortcut=false,deferLoad=false,onChange=async()=>{}}){
     let records=[],loaded=false,loading=null,loadError='',activeTab='details',current=null,query='',globalQuery='',globalVehicle='all',globalCategory='all',editRecord=null;
     const panel=document.createElement('section');panel.id='assetDocuments';panel.className='asset-tab-panel vehicle-documents';panel.hidden=true;document.getElementById('assetView').append(panel);
     const nav=document.querySelector('.asset-tabs');
@@ -164,7 +164,7 @@ window.TiszodVehicleDocuments = (() => {
     hub.querySelector('#documentHubSearch').addEventListener('input',e=>{globalQuery=e.target.value;paintHub();});
     hub.querySelector('#documentHubVehicle').addEventListener('change',e=>{globalVehicle=e.target.value;paintHub();});hub.querySelector('#documentHubCategory').addEventListener('change',e=>{globalCategory=e.target.value;paintHub();});
     hub.querySelector('[data-close-hub]').addEventListener('click',()=>hub.close());preview.querySelector('[data-close-preview]').addEventListener('click',()=>preview.close());preview.addEventListener('close',()=>preview.querySelector('iframe').removeAttribute('src'));
-    load().catch(()=>{});
+    if(!deferLoad)load().catch(()=>{});
     return {render(tab,a){if(assetKey(current||{})!==assetKey(a))query='';current=a;activeTab=tab;panel.hidden=!tab.startsWith('documents-');updateCounts();if(!panel.hidden){document.querySelector('.edit-bar').hidden=true;paint();load().catch(()=>{}).finally(()=>{if(activeTab.startsWith('documents-'))paint();});}},openHub};
   }
   return {create,assetKey,parse,categories};

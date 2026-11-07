@@ -403,8 +403,8 @@ main:has(#categoryView:not([hidden])) .topline{display:none}
 #assetGrid .card-status.sold:before{background:#f4b85e;box-shadow:0 0 0 2px #f4b85e22}
 #assetGrid .card-status.totaled:before{background:#e88bff;box-shadow:0 0 0 2px #e88bff22}
 #assetGrid .card-status.repo:before{background:#ff8254;box-shadow:0 0 0 2px #ff825422}
-#assetGrid .card-copy .card-vin,#assetGrid .card-copy .card-plate{font-size:12px;overflow-wrap:anywhere}
-#assetGrid .card-vin b,#assetGrid .card-plate b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:all;letter-spacing:.02em}
+#assetGrid .card-copy .card-vin,#assetGrid .card-copy .card-plate{overflow-wrap:anywhere}
+#assetGrid .card-vin b,#assetGrid .card-plate b{user-select:all}
 #assetGrid .card-status.managed:before{background:#79c7f1;box-shadow:0 0 0 2px #79c7f122}
 #assetGrid .card-status select{border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;outline:none}
 #assetGrid .card-status select option{background:#152b49;color:#fff}
@@ -465,7 +465,7 @@ main:has(#categoryView:not([hidden])) .topline{display:none}
 <div class="category-grid" id="categoryGrid"></div>
 </div>
 <div class="workspace-view" id="categoryView" hidden>
-<div class="vehicle-filter-bar" role="group" aria-label="Vehicle filters"><label class="vehicle-search">Search vehicles<input id="vehicleSearch" type="search" placeholder="Year, make, model, VIN, plate…" autocomplete="off"></label><label id="vehicleSectionLabel">Type<select id="vehicleSectionFilter" aria-label="Filter by vehicle type"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by vehicle status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label><label>Sort by<select id="yearSort"><option value="usage">Most used this year</option><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
+<div class="vehicle-filter-bar" role="group" aria-label="Vehicle filters"><label class="vehicle-search">Search vehicles<input id="vehicleSearch" type="search" placeholder="Year, make, model, VIN, plate…" autocomplete="off"></label><label id="vehicleSectionLabel">Type<select id="vehicleSectionFilter" aria-label="Filter by vehicle type"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by vehicle status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label><label>Sort by<select id="yearSort"><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option><option value="usage">Most used this year</option></select></label><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
 <p id="vehicleResults" class="vehicle-results" role="status"></p>
 <div class="asset-grid" id="assetGrid"></div>
 </div>
@@ -479,7 +479,7 @@ main:has(#categoryView:not([hidden])) .topline{display:none}
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span><a id="assetFloorPlan" class="asset-floor-plan" href="command-photos/keystone-bullet-331bhs-floor-plan.png" target="_blank" rel="noopener" hidden><span>Floor plan</span><img alt="2020 Keystone Bullet 331BHS camper floor plan" width="540" height="229"></a></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
-<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" src="mustang-fuel.html" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
+<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
 </div>
 <footer class="foot"><span>TisZod · VEHICLES</span><span>PRIVATE SHEET CONNECTION</span></footer>
 </main></div>
@@ -626,7 +626,7 @@ async function loadServiceDetails(){
  return serviceLoad;
 }
 async function openServiceDetails(a){
- try{await loadServiceDetails();if(asset===a)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
+ try{await loadServiceDetails();if(asset===a&&!document.getElementById('assetView').hidden)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
  catch(error){if(asset===a){document.getElementById('assetMaintenance').innerHTML='<div class="asset-note">'+esc(error.message)+' Select another tab and return to Service Log to retry.</div>';document.getElementById('assetRecommended').innerHTML='<div class="asset-note">'+esc(error.message)+'</div>'}}
 }
 const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','chrysleraspen':'Aspen','hondacivic':'Civic','fordmustang':'Mustang','fordf150':'F150','harleydavidsonultra':'FLHTCUI','harleydavidsonroad':'FLTRK','makdaddy':'Legend','stirling':'Stirling','westbrook':'Stirling','trek':'trek','colemanb200':'B200','volpam':'SP03','coolster':'3050C','xpro':'Xpro'};
@@ -796,9 +796,9 @@ function renderRecordReview(a){
  panel.innerHTML='<h3>Records found in Drive</h3>'+(facts.length?'<dl>'+facts.map(f=>'<div><dt>'+esc(f.label)+'</dt><dd>'+esc(f.value)+'</dd></div>').join('')+'</dl>':'')+(specs.startingReadingNote?'<p class="record-warning">'+esc(specs.startingReadingNote)+'</p>':'')+(audit?'<p>'+esc(audit.summary)+'</p><small>Folder review: '+esc(audit.reviewed)+' · '+audit.documents+' documents · '+audit.pictures+' pictures</small>':'')+(reviews.length?'<details><summary>Document findings and qualifications</summary>'+reviews.map(r=>'<p>'+esc(r.summary)+'</p>').join('')+'</details>':'')+(sources.length?'<details><summary>Source records</summary><ul>'+sources.map(r=>{let url='';try{const u=new URL(r.url);if(u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname))url=u.href}catch(_){}return url?'<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+'</a></li>':''}).join('')+'</ul></details>':'');
 }
 
-let category='',asset=null,status='current',yearOrder='usage',editing=false,vehicleQuery='',missingFilter='all';
+let category='',asset=null,status='current',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
-const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
+const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,deferLoad:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
 let photoObserver;
 function assetPhoto(a){
  if(a.photoObjectUrl)return Promise.resolve(a.photoObjectUrl);
@@ -860,7 +860,7 @@ function annualVehicleUsage(a){
  return {year,value:uncertain?null:value,unit:usesHours(a)?'hours':'mi',date:first&&first===prior?start:first?.date,detail};
 }
 function compareVehicleUsage(a,b){
- if(yearOrder==='usage'){
+ if(yearOrder==='usage'&&serviceLoaded){
   const x=annualVehicleUsage(a),y=annualVehicleUsage(b);
   const group=u=>u.value===null?2:u.unit==='hours'?1:0;
   const order=group(x)-group(y)||(y.value??-1)-(x.value??-1);
@@ -872,10 +872,9 @@ function compareVehicleUsage(a,b){
  return String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''));
 }
 function annualUsageLabel(a){
- if(yearOrder!=='usage')return '';
+ if(!serviceLoaded)return '<span class="card-stat">'+new Date().getFullYear()+' use: <b>On demand</b></span>';
  const u=annualVehicleUsage(a);
- const value=!serviceLoaded?'Loading usage…':u.value===null?'Not enough comparable readings':u.value.toLocaleString('en-US',{maximumFractionDigits:1})+' '+u.unit;
- const since=u.date?' · since '+ownershipText(ownershipIso(u.date)):'';
+ const value=u.value===null?'Not enough comparable readings':u.value.toLocaleString('en-US',{maximumFractionDigits:1})+' '+u.unit;
  return '<span class="card-stat" title="'+esc(u.detail||'First available reading this calendar year through the latest recorded reading')+'">'+u.year+' use: <b>'+esc(value)+'</b></span>';
 }
 function renderCategory(){
@@ -980,7 +979,7 @@ function renderAsset(tab='details'){
  document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
  const historyUrl='fuel-history.html?v=20261029-desktop2&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
- const fuelFrame=document.getElementById('fuelFrame');if(fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
+ const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&canFuel&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
  if(tab==='fuel'&&!canFuel)tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
@@ -1098,7 +1097,17 @@ document.getElementById('updated').textContent=D.asOf||'latest';
 renderCategories();
 document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='current';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
 document.getElementById('vehicleStatusFilter').addEventListener('change',e=>{status=e.target.value;renderCategory()});
-document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory()});
+document.getElementById('yearSort').addEventListener('change',async e=>{
+ yearOrder=e.target.value;
+ if(yearOrder!=='usage'||serviceLoaded){renderCategory();return}
+ document.getElementById('vehicleResults').textContent='Loading annual usage…';
+ try{await loadServiceDetails();if(yearOrder==='usage'&&!document.getElementById('categoryView').hidden)renderCategory()}
+ catch(error){
+  if(yearOrder!=='usage')return;
+  yearOrder='newest';renderCategory();
+  document.getElementById('vehicleResults').textContent+=' · Annual usage could not load. Select Most used this year to retry.';
+ }
+});
 document.getElementById('vehicleSearch').addEventListener('input',e=>{vehicleQuery=e.target.value;renderCategory()});
 document.getElementById('vehicleSectionFilter').addEventListener('change',e=>{category=e.target.value;renderCategory()});
 document.getElementById('vehicleMissingFilter').addEventListener('change',e=>{missingFilter=e.target.value;renderCategory()});
@@ -1112,7 +1121,7 @@ document.getElementById('assetGrid').addEventListener('change',async e=>{
  catch(error){input.value=prior;const message=document.createElement('span');message.className='card-status-error';message.setAttribute('role','alert');message.textContent=error.message||'Could not save status.';input.parentElement.append(message)}
  finally{input.disabled=false}
 });
-document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview);if(a)previewPhoto(a,a.photoObjectUrl||a.photo);return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset){renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details');openDueReminder(asset)}}).catch(()=>{});});
+document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview);if(a)previewPhoto(a,a.photoObjectUrl||a.photo);return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
 let mileageTarget=null;
  document.querySelector('#mileageForm [name="mode"]').addEventListener('change',e=>{
   const hours=usesHours(mileageTarget),adding=e.target.value==='add';
@@ -1599,10 +1608,7 @@ document.getElementById('logAssetFuel').onclick=openFuel;
 document.getElementById('vehicleSectionLabel').hidden=Boolean(collectionSection);
 category=defaultCategory;
 status='current';
-document.getElementById('yearSort').value='usage';
-yearOrder=document.getElementById('yearSort').value;
 renderCategory();show('categoryView');
-loadServiceDetails().then(()=>renderCategory()).catch(()=>{document.getElementById('vehicleResults').textContent='Usage could not be loaded. Refresh to retry.';});
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
@@ -1620,7 +1626,7 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="sheets.js?v=20261107-fleet-batch"></script></body></html>
 
 
 
