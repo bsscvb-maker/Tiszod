@@ -203,8 +203,12 @@ body[data-th-page="career"] {
   object-fit: contain;
 }
 
-[data-th-page="career"] .legal-thumbnail:has(img[src$="/pc-mobile-one-ad.png"]) .legal-thumbnail-art {
-  aspect-ratio: 425 / 400;
+[data-th-page="career"] .career-employer-tile > strong {
+  display: none;
+}
+
+[data-th-page="career"] .career-employer-tile .legal-thumbnail {
+  border-top: 0;
 }
 
 [data-th-page="career"] .legal-thumbnail img[src$="/pc-mobile-one-ad.png"] {

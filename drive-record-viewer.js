@@ -214,7 +214,10 @@ function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
  const careerFolder=record.folder&&document.body.dataset.thPage==='career';
  card.className='legal-file';
- if(careerFolder)card.classList.add('career-folder-tile');
+ if(careerFolder){
+  card.classList.add('career-folder-tile');
+  if(record.coverPath?.length===2&&record.coverPath[0]==='Employers')card.classList.add('career-employer-tile');
+ }
  if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.kindLabel??(record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document');card.append(type,caption);
  if(record.id||record.directReader||record.virtualFiles){

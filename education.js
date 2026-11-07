@@ -36,6 +36,7 @@ const careerCovers = new Map([
  ['Employers', 'assets/career/employers-cover.webp'],
  ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
  ['Employers/Advance', 'assets/career/employers/advance.svg'],
+ ['Employers/Berkley', 'assets/career/berkley-machine-works.webp'],
  ['Employers/HireGenics', 'assets/career/employers/hiregenics.svg'],
  ['Employers/IQVIA', 'assets/career/employers/iqvia.svg'],
  ['Employers/PC Mobile One', 'assets/career/employers/pc-mobile-one-ad.png'],
