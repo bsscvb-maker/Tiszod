@@ -349,7 +349,7 @@ main:has(#categoryView:not([hidden]),#vehicleLoading:not([hidden])) .topline{dis
 #assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
 @media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
-<script src="card-titles.js?v=20261106" defer></script></head>
+<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107"></head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>
 #th-auth{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#101d24;color:#e9f5f6;font:16px/1.5 system-ui,sans-serif}
@@ -840,67 +840,10 @@ window.thViewAdapter={
 
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 // Trailer travel mileage uses a year-opening baseline when one can be established.
-const usageCacheKey='tiszod-vehicle-annual-usage-v1';
-const usageYear=new Date().getFullYear();
-let usageCache={}, usageReadings=null, usageRefresh=null;
-try{usageCache=JSON.parse(sessionStorage.getItem(usageCacheKey))||{}}catch{}
-if(usageCache.year!==usageYear)usageCache={};
-function refreshAnnualUsage(){
- if(usageRefresh||Date.now()-(usageCache.savedAt||0)<60000)return;
- usageRefresh=thValues("'Portal Service History'!A2:E5000").then(rows=>{
-  usageReadings=rows.filter(row=>row[0]&&row[3]).map(row=>({asset:row[0],date:row[2],odometer:row[4]}));
-  usageCache={year:usageYear,savedAt:Date.now(),metrics:Object.fromEntries(assets.map(a=>[serviceAssetKey(a),annualVehicleUsage(a)]))};
-  try{sessionStorage.setItem(usageCacheKey,JSON.stringify(usageCache))}catch{}
-  if(!document.getElementById('categoryView').hidden)renderCategory();
- }).catch(()=>{}).finally(()=>{usageRefresh=null});
-}
-function annualVehicleUsage(a){
- const today=new Date(),year=today.getFullYear(),start=new Date(year,0,1),key=serviceAssetKey(a),points=[];
- const cached=usageCache.metrics?.[key];
- if(!serviceLoaded&&!usageReadings&&cached?.value!=null)return cached;
- const trailer=a.category==='Trailers',legend=isLegend(a),record=specRecord(a),usePrior=trailer||legend;
- const historyKeys=legend?['legend','makdaddylegend','makdaddy']:[clean(key)];
- const number=value=>String(value??'').trim()===''?NaN:Number(String(value).replace(/,/g,''));
- let prior;
- const add=(raw,value,service=false)=>{
-  const date=ownershipDate(String(raw||'').slice(0,10)),reading=number(value);
-  if(!date||date>today||!Number.isFinite(reading)||reading<0)return;
-  if(date>=start)points.push({date,reading});
-  else if(usePrior&&service&&(!prior||date>prior.date||(date.getTime()===prior.date.getTime()&&reading>prior.reading)))prior={date,reading};
- };
- for(const entry of (serviceLoaded?services:usageReadings||[]))if(historyKeys.includes(clean(entry.asset)))add(entry.date,entry.odometer,true);
- for(const entry of (window.FUEL_LEGACY||{})[key]?.entries||[])add(entry.date||entry.d,entry.odo??entry.o);
- const m=mileageFor(a);if(m)add(m.serviceStart,m.startMileage);
- points.sort((x,y)=>x.date-y.date||x.reading-y.reading);
- const saved=trailer?record.annualUsageBaselines?.[year]:null;
- const opening=number(saved?.reading);
- const confirmed=Number.isFinite(opening)&&opening>=0;
- const first=confirmed?{date:start,reading:opening}:points[0]?.date.getTime()===start.getTime()?points[0]:prior||points[0];
- const current=number(m?.currentMileage),latest=points[points.length-1];
- const end=Number.isFinite(current)?(trailer?current:Math.max(current,latest?.reading??current)):latest?.reading;
- const comparable=confirmed||prior||points.length>1||Number.isFinite(current);
- const value=comparable&&first&&Number.isFinite(end)&&end>=first.reading?Math.round((end-first.reading)*10)/10:null;
- const uncertain=!trailer&&(record.specs.odometerBrand==='NOT ACTUAL'||/keystonebullet/.test(clean(a.make+' '+a.model)));
- const source=confirmed?saved.source:first&&first===prior?'Latest service reading before January 1 ('+ownershipText(ownershipIso(prior.date))+')':'First available dated reading this calendar year';
- const detail=value===null?'':source+' · '+cardNumber(first.reading)+' to '+cardNumber(end)+(trailer?' tracked mi':'');
- return {year,value:uncertain?null:value,unit:usesHours(a)?'hours':'mi',date:first&&first===prior?start:first?.date,detail};
-}
-function compareVehicleUsage(a,b,metrics){
- if(yearOrder==='usage'){
-  const x=metrics.get(a),y=metrics.get(b);
-  const group=u=>u.value===null?2:u.unit==='hours'?1:0;
-  const order=group(x)-group(y)||(y.value??-1)-(x.value??-1);
-  if(order)return order;
- }else{
-  const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10),ak=Number.isFinite(ay),bk=Number.isFinite(by);
-  const order=ak&&bk?(yearOrder==='oldest'?ay-by:by-ay):Number(bk)-Number(ak);if(order)return order;
- }
- return String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''));
-}
-function annualUsageLabel(u){
- const value=u.value===null?(serviceLoaded||usageReadings||usageCache.savedAt?'Not enough comparable readings':'Pending'):u.value.toLocaleString('en-US',{maximumFractionDigits:1})+' '+u.unit;
- return '<span class="card-stat" title="'+esc(u.detail||'First available reading this calendar year through the latest recorded reading')+'">'+u.year+' use: <b>'+esc(value)+'</b></span>';
-}
+const {annualVehicleUsage,compareVehicleUsage,annualUsageLabel,refreshAnnualUsage}=createFleetUsage({
+ workspace,assets,getServices:()=>serviceLoaded?services:null,onRefresh:()=>{if(!document.getElementById('categoryView').hidden)renderCategory()},
+ serviceAssetKey,specRecord,isLegend,clean,mileageFor,ownershipDate,ownershipText,ownershipIso,cardNumber,usesHours,esc
+});
 function cardPhotoOverride(a){
  return String(a.year)==='2023'&&/harley.*(roadglide|fltrk)/.test(clean(a.make+' '+a.model))?'command-photos/road-glide-2023-gravel-front.jpg':'';
 }
@@ -909,7 +852,7 @@ function renderCategory(){
  category=collectionSection||(collectionTypes.includes(category)?category:defaultCategory);
  const items=assets.filter(a=>{const type=collectionType(a);return category==='All Vehicles'?collectionTypes.includes(type):type===category});
  const metrics=new Map(items.map(a=>[a,annualVehicleUsage(a)]));
- items.sort((a,b)=>compareVehicleUsage(a,b,metrics));
+ items.sort((a,b)=>compareVehicleUsage(a,b,metrics,yearOrder));
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
@@ -1126,7 +1069,7 @@ document.getElementById('updated').textContent=D.asOf||'latest';
 renderCategories();
 document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='current';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
 document.getElementById('vehicleStatusFilter').addEventListener('change',e=>{status=e.target.value;renderCategory()});
-document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory();if(yearOrder==='usage'&&!usageReadings&&!serviceLoaded)refreshAnnualUsage()});
+document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory();if(yearOrder==='usage')refreshAnnualUsage()});
 document.getElementById('vehicleSearch').addEventListener('input',e=>{vehicleQuery=e.target.value;renderCategory()});
 document.getElementById('vehicleSectionFilter').addEventListener('change',e=>{category=e.target.value;renderCategory()});
 document.getElementById('vehicleMissingFilter').addEventListener('change',e=>{missingFilter=e.target.value;renderCategory()});
@@ -1646,7 +1589,7 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
 
 
 

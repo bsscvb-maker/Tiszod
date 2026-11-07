@@ -255,8 +255,6 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 
 .category-card{min-height:130px;justify-content:center}
 .category-card .category-icon{width:50px;height:50px;background:#122d57;color:#c6ddff}
-.year-sort{display:flex;align-items:center;gap:9px;margin:0 0 15px;color:#d4e3f6;font-weight:700}
-.year-sort select{min-height:42px;padding:8px 12px;border:1px solid #6489b8;border-radius:7px;background:#203e68;color:#fff;font:inherit}
 .category-icon svg{width:30px;height:30px;display:block}
 .category-manager{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0;padding:15px;border:1px solid #38577e;border-radius:10px;background:#152b49;color:#f2f7ff}.category-manager label{font-size:15px;font-weight:700}.category-manager select,.category-manager button{min-height:42px;padding:8px 12px;border-radius:7px;font:inherit}.category-manager select{background:#e4ebf2;color:#182b3d}.category-manager button{border:1px solid #7da8df;background:#244d83;color:white;cursor:pointer}.category-manager button:disabled{opacity:.55;cursor:wait}.category-manager [role=status]{width:100%;font-size:14px;color:#c8ddf7}
 .card-photo .category-icon{width:100%;height:100%;display:grid;place-items:center}
@@ -329,13 +327,14 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 @media(max-width:1100px){#menuView .garage-menu{grid-template-columns:1fr}#menuView .garage-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:520px){#menuView .garage-panel{padding:16px}#menuView .garage-primary-actions{flex-direction:column}#menuView .garage-primary-actions button{flex:auto}#menuView .garage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#menuView .garage-highlights,#menuView .report-shortcuts{grid-template-columns:1fr}}
 </style><style>
-#backDashboard[hidden],.vehicle-workspace-actions button[hidden]{display:none!important}.vehicle-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.vehicle-workspace-actions button{min-height:40px;margin:0;padding:9px 16px;border:1px solid #6382ad;border-radius:6px;background:#223d60;color:#f4f8ff;font:700 14px/1.4 Arial,Helvetica,sans-serif;cursor:pointer}
-.vehicle-workspace-actions button:hover{background:#305c96}
 #categoryView .section-title{align-items:center}
-#categoryView .document-hub-button:not(.vehicle-workspace-actions button){display:none}
-#categoryView .vehicle-filter-bar{padding:16px;background:#122237;border:1px solid #344e70;border-radius:9px}
-#categoryView .vehicle-filter-bar label{min-width:145px}
+main:has(#categoryView:not([hidden]),#vehicleLoading:not([hidden])) .topline{display:none}
+#categoryView{margin-top:0}
+#categoryView .document-hub-button{display:none}
+#categoryView .add-vehicle-button{min-height:43px;margin:0;white-space:nowrap}
+#categoryView .vehicle-filter-bar{margin-top:0;padding:16px;background:#122237;border:1px solid #344e70;border-radius:9px}
+#categoryView .vehicle-filter-bar label{min-width:min(100%,145px)}
+#categoryView .vehicle-filter-bar .vehicle-search{min-width:min(100%,250px)}
 #categoryView #assetGrid{gap:14px}
 @media(min-width:1000px){#categoryView #assetGrid .card-photo{width:35%;height:145px}#categoryView #assetGrid .asset-card{min-height:240px;padding-top:48px}}
 </style>
@@ -347,7 +346,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 #assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
 @media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
-<script src="card-titles.js?v=20261106" defer></script></head>
+<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107"></head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>
 #th-auth{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#101d24;color:#e9f5f6;font:16px/1.5 system-ui,sans-serif}
@@ -401,8 +400,8 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 #assetGrid .card-status.sold:before{background:#f4b85e;box-shadow:0 0 0 2px #f4b85e22}
 #assetGrid .card-status.totaled:before{background:#e88bff;box-shadow:0 0 0 2px #e88bff22}
 #assetGrid .card-status.repo:before{background:#ff8254;box-shadow:0 0 0 2px #ff825422}
-#assetGrid .card-copy .card-vin{font-size:12px;overflow-wrap:anywhere}
-#assetGrid .card-vin b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:all;letter-spacing:.02em}
+#assetGrid .card-copy .card-vin{overflow-wrap:anywhere}
+#assetGrid .card-vin b{user-select:all}
 #assetGrid .card-status.managed:before{background:#79c7f1;box-shadow:0 0 0 2px #79c7f122}
 #assetGrid .card-status select{border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;outline:none}
 #assetGrid .card-status select option{background:#152b49;color:#fff}
@@ -456,17 +455,15 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <main>
 <div class="topline"><span>WATERCRAFT / PERSONAL GARAGE</span><span class="updated">LIVE SHEET · UPDATED <b id="updated"></b></span></div>
 
-<div class="workspace-view" id="menuView"><div class="section-title"><div><div class="kicker">Your garage</div><h2>Vehicle workspace</h2></div></div><div class="garage-menu"><section class="garage-panel"><h3>Vehicles</h3><p>Explore your collection and open individual profiles.</p><div class="garage-primary-actions"><button type="button" class="garage-open" id="openVehicles">Browse vehicles →</button><button type="button" class="fuel-log-button" id="openFuelCapture">⛽ Fuel Log</button></div><div class="garage-stats" id="garageStats" aria-label="Garage statistics"></div><details class="garage-more"><summary>Ownership &amp; mileage highlights</summary><div class="garage-highlights" id="garageHighlights"></div></details></section><section class="garage-panel"><h3>Reporting</h3><p>Jump straight into any report. Refine the section, vehicle, and status there.</p><button type="button" class="garage-open" id="openReports">Open reporting →</button><div class="report-shortcuts" id="reportShortcuts"><button type="button" data-report-link="due">Service due or coming up →</button><button type="button" data-report-link="schedule">Complete service schedule →</button><button type="button" data-report-link="history">Service history →</button><button type="button" data-report-link="readings">Mileage and hours →</button><button type="button" data-report-link="inventory">Watercraft inventory →</button><button type="button" data-report-link="missing">Missing information →</button></div></section></div></div>
+<p id="vehicleLoading" role="status">Loading your watercraft…</p>
+<div class="workspace-view" id="menuView" hidden><div class="section-title"><div><div class="kicker">Your garage</div><h2>Vehicle workspace</h2></div></div><div class="garage-menu"><section class="garage-panel"><h3>Vehicles</h3><p>Explore your collection and open individual profiles.</p><div class="garage-primary-actions"><button type="button" class="garage-open" id="openVehicles">Browse vehicles →</button><button type="button" class="fuel-log-button" id="openFuelCapture">⛽ Fuel Log</button></div><div class="garage-stats" id="garageStats" aria-label="Garage statistics"></div><details class="garage-more"><summary>Ownership &amp; mileage highlights</summary><div class="garage-highlights" id="garageHighlights"></div></details></section><section class="garage-panel"><h3>Reporting</h3><p>Jump straight into any report. Refine the section, vehicle, and status there.</p><button type="button" class="garage-open" id="openReports">Open reporting →</button><div class="report-shortcuts" id="reportShortcuts"><button type="button" data-report-link="due">Service due or coming up →</button><button type="button" data-report-link="schedule">Complete service schedule →</button><button type="button" data-report-link="history">Service history →</button><button type="button" data-report-link="readings">Mileage and hours →</button><button type="button" data-report-link="inventory">Watercraft inventory →</button><button type="button" data-report-link="missing">Missing information →</button></div></section></div></div>
 <div class="workspace-view" id="reportsView" hidden><button type="button" class="back-link" id="backReports">Back to menu</button><div class="section-title"><div><div class="kicker">Your garage</div><h2>Reporting</h2><p>Choose a report and section to see the current records.</p></div></div><div class="report-controls"><label>Report<select id="reportType"><option value="due">Service due or coming up</option><option value="schedule">Complete service schedule</option><option value="history">Service history</option><option value="readings">Mileage and hours</option><option value="inventory">Watercraft inventory</option><option value="missing">Missing information</option></select></label><label>Section<select id="reportSection"><option value="all">All sections</option></select></label><label>Vehicle<select id="reportVehicle"><option value="all">All watercraft</option></select></label><label>Watercraft status<select id="reportStatus"><option value="active">Active</option><option value="inactive">Inactive</option><option value="sold">Sold</option><option value="managed">Managed</option><option value="totaled">Totaled</option><option value="repo">Repo</option><option value="all">All watercraft</option></select></label><label id="reportWindowLabel">Coming up within<select id="reportWindow"><option value="30" selected>30 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="365">One year</option></select></label><button type="button" id="applyReport">Apply</button><button type="button" id="exportReport">Download CSV</button><button type="button" id="printReport">Print report</button></div><p class="report-summary" id="reportSummary" role="status"></p><div class="report-output" id="reportOutput"></div></div>
 <div class="workspace-view" id="dashboardView" hidden>
 <div class="section-title"><div><div class="kicker">Your garage</div><h2>Vehicle directory</h2><p>Choose a category to see its vehicles and equipment.</p></div><button type="button" class="add-vehicle-button" id="addVehicleButton">+ Add vehicle</button></div>
 <div class="category-grid" id="categoryGrid"></div>
 </div>
 <div class="workspace-view" id="categoryView" hidden>
-<button type="button" class="back-link" id="backDashboard">Back</button>
-<div class="section-title"><div><div class="kicker">Category</div><h2 id="categoryTitle"></h2><p>Choose an item to view its details, mileage, maintenance, and service recommendations.</p></div><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
-<div class="vehicle-filter-bar"><label class="vehicle-search">Search watercraft<input id="vehicleSearch" type="search" placeholder="Year, make, model, HIN, registration…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by watercraft status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No hours / reading</option></select></label></div>
-<label class="year-sort" for="yearSort">Year order <select id="yearSort"><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label>
+<div class="vehicle-filter-bar" role="group" aria-label="Watercraft filters"><label class="vehicle-search">Search watercraft<input id="vehicleSearch" type="search" placeholder="Year, make, model, HIN, registration…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by watercraft status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No hours / reading</option></select></label><label>Sort by<select id="yearSort"><option value="usage">Most used this year</option><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add item</button></div>
 <p id="vehicleResults" class="vehicle-results" role="status"></p>
 <div class="asset-grid" id="assetGrid"></div>
 </div>
@@ -480,7 +477,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
-<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" src="mustang-fuel.html" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
+<section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
 </div>
 <footer class="foot"><span>TisZod · WATERCRAFT</span><span>PRIVATE SHEET CONNECTION</span></footer>
 </main></div>
@@ -790,16 +787,16 @@ function renderRecordReview(a){
  panel.innerHTML='<h3>Records found in Drive</h3>'+(facts.length?'<dl>'+facts.map(f=>'<div><dt>'+esc(f.label)+'</dt><dd>'+esc(f.value)+'</dd></div>').join('')+'</dl>':'')+(specs.startingReadingNote?'<p class="record-warning">'+esc(specs.startingReadingNote)+'</p>':'')+(audit?'<p>'+esc(audit.summary)+'</p><small>Folder review: '+esc(audit.reviewed)+' · '+audit.documents+' documents · '+audit.pictures+' pictures</small>':'')+(reviews.length?'<details><summary>Document findings and qualifications</summary>'+reviews.map(r=>'<p>'+esc(r.summary)+'</p>').join('')+'</details>':'')+(sources.length?'<details><summary>Source records</summary><ul>'+sources.map(r=>{let url='';try{const u=new URL(r.url);if(u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname))url=u.href}catch(_){}return url?'<li><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+esc(r.name)+'</a></li>':''}).join('')+'</ul></details>':'');
 }
 
-let category='',asset=null,status='current',yearOrder='newest',editing=false,vehicleQuery='',missingFilter='all';
+let category='',asset=null,status='current',yearOrder='usage',editing=false,vehicleQuery='',missingFilter='all';
 const currentAsset=()=>asset;
-const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
+const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,deferLoad:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
 let photoObserver;
 function assetPhoto(a){
  if(a.photoObjectUrl)return Promise.resolve(a.photoObjectUrl);
  a.photoLoading ||= thPhotoObjectUrl(a.photoFileId).then(url=>(a.photoObjectUrl=url)).finally(()=>{a.photoLoading=null});
  return a.photoLoading;
 }
-function show(view){if(view==='menuView'){view='categoryView';if(!category)category='All Watercraft';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
+function show(view){document.getElementById('vehicleLoading').hidden=true;if(view==='menuView'){view='categoryView';if(!category)category='All Watercraft';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
 // Navigation restores display state without replaying data-changing actions.
 window.thViewAdapter={
  capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,yearOrder,vehicleQuery,missingFilter,appliedReport,reportVehicle:document.getElementById('reportVehicle').value,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
@@ -825,16 +822,24 @@ window.thViewAdapter={
 };
 
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Watercraft',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Watercraft'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
+const {annualVehicleUsage,compareVehicleUsage,annualUsageLabel,refreshAnnualUsage}=createFleetUsage({
+ workspace,assets,getServices:()=>serviceLoaded?services:null,onRefresh:()=>{if(!document.getElementById('categoryView').hidden)renderCategory()},
+ serviceAssetKey,specRecord,isLegend,clean,mileageFor,ownershipDate,ownershipText,ownershipIso,cardNumber,usesHours,esc
+});
 function renderCategory(){
  photoObserver?.disconnect();
- const items=assets.filter(a=>inSection(a,category)).sort((a,b)=>{const rank={active:0,managed:1,inactive:2,sold:3,totaled:4,repo:5};const statusOrder=(rank[clean(a.status)]??6)-(rank[clean(b.status)]??6);if(statusOrder)return statusOrder;const ay=Number.parseInt(a.year,10),by=Number.parseInt(b.year,10);const aKnown=Number.isFinite(ay),bKnown=Number.isFinite(by);return (aKnown&&bKnown?(yearOrder==='oldest'?ay-by:by-ay):Number(bKnown)-Number(aKnown))||String(a.make||'').localeCompare(String(b.make||''))||String(a.model||'').localeCompare(String(b.model||''))});
+ const items=assets.filter(a=>inSection(a,category));
+ const metrics=new Map(items.map(a=>[a,annualVehicleUsage(a)]));
+ items.sort((a,b)=>compareVehicleUsage(a,b,metrics,yearOrder));
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
- document.getElementById('categoryTitle').textContent=category==='All Watercraft'?'All '+workspaceTitle:category;
  const sections=['All Watercraft',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Watercraft'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c));
  document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
+ document.getElementById('vehicleSearch').value=vehicleQuery;
+ document.getElementById('vehicleMissingFilter').value=missingFilter;
+ document.getElementById('yearSort').value=yearOrder;
  document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Watercraft'?'All '+workspaceTitle:category);
  document.getElementById('vehicleStatusFilter').innerHTML=['current','active','managed','inactive','sold','totaled','repo','needsreview','all'].map(s=>'<option value="'+s+'"'+(status===s?' selected':'')+'>'+(s==='current'?'Active + Managed':s==='needsreview'?'Needs review':s[0].toUpperCase()+s.slice(1))+' · '+(s==='all'?items.length:items.filter(a=>s==='current'?['active','managed'].includes(clean(a.status)):clean(a.status)===s).length)+'</option>').join('');
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
@@ -843,7 +848,7 @@ function renderCategory(){
   const photoClass=String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=a.photoObjectUrl||a.photoFileId||a.photo?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
-  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed','totaled','repo'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+[...new Set(['Active','Managed','Inactive','Sold','Totaled','Repo',a.status||'Needs review'])].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong>'+(String(a.vin||'').trim()?'<span class="card-stat card-vin">HIN / serial number: <b>'+esc(a.vin)+'</b></span>':'')+(showCardEngine(a)?'<span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span>':'')+'<span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(specRecord(a).specs.odometerBrand==='NOT ACTUAL'?'Not comparable':added===null?'—':added)+'</b></span>'+deadlineCard(a)+'<p class="card-last-updated" data-recorded="'+hasRecordedUpdate(a)+'" data-updated-asset="'+esc(a.id)+'">'+esc(updatedLabel(a))+'</p><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b>'+(ownership.end?'<span>End of Service</span><b>'+esc(ownership.end)+'</b>':'')+'</div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
+  return '<div class="asset-card" data-asset="'+esc(a.id)+'"><span class="card-status '+(['active','inactive','sold','managed','totaled','repo'].includes(s)?s:'')+'"><select data-card-status="'+esc(a.id)+'" aria-label="Status for '+esc(title)+'">'+[...new Set(['Active','Managed','Inactive','Sold','Totaled','Repo',a.status||'Needs review'])].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')+'</select></span>'+picture+'<div class="card-copy"><strong>'+esc(title)+'</strong>'+(String(a.vin||'').trim()?'<span class="card-stat card-vin">HIN / serial number: <b>'+esc(a.vin)+'</b></span>':'')+(showCardEngine(a)?'<span class="card-stat">Engine: <b>'+esc(cardEngine(a))+'</b></span>':'')+'<span class="card-stat">'+readingName(a)+': <b>'+esc(cardReading(a,m))+'</b></span><span class="card-stat">'+(hours?'Hours added':'Miles added')+': <b>'+esc(specRecord(a).specs.odometerBrand==='NOT ACTUAL'?'Not comparable':added===null?'—':added)+'</b></span>'+annualUsageLabel(metrics.get(a))+deadlineCard(a)+'<p class="card-last-updated" data-recorded="'+hasRecordedUpdate(a)+'" data-updated-asset="'+esc(a.id)+'">'+esc(updatedLabel(a))+'</p><div class="card-ownership"><span>'+esc(ownership.label)+'</span><b>'+esc(ownership.date)+'</b><span>'+esc(ownership.durationLabel)+'</span><b>'+esc(ownership.duration)+'</b>'+(ownership.end?'<span>End of Service</span><b>'+esc(ownership.end)+'</b>':'')+'</div><button type="button" class="card-open" data-open-asset="'+esc(a.id)+'" aria-label="Open '+esc(title)+' details">View details</button></div><button type="button" class="card-mileage" data-mileage-asset="'+esc(a.id)+'" aria-label="Update '+(hours?'hours':'mileage')+' for '+esc(title)+'">Update '+(hours?'hours':'mileage')+'</button></div>';
  }).join(''):'<div class="asset-note">No items match these filters.</div>';
  const loadCardPhoto=a=>{
   assetPhoto(a).then(src=>{
@@ -924,7 +929,7 @@ function renderAsset(tab='details'){
  document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
  const historyUrl='fuel-history.html?v=20261029-desktop2&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
- const fuelFrame=document.getElementById('fuelFrame');if(fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
+ const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&canFuel&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
  if(tab==='fuel'&&!canFuel)tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  const recommended=['active','managed'].includes(clean(asset.status));
@@ -1018,7 +1023,7 @@ let reportsButton=document.getElementById('openReports');
 if(!reportsButton){
  reportsButton=document.createElement('button');
  reportsButton.type='button';reportsButton.id='openReports';reportsButton.className='garage-open';reportsButton.textContent='Reports';
- (document.querySelector('#categoryView .section-title')||document.getElementById('categoryView')).append(reportsButton);
+ document.getElementById('menuView').append(reportsButton);
 }
 reportsButton.onclick=()=>openReport();
 document.getElementById('reportShortcuts').addEventListener('click',e=>{const link=e.target.closest('[data-report-link]');if(link)openReport(link.dataset.reportLink)});
@@ -1037,7 +1042,7 @@ document.getElementById('updated').textContent=D.asOf||'latest';
 renderCategories();
 document.getElementById('categoryGrid').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;status='all';vehicleQuery='';missingFilter='all';document.getElementById('vehicleSearch').value='';document.getElementById('vehicleMissingFilter').value='all';renderCategory();show('categoryView')});
 document.getElementById('vehicleStatusFilter').addEventListener('change',e=>{status=e.target.value;renderCategory()});
-document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory()});
+document.getElementById('yearSort').addEventListener('change',e=>{yearOrder=e.target.value;renderCategory();if(yearOrder==='usage')refreshAnnualUsage()});
 document.getElementById('vehicleSearch').addEventListener('input',e=>{vehicleQuery=e.target.value;renderCategory()});
 document.getElementById('vehicleSectionFilter').addEventListener('change',e=>{category=e.target.value;renderCategory()});
 document.getElementById('vehicleMissingFilter').addEventListener('change',e=>{missingFilter=e.target.value;renderCategory()});
@@ -1534,24 +1539,10 @@ window.tiszodFuelOptions=()=>({
 const openFuel=()=>TisFuel.open(window.tiszodFuelOptions());
 document.getElementById('openFuelCapture').onclick=openFuel;
 document.getElementById('logAssetFuel').onclick=openFuel;
-document.getElementById('backDashboard').addEventListener('click',()=>show('menuView'));
-
-/* Open the working vehicle list directly, with a single compact action bar. */
-const quickActions=document.createElement('div');quickActions.className='vehicle-workspace-actions';
-document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
-for(const el of [document.getElementById('openFuelCapture'),document.querySelector('#menuView .document-hub-button'),document.getElementById('openReports')].filter(Boolean))quickActions.append(el);
-document.getElementById('openReports').textContent='Reports';
-document.getElementById('openFuelCapture').textContent='Fuel log';
- document.getElementById('openFuelCapture').hidden=true;
-
-const workspaceDocs=quickActions.querySelector('.document-hub-button');
-if(workspaceDocs)workspaceDocs.textContent='Needs filing';
-document.getElementById('backDashboard').hidden=true;
-document.querySelector('#categoryView .kicker').textContent=workspaceTitle;
- document.querySelector('#reportVehicle').parentElement.firstChild.textContent=workspaceTitle;
- document.querySelector('#deleteAssetButton').textContent='Delete '+workspaceTitle.toLowerCase();
-document.querySelector('#categoryView .section-title p').remove();
+document.querySelector('#reportVehicle').parentElement.firstChild.textContent=workspaceTitle;
+document.querySelector('#deleteAssetButton').textContent='Delete '+workspaceTitle.toLowerCase();
 category='All Watercraft';status='current';renderCategory();show('categoryView');
+requestAnimationFrame(()=>requestAnimationFrame(refreshAnnualUsage));
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
 }
@@ -1569,5 +1560,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261102-updated"></script><script src="sheets.js?v=20261102-vehicle-updated"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261106-portal-navigation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
 
