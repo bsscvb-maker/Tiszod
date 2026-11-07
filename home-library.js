@@ -90,7 +90,7 @@
   }
 
   async function loadEnglishManualIndex(signal) {
-    const response = await fetch('manual-english-index.json?v=20261106-english', {signal});
+    const response = await fetch('manual-english-index.json?v=20261106-manual-audit', {signal});
     if (!response.ok) throw new Error('Could not load the English manuals index. Refresh Drive to retry.');
     const hashes = await response.json();
     if (!Array.isArray(hashes) || !hashes.length || hashes.some(hash => !/^[a-f0-9]{64}$/.test(hash))) {
