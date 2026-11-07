@@ -366,7 +366,13 @@
     history.pushState(null, '', '?view=search');
     showLocation(true);
   });
-  window.addEventListener('popstate', () => showLocation(true));
+  window.addEventListener('popstate', () => {
+    showLocation(true);
+    const savedPath = history.state?.libraryCatalog;
+    if (savedPath && activeSection && currentCatalog()?.nodes.has(savedPath)) {
+      moveCatalog(currentCatalog().nodes.get(savedPath), true);
+    }
+  });
   function updateCategories() {
     category.closest('.library-controls').classList.toggle('manual-controls', Boolean(activeSection));
     const selection = category.value;
@@ -424,8 +430,14 @@
     return li;
   }
 
-  function moveCatalog(entry) {
-    catalogPath = entry?.id || '';
+  function moveCatalog(entry, fromHistory = false) {
+    const nextPath = entry?.id || '';
+    if (!fromHistory && nextPath !== catalogPath) {
+      // Each folder is a distinct browser-history entry, including its parent.
+      history.replaceState({...history.state, libraryCatalog: catalogPath}, '');
+      history.pushState({...history.state, libraryCatalog: nextPath}, '', location.href);
+    }
+    catalogPath = nextPath;
     visible = pageSize;
     closePreview();
     render();
