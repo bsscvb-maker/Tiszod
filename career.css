@@ -185,7 +185,7 @@ body[data-th-page="career"] {
   background: #f5f7fb;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img:is([src$="/iqvia.svg"], [src$="/advance.svg"])) {
+[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/iqvia.svg"]) {
   background: #111c2c;
 }
 
@@ -209,4 +209,16 @@ body[data-th-page="career"] {
 
 [data-th-page="career"] .legal-thumbnail img[src$="/pc-mobile-one-ad.png"] {
   padding: 0;
+}
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/advance.svg"]) {
+  background: #000;
+}
+
+[data-th-page="career"] .legal-thumbnail img[src$="/advance.svg"] {
+  padding: 0;
+}
+
+[data-th-page="career"] #legal-view-actions:empty {
+  display: none;
 }

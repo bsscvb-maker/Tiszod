@@ -294,7 +294,8 @@ async function showLegalRecord(record,back){
  document.getElementById('legal-view-title').textContent=record.displayName??record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();
- if(record.driveAction&&record.url)actions.append(legalLink(record.folder?'Open full Drive folder':'Open in Drive',record.url));
+ const showDriveAction=record.driveAction&&record.url&&!(record.folder&&document.body.dataset.thPage==='career');
+ if(showDriveAction)actions.append(legalLink(record.folder?'Open full Drive folder':'Open in Drive',record.url));
  legalDownloadAction(actions,record);
  if(record.libraryActions){
   const email=document.createElement('a');
