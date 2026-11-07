@@ -508,7 +508,10 @@ const workspace=location.pathname.endsWith('/equipment.html')?'equipment':locati
 const workspaceCategories=workspace==='equipment'?equipmentSections:workspace==='watercraft'?waterSections:vehicleSections;
 const belongsHere=a=>workspaceCategories.includes(a.category)||workspace==='vehicles'&&a.category==='Unfiled';
 const workspaceTitle=workspace==='equipment'?'Equipment':workspace==='watercraft'?'Watercraft':'Vehicles';
-const inSection=(a,section)=>section==='All Vehicles'||(section===equipmentGroup?equipmentSections.includes(a.category):a.category===section);
+const isKeystoneBullet=a=>clean(a.vin)==='4ydt33126lt434476';
+const inSection=(a,section)=>section==='All Vehicles'||a.category===section||
+ (section===equipmentGroup&&equipmentSections.includes(a.category))||
+ (section==='Trailers'&&a.category==='Campers'&&isKeystoneBullet(a));
 const paths={
 'Cars':'<path d="M4 15h16l-2-6H6l-2 6Zm2-6 2-3h8l2 3M5 15v3m14-3v3M7 18h10"/>',
 'Trucks':'<path d="M2 7h12v10H2zM14 11h4l4 4v2h-8M6 17a2 2 0 1 0 4 0m8 0a2 2 0 1 0 4 0"/>',
@@ -830,7 +833,7 @@ window.thViewAdapter={
  }
 };
 
-function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
+function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>inSection(a,c))).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
 // Annual use is measured from the first available dated reading in this calendar year.
 // Status never breaks up a usage ranking; hours and unknown readings follow mileage.
 function annualVehicleUsage(a){
@@ -874,7 +877,7 @@ function renderCategory(){
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
  document.getElementById('categoryTitle').textContent=category==='All Vehicles'?'All '+workspaceTitle:category;
- const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||c==='Off-Road'||c===category||assets.some(a=>a.category===c));
+ const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||c==='Off-Road'||c===category||assets.some(a=>inSection(a,c)));
  document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
  document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
@@ -1003,7 +1006,7 @@ function renderAsset(tab='details'){
  document.getElementById('assetEditStatus').textContent='';
   document.getElementById('photoSummary').innerHTML=[['Engine',asset.engine],['VIN / serial number',asset.vin]].filter(([label])=>label!=='Engine'||showCardEngine(asset)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
  const floorPlan=document.getElementById('assetFloorPlan');
- const showFloorPlan=clean(asset.vin)==='4ydt33126lt434476';
+ const showFloorPlan=isKeystoneBullet(asset);
  floorPlan.hidden=!showFloorPlan;
  floorPlan.parentElement.classList.toggle('has-floor-plan',showFloorPlan);
  if(showFloorPlan&&!floorPlan.querySelector('img').hasAttribute('src'))floorPlan.querySelector('img').src=floorPlan.href;
@@ -1598,8 +1601,8 @@ document.querySelector('#categoryView .section-title p').remove();
 const landingSection=new URLSearchParams(location.search).get('section');
 const trailersLanding=landingSection==='trailers';
 category=trailersLanding?'Trailers':landingSection==='off-road'?'Off-Road':'All Vehicles';
-status=trailersLanding?'all':'current';
-document.getElementById('yearSort').value=trailersLanding?'newest':'usage';
+status='current';
+document.getElementById('yearSort').value='usage';
 yearOrder=document.getElementById('yearSort').value;
 renderCategory();show('categoryView');
 loadServiceDetails().then(()=>renderCategory()).catch(()=>{document.getElementById('vehicleResults').textContent='Usage could not be loaded. Refresh to retry.';});
