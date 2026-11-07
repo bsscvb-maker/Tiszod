@@ -435,6 +435,10 @@
       const category = node(root, meta.category, {art: covers[meta.category]});
       const family = node(category, meta.family, {art: covers[meta.family]});
       const group = node(family, meta.title, {art: meta.art, photo: meta.photo, source: meta.source, illustrative: meta.illustrative, files: []});
+      if (section === 'Manuals' && /\bde415l\b/i.test(file.displayName)) {
+        group.photo = 'assets/home-library/de415l-cover.png';
+        delete group.source;
+      }
       group.files.push(file);
       for (const item of [root, category, family, group]) item.count++;
       byFile.set(file.id, group);
