@@ -870,7 +870,7 @@ function renderCategory(){
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
  document.getElementById('categoryTitle').textContent=category==='All Vehicles'?'All '+workspaceTitle:category;
- const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c));
+ const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||c===category||assets.some(a=>a.category===c));
  document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
  document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
@@ -1586,7 +1586,12 @@ if(workspaceDocs)workspaceDocs.textContent='Needs filing';
 document.getElementById('backDashboard').hidden=true;
 document.querySelector('#categoryView .kicker').textContent='Your garage';
 document.querySelector('#categoryView .section-title p').remove();
-category='All Vehicles';status='current';document.getElementById('yearSort').value='usage';renderCategory();show('categoryView');
+const trailersLanding=new URLSearchParams(location.search).get('section')==='trailers';
+category=trailersLanding?'Trailers':'All Vehicles';
+status=trailersLanding?'all':'current';
+document.getElementById('yearSort').value=trailersLanding?'newest':'usage';
+yearOrder=document.getElementById('yearSort').value;
+renderCategory();show('categoryView');
 loadServiceDetails().then(()=>renderCategory()).catch(()=>{document.getElementById('vehicleResults').textContent='Usage could not be loaded. Refresh to retry.';});
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
