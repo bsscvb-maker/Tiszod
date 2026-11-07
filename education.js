@@ -40,7 +40,7 @@ const careerCovers = new Map([
  ['Employers/Sadler Foods', 'assets/career/employers/full-tile/sadler-foods.svg'],
  ['Employers/Checkered Flag Volkswagen', 'assets/career/employers/full-tile/checkered-flag-volkswagen.jpg'],
  ['Employers/Haley Toyota of Richmond', 'assets/career/employers/full-tile/haley-toyota.png'],
- ['Employers/Kimnach Ford', 'assets/career/employers/full-tile/kimnach-ford.svg'],
+ ['Employers/Kimnach Ford', 'assets/career/employers/full-tile/kimnach-ford.png'],
  ['Employers/Hall Mazda', 'assets/career/employers/full-tile/hall-mazda.jpg'],
  ['Employers/Charles Barker Toyota', 'assets/career/employers/full-tile/charles-barker-toyota.png'],
  ['Employers/Superior Marble and Stone', 'assets/career/employers/full-tile/superior-marble-and-stone.webp'],
