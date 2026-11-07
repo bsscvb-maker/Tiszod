@@ -68,6 +68,7 @@ const careerCovers = new Map([
  // Arrow and Lancer photos: https://www.cincinnatimachineretrofit.com/gallery/
  ['Employers/Berkley/Milling Machines/Arrow 750', 'assets/career/machines/arrow-750.jpg'],
  ['Employers/Berkley/Milling Machines/Lancer 1250', 'assets/career/machines/lancer-1250.jpg'],
+ ['Employers/Berkley/Milling Machines/LeadWell 1650', 'assets/career/machines/leadwell-1650.jpg'],
  // Maxim photo: https://www.southernfabsales.com/machines/1994-cincinnati-milacron-maxim-630-horizontal-machining-center-4433
  ['Employers/Berkley/Milling Machines/Maxim 630', 'assets/career/machines/maxim-630.jpg'],
  // Weiler photo: https://mach4metal.com/en/cnc-lathes/teach-in/weiler-e-70
