@@ -64,8 +64,12 @@ async function legalDriveRequest(path,params,record,signal){
  if(!response.ok)throw Object.assign(Error('Drive could not load this record.'),{status:response.status});
  return response;
 }
-async function legalFolderPage(record,pageToken,signal){
+async function legalFolderPage(record,pageToken,signal,coverFilter){
  const params={q:"'"+record.id+"' in parents and trashed = false",fields:'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',pageSize:'50',orderBy:'folder,name_natural',supportsAllDrives:'true',includeItemsFromAllDrives:'true'};
+ if(coverFilter){
+  params.q+=' and ('+coverFilter+')';
+  params.orderBy='name_natural';
+ }
  if(pageToken)params.pageToken=pageToken;
  const result=await (await legalDriveRequest('',params,record,signal)).json();
  return {nextPageToken:result.nextPageToken,files:(result.files||[]).map(file=>{
@@ -106,6 +110,31 @@ async function legalMedia(record,signal){
  if(!/^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(mime)&&mime!=='application/pdf')throw Error('This file type does not have an in-portal preview.');
  return (await legalDriveRequest(path,{alt:'media',supportsAllDrives:'true'},record,signal)).blob();
 }
+async function careerFolderPhoto(record,signal){
+ const searchDescendants=record.coverPath?.[0]==='Employers'&&
+  record.coverPath[1]==='Berkley'&&record.coverPath[2]==='Berkley Machine Works Pictures';
+ const imageFilter="mimeType contains 'image/'";
+ const filter=searchDescendants?imageFilter+" or mimeType = '"+legalMimePrefix+"folder'":imageFilter;
+ const queue=[{folder:record,depth:0}];
+ let remainingRequests=12;
+ for(const {folder,depth} of queue){
+  let pageToken,photoIndex=0;
+  do{
+   if(remainingRequests--<=0)return null;
+   const page=await legalFolderPage(folder,pageToken,signal,filter);
+   for(const file of page.files){
+    if(file.folder&&searchDescendants)queue.push({folder:file,depth:depth+1});
+    // Reserve a different image for each ancestor that borrows from this folder.
+    if(file.canDownload!==false&&/^image\/(jpeg|png|webp|gif|bmp|avif)$/.test(file.mime)&&photoIndex++===depth){
+     return legalMedia(file,signal);
+    }
+   }
+   pageToken=page.nextPageToken;
+  }while(pageToken);
+ }
+ return null;
+}
+
 async function legalPdf(blob){
  legalPdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
  const pdfjs=await legalPdfModule;
@@ -253,6 +282,25 @@ function legalFileCard(record,back){
    image.onerror=()=>{image.onerror=null;image.src=fallback();};
    image.src=folderPhoto||record.medicalCoverImage||medicalImage||recreationImage||fallback();
    art.replaceChildren(image);
+   if(careerFolder&&!folderPhoto){
+    legalCoverJobs.set(button,async()=>{
+     if(!button.isConnected)return;
+     const timeout=AbortSignal.timeout(12000);
+     const signal=back&&legalViewRequest?AbortSignal.any([timeout,legalViewRequest.signal]):timeout;
+     const photo=await careerFolderPhoto(record,signal).catch(()=>null);
+     if(!photo||!button.isConnected||signal.aborted)return;
+     const url=URL.createObjectURL(photo);
+     const cover=new Image();
+     cover.alt='';
+     cover.dataset.photo='';
+     try{
+      cover.src=url;
+      await cover.decode();
+      if(button.isConnected&&!signal.aborted)art.replaceChildren(cover);
+     }catch{}finally{URL.revokeObjectURL(url)}
+    });
+    legalCoverObserver.observe(button);
+   }
   }else{
    legalCoverJobs.set(button,async()=>{
     const unavailable=()=>{art.textContent='Thumbnail unavailable · Tap to preview'};
