@@ -91,7 +91,34 @@ const careerCovers = new Map([
  ['Career Development/Development Plans/2025', 'command-photos/tasks.webp'],
  ['Career Development/Development Plans/Instructions', 'assets/home-library/books-cover.webp']
 ]);
-const careerCover = path => careerCovers.get(path.join('/'));
+const careerCoverSubjects = [
+ [/\b(?:sql|software|systems|computers?|desktop|network|servers?|servicenow)\b/i, 'assets/career/folders/iqvia-sql.webp'],
+ [/\b(?:emails?|correspondence|communications|cover letters?)\b/i, 'assets/career/folders/cover-letters.webp'],
+ [/\b(?:customers?|suppliers?|vendors?|contacts?)\b/i, 'assets/career/folders/pc-customers.webp'],
+ [/résum|resume|applications?|references|job (?:search|postings)/i, 'assets/career/folders/applications.webp'],
+ [/\b(?:benefits|retirement|pension|payroll|401k|fidelity|schwab|cobra)\b/i, 'assets/career/folders/benefits.webp'],
+ [/\b(?:reviews|performance|reports|analytics|metrics|insights)\b/i, 'assets/family-unique/progress.webp'],
+ [/\b(?:training|instructions|resources|education)\b/i, 'assets/family-unique/classroom.webp'],
+ [/\b(?:photos|pictures|images|screenshots|media|videos?)\b/i, 'assets/career/folders/iqvia-yearbook.webp'],
+ [/\b(?:archives?|backups?|recovered|duplicates?)\b/i, 'assets/family-unique/archive-boxes.webp'],
+ [/\b(?:drafting|machines?|engineering|shop|tools)\b/i, 'assets/career/folders/drafting.webp'],
+ [/\b(?:travel|expenses|transport)\b/i, 'assets/career/folders/travel.webp'],
+ [/\b(?:projects|operations)\b/i, 'assets/career/folders/projects.webp'],
+ [/\b(?:calendar|plans|(?:19|20)\d{2})\b/i, 'assets/hobbies/striders-calendar.webp']
+];
+const defaultCareerCover = 'assets/family-unique/folders.webp';
+
+function careerCover(path){
+ const dedicatedCover=careerCovers.get(path.join('/'));
+ if(dedicatedCover)return dedicatedCover;
+ for(let index=path.length-1;index>=0;index--){
+  const subject=careerCoverSubjects.find(([pattern])=>pattern.test(path[index]));
+  if(subject)return subject[1];
+  const parentCover=careerCovers.get(path.slice(0,index+1).join('/'));
+  if(parentCover&&!parentCover.startsWith('assets/career/employers/'))return parentCover;
+ }
+ return defaultCareerCover;
+}
 
 async function loadCareerFolder(){
  const host=$('career-drive');
