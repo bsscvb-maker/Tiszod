@@ -325,7 +325,7 @@
 
   function showLocation(focus = false) {
     const params = new URLSearchParams(location.search);
-    catalogPath = '';
+    catalogPath = history.state?.libraryCatalog || '';
     activeSection = sections.find(name => name.toLowerCase() === params.get('collection')) || '';
     const across = params.get('view') === 'search';
     closePreview();
@@ -532,7 +532,7 @@
     button.dataset.group = entry.id;
     button.addEventListener('click', () => {
       if (entry.files) openGroup(entry, button, fromSearch);
-      else moveCatalog(entry, fromSearch);
+      else moveCatalog(entry);
     });
     li.append(button);
     return li;
