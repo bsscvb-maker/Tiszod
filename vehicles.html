@@ -349,7 +349,7 @@ main:has(#categoryView:not([hidden]),#vehicleLoading:not([hidden])) .topline{dis
 #assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
 @media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
-<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107"><style>
+<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107-fill"><style>
 body[data-th-page] #categoryView #assetGrid .asset-card .card-photo--road-glide img {
   transform: scale(1.4);
   transform-origin: 45% 70%;
@@ -622,6 +622,12 @@ for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavid
 // Consolidate legacy sections while retaining their reading and engine semantics.
 for(const a of assets){a.readingCategory=a.category;a.category=vehicleSectionAliases[a.category]||a.category;}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
+for(const a of assets){
+ if(String(a.year)==='2012'&&clean(a.make)==='honda'&&clean(a.model).includes('civic')&&
+    (!a.photoFileId||a.photoFileId==='10OPX_5birsRSs2P-_p6WEGDA7-zBole5')){
+  a.photoFileId='1E8JGtXYzE2h132wHpC5sAS0u5YqM7hRi';
+ }
+}
 document.querySelector('.th-app-topbar strong').textContent=workspaceTitle;
 document.querySelectorAll('.th-sidebar [href$=".html"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')===(workspace==='vehicles'?'vehicles.html':workspace+'.html')));
 document.querySelector('#menuView h2').textContent=workspaceTitle+' workspace';

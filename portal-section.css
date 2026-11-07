@@ -1,5 +1,5 @@
 /* Shared layout for the main portal tabs. Individual pages keep their own content and controls. */
-main.portal-section {
+body[data-th-page] .th-app-main > main.portal-section {
   --section-ink: #edf3fb;
   --section-muted: #c6d4e6;
   --section-line: #3a506a;
@@ -16,10 +16,11 @@ main.portal-section {
   padding: clamp(16px, 3vw, 36px) clamp(14px, 3vw, 40px) 48px;
 }
 
-.portal-section > :is(.education, .finance-wrap, .accounts, .hobby-page) {
+body[data-th-page] main.portal-section > :is(.education, .finance-wrap, .accounts, .hobby-page) {
   width: 100%;
   max-width: none;
   margin-inline: 0;
+  padding: 0;
 }
 
 body[data-th-page="black-mild"] .portal-section {
@@ -53,16 +54,16 @@ body[data-th-page="hobbies"] .portal-section {
   --section-end: #152725;
 }
 
-main.portal-section .portal-section-hero {
+body[data-th-page] main.portal-section .portal-section-hero {
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--section-gap);
   width: 100%;
-  min-height: 0;
+  min-height: 216px;
   margin: 0 0 1.35rem;
-  padding: clamp(23px, 4vw, 48px);
+  padding: 24px clamp(23px, 4vw, 48px);
   overflow: hidden;
   border: 1px solid var(--section-line);
   border-radius: 16px;
@@ -72,8 +73,12 @@ main.portal-section .portal-section-hero {
   color: var(--section-ink);
 }
 
-main.portal-section .portal-section-hero:has(> h1) {
-  display: block;
+body[data-th-page] main.portal-section .portal-section-hero:has(> h1) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
 }
 
 .portal-section .portal-section-kicker {
@@ -85,7 +90,7 @@ main.portal-section .portal-section-hero:has(> h1) {
   text-transform: uppercase;
 }
 
-main.portal-section .portal-section-hero h1 {
+body[data-th-page] main.portal-section .portal-section-hero h1 {
   margin: .45rem 0 .4rem;
   color: inherit;
   font-size: clamp(2rem, 5vw, 3.35rem);
@@ -93,10 +98,12 @@ main.portal-section .portal-section-hero h1 {
   letter-spacing: -.045em;
 }
 
-main.portal-section .portal-section-hero p {
+body[data-th-page] main.portal-section .portal-section-hero p {
   max-width: 54ch;
   margin: .45rem 0 0;
   color: var(--section-muted);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .portal-section .portal-section-cards {
@@ -145,12 +152,38 @@ main.portal-section .portal-section-hero p {
   gap: var(--section-gap);
 }
 
+.portal-section > .bm-counts {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: none;
+  margin: 0 0 1.35rem;
+}
+
+.portal-section .freebirds-section-hero .hero-copy {
+  max-width: none;
+  padding: 0;
+}
+
+.portal-section .freebirds-section-hero > img {
+  display: block;
+  width: clamp(72px, 14vw, 170px);
+  height: clamp(54px, 8vw, 108px);
+  object-fit: contain;
+}
+
 @media (max-width: 1050px) {
   .portal-section .portal-section-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 700px) {
-  main.portal-section .portal-section-hero { flex-wrap: wrap; }
+  body[data-th-page] .th-app-main > main.portal-section {
+    padding: 16px 14px 32px !important;
+  }
+  body[data-th-page] main.portal-section > .finance-wrap { padding: 0 !important; }
+  body[data-th-page] main.portal-section .portal-section-hero {
+    min-height: 0;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 570px) {
