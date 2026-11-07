@@ -845,7 +845,7 @@ const {annualVehicleUsage,compareVehicleUsage,annualUsageLabel,refreshAnnualUsag
  serviceAssetKey,specRecord,isLegend,clean,mileageFor,ownershipDate,ownershipText,ownershipIso,cardNumber,usesHours,esc
 });
 function cardPhotoOverride(a){
- return String(a.year)==='2023'&&/harley.*(roadglide|fltrk)/.test(clean(a.make+' '+a.model))?'command-photos/road-glide-2023-gravel-front.jpg':'';
+ return String(a.year)==='2023'&&/harley.*(roadglide|fltrk)/.test(clean(a.make+' '+a.model))?'command-photos/road-glide-2023-gravel-cutout.jpg':'';
 }
 function renderCategory(){
  photoObserver?.disconnect();
