@@ -223,10 +223,6 @@ body[data-th-page="career"] {
   object-fit: cover;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src$="/full-tile/kimnach-ford.png"] {
-  object-view-box: inset(13.4% 15% 62% 25%);
-}
-
 [data-th-page="career"] .legal-thumbnail-art:has(img[src="assets/career/development/insights-discovery.webp"]) {
   background: #fff;
 }
