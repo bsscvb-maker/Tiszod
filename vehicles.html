@@ -831,22 +831,33 @@ window.thViewAdapter={
 };
 
 function renderCategories(){document.getElementById('categoryGrid').innerHTML=['All Vehicles',...workspaceCategories.filter(c=>workspace!=='equipment'||!equipmentSections.includes(c)),...(workspace==='equipment'?[equipmentGroup]:[]),...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||assets.some(a=>a.category===c)).map(c=>'<button type="button" class="category-card" data-category="'+esc(c)+'"><span class="category-icon">'+icon(c===equipmentGroup?'Tractors':c)+'</span><strong>'+esc(c)+'</strong></button>').join('')}
-// Annual use is measured from the first available dated reading in this calendar year.
-// Status never breaks up a usage ranking; hours and unknown readings follow mileage.
+// Trailer travel mileage uses a year-opening baseline when one can be established.
 function annualVehicleUsage(a){
- const year=new Date().getFullYear(),key=serviceAssetKey(a),points=[];
+ const today=new Date(),year=today.getFullYear(),start=new Date(year,0,1),key=serviceAssetKey(a),points=[];
+ const trailer=a.category==='Trailers',record=specRecord(a);
  const number=value=>String(value??'').trim()===''?NaN:Number(String(value).replace(/,/g,''));
- const add=(raw,value)=>{const date=ownershipDate(String(raw||'').slice(0,10)),reading=number(value);if(date&&date.getFullYear()===year&&date<=new Date()&&Number.isFinite(reading)&&reading>=0)points.push({date,reading});};
- for(const entry of services)if(clean(entry.asset)===clean(key))add(entry.date,entry.odometer);
+ let prior;
+ const add=(raw,value,service=false)=>{
+  const date=ownershipDate(String(raw||'').slice(0,10)),reading=number(value);
+  if(!date||date>today||!Number.isFinite(reading)||reading<0)return;
+  if(date>=start)points.push({date,reading});
+  else if(trailer&&service&&(!prior||date>prior.date||(date.getTime()===prior.date.getTime()&&reading>prior.reading)))prior={date,reading};
+ };
+ for(const entry of services)if(clean(entry.asset)===clean(key))add(entry.date,entry.odometer,true);
  for(const entry of (window.FUEL_LEGACY||{})[key]?.entries||[])add(entry.date||entry.d,entry.odo??entry.o);
  const m=mileageFor(a);if(m)add(m.serviceStart,m.startMileage);
  points.sort((x,y)=>x.date-y.date||x.reading-y.reading);
- const first=points[0],current=number(m?.currentMileage);
- const latest=points[points.length-1];
- const end=Number.isFinite(current)?Math.max(current,latest?.reading??current):latest?.reading;
+ const saved=trailer?record.annualUsageBaselines?.[year]:null;
+ const opening=number(saved?.reading);
+ const confirmed=Number.isFinite(opening)&&opening>=0;
+ const first=confirmed?{date:start,reading:opening}:points[0]?.date.getTime()===start.getTime()?points[0]:prior||points[0];
+ const current=number(m?.currentMileage),latest=points[points.length-1];
+ const end=Number.isFinite(current)?(trailer?current:Math.max(current,latest?.reading??current)):latest?.reading;
  const value=first&&Number.isFinite(end)&&end>=first.reading?Math.round((end-first.reading)*10)/10:null;
- const uncertain=specRecord(a).specs.odometerBrand==='NOT ACTUAL'||/keystonebullet/.test(clean(a.make+' '+a.model));
- return {year,value:uncertain?null:value,unit:usesHours(a)?'hours':'mi',date:first?.date};
+ const uncertain=!trailer&&(record.specs.odometerBrand==='NOT ACTUAL'||/keystonebullet/.test(clean(a.make+' '+a.model)));
+ const source=confirmed?saved.source:first&&first===prior?'Latest service reading before January 1 ('+ownershipText(ownershipIso(prior.date))+')':'First available dated reading this calendar year';
+ const detail=value===null?'':source+' · '+cardNumber(first.reading)+' to '+cardNumber(end)+(trailer?' tracked mi':'');
+ return {year,value:uncertain?null:value,unit:usesHours(a)?'hours':'mi',date:first&&first===prior?start:first?.date,detail};
 }
 function compareVehicleUsage(a,b){
  if(yearOrder==='usage'){
@@ -865,7 +876,7 @@ function annualUsageLabel(a){
  const u=annualVehicleUsage(a);
  const value=!serviceLoaded?'Loading usage…':u.value===null?'Not enough comparable readings':u.value.toLocaleString('en-US',{maximumFractionDigits:1})+' '+u.unit;
  const since=u.date?' · since '+ownershipText(ownershipIso(u.date)):'';
- return '<span class="card-stat" title="First available reading this calendar year through the latest recorded reading'+esc(since)+'">'+u.year+' use: <b>'+esc(value)+'</b></span>';
+ return '<span class="card-stat" title="'+esc(u.detail||'First available reading this calendar year through the latest recorded reading')+'">'+u.year+' use: <b>'+esc(value)+'</b></span>';
 }
 function renderCategory(){
  photoObserver?.disconnect();
