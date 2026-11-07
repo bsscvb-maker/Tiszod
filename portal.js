@@ -28,6 +28,10 @@
 /* Shared account controls and workbook connection state. */
 (() => {
   const nav = document.querySelector('.th-sidebar nav');
+  const recreationChildren=['black-mild.html','freebirds.html'];
+  if(nav)for(const link of nav.querySelectorAll('a[href]')){
+    if(recreationChildren.includes(link.getAttribute('href')))link.remove();
+  }
   if (nav && !nav.querySelector('[href="hobbies.html"]')) {
     const link = document.createElement('a');
     const current = location.pathname.endsWith('/hobbies.html');
@@ -37,15 +41,10 @@
     link.innerHTML = '<span class="th-nav-icon" aria-hidden="true"></span><span>Recreation</span>';
     nav.append(link);
   }
-  if (nav && !nav.querySelector('[href="black-mild.html"]')) {
-    const link = document.createElement('a');
-    const isCurrent = location.pathname.endsWith('/black-mild.html');
-    link.className = 'th-nav-link' + (isCurrent ? ' active' : '');
-    link.href = 'black-mild.html';
-    if (isCurrent) link.setAttribute('aria-current', 'page');
-    link.innerHTML = '<span class="th-nav-icon" style="font-family:Georgia,serif;color:#f0d18d">B&amp;M</span>Black &amp; Mild';
-    const systemLabel = [...nav.querySelectorAll('.th-nav-label')].find(el => el.textContent.trim() === 'System');
-    nav.insertBefore(link, systemLabel || null);
+  const recreation=nav?.querySelector('[href="hobbies.html"]');
+  if(recreation&&recreationChildren.includes(location.pathname.split('/').pop())){
+    recreation.classList.add('active');
+    recreation.setAttribute('aria-current','location');
   }
 
   if (nav && !nav.querySelector('[href="plan-tracker.html"]')) {
@@ -127,11 +126,9 @@
     }
     const plan=nav.querySelector('[href="plan-tracker.html"]');
     if(plan)plan.innerHTML='<span class="th-nav-icon th-plan-icon" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="#25477D"/><rect x="8" y="7" width="17" height="21" rx="3" fill="#142A49" stroke="#D5E8FF" stroke-width="1.5"/><rect x="12" y="4" width="9" height="6" rx="2" fill="#8CC9FF"/><path d="m11 16 2 2 4-4M19 16h3M11 23h11" stroke="#DAEEFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Task Tracker</span>';
-    const bm=nav.querySelector('[href="black-mild.html"]');
-    if(bm)bm.innerHTML='<span class="th-nav-icon th-bm-icon" aria-hidden="true">B&amp;M</span><span>Black &amp; Mild</span>';
     const groups=[
       ['Overview',['./','plan-tracker.html']],
-      ['Workspaces',['legal.html','identification.html','career.html','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','freebirds.html','hobbies.html','black-mild.html']],
+      ['Workspaces',['legal.html','identification.html','career.html','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','hobbies.html']],
       ['Vehicles & gear',['vehicles.html','equipment.html','watercraft.html']],
       ['System',['accounts.html','admin.html']]
     ];
@@ -271,7 +268,7 @@
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['black-mild.html','career.html','education.html','equipment.html','family.html','finance.html','freebirds.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
+  const order=[['Main',['./']],['Modules',['career.html','education.html','equipment.html','family.html','finance.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
@@ -282,8 +279,9 @@
  const heading=main.querySelector('.dash-heading');heading?.querySelector('h1')?.replaceChildren(document.createTextNode('Personal Command Center'));
  const h2=grid.querySelector('h2');if(h2)h2.textContent='Modules';
  grid.classList.add('th-module-grid');grid.setAttribute('aria-label','Personal modules');
- const modulePaths=['plan-tracker.html','finance.html','career.html','home-library.html','pets.html','freebirds.html','black-mild.html','vehicles.html','equipment.html','watercraft.html','hobbies.html','medical.html','admin.html'];
- for(const path of ['plan-tracker.html','black-mild.html','home-library.html','career.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');const [name,description]={'plan-tracker.html':['Task Tracker','Your tasks, priorities, and next steps'],'black-mild.html':['Black & Mild','Your Black & Mild records'],'home-library.html':['Library','Find manuals, recipes, and purchase records'],'career.html':['Career']}[path];strong.textContent=name;body.append(strong);if(description){small.textContent=description;body.append(small)}a.append(icon,body);grid.append(a)}
+ const modulePaths=['plan-tracker.html','finance.html','career.html','home-library.html','pets.html','vehicles.html','equipment.html','watercraft.html','hobbies.html','medical.html','admin.html'];
+ for(const path of ['plan-tracker.html','home-library.html','career.html']){if(grid.querySelector('[href="'+path+'"]'))continue;const source=nav?.querySelector('[href="'+path+'"]');if(!source)continue;const a=document.createElement('a');a.href=path;a.className='workspace';const icon=source.querySelector('.th-nav-icon')?.cloneNode(true)||document.createElement('span');icon.className='workspace-icon';const body=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');const [name,description]={'plan-tracker.html':['Task Tracker','Your tasks, priorities, and next steps'],'home-library.html':['Library','Find manuals, recipes, and purchase records'],'career.html':['Career']}[path];strong.textContent=name;body.append(strong);if(description){small.textContent=description;body.append(small)}a.append(icon,body);grid.append(a)}
+ grid.querySelectorAll('a.workspace:is([href="black-mild.html"],[href="freebirds.html"])').forEach(card=>card.remove());
  const cards=[...grid.querySelectorAll('a.workspace')];cards.sort((a,b)=>modulePaths.indexOf(a.getAttribute('href'))-modulePaths.indexOf(b.getAttribute('href'))).forEach(a=>{a.classList.add('th-module-card');const icon=a.querySelector('.workspace-icon'),body=[...a.children].find(c=>c.querySelector('strong'));const art=document.createElement('span');art.className='th-module-art';if(icon)art.append(icon);if(body)body.classList.add('th-module-body');a.prepend(art);grid.append(a)});
  const title=document.createElement('div');title.className='th-module-heading';const label=document.createElement('h2');label.textContent='Modules';title.append(label);
  const stats=main.querySelector('.stats');if(stats)heading?.after(stats);stats?.after(title,grid);

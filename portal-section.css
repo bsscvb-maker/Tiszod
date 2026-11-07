@@ -140,14 +140,6 @@ body[data-th-page] main.portal-section .portal-section-hero p {
   margin: 0;
 }
 
-.portal-section .portal-section-card-body .portal-section-card-link {
-  margin-top: auto;
-  padding-top: .7rem;
-  color: var(--section-accent);
-  font-size: .8rem;
-  font-weight: 700;
-}
-
 .portal-section :is(.education-toolbar, .accounts-toolbar, .finance-bank-nav, .pet-tabs, .hobby-grid) {
   gap: var(--section-gap);
 }
