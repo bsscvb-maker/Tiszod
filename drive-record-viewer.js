@@ -550,6 +550,10 @@ async function showLegalRecord(record,back){
   try{
    const result=record.virtualFiles?{files:typeof record.virtualFiles==='function'?record.virtualFiles():record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
+   if(document.body.dataset.thPage==='career'&&record.coverPath?.length===1&&record.coverPath[0]==='Employers'){
+    const amazon=result.files.findIndex(file=>file.folder&&file.name==='Amazon');
+    if(amazon>0)result.files.unshift(...result.files.splice(amazon,1));
+   }
    for(const file of result.files){
     if(file.folder&&record.excludedFolderIds?.has(file.id))continue;
     if(record.indianCove){

@@ -114,6 +114,7 @@ const careerCovers = new Map([
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/Yearbook', 'assets/career/folders/iqvia-archive-yearbook.jpg'],
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/zzz-Archive', 'assets/career/folders/iqvia-boxed-archive.jpg'],
  ['Employers', 'assets/career/employers-cover.webp'],
+ ['Employers/Amazon', 'assets/career/employers/amazon.svg'],
  ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
  ['Employers/Advance', 'assets/career/employers/advance.svg'],
  ['Employers/Berkley', 'assets/career/berkley-machine-works.webp'],
