@@ -51,10 +51,10 @@ const careerCovers = new Map([
  ['Employers/IQVIA/Yearbook', 'assets/career/folders/iqvia-yearbook.webp'],
  ['Employers/AbbVie/Benefits and Retirement', 'assets/career/folders/benefits.webp'],
  ['Employers/AbbVie/Onboarding and Agreements', 'assets/career/folders/onboarding.webp'],
- ['Employers/AbbVie/Onboarding and Agreements/Expense Card', 'assets/career/folders/pc-payment-terminal.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Expense Card', 'assets/legal/financial-records.webp'],
  ['Employers/AbbVie/Onboarding and Agreements/Identity and Background Checks', 'assets/family/identification.webp'],
  ['Employers/AbbVie/Onboarding and Agreements/Offers and Agreements', 'assets/legal/separation-agreements.webp'],
- ['Employers/AbbVie/Onboarding and Agreements/Orientation and Policies', 'assets/legal/reference.webp'],
+ ['Employers/AbbVie/Onboarding and Agreements/Orientation and Policies', 'assets/legal/personal-records.webp'],
  ['Employers/AbbVie/Separation', 'assets/career/folders/separation.webp'],
  ['Employers/AbbVie/Travel and Expenses', 'assets/career/folders/travel.webp'],
  ['Employers/AbbVie/Verification', 'assets/career/folders/verification.webp'],
@@ -65,6 +65,13 @@ const careerCovers = new Map([
  ['Employers/Berkley/Berkley Shop Information', 'assets/career/folders/shop-tools.webp'],
  ['Employers/Berkley/Drafting Office', 'assets/career/folders/drafting.webp'],
  ['Employers/Berkley/Milling Machines', 'assets/career/folders/milling.webp'],
+ // Arrow and Lancer photos: https://www.cincinnatimachineretrofit.com/gallery/
+ ['Employers/Berkley/Milling Machines/Arrow 750', 'assets/career/machines/arrow-750.jpg'],
+ ['Employers/Berkley/Milling Machines/Lancer 1250', 'assets/career/machines/lancer-1250.jpg'],
+ // Maxim photo: https://www.southernfabsales.com/machines/1994-cincinnati-milacron-maxim-630-horizontal-machining-center-4433
+ ['Employers/Berkley/Milling Machines/Maxim 630', 'assets/career/machines/maxim-630.jpg'],
+ // Weiler photo: https://mach4metal.com/en/cnc-lathes/teach-in/weiler-e-70
+ ['Employers/Berkley/Milling Machines/Weiler E70', 'assets/career/machines/weiler-e70.jpg'],
  ['Employers/PC Mobile One/Computer Sales', 'assets/career/folders/computer-sales.webp'],
  ['Resumes and Job Search/2026 Job Search/Applications', 'assets/career/folders/applications.webp'],
  ['Resumes and Job Search/2026 Job Search/Cover Letters', 'assets/career/folders/cover-letters.webp'],
@@ -95,36 +102,7 @@ const careerCovers = new Map([
  ['Career Development/Development Plans/2025', 'command-photos/tasks.webp'],
  ['Career Development/Development Plans/Instructions', 'assets/home-library/books-cover.webp']
 ]);
-const careerCoverSubjects = [
- [/\b(?:sql|software|systems|computers?|desktop|network|servers?|servicenow)\b/i, 'assets/career/folders/iqvia-sql.webp'],
- [/\b(?:emails?|correspondence|communications|cover letters?)\b/i, 'assets/career/folders/cover-letters.webp'],
- [/\b(?:customers?|suppliers?|vendors?|contacts?)\b/i, 'assets/career/folders/pc-customers.webp'],
- [/résum|resume|applications?|references|job (?:search|postings)/i, 'assets/career/folders/applications.webp'],
- [/\b(?:benefits|retirement|pension|payroll|401k|fidelity|schwab|cobra)\b/i, 'assets/career/folders/benefits.webp'],
- [/\b(?:reviews|performance|reports|analytics|metrics|insights)\b/i, 'assets/family-unique/progress.webp'],
- [/\b(?:training|instructions|resources|education)\b/i, 'assets/family-unique/classroom.webp'],
- [/\b(?:photos|pictures|images|screenshots|media|videos?)\b/i, 'assets/career/folders/iqvia-yearbook.webp'],
- [/\b(?:archives?|backups?|recovered|duplicates?)\b/i, 'assets/family-unique/archive-boxes.webp'],
- [/\b(?:drafting|machines?|engineering|shop|tools)\b/i, 'assets/career/folders/drafting.webp'],
- [/\b(?:travel|expenses|transport)\b/i, 'assets/career/folders/travel.webp'],
- [/\b(?:projects|operations)\b/i, 'assets/career/folders/projects.webp'],
- [/\b(?:calendar|plans|(?:19|20)\d{2})\b/i, 'assets/hobbies/striders-calendar.webp']
-];
-const defaultCareerCover = 'assets/family-unique/folders.webp';
-
-function careerCover(path){
- const dedicatedCover=careerCovers.get(path.join('/'));
- if(dedicatedCover)return dedicatedCover;
- // AbbVie folders without a dedicated photo get the viewer's folder-specific artwork.
- if(path[0]==='Employers'&&path[1]==='AbbVie')return undefined;
- for(let index=path.length-1;index>=0;index--){
-  const subject=careerCoverSubjects.find(([pattern])=>pattern.test(path[index]));
-  if(subject)return subject[1];
-  const parentCover=careerCovers.get(path.slice(0,index+1).join('/'));
-  if(parentCover&&!parentCover.startsWith('assets/career/employers/'))return parentCover;
- }
- return defaultCareerCover;
-}
+const careerCover = path => careerCovers.get(path.join('/'));
 
 async function loadCareerFolder(){
  const host=$('career-drive');

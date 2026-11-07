@@ -166,7 +166,7 @@ async function legalDocumentCover(record,signal){
  }finally{await task.destroy()}
 }
 const careerFolderSymbols=[
- [/sql|software|systems|computer|desktop|network|server|servicenow/i,'M3 4h18v13H3zM8 21h8M12 17v4M7 8l3 3-3 3m6 0h4'],
+ [/sql|software|systems|computer|desktop|network|server|servicenow|dnc\s*50/i,'M3 4h18v13H3zM8 21h8M12 17v4M7 8l3 3-3 3m6 0h4'],
  [/email|correspondence|communications/i,'M3 5h18v14H3zM3 5l9 8 9-8'],
  [/customers|suppliers|vendors|contacts/i,'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20v-2a6 6 0 0 1 12 0v2m2-9a3 3 0 0 0 0-6m1 9a4 4 0 0 1 3 4v2'],
  [/résum|resume|cover letter|application|references|job search|job postings/i,'M7 3h7l4 4v14H7zM14 3v5h4M10 12h5m-5 4h5'],
@@ -175,7 +175,7 @@ const careerFolderSymbols=[
  [/training|plans|instructions|resources|education/i,'M3 5c4-1 7 0 9 2 2-2 5-3 9-2v14c-4-1-7 0-9 2-2-2-5-3-9-2zM12 7v14'],
  [/photos|pictures|images|screenshots|media|video/i,'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M16 9h.01'],
  [/archive|backup|recovered|duplicate/i,'M4 8h16v12H4zM3 4h18v4H3zM9 12h6'],
- [/drafting|machine|engineering|shop|tools/i,'M4 19L19 4v15zM10 16l6-6v6z'],
+ [/drafting|machine|engineering|shop|tools|leadwell|weiler|fixture|spindle|lathe|milling/i,'M4 19L19 4v15zM10 16l6-6v6z'],
  [/travel|expenses|transport/i,'M12 22s7-5 7-12a7 7 0 0 0-14 0c0 7 7 12 7 12zM12 10h.01'],
  [/employers|company|operations|projects/i,'M3 7h18v13H3zM8 7V4h8v3M3 12h18m-11 0v3h4v-3']
 ];
