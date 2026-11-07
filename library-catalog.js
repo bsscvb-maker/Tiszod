@@ -428,7 +428,10 @@
       return parent.children.get(id);
     }
     for (const file of files) {
-      const meta = classify(file);
+      const inferred = classify(file);
+      const meta = section === 'Manuals' && file.manualCategory
+        ? {...inferred, category: file.manualCategory, family: 'Filed manuals', title: file.displayName}
+        : inferred;
       const category = node(root, meta.category, {art: covers[meta.category]});
       const family = node(category, meta.family, {art: covers[meta.family]});
       const group = node(family, meta.title, {art: meta.art, photo: meta.photo, source: meta.source, illustrative: meta.illustrative, files: []});

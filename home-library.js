@@ -108,7 +108,7 @@
     return index.has(hash);
   }
 
-  async function loadLibrary() {
+  async function loadLibrary(savedRecords = thLibraryBooks.readRecords().catch(() => null)) {
     indexing?.abort();
     contentSearch?.abort();
     clearTimeout(timer);
@@ -185,13 +185,34 @@
       if (signal.aborted) return;
       if (!scanned.length) throw new Error('The document folders could not be read. Check your Drive access and try again.');
       manualIndexUnavailable = !englishManuals;
+      const saved = await savedRecords;
+      if (signal.aborted) return;
+      for (const {id, data} of saved || []) {
+        if (data.deleted || !thLibraryBooks.isManual(data)) continue;
+        const link = thLibraryBooks.manualDriveLink(data.url);
+        if (!link) continue;
+        const existing = catalog.get(link.id);
+        const title = data.name.replace(/\.[a-z0-9]{1,6}$/i, '');
+        const titleKey = normalize(title);
+        const path = 'Manuals / ' + data.manualCategory;
+        const mime = existing?.mime || ({pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif'}[data.name.split('.').pop().toLowerCase()] || '');
+        catalog.set(link.id, {
+          ...existing, ...link, resourceKey:link.resourceKey || existing?.resourceKey, name:data.name, displayName:title, mime, section:'Manuals', path, titleKey,
+          manualCategory:data.manualCategory, savedRecordId:id, topics:[data.manualCategory],
+          index:normalize([title, path, data.notes || ''].join(' ')), url:data.url,
+          driveAction:true, libraryActions:true
+        });
+      }
       documents = [...catalog.values()];
       catalogs = Object.fromEntries(sections.map(section => [section, thLibraryCatalog.build(documents.filter(file => file.section === section), section)]));
       if (!currentCatalog()?.nodes.has(catalogPath)) catalogPath = '';
       folders = scanned;
       loaded = true;
-      if (failures.length) {
-        notice.textContent = failures.length + ' Drive folder(s) could not be read. Refresh to retry them.';
+      if (failures.length || !saved) {
+        const warnings = [];
+        if (failures.length) warnings.push(failures.length + ' Drive folder(s) could not be read.');
+        if (!saved) warnings.push('Saved Manuals could not be loaded.');
+        notice.textContent = warnings.join(' ') + ' Refresh to retry.';
         notice.hidden = false;
       }
       for (const name of sections) {
@@ -199,7 +220,7 @@
         get('library-count-' + name).textContent = name === 'Manuals' && manualIndexUnavailable ? 'Index unavailable' :
           count.toLocaleString() + (count === 1 ? ' document' : ' documents');
       }
-      if (failures.length) get('library-home-status').textContent = notice.textContent;
+      if (!notice.hidden) get('library-home-status').textContent = notice.textContent;
       updateCategories();
       search(false);
     } catch (error) {
@@ -264,6 +285,12 @@
     const bookPages = pages.size > 1 && [...pages.values()].includes(file) ?
       [...pages].sort(([a], [b]) => a - b).map(([number, scan]) => ({number, file: scan})) : null;
     thDriveRecords.open({...file, readingMode: true, bookMode: file.section === 'Manuals', bookPages});
+    if (file.savedRecordId) {
+      const edit = document.createElement('a');
+      edit.href = 'education.html?' + new URLSearchParams({view:'books', editManual:file.savedRecordId});
+      edit.textContent = 'Edit filing';
+      get('legal-view-actions').append(edit);
+    }
   }
 
   function renderReaderItem(group) {
@@ -697,10 +724,11 @@
   showLocation();
   window.thStart = async () => {
     const count = get('library-count-Books');
-    const bookCount = thLibraryBooks.readRecords().then(records => {
+    const savedRecords = thLibraryBooks.readRecords().catch(() => null);
+    const bookCount = savedRecords.then(records => {
       const books = records.filter(({data}) => thLibraryBooks.isBook(data) && !data.deleted).length;
       count.textContent = books.toLocaleString() + (books === 1 ? ' book' : ' books');
     }).catch(() => { count.textContent = 'Book collection'; });
-    await Promise.all([loadLibrary(), bookCount]);
+    await Promise.all([loadLibrary(savedRecords), bookCount]);
   };
 })();

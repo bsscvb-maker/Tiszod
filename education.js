@@ -1,12 +1,14 @@
 'use strict';(()=>{
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let records=[],editing=null,ready=false,page=1;
-const viewMode=new URLSearchParams(location.search).get('view');
+const pageParams=new URLSearchParams(location.search);
+const viewMode=pageParams.get('view');
+let manualToEdit=pageParams.get('editManual');
 const careerMode=location.pathname.endsWith('/career.html');
 const bookMode=!careerMode&&viewMode==='books';
 const careerLanding=careerMode&&viewMode!=='saved';
 const dedicated=bookMode||careerMode;
-const {owner,isBook,isCareer,readRecords}=thLibraryBooks;
+const {owner,isBook,isCareer,isManual,manualDriveLink,readRecords}=thLibraryBooks;
 if(bookMode){
  document.title='TisZod · Library · Books';
  document.body.dataset.thPage='home-library';
@@ -189,7 +191,16 @@ async function loadPortraits(){
   }
  }catch{}
 }
-window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected'};
+window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}records=await readRecords();const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected';
+ if(bookMode&&manualToEdit){
+  const id=manualToEdit;
+  manualToEdit=null;
+  const url=new URL(location.href);
+  url.searchParams.delete('editManual');
+  history.replaceState(history.state,'',url);
+  if(records.some(record=>record.id===id&&!record.data.deleted&&isManual(record.data)))edit(id);
+ }
+};
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
@@ -277,6 +288,13 @@ function resetBookFilters(){for(const id of ['book-kind','book-genre','book-auth
 bookTools.addEventListener('change',()=>render());
 bookTools.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='book-reset'){resetBookFilters();$('education-search').value=''}if(b.dataset.bookPreset){resetBookFilters();const p=b.dataset.bookPreset;if(['Fiction','Nonfiction'].includes(p))$('book-kind').value=p;else if(p!=='All books')$('book-genre').value=p}render()});
 const fields=document.querySelector('.education-fields');
+const destination=$('education-form').elements.category;
+destination.closest('label').firstChild.textContent='Destination module';
+destination.add(new Option('Manuals', 'Manuals'));
+destination.closest('label').insertAdjacentHTML('afterend','<label hidden>Manuals category<select name="manualCategory"><option value="Automotive">Automotive</option></select></label>');
+const manualCategory=$('education-form').elements.manualCategory;
+function syncManualDestination(){manualCategory.closest('label').hidden=destination.value!=='Manuals';}
+destination.addEventListener('change',syncManualDestination);
 fields.insertAdjacentHTML('beforeend','<label>Book author<input name="author" maxlength="300"></label><label>Fiction / nonfiction<select name="bookKind"><option value="">Suggested automatically</option><option>Fiction</option><option>Nonfiction</option><option>Uncategorized</option></select></label><label>Book genre<select name="genre"><option value="">Suggested automatically</option>'+genreOptions.map(g=>'<option>'+esc(g)+'</option>').join('')+'</select></label>');
 function bookSortGroup(data){
  const name=data.name||'';
@@ -314,7 +332,7 @@ function render(){
  if(!showDocuments)return;
  const booksView=bookMode||selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;
  const person=view,category=dedicated?'':$('education-category').value,deleted=$('education-view').value==='deleted';
- const list=records.filter(r=>!!r.data.deleted===deleted&&(bookMode?isBook(r.data):careerMode?isCareer(r.data):owner(r.data)===person&&!isBook(r.data)&&!isCareer(r.data))&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
+ const list=records.filter(r=>!!r.data.deleted===deleted&&(bookMode?isBook(r.data):careerMode?isCareer(r.data):owner(r.data)===person&&!isBook(r.data)&&!isCareer(r.data)&&!isManual(r.data))&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
  $('education-pin-section').hidden=true;
  const grid=$('education-grid'),chosen=person;
  const heading=grid.previousElementSibling;
@@ -358,9 +376,9 @@ document.querySelector('.education').addEventListener('click',e=>{
  if(b.dataset.recordBack){selectedFolder='';if(b.dataset.recordBack==='root'){selectedCategory='';$('education-person').value='';$('education-category').value='';$('education-search').value=''}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
-function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('education-form');f.reset();for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:bookMode?'Books':careerMode?'Career':selectedCategory||'Other'}[k]||'');$('education-save-status').textContent='';$('education-dialog').showModal()}
+function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('education-form');f.reset();for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:bookMode?'Books':careerMode?'Career':selectedCategory||'Other'}[k]||'');manualCategory.value=editing?.data.manualCategory||'Automotive';syncManualDestination();$('education-save-status').textContent='';$('education-dialog').showModal()}
 document.querySelector('.education').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.id==='education-add')edit();else if(b.id==='education-prev'){page=Math.max(1,page-1);render()}else if(b.id==='education-next'){page++;render()}else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
-$('education-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;try{const d={...(editing?.data||{favorite:false,deleted:false})};for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])d[k]=f.elements.namedItem(k).value.trim();if(!safe(d.url))throw Error('Enter a complete https:// document link.');await save(editing,d);$('education-dialog').close();message('Document saved.')}catch(err){$('education-save-status').textContent=err.message}finally{b.disabled=false}};
+$('education-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;try{const d={...(editing?.data||{favorite:false,deleted:false})};for(const k of ['name','person','category','url','expires','notes','author','bookKind','genre'])d[k]=f.elements.namedItem(k).value.trim();if(!safe(d.url))throw Error('Enter a complete https:// document link.');if(d.category==='Manuals'){if(!manualDriveLink(d.url))throw Error('Enter a Google Drive file link to file this item in Manuals.');d.manualCategory=manualCategory.value;}else delete d.manualCategory;await save(editing,d);$('education-dialog').close();message(d.category==='Manuals'?'Saved in Manuals → Automotive.':'Document saved.')}catch(err){$('education-save-status').textContent=err.message}finally{b.disabled=false}};
 for(const id of ['education-search','education-person','education-category','education-folder','education-view'])$(id).addEventListener(id==='education-search'?'input':'change',()=>{page=1;recordPage=1;render()});$('education-refresh').onclick=()=>window.thStart().catch(e=>message(e.message));$('education-close').onclick=()=>$('education-dialog').close();
 
 for(const id of ['education-prev','education-next','education-page','education-folder']){const el=document.getElementById(id);if(el)el.hidden=true;}document.querySelector('label:has(#education-folder)')?.setAttribute('hidden','');
