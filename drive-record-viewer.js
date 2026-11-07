@@ -234,6 +234,7 @@ function legalFileCard(record,back){
   const art=document.createElement('span'),label=document.createElement('span'),labelTitle=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
   label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
+  if(careerFolder)labelTitle.textContent=record.displayName??record.name;
   label.append(labelTitle);
   button.append(art,label);
   if(!record.directReader)button.onclick=()=>showLegalRecord(record,back);

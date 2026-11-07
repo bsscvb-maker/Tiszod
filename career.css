@@ -169,6 +169,25 @@ body[data-th-page="career"] {
   margin: .85rem 1rem;
 }
 
+[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) > strong {
+  display: none;
+}
+
+[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail {
+  border-top: 0;
+}
+
+[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label {
+  display: flex;
+  color: var(--career-ink);
+  background: var(--career-panel);
+  padding-inline: 1rem;
+}
+
+[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label::after {
+  color: var(--career-gold);
+}
+
 [data-th-page="career"] .career-folder-tile .legal-thumbnail {
   height: auto;
   display: block;
