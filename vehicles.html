@@ -223,9 +223,9 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 <style>/* Vehicle directory and horizontal vehicle details */
 body[data-th-page="fleet"]{background:#080d15;color:#eef4ff}
 body[data-th-page="fleet"] .th-page-content{background:#080d15}
-#dashboardView .section-title,#categoryView .section-title{margin:18px 0}
-#dashboardView .section-title h2,#categoryView .section-title h2{font-size:28px;color:#f2f7ff}
-#dashboardView .section-title p,#categoryView .section-title p{font-size:14px;color:#abbdd7}
+#dashboardView .section-title{margin:18px 0}
+#dashboardView .section-title h2{font-size:28px;color:#f2f7ff}
+#dashboardView .section-title p{font-size:14px;color:#abbdd7}
 .category-grid,.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:16px 0 24px;border:0;max-width:none}
 .category-card,.asset-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:8px;width:100%;min-height:150px;margin:0;padding:20px;border:1px solid #3c73bf;border-radius:12px;background:linear-gradient(145deg,#214e91,#132c55);box-shadow:0 5px 18px #0005;color:#f4f8ff;transition:background .16s,transform .16s}
 .category-card:hover,.asset-card:hover{background:linear-gradient(145deg,#2c65b3,#1b3d75);transform:translateY(-2px);box-shadow:0 9px 24px #0008}
@@ -255,8 +255,6 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 
 .category-card{min-height:130px;justify-content:center}
 .category-card .category-icon{width:50px;height:50px;background:#122d57;color:#c6ddff}
-.year-sort{display:flex;align-items:center;gap:9px;margin:0 0 15px;color:#d4e3f6;font-weight:700}
-.year-sort select{min-height:42px;padding:8px 12px;border:1px solid #6489b8;border-radius:7px;background:#203e68;color:#fff;font:inherit}
 .category-icon svg{width:30px;height:30px;display:block}
 .category-manager{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0;padding:15px;border:1px solid #38577e;border-radius:10px;background:#152b49;color:#f2f7ff}.category-manager label{font-size:15px;font-weight:700}.category-manager select,.category-manager button{min-height:42px;padding:8px 12px;border-radius:7px;font:inherit}.category-manager select{background:#e4ebf2;color:#182b3d}.category-manager button{border:1px solid #7da8df;background:#244d83;color:white;cursor:pointer}.category-manager button:disabled{opacity:.55;cursor:wait}.category-manager [role=status]{width:100%;font-size:14px;color:#c8ddf7}
 .card-photo .category-icon{width:100%;height:100%;display:grid;place-items:center}
@@ -329,13 +327,13 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 @media(max-width:1100px){#menuView .garage-menu{grid-template-columns:1fr}#menuView .garage-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:520px){#menuView .garage-panel{padding:16px}#menuView .garage-primary-actions{flex-direction:column}#menuView .garage-primary-actions button{flex:auto}#menuView .garage-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#menuView .garage-highlights,#menuView .report-shortcuts{grid-template-columns:1fr}}
 </style><style>
-.vehicle-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.vehicle-workspace-actions button{min-height:40px;margin:0;padding:9px 16px;border:1px solid #6382ad;border-radius:6px;background:#223d60;color:#f4f8ff;font:700 14px/1.4 Arial,Helvetica,sans-serif;cursor:pointer}
-.vehicle-workspace-actions button:hover{background:#305c96}
-#categoryView .section-title{align-items:center}
-#categoryView .document-hub-button:not(.vehicle-workspace-actions button){display:none}
-#categoryView .vehicle-filter-bar{padding:16px;background:#122237;border:1px solid #344e70;border-radius:9px}
-#categoryView .vehicle-filter-bar label{min-width:145px}
+main:has(#categoryView:not([hidden])) .topline{display:none}
+#categoryView{margin-top:0}
+#categoryView .document-hub-button,#categoryView [hidden]{display:none}
+#categoryView .add-vehicle-button{min-height:43px;margin:0;white-space:nowrap}
+#categoryView .vehicle-filter-bar{margin-top:0;padding:12px;background:#122237;border:1px solid #344e70;border-radius:9px}
+#categoryView .vehicle-filter-bar label{min-width:min(100%,145px)}
+#categoryView .vehicle-filter-bar .vehicle-search{min-width:min(100%,250px)}
 #categoryView #assetGrid{gap:14px}
 @media(min-width:1000px){#categoryView #assetGrid .card-photo{width:35%;height:145px}#categoryView #assetGrid .asset-card{min-height:240px;padding-top:48px}}
 </style>
@@ -467,10 +465,7 @@ body[data-th-page="fleet"] .th-page-content{background:#080d15}
 <div class="category-grid" id="categoryGrid"></div>
 </div>
 <div class="workspace-view" id="categoryView" hidden>
-<button type="button" class="back-link" id="backDashboard">Back</button>
-<div class="section-title"><div><div class="kicker">Category</div><h2 id="categoryTitle"></h2><p>Choose an item to view its details, mileage, maintenance, and service recommendations.</p></div><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
-<div class="vehicle-filter-bar"><label class="vehicle-search">Search vehicles<input id="vehicleSearch" type="search" placeholder="Year, make, model, VIN, plate…" autocomplete="off"></label><label>Section<select id="vehicleSectionFilter" aria-label="Filter by section"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by vehicle status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label></div>
-<label class="year-sort" for="yearSort">Sort by <select id="yearSort"><option value="usage">Most used this year</option><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label>
+<div class="vehicle-filter-bar" role="group" aria-label="Vehicle filters"><label class="vehicle-search">Search vehicles<input id="vehicleSearch" type="search" placeholder="Year, make, model, VIN, plate…" autocomplete="off"></label><label id="vehicleSectionLabel">Type<select id="vehicleSectionFilter" aria-label="Filter by vehicle type"></select></label><label>Status<select id="vehicleStatusFilter" aria-label="Filter by vehicle status"></select></label><label>Missing information<select id="vehicleMissingFilter"><option value="all">All records</option><option value="any">Any missing information</option><option value="photo">No photo</option><option value="engine">No engine size</option><option value="mileage">No mileage / reading</option></select></label><label>Sort by<select id="yearSort"><option value="usage">Most used this year</option><option value="newest">Newest to oldest</option><option value="oldest">Oldest to newest</option></select></label><button type="button" class="add-vehicle-button" id="addCategoryVehicleButton">+ Add vehicle</button></div>
 <p id="vehicleResults" class="vehicle-results" role="status"></p>
 <div class="asset-grid" id="assetGrid"></div>
 </div>
@@ -507,7 +502,12 @@ const waterSections=['Boats','Personal Watercraft'];
 const workspace=location.pathname.endsWith('/equipment.html')?'equipment':location.pathname.endsWith('/watercraft.html')?'watercraft':'vehicles';
 const workspaceCategories=workspace==='equipment'?equipmentSections:workspace==='watercraft'?waterSections:vehicleSections;
 const belongsHere=a=>workspaceCategories.includes(a.category)||workspace==='vehicles'&&a.category==='Unfiled';
-const workspaceTitle=workspace==='equipment'?'Equipment':workspace==='watercraft'?'Watercraft':'Vehicles';
+const landingSection=new URLSearchParams(location.search).get('section');
+const collectionSection=landingSection==='trailers'?'Trailers':landingSection==='off-road'?'Off-Road':null;
+const collectionTypes=collectionSection?[collectionSection]:vehicleSections.filter(section=>section!=='Trailers'&&section!=='Off-Road');
+const collectionFilters=collectionSection?collectionTypes:[...collectionTypes,'Unfiled'];
+const defaultCategory=collectionSection||'All Vehicles';
+const workspaceTitle=collectionSection||'Vehicles';
 const inSection=(a,section)=>section==='All Vehicles'||(section===equipmentGroup?equipmentSections.includes(a.category):a.category===section);
 const paths={
 'Cars':'<path d="M4 15h16l-2-6H6l-2 6Zm2-6 2-3h8l2 3M5 15v3m14-3v3M7 18h10"/>',
@@ -805,7 +805,7 @@ function assetPhoto(a){
  a.photoLoading ||= thPhotoObjectUrl(a.photoFileId).then(url=>(a.photoObjectUrl=url)).finally(()=>{a.photoLoading=null});
  return a.photoLoading;
 }
-function show(view){if(view==='menuView'){view='categoryView';if(!category)category='All Vehicles';renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
+function show(view){if(view==='menuView'){view='categoryView';if(!category)category=defaultCategory;renderCategory();}for(const id of ['menuView','reportsView','dashboardView','categoryView','assetView'])document.getElementById(id).hidden=id!==view;window.scrollTo({top:0,behavior:'smooth'})}
 // Navigation restores display state without replaying data-changing actions.
 window.thViewAdapter={
  capture:()=>({view:['menuView','reportsView','dashboardView','categoryView','assetView'].find(id=>!document.getElementById(id).hidden),category,asset:asset?.id||null,status,yearOrder,vehicleQuery,missingFilter,appliedReport,reportVehicle:document.getElementById('reportVehicle').value,assetTab:document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details'}),
@@ -880,15 +880,18 @@ function annualUsageLabel(a){
 }
 function renderCategory(){
  photoObserver?.disconnect();
- const items=assets.filter(a=>inSection(a,category)).sort(compareVehicleUsage);
+ category=collectionSection||(collectionFilters.includes(category)?category:defaultCategory);
+ const items=assets.filter(a=>category==='All Vehicles'?collectionTypes.includes(a.category):inSection(a,category)).sort(compareVehicleUsage);
  const words=vehicleQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
  const missing=a=>({photo:!(a.photoFileId||a.photo),engine:showCardEngine(a)&&cardEngine(a)==='Not recorded',mileage:cardReading(a,mileageFor(a))==='Not recorded'});
  const shown=items.filter(a=>{if(status==='current'?!['active','managed'].includes(clean(a.status)):status!=='all'&&clean(a.status)!==status)return false;if(words.length&&!words.every(w=>[a.year,a.make,a.model,a.vin,a.tag,a.vehicleNumber,a.engine,a.category].join(' ').toLowerCase().includes(w)))return false;const gaps=missing(a);return missingFilter==='all'||missingFilter==='any'&&Object.values(gaps).some(Boolean)||Boolean(gaps[missingFilter])});
- document.getElementById('categoryTitle').textContent=category==='All Vehicles'?'All '+workspaceTitle:category;
- const sections=['All Vehicles',...(workspace==='equipment'?[equipmentGroup]:[]),...workspaceCategories,...(workspace==='vehicles'?['Unfiled']:[])].filter(c=>c==='All Vehicles'||c===equipmentGroup||c==='Vans'||c==='Off-Road'||c===category||assets.some(a=>a.category===c));
- document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+ const sections=collectionSection?collectionTypes:['All Vehicles',...collectionFilters.filter(c=>c===category||assets.some(a=>a.category===c))];
+ document.getElementById('vehicleSectionFilter').innerHTML=sections.map(c=>'<option value="'+esc(c)+'">'+esc(c==='All Vehicles'?'All types':c)+'</option>').join('');
  document.getElementById('vehicleSectionFilter').value=category;
- document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+' in '+(category==='All Vehicles'?'All '+workspaceTitle:category);
+ document.getElementById('vehicleSearch').value=vehicleQuery;
+ document.getElementById('vehicleMissingFilter').value=missingFilter;
+ document.getElementById('yearSort').value=yearOrder;
+ document.getElementById('vehicleResults').textContent='Showing '+shown.length+' of '+items.length+(collectionSection?' · '+collectionSection:'');
  document.getElementById('vehicleStatusFilter').innerHTML=['current','active','managed','inactive','sold','totaled','repo','all'].map(s=>'<option value="'+s+'"'+(status===s?' selected':'')+'>'+(s==='current'?'Active + Managed':s[0].toUpperCase()+s.slice(1))+' · '+(s==='all'?items.length:items.filter(a=>s==='current'?['active','managed'].includes(clean(a.status)):clean(a.status)===s).length)+'</option>').join('');
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
@@ -1076,7 +1079,7 @@ let reportsButton=document.getElementById('openReports');
 if(!reportsButton){
  reportsButton=document.createElement('button');
  reportsButton.type='button';reportsButton.id='openReports';reportsButton.className='garage-open';reportsButton.textContent='Reports';
- (document.querySelector('#categoryView .section-title')||document.getElementById('categoryView')).append(reportsButton);
+ document.getElementById('menuView').append(reportsButton);
 }
 reportsButton.onclick=()=>openReport();
 document.getElementById('reportShortcuts').addEventListener('click',e=>{const link=e.target.closest('[data-report-link]');if(link)openReport(link.dataset.reportLink)});
@@ -1286,10 +1289,11 @@ async function moveAssetTo(next){
 document.getElementById('moveAssetButton').addEventListener('click',()=>moveAssetTo(document.getElementById('moveAssetCategory').value));
 document.getElementById('moveAssetCategory').addEventListener('change',e=>moveAssetTo(e.target.value));
 document.getElementById('unfileAssetButton').addEventListener('click',()=>moveAssetTo('Unfiled'));
-document.getElementById('newVehicleCategory').innerHTML=workspaceCategories.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+document.getElementById('newVehicleCategory').innerHTML=collectionTypes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
 for(const addButton of [document.getElementById('addVehicleButton'),document.getElementById('addCategoryVehicleButton'),document.getElementById('addDetailVehicleButton')])addButton.addEventListener('click',()=>{
  document.getElementById('addVehicleForm').reset();
- document.getElementById('newVehicleCategory').value=asset&&!document.getElementById('assetView').hidden?asset.category:category===equipmentGroup?'Yard Equipment':category&&workspaceCategories.includes(category)?category:workspace==='equipment'?'Yard Equipment':workspace==='watercraft'?'Boats':'Cars';
+ const preferred=asset&&!document.getElementById('assetView').hidden?asset.category:category;
+ document.getElementById('newVehicleCategory').value=collectionTypes.includes(preferred)?preferred:collectionTypes[0];
  document.getElementById('addVehicleStatus').textContent='';
  document.getElementById('addVehicleDialog').showModal();
  document.querySelector('#addVehicleForm [name=year]').focus();
@@ -1592,23 +1596,8 @@ window.tiszodFuelOptions=()=>({
 const openFuel=()=>TisFuel.open(window.tiszodFuelOptions());
 document.getElementById('openFuelCapture').onclick=openFuel;
 document.getElementById('logAssetFuel').onclick=openFuel;
-document.getElementById('backDashboard').addEventListener('click',()=>show('menuView'));
-
-/* Open the working vehicle list directly, with a single compact action bar. */
-const quickActions=document.createElement('div');quickActions.className='vehicle-workspace-actions';
-document.getElementById('categoryView').insertBefore(quickActions,document.querySelector('#categoryView .vehicle-filter-bar'));
-for(const el of [document.getElementById('openFuelCapture'),document.querySelector('#menuView .document-hub-button'),document.getElementById('openReports')].filter(Boolean))quickActions.append(el);
-document.getElementById('openReports').textContent='Reports';
-document.getElementById('openFuelCapture').textContent='Fuel log';
-
-const workspaceDocs=quickActions.querySelector('.document-hub-button');
-if(workspaceDocs)workspaceDocs.textContent='Needs filing';
-document.getElementById('backDashboard').hidden=true;
-document.querySelector('#categoryView .kicker').textContent='Your garage';
-document.querySelector('#categoryView .section-title p').remove();
-const landingSection=new URLSearchParams(location.search).get('section');
-const trailersLanding=landingSection==='trailers';
-category=trailersLanding?'Trailers':landingSection==='off-road'?'Off-Road':'All Vehicles';
+document.getElementById('vehicleSectionLabel').hidden=Boolean(collectionSection);
+category=defaultCategory;
 status='current';
 document.getElementById('yearSort').value='usage';
 yearOrder=document.getElementById('yearSort').value;
