@@ -166,6 +166,9 @@ async function legalDocumentCover(record,signal){
  }finally{await task.destroy()}
 }
 const careerFolderSymbols=[
+ [/sql|software|systems|computer|desktop|network|server|servicenow/i,'M3 4h18v13H3zM8 21h8M12 17v4M7 8l3 3-3 3m6 0h4'],
+ [/email|correspondence|communications/i,'M3 5h18v14H3zM3 5l9 8 9-8'],
+ [/customers|suppliers|vendors|contacts/i,'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20v-2a6 6 0 0 1 12 0v2m2-9a3 3 0 0 0 0-6m1 9a4 4 0 0 1 3 4v2'],
  [/résum|resume|cover letter|application|references|job search|job postings/i,'M7 3h7l4 4v14H7zM14 3v5h4M10 12h5m-5 4h5'],
  [/benefits|retirement|pension|payroll|401k|fidelity|schwab|cobra/i,'M12 2v20m4-15H9a3 3 0 0 0 0 6h6a3 3 0 0 1 0 6H7'],
  [/reviews|performance|reports|analytics|metrics|insights/i,'M4 4v16h16M8 16v-4m4 4V8m4 8V6'],
@@ -198,8 +201,8 @@ function uniqueCover(key,symbol){
   return `<g transform="translate(${x} ${y}) rotate(${angle})"><rect width="${w}" height="${h}" rx="${4+random(10)}" fill="hsl(${tone} 40% ${24+random(36)}%)" stroke="${paper}" stroke-opacity=".37"/><g stroke="${paper}" stroke-opacity=".55">${marks}</g></g>`;
  }).join('');
  const signature=Array.from(key,ch=>ch.codePointAt(0).toString(16)).join('.');
- const emblem=symbol?`<g transform="translate(320 180)"><circle r="78" fill="${bg}" fill-opacity=".95" stroke="${paper}" stroke-width="2"/><path transform="translate(-46 -46) scale(3.8)" d="${symbol}" fill="none" stroke="${paper}" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></g>`:'';
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><desc>${signature}</desc><defs><radialGradient id="light" cx="${focus/6.4}%" cy="39%" r="70%"><stop stop-color="hsl(${hue} 40% 42%)"/><stop offset="1" stop-color="${bg}"/></radialGradient><pattern id="grid" width="19" height="19" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${paper}" opacity=".17"/></pattern></defs><rect width="640" height="360" fill="url(#light)"/><rect width="640" height="360" fill="url(#grid)"/><circle cx="${focus}" cy="170" r="${70+random(90)}" fill="none" stroke="${paper}" stroke-opacity=".37"/><g transform="translate(20 22)">${panels}</g>${emblem}<rect x="24" y="24" width="592" height="312" rx="15" fill="none" stroke="${paper}" stroke-opacity=".25"/></svg>`;
+ const emblem=symbol?`<g transform="translate(${Math.max(152,focus)} 180)"><circle r="118" fill="${bg}" fill-opacity=".95" stroke="${paper}" stroke-width="2"/><path transform="translate(-88 -88) scale(7.3)" d="${symbol}" fill="none" stroke="${paper}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></g>`:'';
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><desc>${signature}</desc><defs><radialGradient id="light" cx="${focus/6.4}%" cy="39%" r="70%"><stop stop-color="hsl(${hue} 40% 42%)"/><stop offset="1" stop-color="${bg}"/></radialGradient><pattern id="grid" width="19" height="19" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="${paper}" opacity=".17"/></pattern></defs><rect width="640" height="360" fill="url(#light)"/><rect width="640" height="360" fill="url(#grid)"/><circle cx="${focus}" cy="170" r="${70+random(90)}" fill="none" stroke="${paper}" stroke-opacity=".37"/><g transform="translate(20 22)">${symbol?'':panels}</g>${emblem}<rect x="24" y="24" width="592" height="312" rx="15" fill="none" stroke="${paper}" stroke-opacity=".25"/></svg>`;
  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 const legalCoverJobs=new WeakMap();
