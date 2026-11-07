@@ -5,19 +5,21 @@
 
 .garage-collections{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.64fr);gap:18px}.product-tile{background:#fff}.product-tile img{object-fit:contain;object-position:right center}.product-tile:after{background:linear-gradient(0deg,rgba(8,18,31,.92),rgba(8,18,31,.66) 27%,transparent 58%)}.garage-collections .tile-content{padding:18px 24px}@media(max-width:1100px){.garage-collections{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}.garage-collections .hero{grid-column:1/-1}}
 @media(max-width:760px){.garage-collections{grid-template-columns:1fr}.garage-collections .hero{min-height:320px}}
-.framed-tile{display:grid;grid-template-rows:minmax(150px,1fr) auto;background:#111b28}
-.framed-tile .tile-photo{position:relative}
-.framed-tile img{object-fit:contain}
-.framed-tile:after{content:none}
-.garage-collections .framed-tile .tile-content{position:relative;padding:10px 24px 14px}
+.framed-tile .tile-photo{position:absolute;inset:0;container-type:size}
+.framed-tile img{object-position:center top}
+.framed-tile .tile-backdrop{display:none}
+@container (aspect-ratio < 11/10) or (aspect-ratio > 9/5){
+  .framed-tile .tile-backdrop{display:block;filter:blur(12px);transform:scale(1.1)}
+  .framed-tile .tile-subject{object-fit:contain}
+}
 </style></head><body><main data-th-navigation-main><a class="back" href="./">← TisZod Dashboard</a><div class="top"><div><div class="eyebrow">TisZod / Personal workspace</div><h1>Garage</h1><p>Everything you drive, ride, tow, or maintain — organized in one place.</p></div></div>
 
-<section class="garage-collections" aria-label="Garage collections"><a class="hero" href="vehicles.html" aria-label="Open Vehicles" style="color:inherit;text-decoration:none"><img src="command-photos/vehicles.jpg" alt="Vehicle collection" onerror="this.src='ram-nav.webp'"><div class="hero-content"><div class="eyebrow">Main collection</div><h2>Vehicles</h2><p>Your cars, trucks, motorcycles, and other vehicles take center stage. Open the full vehicle collection to see each vehicle's own photos, details, mileage, registration, inspections, maintenance, and documents.</p></div></a>
+<section class="garage-collections" aria-label="Garage collections"><a class="hero" href="vehicles.html" aria-label="Open Vehicles" style="color:inherit;text-decoration:none"><img src="command-photos/vehicles.jpg" alt="Vehicle collection" onerror="this.src='ram-nav.webp'"><div class="hero-content"><h2>Vehicles</h2><p>Your cars, trucks, motorcycles, and other vehicles take center stage. Open the full vehicle collection to see each vehicle's own photos, details, mileage, registration, inspections, maintenance, and documents.</p></div></a>
 <div class="secondary">
 <a class="tile" href="watercraft.html"><img src="command-photos/watercraft.jpg" alt="Watercraft collection"><div class="tile-content"><h3>Watercraft</h3><p>Boats, personal watercraft, and related records →</p></div></a>
-<a class="tile framed-tile" href="equipment.html"><div class="tile-photo"><img src="command-photos/equipment-workshop.jpg" alt="Yellow CAT RP6500 generator outside a workshop"></div><div class="tile-content"><h3>Equipment</h3><p>Tractors, shop equipment, and maintenance →</p></div></a>
+<a class="tile framed-tile" href="equipment.html"><div class="tile-photo"><img class="tile-backdrop" src="command-photos/equipment-workshop.jpg" alt=""><img class="tile-subject" src="command-photos/equipment-workshop.jpg" alt="Yellow CAT RP6500 generator outside a workshop"></div><div class="tile-content"><h3>Equipment</h3><p>Tractors, shop equipment, and maintenance →</p></div></a>
 </div>
 <div class="secondary">
 <a class="tile product-tile" href="vehicles.html?section=trailers"><img src="command-photos/trailers.jpg" alt=""><div class="tile-content"><h3>Trailers</h3><p>Utility, cargo, and boat trailers →</p></div></a>
-<a class="tile framed-tile" href="vehicles.html?section=off-road"><div class="tile-photo"><img src="command-photos/off-road-green-quad-trail.jpg" alt="Green X-Pro Jaguar 200 quad on a forest trail"></div><div class="tile-content"><h3>Off-Road</h3><p>ATVs, quads, and mini bikes →</p></div></a>
+<a class="tile framed-tile" href="vehicles.html?section=off-road"><div class="tile-photo"><img class="tile-backdrop" src="command-photos/off-road-green-quad-rock-crawl.jpg" alt=""><img class="tile-subject" src="command-photos/off-road-green-quad-rock-crawl.jpg" alt="Green X-Pro Jaguar 200 quad climbing over a rock on a forest trail"></div><div class="tile-content"><h3>Off-Road</h3><p>ATVs, quads, and mini bikes →</p></div></a>
 </div></section><p class="note">Your existing individual vehicle cards, pictures, records, and editing tools remain in their original modules. This page brings the sections together without replacing their data.</p></main><script src="portal.js?v=20261106-portal-navigation"></script></body></html>
