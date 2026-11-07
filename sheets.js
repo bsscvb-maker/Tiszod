@@ -22,6 +22,7 @@ function thClearSession() {
   thExpiresAt=0;
   localStorage.removeItem(TH_SESSION_KEY);
   sessionStorage.removeItem(TH_SESSION_KEY);
+  sessionStorage.removeItem('tiszod-vehicle-annual-usage-v1');
 }
 
 function thSignOut() {
