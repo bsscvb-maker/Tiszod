@@ -19,7 +19,7 @@ if(bookMode){
  $('education-add').textContent='+ Add book';
  $('education-category').closest('label').hidden=true;
  $('education-form').elements.person.closest('label').hidden=true;
- $('education-form').elements.category.closest('label').hidden=true;
+ 
 }
 
 if(careerMode){
@@ -30,7 +30,7 @@ if(careerMode){
  $('education-add').hidden=careerLanding;
  $('education-add').textContent='+ Add career document';
  $('education-category').closest('label').hidden=true;
- for(const field of ['person','category'])$('education-form').elements[field].closest('label').hidden=true;
+ $('education-form').elements.person.closest('label').hidden=true;
 }
 const careerCovers = new Map([
  ['Employers/PC Mobile One/Advetising Ads', 'assets/career/folders/pc-advertising.webp'],
