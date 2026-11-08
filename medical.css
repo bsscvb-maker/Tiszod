@@ -5,7 +5,7 @@
 .medical h2{font-size:1.35rem;margin:1rem 0}.medical-panel{margin:20px 0;padding:clamp(12px,2vw,23px)}.medical-panel h2{margin-top:0}
 .medical-heading,.medical-filters{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;justify-content:space-between}
 .medical-filters label{flex:1 1 155px}.medical label{display:grid;gap:4px;color:#bddde5;font-size:.86rem}
-.medical select,.medical input,.medical button{font:inherit;color:#e5f5fa;background:#152b3a;border:1px solid #416777;border-radius:8px;padding:8px 11px}.medical button{cursor:pointer}.medical button:hover{border-color:#95e0d5}
+.medical select,.medical input:not(.module-search input),.medical button:not(.module-search button){font:inherit;color:#e5f5fa;background:#152b3a;border:1px solid #416777;border-radius:8px;padding:8px 11px}.medical button{cursor:pointer}.medical button:hover{border-color:#95e0d5}
 .medical-kpis,.medical-folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));gap:12px}
 .medical-kpis button{text-align:left;min-height:90px;padding:13px}.medical-kpis strong,.medical-kpis small{display:block}.medical-kpis strong{font-size:1.15rem;margin-bottom:6px}.medical-kpis small{color:#a9d4de}
 .medical-folders .legal-file{min-width:0}.medical-folders .legal-thumbnail{width:100%}
@@ -149,7 +149,7 @@
 }
 
 #medical-todd{margin:0 0 24px}
-#medical-content:has(#medical-todd:not([hidden])) :is(.medical-hero,#medical-people){display:none}
+#medical-content:has(#medical-todd:not([hidden])) :is(.medical-hero,#medical-people,#medical-landing-search){display:none}
 #medical-todd-title{margin:12px 0}
 .medical-back{color:#a4eee1}
 #medical-admin-folders>summary{cursor:pointer;padding:14px 16px;border:1px solid #3a5c6e;border-radius:10px;background:#142332;color:#e5f3f5;font-weight:750}

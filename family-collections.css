@@ -5,7 +5,7 @@
 
 [data-family-collections="medical"] .legal-file{position:relative}
 [data-family-collections="medical"] .medical-person-card>strong{padding-right:50px}
-.medical-person-portrait{position:absolute;top:3.3rem;right:.9rem;width:clamp(47px,7vw,74px);aspect-ratio:1;z-index:1;display:grid;place-items:center;border:2px solid #e2c791;border-radius:50%;color:#eef5fb;background:#233646 no-repeat;font-weight:800}
+.medical-person-portrait{position:absolute;top:.55rem;right:.55rem;width:clamp(47px,7vw,74px);aspect-ratio:1;z-index:1;display:grid;place-items:center;border:2px solid #e2c791;border-radius:50%;color:#eef5fb;background:#233646 no-repeat;font-weight:800}
 .medical-person-portrait.has-photo{background-image:url('command-photos/family-portraits.jpg');background-size:460% auto}
 .medical-person-portrait[data-person="Todd"]{background-position:34.0278% 41%}
 .medical-person-portrait[data-person="Alexis"]{background-position:65.9722% 41%}
@@ -15,8 +15,8 @@
 
 [data-family-collections="medical"] .legal-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 [data-family-collections="medical"] .medical-person-card[hidden]{display:none}
-[data-family-collections="medical"] .medical-person-card .legal-thumbnail{height:auto;display:block;aspect-ratio:auto}
-[data-family-collections="medical"] .medical-person-card .legal-thumbnail-art{position:relative;inset:auto;aspect-ratio:16/9}
+[data-family-collections="medical"] .medical-person-card .legal-thumbnail{box-sizing:border-box;width:100%;height:auto;display:grid;grid-template-columns:minmax(0,1fr);place-items:stretch;padding:0}
+[data-family-collections="medical"] .medical-person-card .legal-thumbnail-art{display:block;position:relative;inset:auto;width:100%;height:auto;aspect-ratio:16/9;min-height:120px}
 [data-family-collections="medical"] .medical-person-card .legal-thumbnail-label{position:relative;inset:auto}
 .medical-person-card .medical-hide-person,.medical-show-hidden{min-height:40px;margin-top:8px}
 .medical-person-card .medical-hide-person{position:relative;display:flex;align-items:center;gap:8px;margin-left:auto}

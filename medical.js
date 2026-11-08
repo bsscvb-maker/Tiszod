@@ -256,6 +256,17 @@
     if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
   }
   window.addEventListener('hashchange',()=>revealTodd());
+  $('medical-landing-search').addEventListener('submit',event=>{
+    event.preventDefault();
+    const query=$('medical-landing-query').value.trim();
+    if(!query)return;
+    $('medical-search').value=query;
+    visitFilter='';
+    revealTodd('#timeline-title');
+    resetResults();
+    if(location.hash!=='#timeline-title')location.hash='timeline-title';
+    else $('timeline-title').scrollIntoView();
+  });
   $('medical-content').addEventListener('click',event=>{
     const link=event.target.closest('a[href^="#"]');
     if(link)revealTodd(link.hash);

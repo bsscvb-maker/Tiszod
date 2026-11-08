@@ -24,7 +24,7 @@
  window.thMedicalCardCover = record => {
   const path = record.coverPath;
   if (path?.[0] === 'medical' && path.length === 2 && people.has(path[1])) {
-   return 'assets/medical/book-'+path[1].toLowerCase()+'.jpg';
+   return 'assets/medical/person-cover-'+path[1].toLowerCase()+'.jpg';
   }
   const key = record.id || record.readerUrl || JSON.stringify(path || [record.name]);
   if (assigned.has(key)) return assigned.get(key);

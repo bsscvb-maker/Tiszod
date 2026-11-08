@@ -174,7 +174,8 @@
    avatar.style.backgroundPosition='center';
   }else if(name==='Zach')avatar.textContent='Z';
   else avatar.classList.add('has-photo');
-  card.append(avatar);
+  const mount=area==='medical'?card.querySelector('.legal-thumbnail-art'):card;
+  mount?.append(avatar);
  }
 
  async function renderMedicalPeople(cards,status){
