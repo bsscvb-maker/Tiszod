@@ -50,7 +50,7 @@
   let injections=[];
   let addedDoses=[];
   let doseLogReady=false;
-  let editDose;
+  let editDose,copyDose;
   const doseFileTag="appProperties has { key='tiszodRecord' and value='medicalInjection' }";
   const injectionKey=row=>row.date+'|'+(/zepbound/i.test(row.product)?'zepbound':'tirzepatide');
   function doseTime(row){
@@ -132,7 +132,7 @@
       rows.textContent='The private injection log is loading or unavailable.';
       return;
     }
-    rows.replaceChildren(thMedicalFolders.injectionHistory(injections,doseLogReady?row=>editDose(row):null));
+    rows.replaceChildren(thMedicalFolders.injectionHistory(injections,row=>editDose(row),row=>copyDose(row)));
   }
   function openInjectionHistory(){
     const dialog=$('medical-injection-history');
@@ -143,7 +143,9 @@
   function setupDoseForm(){
     const form=$('medical-injection-entry');
     const fields=form.elements;
-    const status=$('medical-dose-status');
+    const status=$('medical-dose-error');
+    const historyStatus=$('medical-dose-status');
+    const dialog=$('medical-dose-dialog');
     const submit=form.querySelector('[type="submit"]');
     let pending={};
     let editing=null;
@@ -157,19 +159,19 @@
       fields.time.value=now.hour+':'+now.minute;
     }
     function closeForm(){
-      form.hidden=true;
+      dialog.close();
       editing=null;
       $('medical-dose-add').focus();
     }
-    editDose=row=>{
+    function openForm(row, isEdit){
       if(submit.disabled)return;
       status.textContent='';
-      if(!doseLogReady){status.textContent='The private dose log is unavailable. Reload Medical and try again.';return;}
+      historyStatus.textContent='';
       pending={};
-      editing=row||null;
+      editing=isEdit?row:null;
       form.reset();
-      fields.time.required=!row||Boolean(doseTime(row));
-      fields.mg.required=!row||Boolean(row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]);
+      fields.time.required=!isEdit||Boolean(doseTime(row));
+      fields.mg.required=!isEdit||Boolean(row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]);
       if(row){
         fields.date.value=row.date;
         fields.time.value=doseTime(row);
@@ -177,18 +179,23 @@
         fields.mg.value=row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]??'';
         fields.units.value=row.units??String(row.dose).match(/([\d.]+)\s*(?:syringe\s*)?units?\b/i)?.[1]??'';
         fields.notes.value=row.notes||'';
-      }else setEasternNow();
-      submit.textContent=row?'Save changes':'Save injection';
-      $('medical-dose-form-title').textContent=row?'Edit injection':'Add injection';
-      form.hidden=false;
+      }
+      if(!isEdit)setEasternNow();
+      submit.textContent=isEdit?'Save changes':'Save injection';
+      $('medical-dose-form-title').textContent=isEdit?'Edit injection':'Add injection';
+      $('medical-dose-review').textContent=!isEdit&&row?'Copied from the '+row.date+' entry. Confirm that the dose and notes apply to this injection.':'Review the values before saving.';
+      dialog.showModal();
       fields.date.focus();
-    };
-    $('medical-dose-add').onclick=()=>editDose();
+    }
+    editDose=row=>openForm(row,true);
+    copyDose=row=>openForm(row,false);
+    $('medical-dose-add').onclick=()=>copyDose(injections.filter(canEditDose).sort((a,b)=>
+      b.date.localeCompare(a.date)||doseTime(b).localeCompare(doseTime(a)))[0]);
     form.querySelector('[data-dose-cancel]').onclick=closeForm;
-    $('medical-injection-history').addEventListener('close',()=>{if(!submit.disabled)form.hidden=true;});
+    dialog.addEventListener('cancel',event=>{if(submit.disabled)event.preventDefault();});
     form.onsubmit=async event=>{
       event.preventDefault();
-      if(!doseLogReady||submit.disabled)return;
+      if(submit.disabled)return;
       const mg=fields.mg.value;
       const units=fields.units.value;
       const time24=fields.time.value;
@@ -210,7 +217,9 @@
       $('medical-dose-add').disabled=true;
       status.textContent='Saving to your private injection log…';
       try{
+        if(medicationSource===undefined)medicationSource=await api.medicationSource();
         addedDoses=await readAddedDoses();
+        doseLogReady=true;
         syncInjections();
         const isEdited=entry=>editing&&(editing.driveId?entry.driveId===editing.driveId:
           sourceIdentity(entry)===sourceIdentity(editing)||entry.replaces===row.replaces);
@@ -229,14 +238,14 @@
         renderInjectionHistory();
         closeForm();
         pending={};
-        status.textContent=latest?'Injection updated.':'Injection saved.';
+        historyStatus.textContent=latest?'Injection updated.':'Injection saved.';
       }catch(error){
         renderInjectionHistory();
         status.textContent=error.message||'Could not save the dose.';
       }finally{
         inputs.forEach(input=>input.disabled=false);
         $('medical-dose-add').disabled=false;
-        if(form.hidden&&$('medical-injection-history').open)$('medical-dose-add').focus();
+        if(!dialog.open&&$('medical-injection-history').open)$('medical-dose-add').focus();
       }
     };
   }

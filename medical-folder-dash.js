@@ -13,7 +13,7 @@ window.thMedicalFolders = (() => {
       for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
     return el;
   }
-  function injectionHistory(entries,edit) {
+  function injectionHistory(entries,edit,copy) {
     const rows=(Array.isArray(entries)?entries:[]).filter(item=>/tirzepatide|zepbound/i.test(item?.product||''));
     if(!rows.length)return make('p','No recorded tirzepatide or Zepbound injections are available.');
     const minutes=time=>{
@@ -25,20 +25,28 @@ window.thMedicalFolders = (() => {
     const area=make('div');area.className='medical-folder-table';
     area.classList.add('medical-injection-table');
     const headers=['Dose #','Date','Time (Eastern)','Product','Reported Dose','Notes'];
-    if(edit)headers.push('Action');
+    if(edit)headers.unshift('Actions');
     area.append(table(headers,
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
         {
           const cells=[item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes]
             .map(value=>value==null||value===''?'Not recorded':String(value));
           if(!edit)return cells;
-          if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return [...cells,'—'];
+          if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return ['—',...cells];
           const button=make('button','Edit');
           button.type='button';
           button.setAttribute('aria-label','Edit injection '+item.date+(item.time?' '+item.time:''));
           button.onclick=()=>edit(item);
-          return [...cells,button];
+          const actions=make('div');
+          actions.className='medical-injection-row-actions';
+          const template=make('button','Use as template');
+          template.type='button';
+          template.setAttribute('aria-label','Use injection '+item.date+(item.time?' '+item.time:'')+' as template');
+          template.onclick=()=>copy(item);
+          actions.append(button,template);
+          return [actions,...cells];
         }),false));
+    for(const row of area.querySelectorAll('tr'))row.lastElementChild.classList.add('medical-injection-notes');
     area.tabIndex=0;
     area.setAttribute('role','region');
     area.setAttribute('aria-label','Injection history table');
