@@ -49,7 +49,7 @@ function fitFrontReference(vertex){
  vertex.x-=Math.sign(vertex.x)*.062*fingers;
  vertex.z+=.087*fingers;
  // The reference is looking slightly upward. Pivot above the neck joint.
- const chinLift=.14*smoothRange(1.39,1.57,y);
+ const chinLift=.23*smoothRange(1.39,1.57,y);
  const headY=vertex.y-1.48,headZ=vertex.z-.015;
  vertex.y=1.48+headY*Math.cos(chinLift)+headZ*Math.sin(chinLift);
  vertex.z=.015+headZ*Math.cos(chinLift)-headY*Math.sin(chinLift);
@@ -78,7 +78,7 @@ function remapMeshes(THREE,root,{copy=false}={}){
   mesh.geometry=geometry;
  });
 }
-const HEAD_URL='assets/medical/sculpted-scanner-head.json';
+const HEAD_URL='assets/medical/sculpted-scanner-head.json?v=reference-face';
 
 function getHeadGeometry(THREE){
  return headGeometryPromise??=(async()=>{
