@@ -620,44 +620,21 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  else consolidate();
 })();
 
-;(() => {
-function init(){
-const side=document.querySelector('#sidebar,.th-sidebar');if(!side)return;
-const bssc=side.id==='sidebar',labels=[...side.querySelectorAll(bssc?'.nav-label':'.th-nav-label')],items=[...side.querySelectorAll(bssc?'button[data-module]':'a.th-nav-link')];if(!labels.length||!items.length)return;
-const key=bssc?'sidebar-order-v1:bssc':'sidebar-order-v3:tiszod',id=e=>bssc?e.dataset.module:e.getAttribute('href'),map=new Map(items.map(e=>[id(e),e]));
-const groups=labels.map((label,index)=>({label,index,host:bssc?label.nextElementSibling:label.parentElement}));
-const defaults=items.map(el=>{let group=0;for(const g of groups)if(g.label.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)group=g.index;return{id:id(el),group}});
-function normalize(rows){const seen=new Set();return [...(Array.isArray(rows)?rows:[]),...defaults].filter(r=>r&&map.has(r.id)&&!seen.has(r.id)&&seen.add(r.id)).map(r=>({id:r.id,group:Number.isInteger(r.group)&&groups[r.group]?r.group:0}))}
-function apply(){for(const g of groups){const entries=rows.filter(r=>r.group===g.index).map(r=>map.get(r.id));if(bssc)g.host.append(...entries);else{let anchor=g.label;for(const el of entries){anchor.after(el);anchor=el}}}}
-let rows=defaults,editing=false,dragged=null,saved;try{saved=JSON.parse(localStorage.getItem(key));rows=normalize(saved)}catch{}
-if(!bssc&&!Array.isArray(saved)){
-  const moduleGroup=groups.find(({label})=>label.textContent.trim()==='Modules');
-  if(moduleGroup){
-    const moduleName=row=>{const link=map.get(row.id).cloneNode(true);link.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(icon=>icon.remove());return link.textContent.trim()};
-    const modules=rows.filter(row=>row.group===moduleGroup.index).sort((a,b)=>moduleName(a).localeCompare(moduleName(b)));
-    rows=rows.map(row=>row.group===moduleGroup.index?modules.shift():row);
+/* Keep the module list stable regardless of the current page. */
+(() => {
+ function sortModules(){
+  const nav=document.querySelector('.th-sidebar nav');
+  const heading=[...nav?.querySelectorAll('.th-nav-label')||[]].find(label=>label.textContent.trim()==='Modules');
+  if(!heading)return;
+  const modules=[];
+  for(let link=heading.nextElementSibling;link?.matches('a.th-nav-link');link=link.nextElementSibling){
+   const label=link.cloneNode(true);
+   label.querySelector('.th-nav-icon')?.remove();
+   modules.push({link,name:label.textContent.trim()});
   }
-}
-apply();
-const style=document.createElement('style');style.textContent='.sidebar-order-open{font:600 11px system-ui!important;margin-left:6px;padding:3px 6px!important;min-height:26px!important;background:#1e293b!important;color:#fff!important;border:1px solid #64748b!important;border-radius:5px;letter-spacing:normal;text-transform:none}.sidebar-drag-handle{display:none;flex:0 0 18px!important;width:18px!important;margin-left:auto;cursor:grab;color:#cbd5e1;font:20px/1 system-ui;touch-action:none}.sidebar-arranging .sidebar-drag-handle{display:inline-flex;align-items:center;justify-content:center}.sidebar-arranging [data-sidebar-item]{outline:1px dashed #64748b;outline-offset:-2px}.sidebar-arranging .sidebar-drop-target{outline:2px solid #67e8d9!important}.sidebar-drag-handle:focus-visible{outline:2px solid #67e8d9}.sidebar-order-status{display:block;color:#fca5a5;font-size:11px}';document.head.append(style);
-const setupHost=document.getElementById('sidebar-setup-controls');
-if(!bssc&&!setupHost)return;
-const toggle=document.createElement('button');toggle.type='button';toggle.className='sidebar-order-open';toggle.textContent=bssc?'Edit order':'⚙ Arrange sidebar menu';toggle.setAttribute('aria-label','Arrange sidebar menu');toggle.setAttribute('aria-pressed','false');if(bssc)labels[0].append(toggle);else{setupHost.append(toggle);toggle.title='Change the order of modules in the left sidebar';toggle.style.cssText='font-size:14px!important;padding:10px 16px!important;margin:0;cursor:pointer'}
-
-const status=document.createElement('span');status.className='sidebar-order-status';status.setAttribute('role','status');toggle.after(status);
-function save(next){try{localStorage.setItem(key,JSON.stringify(next));rows=next;apply();status.textContent=''}catch{status.textContent='Order could not be saved.'}}
-function move(source,target,after){if(source===target)return;const from=rows.find(r=>r.id===source),to=rows.find(r=>r.id===target);if(!from||!to)return;const next=rows.filter(r=>r.id!==source).map(r=>({...r})),at=next.findIndex(r=>r.id===target);next.splice(at+(after?1:0),0,{id:source,group:to.group});save(next)}
-toggle.onclick=()=>{editing=!editing;side.classList.toggle('sidebar-arranging',editing);toggle.textContent=bssc?(editing?'Done':'Edit order'):(editing?'✓ Done arranging':'⚙ Arrange sidebar menu');toggle.setAttribute('aria-pressed',String(editing));toggle.title=editing?'Done arranging modules — changes save automatically':'Sidebar setup: reorder modules'};
-side.addEventListener('click',e=>{if(editing&&e.target.closest('[data-sidebar-item]')){e.preventDefault();e.stopImmediatePropagation()}},true);
-for(const el of items){el.dataset.sidebarItem=id(el);const handle=document.createElement('span');handle.className='sidebar-drag-handle';handle.textContent='⠿';handle.draggable=true;handle.tabIndex=0;handle.setAttribute('role','button');handle.setAttribute('aria-label','Drag to reorder '+el.textContent.trim());handle.title='Drag to reorder; use arrow keys to move';el.append(handle);
-handle.addEventListener('dragstart',e=>{if(!editing){e.preventDefault();return}dragged=id(el);e.dataTransfer.setData('text/plain',dragged);e.dataTransfer.effectAllowed='move';e.stopPropagation()});
-handle.addEventListener('dragend',()=>{dragged=null;side.querySelectorAll('.sidebar-drop-target').forEach(x=>x.classList.remove('sidebar-drop-target'))});
-handle.addEventListener('keydown',e=>{if(!editing||!['ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();const at=rows.findIndex(r=>r.id===id(el)),target=rows[at+(e.key==='ArrowUp'?-1:1)];if(target){move(id(el),target.id,e.key==='ArrowDown');handle.focus()}});
-el.addEventListener('dragover',e=>{if(editing&&dragged){e.preventDefault();el.classList.add('sidebar-drop-target')}});
-el.addEventListener('dragleave',()=>el.classList.remove('sidebar-drop-target'));
-el.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();e.stopPropagation();const after=e.clientY>el.getBoundingClientRect().top+el.getBoundingClientRect().height/2;move(dragged,id(el),after);el.classList.remove('sidebar-drop-target');dragged=null});
-}
-for(const g of groups){g.label.addEventListener('dragover',e=>{if(editing&&dragged)e.preventDefault()});g.label.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();const next=rows.filter(r=>r.id!==dragged).map(r=>({...r}));const at=next.findIndex(r=>r.group>g.index);next.splice(at<0?next.length:at,0,{id:dragged,group:g.index});save(next);dragged=null})}
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  modules.sort((a,b)=>a.name.localeCompare(b.name,'en'));
+  heading.after(...modules.map(module=>module.link));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sortModules);
+ else sortModules();
 })();
