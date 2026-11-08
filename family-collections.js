@@ -88,9 +88,13 @@
 
  async function readPeopleFolders() {
   const roots = await thDriveRecords.findFolders('TisZod');
-  const candidates = await Promise.all(roots.map(root => thDriveRecords.children(root)));
+  const readFolders=async entries=>area==='medical'
+   ? (await Promise.allSettled(entries.map(entry=>thDriveRecords.children(entry)))).flatMap(result=>result.status==='fulfilled'?[result.value]:[])
+   : Promise.all(entries.map(entry=>thDriveRecords.children(entry)));
+  const candidates = await readFolders(roots);
   const folders = candidates.flat().filter(file => file.folder && file.name === sourceFolder);
-  const contents = await Promise.all(folders.map(folder => thDriveRecords.children(folder)));
+  if(area==='medical'&&folders.length===1)return thDriveRecords.children(folders[0]);
+  const contents = await readFolders(folders);
   const matches = contents.filter(files => sourcePeople.every(name => files.some(file => file.folder && file.name === name)));
   if (matches.length !== 1) throw Error('Could not uniquely locate TisZod / ' + sourceFolder + '.');
   return matches[0];
@@ -105,7 +109,8 @@
   const keep = name === 'Alexis' && personal && ['family', 'identification'].includes(area)
    ? await thDriveRecords.children(personal) : [];
   if (area === 'education') return [school];
-  if (area === 'medical') return name === 'Todd' ? toddMedical : name === 'Tracy' ? files : [health];
+  if (area === 'medical') return name === 'Todd' ? toddMedical : name === 'Tracy' ? files :
+   files.filter(file=>file.folder&&/^(?:\d{2}[ ._-]+)?(?:health|medical)\b/i.test(file.name));
   if (area === 'hobbies') return name === 'Todd'
    ? [link('Black & Mild','black-mild.html'), link('Freebirds','freebirds.html'),
       get('Tickets'), ...files.filter(file => /running club group photos/i.test(file.name))]
@@ -137,23 +142,64 @@
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
    coverPath: [area, coverName],
-   coverFor,
+   coverFor: area==='medical'?path=>path.length===2?'assets/medical/mythic-book.svg':coverFor(path):coverFor,
    virtualFiles: records
   });
   return card;
  }
 
- async function loadRecreationPortraits() {
+ async function loadPortraits(onError) {
   try {
    return thPersonPortraits.parse(await thValues(thPersonPortraits.range,'UNFORMATTED_VALUE'));
   } catch {
    try {
     return thPersonPortraits.parse(await thValues(thPersonPortraits.range,'UNFORMATTED_VALUE'));
    } catch {
-    document.getElementById('hobby-portrait-status').textContent='Profile photos could not load. Use Refresh to try again.';
+    onError();
     return new Map();
    }
   }
+ }
+
+ function appendPortrait(card,name,portraits){
+  const avatar=document.createElement('span');
+  avatar.className=area==='medical'?'medical-person-portrait':'recreation-portrait';
+  avatar.dataset.person=name;
+  avatar.setAttribute('aria-hidden','true');
+  const portrait=portraits.get(thPersonPortraits.nameKey(name));
+  if(portrait){
+   avatar.style.backgroundImage='url('+portrait+')';
+   avatar.style.backgroundSize='cover';
+   avatar.style.backgroundPosition='center';
+  }else if(name==='Zach')avatar.textContent='Z';
+  else avatar.classList.add('has-photo');
+  card.append(avatar);
+ }
+
+ async function renderMedicalPeople(cards,status){
+  const members=['Todd','Tracy','Aiden','Alexis','Zach'];
+  const notices=[];
+  const [folders,portraits]=await Promise.all([
+   readPeopleFolders().catch(()=>{notices.push('Family folders could not load.');return [];}),
+   loadPortraits(()=>notices.push('Profile photos could not load.'))
+  ]);
+  const missing=[];
+  const entries=await Promise.all(members.map(async name=>{
+   const original=folders.find(file=>file.folder&&file.name.trim().toLowerCase()===name.toLowerCase());
+   let files=[];
+   if(name!=='Todd'&&original){
+    try{files=await thDriveRecords.children(original)}catch{missing.push(name)}
+   }
+   const records=(await recordsFor(name,files)).map(record=>decorate(record,[area,name]));
+   const card=personCard(name,original,records);
+   card.classList.add('medical-person-card');
+   card.dataset.person=name;
+   appendPortrait(card,name,portraits);
+   return card;
+  }));
+  cards.replaceChildren(...entries);
+  if(missing.length)notices.push('Could not open records for '+missing.join(', ')+'.');
+  status.textContent=notices.join(' ');
  }
 
  async function render() {
@@ -171,8 +217,9 @@
   const cards = document.createElement('div');
   cards.className = 'legal-cards';
   mount.append(heading, status, cards);
+  if(area==='medical')return renderMedicalPeople(cards,status);
   try {
-   const portraitRead=area==='hobbies'?loadRecreationPortraits():Promise.resolve(new Map());
+   const portraitRead=area==='hobbies'?loadPortraits(()=>{document.getElementById('hobby-portrait-status').textContent='Profile photos could not load. Use Refresh to try again.';}):Promise.resolve(new Map());
    const [personFolders,portraits]=await Promise.all([readPeopleFolders(),portraitRead]);
    const members = ['education', 'identification'].includes(area) ? people.slice(0, 2)
     : area === 'hobbies' ? ['Todd','Aiden','Alexis','Zach','Tracy'] : people;
@@ -190,18 +237,7 @@
      if(name==='Todd')records.push(...(window.thRecreationSearchEntries||[]));
      const card=personCard(name,original,records);
      card.classList.add('recreation-person');
-     const avatar=document.createElement('span');
-     avatar.className='recreation-portrait';
-     avatar.dataset.person=name;
-     avatar.setAttribute('aria-hidden','true');
-     const portrait=portraits.get(thPersonPortraits.nameKey(name));
-     if(portrait){
-      avatar.style.backgroundImage='url('+portrait+')';
-      avatar.style.backgroundSize='cover';
-      avatar.style.backgroundPosition='center';
-     }else if(name==='Zach')avatar.textContent='Z';
-     else avatar.classList.add('has-photo');
-     card.append(avatar);
+     appendPortrait(card,name,portraits);
      return {card,records};
     }
     if (records.length) return {card:personCard(name, original, records), records};

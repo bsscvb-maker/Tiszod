@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270">
+  <defs>
+    <radialGradient id="light"><stop stop-color="#685741"/><stop offset="1" stop-color="#101821"/></radialGradient>
+    <linearGradient id="leather" x2="1" y2="1"><stop stop-color="#29413f"/><stop offset="1" stop-color="#102222"/></linearGradient>
+    <linearGradient id="gold"><stop stop-color="#a4753e"/><stop offset=".5" stop-color="#f3d698"/><stop offset="1" stop-color="#ad8044"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="7" dy="12" stdDeviation="12" flood-opacity=".75"/></filter>
+    <pattern id="stars" width="56" height="51" patternUnits="userSpaceOnUse"><path d="M12 9v8m-4-4h8m28 23v4m-2-2h4" stroke="#ddba77" opacity=".32"/></pattern>
+  </defs>
+  <path fill="url(#light)" d="M0 0h480v270H0z"/>
+  <path fill="url(#stars)" d="M0 0h480v270H0z"/>
+  <g transform="rotate(-9 240 135)" filter="url(#shadow)">
+    <rect x="154" y="22" width="179" height="229" rx="10" fill="#151d20"/>
+    <rect x="159" y="25" width="170" height="221" rx="8" fill="#cbb78d"/>
+    <path d="M172 229h153m-153 5h153m-153 5h153" stroke="#88704f" opacity=".72"/>
+    <rect x="151" y="18" width="176" height="211" rx="9" fill="url(#leather)" stroke="#0b1719" stroke-width="4"/>
+    <path d="M169 20v207m-17-168h17m-17 33h17m-17 74h17m-17 33h17" stroke="#68847c" opacity=".65" stroke-width="2"/>
+    <g fill="none" stroke="url(#gold)">
+      <rect x="179" y="30" width="135" height="186" rx="6"/>
+      <rect x="185" y="36" width="123" height="174" rx="4" opacity=".65"/>
+      <circle cx="246" cy="123" r="39"/>
+      <circle cx="246" cy="123" r="32" stroke-dasharray="1 4"/>
+      <path d="M246 94v59m-8-56q8-8 16 0m-19 49q9-3 13-11t-8-13q-15-7-5-15 8-6 19 1m-8 55 6 7-6 7-6-7zM190 57q17 0 17-17m96 17q-17 0-17-17m-96 151q17 0 17 17m96-17q-17 0-17 17" stroke-width="2"/>
+      <path d="M246 48v18m-9-9h18m-42 135h66"/>
+    </g>
+  </g>
+</svg>
