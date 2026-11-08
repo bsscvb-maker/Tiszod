@@ -30,6 +30,7 @@ window.thMedical3D={
    const muscle=new THREE.MeshStandardMaterial({color:0xb75a58,roughness:.62,metalness:.08});
    const bone=new THREE.MeshStandardMaterial({color:0xe5e6d9,roughness:.48});
    const scan=new THREE.MeshStandardMaterial({color:0x3ae5ff,roughness:.2,metalness:.45,transparent:true,opacity:.46,wireframe:true});
+   const anatomySurface=new THREE.MeshStandardMaterial({color:0xc56e68,transparent:true,opacity:.32,roughness:.6,depthWrite:false});
    const parts=[];
    function ell(parent,x,y,z,sx,sy,sz,material,rotation=0){
     const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),material);
@@ -90,7 +91,7 @@ window.thMedical3D={
     state.mode=mode;organs.visible=mode!=='skin';
     for(const p of parts){
      if(p.material===hair||p.material===eye)continue;
-     p.material=mode==='skin'?skin:mode==='anatomy'?new THREE.MeshStandardMaterial({color:0xc56e68,transparent:true,opacity:.32,roughness:.6,depthWrite:false}):mode==='scan'?scan:skin;
+     p.material=mode==='skin'?skin:mode==='anatomy'?anatomySurface:mode==='scan'?scan:skin;
     }
     if(mode==='skin'){parts[0].material=skin;parts[1].material=hair;}
     if(mode==='anatomy'){parts[1].material=hair;}
