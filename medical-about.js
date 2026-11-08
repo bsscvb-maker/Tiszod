@@ -285,6 +285,20 @@
     return [...byTime.entries()].sort(([a],[b])=>b-a).map(([,row])=>row);
   }
 
+  function chartWeighIns(savedProfile) {
+    const composition = compositionReadings(savedProfile).flatMap(row => {
+      const weight = asPounds(row) ?? row.weight;
+      if (!Number.isFinite(weight) || weight <= 0 || (row.unit && !['lb', 'kg'].includes(row.unit))) return [];
+      const time = measurementTime(row);
+      const date = row.date?.slice(0, 10) || new Date(time).toISOString().slice(0, 10);
+      return [{...row, date, time, weight, unit:'lb', source:row.source || 'Body composition'}];
+    });
+    const legacy = Array.isArray(savedProfile.weighIns) ? savedProfile.weighIns : [];
+    return [...legacy.filter(row => !composition.some(entry =>
+      entry.date === row?.date && entry.weight === asPounds(row) && !Number.isFinite(row.time)
+    )), ...composition];
+  }
+
   function comparison(label,current,prior,unit='',preferred=0) {
     const item=make('div'), values=make('dd');
     item.className='medical-measurement-comparison';
@@ -469,13 +483,13 @@
     [compositionSource,medicationSource]=await Promise.all([source,medication]);
     syncInjections();
     if($('medical-injection-history').open)renderInjectionHistory();
-    api.onWeighIns?.(savedProfile.weighIns);
     try {
       const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
       if(savedProfile.currentList && !(Date.parse(local.profileUpdatedAt)>=Date.parse(savedProfile.profileUpdatedAt)))delete local.currentList;
       profile={...savedProfile,...local};
     }
     catch {profile = savedProfile;}
+    api.onWeighIns?.(chartWeighIns(savedProfile));
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
     void doseLog.then(storedDoses=>{
       if(doseLogReady)return;
