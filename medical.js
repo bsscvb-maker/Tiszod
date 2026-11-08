@@ -57,7 +57,8 @@
     return files;
   }
   const children = id => list("'" + escapeQuery(id) + "' in parents");
-  const exclude = file => /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
+  const compositionFilename='TisZod About Me - Body Composition.json';
+  const exclude = file => file.name===compositionFilename|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
   function dateFromName(name) {
     const match = name.match(/\b((?:19|20)\d\d)[.\/-](0[1-9]|1[0-2])(?:[.\/-](0[1-9]|[12]\d|3[01]))?(?![.\/-]\d)/);
     if (match) {
@@ -284,6 +285,7 @@
       key = 'tiszod-medical-review-v1:' + root.id;
       try {review = JSON.parse(localStorage.getItem(key) || '{}') || {};} catch {review = {};}
       const files = (await children(root.id)).filter(file => !exclude(file));
+      const toddFolder=files.find(file=>file.folder&&file.name==='Todd');
       const folders = files.filter(file => file.folder);
       const rootFiles = files.filter(file => !file.folder);
       const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));
@@ -370,7 +372,17 @@
         finally {button.disabled=false;}
       };
       thMedicalAbout.start({
-        key, list, onFolderSummaries: value => {
+        key, list,
+        async compositionSource(){
+          if(!toddFolder)return null;
+          const sources=(await children(toddFolder.id)).filter(file=>!file.folder&&file.name===compositionFilename);
+          if(sources.length>1)throw Error('More than one body composition source was found.');
+          if(!sources.length)return null;
+          const response=await thDriveFetch(sources[0].id,{cache:'no-store'});
+          if(!response.ok)throw Error('Body composition source could not load.');
+          return response.json();
+        },
+        onFolderSummaries: value => {
           folderSummaries=value||{};
           const hidden = new Set(folderSummaries.hiddenBillingIds||[]);
           records=records.filter(record=>!hidden.has(record.id));

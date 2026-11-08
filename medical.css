@@ -162,3 +162,5 @@ body[data-th-page="medical"] .medical-themed-card > .legal-kind{display:none}
 .medical-measurement-change{font-size:.86rem;color:#c6d7e3}
 .medical-measurement-change[data-trend="positive"]{color:#80e5a4}
 .medical-measurement-change[data-trend="negative"]{color:#ff9b9b}
+
+.medical-measurement-dates{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;color:#b8cbd8;font-size:.85rem}

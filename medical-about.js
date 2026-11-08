@@ -16,7 +16,7 @@
     ['pcp','Primary care physician'],
     ['eyeCare','Ophthalmologist or eye-care practice']
   ];
-  let api, profile = {}, savedProfile = {}, loadMessage = '';
+  let api, profile = {}, savedProfile = {}, compositionSource=null, loadMessage = '';
 
   function careTeam() {
     const team=make('section');team.className='medical-folder-dashboard medical-care-team';
@@ -63,7 +63,13 @@
     const history=Array.isArray(profile.bodyCompositionHistory)?profile.bodyCompositionHistory:[];
     const scale=Array.isArray(profile.weighIns)?profile.weighIns.filter(row=>
       ['bmi','bodyFat','muscle','water'].some(key=>Number.isFinite(row?.[key]))):[];
-    const readings=[...scale,...history,profile.bodyComposition].filter(row=>Number.isFinite(measurementTime(row)));
+    const confirmed=Array.isArray(compositionSource?.readings)?compositionSource.readings.filter(row=>Number.isFinite(measurementTime(row))):[];
+    const measurements=['weight','bmi','bodyFat','muscle','water','boneMass'];
+    const sameReading=(row,entry)=>row.date?.slice(0,10)===entry.date?.slice(0,10)&&
+      measurements.every(metric=>row[metric]==null||row[metric]===entry[metric]);
+    const legacy=[...scale,...history,profile.bodyComposition].filter(row=>Number.isFinite(measurementTime(row))&&
+      !confirmed.some(entry=>sameReading(row,entry)));
+    const readings=[...legacy,...confirmed];
     const byTime=new Map();
     for(const row of readings){
       const time=measurementTime(row);
@@ -102,26 +108,38 @@
     const figure=make('figure'),silhouette=make('img');
     silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body reference';
     figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
-    const grid=make('dl'),weights=api.weights(),height=heightInches(profile.height);
-    const currentWeight=asPounds(weights.at(-1)),priorWeight=asPounds(weights.at(-2));
+    const grid=make('dl'),height=heightInches(profile.height);
+    const composition=compositionReadings(profile);
+    const scaleWeights=composition.filter(row=>Number.isFinite(asPounds(row)));
+    const weights=[...api.weights().filter(row=>!scaleWeights.some(scale=>scale.date?.slice(0,10)===row.date?.slice(0,10)&&asPounds(scale)===asPounds(row))),...scaleWeights]
+      .sort((a,b)=>measurementTime(a)-measurementTime(b));
+    const current=weights.at(-1),prior=weights.at(-2);
+    const currentWeight=asPounds(current),priorWeight=asPounds(prior);
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
     grid.children[0].after(comparison('Weight',currentWeight,priorWeight,' lb',-1));
-    grid.append(comparison('BMI',bmiFor(currentWeight,height),bmiFor(priorWeight,height)));
+    grid.append(comparison('BMI',current?.bmi??bmiFor(currentWeight,height),prior?.bmi??bmiFor(priorWeight,height)));
     const measurements=make('div');measurements.className='medical-measurements';
     measurements.append(make('h3','Vitals'),grid);
-    const composition=compositionReadings(profile);
     if(composition.length){
       const readings=make('dl');
       for(const [label,key,unit,preferred] of [
         ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',0],
-        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0]
+        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0],['Bone mass','boneMass','%',0]
       ]){
         const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
         readings.append(comparison(label,values[0],values[1],unit,preferred));
       }
-      measurements.append(make('h3','Body composition'),readings);
+      const formatTime=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
+      const dates=make('p');dates.className='medical-measurement-dates';
+      for(const [index,label] of ['Current','Prior'].entries()){
+        const row=composition[index];
+        if(row)dates.append(make('span',label+': '+(row.date?.length===10?row.date:formatTime.format(measurementTime(row)))));
+      }
+      const updated=Date.parse(compositionSource?.updatedAt);
+      if(Number.isFinite(updated))dates.append(make('span','Updated: '+formatTime.format(updated)));
+      measurements.append(make('h3','Body composition'),dates,readings);
     }
     overview.append(figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
@@ -190,6 +208,7 @@
     inputs.height.focus();
   }
   async function loadProfile() {
+    const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
       const files = await api.list("'me' in owners and name = '"+profileFilename+"'");
       if (files.length === 1) {
@@ -199,6 +218,7 @@
       } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
+    compositionSource=await source;
     api.onFolderSummaries?.(savedProfile.folderSummaries);
     api.onWeighIns?.(savedProfile.weighIns);
     try {
@@ -212,7 +232,7 @@
   window.thMedicalAbout = {
     careTeam,
     start(options) {
-      api = options; profile = {}; savedProfile = {}; loadMessage = '';
+      api = options; profile = {}; savedProfile = {}; compositionSource=null; loadMessage = '';
       $('medical-about-edit').onclick = edit;
       renderProfile(); void loadProfile();
     },
