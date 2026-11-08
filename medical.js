@@ -262,7 +262,7 @@
     $('medical-todd').hidden=!inTodd;
     if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
   }
-  let medicalLoad;
+  let medicalLoad, indexReady=false;
   function ensureMedicalDetails(){
     medicalLoad??=loadMedicalDetails().then(loaded=>{
       if(!loaded)medicalLoad=undefined;
@@ -284,7 +284,7 @@
     $('medical-search').value=query;
     visitFilter='';
     revealTodd('#timeline-title');
-    if(!$('medical-dashboard').hidden)resetResults();
+    if(indexReady)resetResults();
     loadForTodd();
     if(location.hash!=='#timeline-title')location.hash='timeline-title';
     else $('timeline-title').scrollIntoView();
@@ -299,6 +299,7 @@
     if(!$('medical-todd').hidden||new URLSearchParams(location.search).get('q'))await ensureMedicalDetails();
   };
   async function loadMedicalDetails(){
+    indexReady=false;
     workbookWeights = []; manualWeights = []; browserWeights = []; weights = []; folderSummaries = {};
     $('medical-content').hidden = false;
     $('medical-dashboard').hidden = true;
@@ -314,35 +315,7 @@
       const toddFolder=files.find(file=>file.folder&&file.name==='Todd');
       const folders = files.filter(file => file.folder);
       const rootFiles = files.filter(file => !file.folder);
-      const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));
-      records = indexed.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-      records.push(...rootFiles.map(file => ({...file,path:['Body Composition'],category:'Body Composition',kind:'Document',date:dateFromName(file.name)})));
       workbook = rootFiles.find(f => /^body composition(?: metrics)?\.xlsx$/i.test(f.name));
-      const ordered = [...new Set([...categories,...folders.map(f=>canonical(f.name))])];
-      $('medical-category').replaceChildren();
-      $('medical-year').replaceChildren();
-      for (const [value,name] of [['','All categories'],...ordered.map(name=>[name,folderLabels[name] || name]),['Tests','All test records'],['Eyeglass prescriptions','Eyeglass prescriptions']]) $('medical-category').add(new Option(name,value));
-      $('medical-year').add(new Option('All years',''));
-      for (const year of [...new Set(records.map(r=>eventDate(r).slice(0,4)).filter(Boolean))].sort().reverse()) $('medical-year').add(new Option(year,year));
-      const order = ['Billing','Dental','Immunizations','Insurance','Test Result','Prescriptions','Providers'];
-      const rank = name => order.includes(name) ? order.indexOf(name) : order.length;
-      const usedMedicalArt = new Set(['providers']);
-      const cards = folders.map(folder => {
-        const category=canonical(folder.name);
-        const [art,medicalCover] = collections[category] || [null,'blue'];
-        const medicalArt = usedMedicalArt.has(art) ? undefined : art;
-        if (medicalArt) usedMedicalArt.add(medicalArt);
-        return thMedicalFolders.enrich({...folder,originalName:folder.name,name:folderLabels[category] || folder.name,medicalCover,medicalArt},{
-          records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
-        });
-      }).sort((a,b)=>rank(a.name)-rank(b.name));
-      cards.push({id:'medical-care-team',name:'Care Team',folder:true,dashboardOnly:true,dashboard:()=>thMedicalAbout.careTeam(),medicalCoverImage:'assets/medical/care-team.svg'});
-      cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.webp'});
-      revealTodd();
-      renderCollections(cards);
-      $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
-      for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
-      $('medical-more').onclick = () => {limit+=30;renderResults();};
       $('weight-range').onchange = renderWeight;
       const weighInKey=key+':weigh-ins', weighInForm=$('medical-add-weigh-in');
       try {
@@ -367,7 +340,7 @@
         $('medical-search').value=query.slice(0,120);
         revealTodd('#timeline-title');
       }
-      renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
+      $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       const importForm=$('medical-import-weigh-ins');
       importForm.onsubmit=async event=>{
         event.preventDefault();
@@ -408,7 +381,7 @@
         if(!response.ok)throw Error('Private source could not load.');
         return response.json();
       }
-      thMedicalAbout.start({
+      await thMedicalAbout.start({
         key, list,
         compositionSource:()=>readToddSource(compositionFilename),
         medicationSource:()=>readToddSource(medicationFilename),
@@ -416,13 +389,47 @@
           folderSummaries=value||{};
           const hidden = new Set(folderSummaries.hiddenBillingIds||[]);
           records=records.filter(record=>!hidden.has(record.id));
-          renderResults();
+          if(indexReady)renderResults();
         }, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
         eventName, eventDate, confirmedEvents,
         current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
         open: record => thDriveRecords.open(record)
       });
       void loadWeight();
+      $('medical-status').textContent = 'Loading document collections and timeline…';
+      $('medical-count').textContent = 'Indexing records…';
+      const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));
+      const hiddenBilling=new Set(folderSummaries.hiddenBillingIds||[]);
+      records = indexed.flatMap(r => r.status === 'fulfilled' ? r.value : []).filter(record=>!hiddenBilling.has(record.id));
+      records.push(...rootFiles.map(file => ({...file,path:['Body Composition'],category:'Body Composition',kind:'Document',date:dateFromName(file.name)})));
+      const ordered = [...new Set([...categories,...folders.map(f=>canonical(f.name))])];
+      $('medical-category').replaceChildren();
+      $('medical-year').replaceChildren();
+      for (const [value,name] of [['','All categories'],...ordered.map(name=>[name,folderLabels[name] || name]),['Tests','All test records'],['Eyeglass prescriptions','Eyeglass prescriptions']]) $('medical-category').add(new Option(name,value));
+      $('medical-year').add(new Option('All years',''));
+      for (const year of [...new Set(records.map(r=>eventDate(r).slice(0,4)).filter(Boolean))].sort().reverse()) $('medical-year').add(new Option(year,year));
+      const order = ['Billing','Dental','Immunizations','Insurance','Test Result','Prescriptions','Providers'];
+      const rank = name => order.includes(name) ? order.indexOf(name) : order.length;
+      const usedMedicalArt = new Set(['providers']);
+      const cards = folders.map(folder => {
+        const category=canonical(folder.name);
+        const [art,medicalCover] = collections[category] || [null,'blue'];
+        const medicalArt = usedMedicalArt.has(art) ? undefined : art;
+        if (medicalArt) usedMedicalArt.add(medicalArt);
+        return thMedicalFolders.enrich({...folder,originalName:folder.name,name:folderLabels[category] || folder.name,medicalCover,medicalArt},{
+          records,date:eventDate,detail,summary:()=>folderSummaries,open:(record,back)=>thDriveRecords.open(record,back)
+        });
+      }).sort((a,b)=>rank(a.name)-rank(b.name));
+      cards.push({id:'medical-care-team',name:'Care Team',folder:true,dashboardOnly:true,dashboard:()=>thMedicalAbout.careTeam(),medicalCoverImage:'assets/medical/care-team.svg'});
+      cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.webp'});
+      revealTodd(query&&!location.hash?'#timeline-title':location.hash);
+      renderCollections(cards);
+      $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
+      for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
+      $('medical-more').onclick = () => {limit+=30;renderResults();};
+      indexReady=true;
+      renderResults();
+      thMedicalAbout.refresh();
       return true;
     } catch(error) {
       if (error.status === 401) throw error;

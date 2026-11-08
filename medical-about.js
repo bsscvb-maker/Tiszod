@@ -317,7 +317,7 @@
     }
     updateMotion();
     const silhouette=make('img');
-    silhouette.src='assets/medical/body-scanner.svg';silhouette.alt='Generic body diagram';
+    silhouette.src='assets/medical/body-scanner.svg?v=anatomy';silhouette.alt='Generic body diagram';
     const ring=make('span'), sweep=make('span'), grid=make('span'), target=make('span');
     ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
     grid.className='medical-scanner-grid';target.className='medical-scanner-target';
@@ -464,10 +464,7 @@
       } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
-    let storedDoses;
-    [compositionSource,medicationSource,storedDoses]=await Promise.all([source,medication,doseLog]);
-    doseLogReady=Array.isArray(storedDoses)&&medicationSource!==undefined;
-    addedDoses=storedDoses||[];
+    [compositionSource,medicationSource]=await Promise.all([source,medication]);
     syncInjections();
     if($('medical-injection-history').open)renderInjectionHistory();
     api.onWeighIns?.(savedProfile.weighIns);
@@ -478,6 +475,14 @@
     }
     catch {profile = savedProfile;}
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
+    void doseLog.then(storedDoses=>{
+      if(doseLogReady)return;
+      doseLogReady=Array.isArray(storedDoses)&&medicationSource!==undefined;
+      addedDoses=storedDoses||[];
+      syncInjections();
+      if($('medical-injection-history').open)renderInjectionHistory();
+      if (!$('medical-about-profile').querySelector('form')) renderProfile();
+    });
   }
   window.thMedicalAbout = {
     careTeam,openInjectionHistory,
@@ -488,7 +493,7 @@
       if(historyButton)historyButton.onclick=openInjectionHistory;
       if($('medical-injection-entry'))setupDoseForm();
       $('medical-about-edit').onclick = edit;
-      renderProfile(); void loadProfile();
+      renderProfile(); return loadProfile();
     },
     refresh() {
       if (!api) return;

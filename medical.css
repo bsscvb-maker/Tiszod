@@ -202,13 +202,13 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-body-profile .medical-scanner-stage img{
  position:absolute;z-index:2;inset:3% 7%;width:86%;height:94%;max-height:none;
  object-fit:fill;filter:drop-shadow(0 0 8px #57e8ec) drop-shadow(0 0 23px #4790ff8c);
- animation:medical-scanner-turn 7s ease-in-out infinite alternate;
+ animation:medical-scanner-turn 3.8s ease-in-out infinite alternate;
 }
 .medical-scanner-ring,.medical-scanner-target{position:absolute;border-radius:50%;pointer-events:none}
 .medical-scanner-ring{
  inset:11% 4%;border:2px solid #60ddfd45;border-top-color:#73edff;border-bottom-color:#a28cff;
  box-shadow:0 0 24px #4bcbef4d,inset 0 0 24px #4bcbef26;
- animation:medical-scanner-orbit 5.5s linear infinite;
+ animation:medical-scanner-orbit 2.8s linear infinite;
 }
 .medical-scanner-target{
  inset:26% 6%;z-index:1;border:1px dashed #88dbff90;
@@ -218,7 +218,7 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
  position:absolute;z-index:3;top:4%;inset-inline:4%;height:3px;pointer-events:none;
  background:linear-gradient(90deg,transparent,#8ee7ff 13%,#efffff 50%,#8ee7ff 87%,transparent);
  box-shadow:0 0 18px 4px #60e6ed9c;
- animation:medical-scanner-sweep 3.6s ease-in-out infinite alternate;
+ animation:medical-scanner-sweep 2.5s ease-in-out infinite alternate;
 }
 .medical-scanner[data-paused] :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation-play-state:paused}
 @keyframes medical-scanner-turn{from{transform:rotateY(-38deg)}to{transform:rotateY(38deg)}}
