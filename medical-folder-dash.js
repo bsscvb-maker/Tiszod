@@ -22,6 +22,8 @@ window.thMedicalFolders = (() => {
       const [,hour,minute,period]=match;
       return (period?Number(hour)%12+(period.toUpperCase()==='PM'?12:0):Number(hour))*60+Number(minute);
     };
+    const displayTime=value=>String(value??'').trim()
+      .replace(/\b(\d{1,2}:\d{2}):\d{2}(?=\s*(?:AM|PM)?\s*$)/i,'$1');
     const area=make('div');area.className='medical-folder-table';
     area.classList.add('medical-injection-table');
     const headers=['Dose #','Date','Time (Eastern)','Product','Reported Dose','Notes'];
@@ -29,13 +31,13 @@ window.thMedicalFolders = (() => {
     area.append(table(headers,
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
         {
-          const cells=[item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes]
+          const cells=[item.doseNumber ?? '—',item.date,displayTime(item.time),item.product,item.dose ?? '—',item.notes]
             .map(value=>value==null||String(value).trim()===''||/^not recorded$/i.test(String(value).trim())?'—':String(value));
           if(!edit)return cells;
           if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return ['—',...cells];
           const button=make('button','Edit');
           button.type='button';
-          button.setAttribute('aria-label','Edit injection '+item.date+(item.time?' '+item.time:''));
+          button.setAttribute('aria-label','Edit injection '+item.date+(item.time?' '+displayTime(item.time):''));
           button.onclick=()=>edit(item);
           return [button,...cells];
         }),false));
