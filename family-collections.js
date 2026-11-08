@@ -17,7 +17,7 @@
   'medical/Aiden': 'aiden-medical', 'medical/Alexis': 'alexis-medical',
   'medical/Tracy': 'tracy-medical', 'medical/Todd': 'todd-medical',
   'hobbies/Aiden': 'aiden-recreation', 'hobbies/Alexis': 'alexis-recreation',
-  'hobbies/Todd': 'todd-recreation', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
+  'hobbies/Todd': 'command-photos/off-road-jaguar-chrome.jpg', 'hobbies/Zach': 'assets/family/sports.webp', 'hobbies/Tracy': 'assets/family/volunteering.webp', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
   'family/Aiden/01 School & IEP': 'classroom', 'family/Alexis/01 School': 'alexis-school',
   'family/Aiden/01 School & IEP/Early Childhood Special Education': 'early-childhood',
   'family/Aiden/01 School & IEP/Preschool Screening & Assessment': 'preschool',
@@ -132,7 +132,7 @@
    hobbies: 'Browse activities',
    identification: 'Browse ID records'
   };
-  return thDriveRecords.card({
+  const card = thDriveRecords.card({
    ...original, name, folder: true, driveAction: area === 'family',
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
@@ -140,6 +140,7 @@
    coverFor,
    virtualFiles: records
   });
+  return card;
  }
 
  async function render() {
@@ -156,17 +157,37 @@
   mount.append(heading, status, cards);
   try {
    const personFolders = await readPeopleFolders();
+   const portraitRows=area==='hobbies'?await thValues("'Identification Records'!D1:E2000",'UNFORMATTED_VALUE').catch(()=>[]):[];
+   const portraits=new Map(portraitRows.flatMap(([key,value])=>typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?[[key.slice(13),value]]:[]));
    const members = ['education', 'identification'].includes(area) ? people.slice(0, 2)
-    : area === 'hobbies' ? people.filter(name => name !== 'Tracy') : people;
+    : area === 'hobbies' ? ['Todd','Aiden','Alexis','Zach','Tracy'] : people;
    const results = await Promise.allSettled(members.map(async name => {
     const original = personFolders.find(file => file.folder && file.name === name);
-    const files = area === 'medical' && name === 'Todd' ? [] : await thDriveRecords.children(original);
+    const files = !original || (area === 'medical' && name === 'Todd') ? [] : await thDriveRecords.children(original);
     const records = (await recordsFor(name, files)).filter(Boolean).map(record => decorate(record, [area, name]));
     if (records.length && area === 'education') {
      const section = document.createElement('div');
      section.dataset.educationFamily = name;
      section.append(...records.map(record => thDriveRecords.card({...record, cardLabel: 'Browse school records'})));
      return section;
+    }
+    if (area === 'hobbies') {
+     if(name==='Todd')records.push(...(window.thRecreationSearchEntries||[]));
+     const card=personCard(name,original,records);
+     card.classList.add('recreation-person');
+     const avatar=document.createElement('span');
+     avatar.className='recreation-portrait';
+     avatar.dataset.person=name;
+     avatar.setAttribute('aria-hidden','true');
+     const portrait=portraits.get(name);
+     if(portrait){
+      avatar.style.backgroundImage='url('+portrait+')';
+      avatar.style.backgroundSize='cover';
+      avatar.style.backgroundPosition='center';
+     }else if(name==='Zach')avatar.textContent='Z';
+     else avatar.classList.add('has-photo');
+     card.append(avatar);
+     return {card,records};
     }
     if (records.length) return {card:personCard(name, original, records), records};
     throw Error('Collection unavailable.');
@@ -217,6 +238,10 @@
  const start = window.thStart;
  window.thStart = async (...args) => {
   if (area === 'family') return render();
+  if(area==='hobbies'){
+   try{await start(...args)}finally{await render()}
+   return;
+  }
   await Promise.all([start(...args), render()]);
   if (area === 'medical' && ['#weight-title', '#medical-about', '#medical-browse'].includes(location.hash)) {
    document.getElementById(location.hash.slice(1))?.scrollIntoView();

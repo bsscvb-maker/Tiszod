@@ -307,7 +307,7 @@ function legalFileCard(record,back){
   const button=document.createElement(record.directReader?'a':'button');
   if(record.directReader){
    button.href=record.readerUrl;
-   if(record.closeOnOpen)button.addEventListener('click',()=>legalViewer.close());
+   if(record.closeOnOpen)button.addEventListener('click',closeFromNavigation);
   }else button.type='button';
   button.className='legal-thumbnail';
   if(careerFolder)button.setAttribute('aria-label','Open '+(record.displayName??record.name));

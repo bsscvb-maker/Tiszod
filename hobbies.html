@@ -1,20 +1,30 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TisZod · Recreation</title><meta name="theme-color" content="#0b1019">
-<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><style>.hobby-page{max-width:1100px;margin:auto}.hobby-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:20px}.hobby-card{display:flex;flex-direction:column;overflow:hidden;border:1px solid #395374;border-radius:13px;background:#151e2d;color:#e0eaff;text-decoration:none}.hobby-card{padding:0;text-align:left;font:inherit;cursor:pointer}.hobby-card:is(:hover,:focus-visible){outline:2px solid #8eb4ff}.hobby-art{display:grid;place-items:center;aspect-ratio:1;background:radial-gradient(ellipse,#405569,#172233);color:#e3c89e;font-size:clamp(2rem,7vw,5rem)}.hobby-logo{display:block;width:82%;height:82%;min-height:0;object-fit:contain}.hobby-logo--official{background:#fff;border-radius:10px;padding:6%;box-sizing:border-box}.hobby-card strong{padding:14px}@media(max-width:1050px){.hobby-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><link rel="stylesheet" href="family-collections.css?v=20261106-unique-covers"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="module-search.css?v=1"></head><body data-th-page="hobbies">
+<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><style>.hobby-page{max-width:1100px;margin:auto}</style><link rel="stylesheet" href="family-collections.css?v=20261106-unique-covers"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="module-search.css?v=1"><style>
+.hobby-page:has(~ #legal-view:not([hidden])){display:none}
+#legal-view{width:100%;max-height:none;margin:0;overflow:visible}
+.family-collections .recreation-person{position:relative}
+.recreation-portrait{position:absolute;top:10px;right:14px;width:36px;height:36px;display:grid;place-items:center;border:2px solid #c5d8ef;border-radius:50%;color:#eaf2ff;background:#28415c no-repeat;font-weight:800}
+.recreation-portrait.has-photo{background-image:url('command-photos/family-portraits.jpg');background-size:460% auto}
+.recreation-portrait[data-person="Todd"]{background-position:34.0278% 41%}
+.recreation-portrait[data-person="Alexis"]{background-position:65.9722% 41%}
+.recreation-portrait[data-person="Tracy"]{background-position:97.9167% 41%}
+.recreation-portrait[data-person="Aiden"]{background:url('command-photos/aiden-portrait.jpg?v=2') center/cover no-repeat}
+</style></head><body data-th-page="hobbies">
 
 <div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>#th-auth{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#101d24;color:#e9f5f6;font:16px/1.5 system-ui,sans-serif}#th-auth[hidden]{display:none}#th-auth .th-auth-card{width:min(100%,440px);padding:40px;border:1px solid #35656d;border-radius:14px;background:#173039;text-align:center}#th-auth h1{font-size:30px}#th-sign-in{padding:12px 22px;background:#24c5ce;border:0;border-radius:6px;font-weight:700;cursor:pointer}</style>
 
 <div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside>
-<div class="th-app-main"><header class="th-app-topbar"><div><strong>Recreation</strong><small>Clubs and recreation records</small></div><span class="th-connection" id="th-connection">Connecting…</span></header><main class="th-page-content portal-section"><section class="hobby-page"><header class="portal-section-hero"><div class="portal-section-kicker">TISZOD / RECREATION</div><h1>Recreation</h1><p>Clubs, memberships, and activity records.</p></header><section class="family-collections" data-family-collections="hobbies" hidden></section><p id="hobby-status" role="status"></p><div class="hobby-grid" id="hobby-grid"></div><form class="module-search" data-search-scope="hobbies" role="search" aria-label="Search Recreation folders and files"><label for="module-search-query">Search Recreation folders and files</label><div class="module-search-row"><input id="module-search-query" type="search" maxlength="120" autocomplete="off" placeholder="Try Striders, camping, or Freebirds" required><button type="submit">Search all</button></div><p class="module-search-status" role="status"></p><ul class="module-search-results" aria-label="Search results"></ul></form></section></main></div></div>
-<dialog class="legal-view" id="legal-view" aria-labelledby="legal-view-title">
- <div class="legal-actions"><button type="button" id="legal-view-back" hidden>Back to folder</button><button type="button" id="legal-view-close">Close</button></div>
- <h2 id="legal-view-title"></h2>
+<div class="th-app-main"><header class="th-app-topbar"><div><strong>Recreation</strong><small>Clubs and recreation records</small></div><span class="th-connection" id="th-connection">Connecting…</span></header><main class="th-page-content portal-section"><section class="hobby-page"><header class="portal-section-hero"><div class="portal-section-kicker">TISZOD / RECREATION</div><h1>Recreation</h1><p>Clubs, memberships, and activity records.</p></header><section class="family-collections" data-family-collections="hobbies" hidden></section><p id="hobby-status" role="status"></p><form class="module-search" data-search-scope="hobbies" role="search" aria-label="Search Recreation folders and files"><label for="module-search-query">Search Recreation folders and files</label><div class="module-search-row"><input id="module-search-query" type="search" maxlength="120" autocomplete="off" placeholder="Try Striders, camping, or Freebirds" required><button type="submit">Search all</button></div><p class="module-search-status" role="status"></p><ul class="module-search-results" aria-label="Search results"></ul></form></section>
+<section class="legal-view" id="legal-view" aria-labelledby="legal-view-title" hidden>
+ <div class="legal-actions"><button type="button" id="legal-view-back" hidden>Back to folder</button><button type="button" id="legal-view-close">? Recreation</button></div>
+ <h2 id="legal-view-title" tabindex="-1"></h2>
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
-</dialog>
-<script src="drive-record-viewer.js?v=20261107-recreation-folders"></script>
+</section></main></div></div>
+<script src="drive-record-viewer.js?v=20261108-inline-recreation"></script>
 <script>
 const hobbyLogos = new Map([
  ['backwoods hunt club', { file: 'backwoods.svg', fallback: '🌲' }],
@@ -41,11 +51,10 @@ function recreationFolderCover(path){
 }
 window.thStart=async()=>{
  window.thRecreationSearchEntries=undefined;
- const status=document.getElementById('hobby-status'),grid=document.getElementById('hobby-grid');
+ const status=document.getElementById('hobby-status');
  status.textContent='Loading folders…';
  try{
   const rows=await thValues("'Hobbies & Recreation Links'!A2:B30",'UNFORMATTED_VALUE');
-  const cards=[];
   const searchEntries=[];
   let backwoodsFolder,indianCoveFolder,tidewaterFolder;
   for(const [name,link] of rows){
@@ -59,33 +68,18 @@ window.thStart=async()=>{
    const resourceKey = /^[\w-]+$/.test(rawKey || '') ? rawKey : null;
    const isBackwoods = id === '1t_Vz7x1KGJyEm3-fcRNPZpe3RtJ511KK' ||
      String(name).toLowerCase().replace(/\s+/g, '') === 'backwoodshuntclub';
-   const card = document.createElement('button');
-   card.className = 'hobby-card';
    const indianCove = String(name).trim().toLowerCase() === 'indian cove resort';
    const tidewaterStriders = String(name).trim().toLowerCase() === 'tidewater striders';
    const folder = { name, id, folder: true, url: url.href, resourceKey, indianCove, tidewaterStriders, coverFor:recreationFolderCover, coverPath:['hobbies',name] };
    if (tidewaterStriders) tidewaterFolder=folder;
    if (indianCove) indianCoveFolder=folder;
    if(isBackwoods){folder.readerUrl='backwoods-bylaws.html';backwoodsFolder=folder}
+   const logo=hobbyLogos.get(String(name).trim().toLowerCase());
+   if(logo)folder.coverFor=path=>path.length===2?'assets/hobbies/'+logo.file:recreationFolderCover(path);
    searchEntries.push(folder);
-   card.type='button';
-   card.onclick=()=>thDriveRecords.open(folder);
-   const art=document.createElement('span');art.className='hobby-art';art.setAttribute('aria-hidden','true');
-   const logo = hobbyLogos.get(String(name).trim().toLowerCase());
-   if (logo) {
-    const image = document.createElement('img');
-    image.className = logo.official ? 'hobby-logo hobby-logo--official' : 'hobby-logo';
-    image.alt = '';
-    image.addEventListener('error', () => { art.textContent = logo.fallback; }, { once: true });
-    image.src = 'assets/hobbies/' + logo.file;
-    art.append(image);
-   } else {
-    art.textContent = '◆';
-   }
-   const label=document.createElement('strong');label.textContent=name;card.append(art,label);cards.push(card);
   }
   window.thRecreationSearchEntries=searchEntries;
-  grid.replaceChildren(...cards);status.textContent=cards.length?'':'No folders are configured.';
+  status.textContent=searchEntries.length?'':'No club folders are configured.';
   const page = new URL(location.href);
   const selectedFolder={backwoods:backwoodsFolder,'indian-cove':indianCoveFolder,'tidewater-striders':tidewaterFolder}[page.searchParams.get('folder')];
   if (selectedFolder) {
@@ -95,4 +89,4 @@ window.thStart=async()=>{
   }
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
-</script><script src="family-collections.js?v=20261108-recreation-search"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=1"></script></body></html>
+</script><script src="family-collections.js?v=20261108-recreation-people"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=1"></script></body></html>
