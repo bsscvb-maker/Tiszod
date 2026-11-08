@@ -567,6 +567,17 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  body[data-th-page] #categoryView #assetGrid .card-open,body[data-th-page] #categoryView #assetGrid .card-mileage{position:static;grid-column:1/-1;width:100%;min-height:44px;margin:0;padding:10px;font-size:13px;text-align:center}
  body[data-th-page] #categoryView #assetGrid .card-open{grid-column:1/-1}
  }
+ @media(max-width:700px){
+  body[data-th-page] dialog[open]{box-sizing:border-box;max-inline-size:calc(100vw - 24px);max-block-size:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+  body[data-th-page] dialog[open] :is(input,select,textarea){box-sizing:border-box;min-inline-size:0;max-inline-size:100%;font-size:16px}
+  body[data-th-page] dialog[open] .complete-grid{grid-template-columns:minmax(0,1fr)}
+  body[data-th-page] dialog[open] .complete-grid > *{min-width:0}
+ }
+ @media(max-width:359px){
+  body[data-th-page] .th-mobile-bar .th-browser-controls{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;min-width:0}
+  body[data-th-page] .th-mobile-bar .th-browser-controls button{min-width:0!important;flex-direction:column!important;gap:2px;padding:2px!important}
+  body[data-th-page] .th-mobile-bar .th-mobile-control-label{font-size:10px!important}
+ }
  @media(min-width:360px) and (max-width:700px){
  body[data-th-page] #categoryView #assetGrid .asset-card{grid-template-columns:88px minmax(0,1fr) minmax(0,1fr)}
  body[data-th-page] #categoryView #assetGrid .card-copy>strong{grid-column:2/-1}
