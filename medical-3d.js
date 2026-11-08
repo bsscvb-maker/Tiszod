@@ -7,14 +7,15 @@ const active=new WeakMap();
 window.thMedical3D={
  async mount(stage,figure){
   if(active.has(stage))return active.get(stage);
-  const state={disposed:false,paused:false,mode:'skin',yaw:0,pitch:0,zoom:7.6};
+  const state={disposed:false,paused:false,mode:'skin',yaw:0,pitch:0,zoom:7.6,quality:'auto'};
   active.set(stage,state);
   try{
    const THREE=await getThree();if(state.disposed||!stage.isConnected)return;
    const scene=new THREE.Scene();
    const camera=new THREE.PerspectiveCamera(35,1,.1,100);
    const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'default'});
-   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
+   const pixelRatio=()=>state.quality==='low'?1:state.quality==='high'?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.5);
+   renderer.setPixelRatio(pixelRatio());renderer.outputColorSpace=THREE.SRGBColorSpace;
    renderer.domElement.className='medical-three-canvas';
    renderer.domElement.setAttribute('aria-label','Rotatable 3D male body illustration. Drag to rotate; pinch or scroll to zoom.');
    renderer.domElement.style.touchAction='none';
@@ -126,10 +127,14 @@ window.thMedical3D={
    renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',up);
    renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(5.3,Math.min(11,state.zoom+e.deltaY*.008))},{passive:false});
    state.reset=()=>{state.yaw=0;state.pitch=0;state.zoom=7.6};
+   state.setQuality=quality=>{state.quality=['low','auto','high'].includes(quality)?quality:'auto';renderer.setPixelRatio(pixelRatio());resize()};
+   state.rotate=(delta)=>{state.yaw+=delta};
+   state.zoomBy=(delta)=>{state.zoom=Math.max(5.3,Math.min(11,state.zoom+delta))};
+   state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let frame=0,clock=0;
    function render(t){
     if(state.disposed||!stage.isConnected){observer.disconnect();renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
-    if(!state.paused){clock=t*.001;body.rotation.y=state.yaw;body.rotation.x=state.pitch;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
+    body.rotation.y=state.yaw;body.rotation.x=state.pitch;if(!state.paused){clock=t*.001;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
     camera.position.set(0,0,state.zoom);camera.lookAt(0,-.1,0);renderer.render(scene,camera);frame=requestAnimationFrame(render);
    }
    frame=requestAnimationFrame(render);
