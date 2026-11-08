@@ -312,7 +312,7 @@ function legalFileCard(record,back){
    if(record.closeOnOpen)button.addEventListener('click',closeFromNavigation);
   }else button.type='button';
   button.className='legal-thumbnail';
-  if(careerFolder)button.setAttribute('aria-label','Open '+(record.displayName??record.name));
+  if(careerFolder||document.body.dataset.thPage==='hobbies')button.setAttribute('aria-label','Open '+(record.displayName??record.name));
   const art=document.createElement('span'),label=document.createElement('span'),labelTitle=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
   label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=(!medicalStriders&&((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage))?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');

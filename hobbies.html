@@ -5,6 +5,11 @@
 .hobby-page:has(~ #legal-view:not([hidden])){display:none}
 #legal-view{width:100%;max-height:none;margin:0;overflow:visible}
 .family-collections .recreation-person{position:relative}
+body[data-th-page="hobbies"] .legal-file > .legal-kind,
+body[data-th-page="hobbies"] .legal-thumbnail-label{display:none}
+body[data-th-page="hobbies"] .legal-thumbnail-art{inset:8px}
+body[data-th-page="hobbies"] .legal-thumbnail img{object-fit:contain;object-position:center}
+body[data-th-page="hobbies"] .recreation-person > strong{padding-right:42px}
 #hobby-portrait-status:empty{display:none}
 .recreation-portrait{position:absolute;top:10px;right:14px;width:36px;height:36px;display:grid;place-items:center;border:2px solid #c5d8ef;border-radius:50%;color:#eaf2ff;background:#28415c no-repeat;font-weight:800}
 .recreation-portrait.has-photo{background-image:url('command-photos/family-portraits.jpg');background-size:460% auto}
@@ -25,10 +30,11 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </section></main></div></div>
-<script src="drive-record-viewer.js?v=20261108-inline-recreation"></script>
+<script src="drive-record-viewer.js?v=20261108-recreation-art"></script>
 <script>
 const hobbyLogos = new Map([
  ['backwoods hunt club', { file: 'backwoods.svg', fallback: '🌲' }],
+ ['big ugly brewing – ton up club', { file: 'big-ugly-brewing.png' }],
  ['indian cove resort', { file: 'indian-cove.webp', fallback: '🏕', official: true }],
  ['tidewater striders', { file: 'tidewater-striders.png', fallback: '👟', official: true }],
  ['windsor hunt club', { file: 'windsor.svg', fallback: '🦌' }]
@@ -75,7 +81,7 @@ window.thStart=async()=>{
    if (tidewaterStriders) tidewaterFolder=folder;
    if (indianCove) indianCoveFolder=folder;
    if(isBackwoods){folder.readerUrl='backwoods-bylaws.html';backwoodsFolder=folder}
-   const logo=hobbyLogos.get(String(name).trim().toLowerCase());
+   const logo=hobbyLogos.get(String(name).trim().toLowerCase().replace(/\s*[-–—]\s*/g,' – '));
    if(logo)folder.coverFor=path=>path.length===2?'assets/hobbies/'+logo.file:recreationFolderCover(path);
    searchEntries.push(folder);
   }
@@ -90,4 +96,4 @@ window.thStart=async()=>{
   }
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
-</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-cards"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-mobile-shell"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=1"></script></body></html>
+</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-art"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-mobile-shell"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=1"></script></body></html>

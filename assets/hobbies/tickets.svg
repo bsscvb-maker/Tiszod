@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <radialGradient id="background" cx=".53" cy=".36" r=".78">
+      <stop stop-color="#373252"/>
+      <stop offset="1" stop-color="#121827"/>
+    </radialGradient>
+    <linearGradient id="paper" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#ffe8b6"/>
+      <stop offset="1" stop-color="#e9b66c"/>
+    </linearGradient>
+    <path id="stub" d="M135 106h370v52a22 22 0 0 0 0 44v52H135v-52a22 22 0 0 0 0-44z"/>
+  </defs>
+  <rect width="640" height="360" rx="24" fill="url(#background)"/>
+  <use href="#stub" transform="rotate(-13 320 180)" fill="#9e645b" stroke="#dba693" stroke-width="3"/>
+  <use href="#stub" transform="translate(0 8) rotate(7 320 180)" fill="#090d15" opacity=".55"/>
+  <g transform="rotate(7 320 180)">
+    <use href="#stub" fill="url(#paper)" stroke="#fff0c9" stroke-width="3"/>
+    <path d="M155 123h329m-329 114h329" stroke="#925938" stroke-width="2"/>
+    <path d="M423 116v128" stroke="#925938" stroke-width="2" stroke-dasharray="5 6"/>
+    <text x="279" y="193" text-anchor="middle" fill="#3c251e" font-family="Georgia,serif" font-weight="bold" font-size="45" letter-spacing="3">TICKETS</text>
+    <path d="M455 159l5 11 12 1-9 8 3 12-11-6-10 6 2-12-9-8 12-1z" fill="#925938"/>
+  </g>
+</svg>

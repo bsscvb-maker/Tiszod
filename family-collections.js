@@ -8,7 +8,7 @@
   family: 'Family records', education: 'School records by person', medical: 'Medical records by person',
   hobbies: 'Family activities', identification: 'Family identification records'
  };
- const photo = name => /\.(?:jpg|png|webp)$/.test(name) ? name : 'assets/family-unique/' + name + '.webp';
+ const photo = name => /\.(?:jpg|png|svg|webp)$/.test(name) ? name : 'assets/family-unique/' + name + '.webp';
  // A photograph is assigned to one location only. The viewer illustrates all other locations individually.
  const photos = new Map(Object.entries({
   'family/Aiden': 'aiden-family', 'family/Alexis': 'alexis-family',
@@ -56,9 +56,9 @@
   'education/Alexis/01 School': 'assets/family/school-reports.webp',
   'hobbies/Aiden/Activities & Sports': 'assets/family/sports.webp',
   'hobbies/Alexis/Activities & Volunteering': 'assets/family/volunteering.webp',
-  'hobbies/Todd/Tickets': 'assets/family/archive.webp',
+  'hobbies/Todd/Tickets': 'assets/hobbies/tickets.svg',
   'hobbies/Todd/Black & Mild': 'assets/hobbies/black-and-mild-logo.png',
-  'hobbies/Todd/Freebirds': 'freebirds-boot.jpg'
+  'hobbies/Todd/Freebirds': 'freebirds-logo.svg'
  }));
  const coverFor = path => {
   const key = path.join('/').replace(/^((?:family|medical|hobbies)\/(?:Aiden|Alexis)\/)0[2-5] /, '$1');
