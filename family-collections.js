@@ -114,7 +114,7 @@
   if (area === 'hobbies') return name === 'Todd'
    ? [link('Black & Mild','black-mild.html'), link('Freebirds','freebirds.html'),
       get('Tickets'), ...files.filter(file => /running club group photos/i.test(file.name))]
-   : [activities];
+   : activities ? thDriveRecords.children(activities) : [];
   if (area === 'identification') {
    if (name === 'Alexis') return [keep.find(exact('DMV & Driver Records'))];
    const records = personal ? await thDriveRecords.children(personal) : [];
@@ -178,6 +178,50 @@
   mount?.append(avatar);
  }
 
+ function renderHideablePeople(cards,entries){
+  const members=entries.map(card=>card.dataset.person);
+  const prefix=area==='hobbies'?'recreation':'medical';
+  const key='tiszod-'+prefix+'-hidden-people';
+  let hidden=new Set();
+  try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))hidden=new Set(saved.filter(name=>members.includes(name)));}catch{}
+  let showHidden=false;
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className=prefix+'-show-hidden';
+  cards.before(toggle);
+  function updateVisibility(){
+   toggle.hidden=!hidden.size;
+   if(!hidden.size)showHidden=false;
+   toggle.textContent=showHidden?'Back to visible people':'Show hidden people ('+hidden.size+')';
+   toggle.setAttribute('aria-pressed',String(showHidden));
+   for(const card of entries){
+    const name=card.dataset.person,isHidden=hidden.has(name);
+    card.hidden=showHidden?!isHidden:isHidden;
+    const button=card.querySelector('.'+prefix+'-hide-person');
+    button.textContent=isHidden?'Unhide':'Hide';
+    button.setAttribute('aria-label','Hide '+name);
+    button.setAttribute('aria-checked',String(isHidden));
+   }
+  }
+  toggle.onclick=()=>{showHidden=!showHidden;updateVisibility();};
+  for(const card of entries){
+   const button=document.createElement('button');
+   button.type='button';
+   button.className=prefix+'-hide-person';
+   button.setAttribute('role','switch');
+   button.onclick=()=>{
+    const name=card.dataset.person;
+    if(hidden.has(name))hidden.delete(name);else hidden.add(name);
+    try{localStorage.setItem(key,JSON.stringify([...hidden]));}catch{}
+    updateVisibility();
+    if(card.hidden)(toggle.hidden?entries.find(entry=>!entry.hidden)?.querySelector('.'+prefix+'-hide-person'):toggle)?.focus();
+   };
+   card.append(button);
+  }
+  cards.replaceChildren(...entries);
+  updateVisibility();
+ }
+
  async function renderMedicalPeople(cards,status){
   const members=['Todd','Tracy','Aiden','Alexis','Zach'];
   const notices=[];
@@ -199,45 +243,7 @@
    appendPortrait(card,name,portraits);
    return card;
   }));
-  const key='tiszod-medical-hidden-people';
-  let hidden=new Set();
-  try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))hidden=new Set(saved.filter(name=>members.includes(name)));}catch{}
-  let showHidden=false;
-  const toggle=document.createElement('button');
-  toggle.type='button';
-  toggle.className='medical-show-hidden';
-  cards.before(toggle);
-  function updateVisibility(){
-   toggle.hidden=!hidden.size;
-   if(!hidden.size)showHidden=false;
-   toggle.textContent=showHidden?'Back to visible people':'Show hidden people ('+hidden.size+')';
-   toggle.setAttribute('aria-pressed',String(showHidden));
-   for(const card of entries){
-    const name=card.dataset.person,isHidden=hidden.has(name);
-    card.hidden=showHidden?!isHidden:isHidden;
-    const button=card.querySelector('.medical-hide-person');
-    button.textContent=isHidden?'Unhide':'Hide';
-    button.setAttribute('aria-label','Hide '+name);
-    button.setAttribute('aria-checked',String(isHidden));
-   }
-  }
-  toggle.onclick=()=>{showHidden=!showHidden;updateVisibility();};
-  for(const card of entries){
-   const button=document.createElement('button');
-   button.type='button';
-   button.className='medical-hide-person';
-   button.setAttribute('role','switch');
-   button.onclick=()=>{
-    const name=card.dataset.person;
-    if(hidden.has(name))hidden.delete(name);else hidden.add(name);
-    try{localStorage.setItem(key,JSON.stringify([...hidden]));}catch{}
-    updateVisibility();
-    if(card.hidden)(toggle.hidden?cards.querySelector('.medical-person-card:not([hidden]) button'):toggle)?.focus();
-   };
-   card.append(button);
-  }
-  cards.replaceChildren(...entries);
-  updateVisibility();
+  renderHideablePeople(cards,entries);
   if(missing.length)notices.push('Could not open records for '+missing.join(', ')+'.');
   status.textContent=notices.join(' ');
  }
@@ -277,6 +283,7 @@
      if(name==='Todd')records.push(...(window.thRecreationSearchEntries||[]));
      const card=personCard(name,original,records);
      card.classList.add('recreation-person');
+     card.dataset.person=name;
      appendPortrait(card,name,portraits);
      return {card,records};
     }
@@ -284,8 +291,10 @@
     throw Error('Collection unavailable.');
    }));
    const available = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
-   cards.replaceChildren(...available.map(entry => entry.card || entry));
-   if (area === 'hobbies') window.thFamilyRecreationSearchEntries = available.flatMap(entry => entry.records || []);
+   if (area === 'hobbies') {
+    renderHideablePeople(cards,available.map(entry=>entry.card));
+    window.thFamilyRecreationSearchEntries=available.flatMap(entry=>entry.records);
+   } else cards.replaceChildren(...available.map(entry=>entry.card||entry));
    const unavailable = members.filter((_, i) => results[i].status === 'rejected');
    status.textContent = unavailable.length ? 'Could not load collections for ' + unavailable.join(', ') + '.' : '';
   } catch {

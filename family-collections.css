@@ -18,11 +18,14 @@
 [data-family-collections="medical"] .medical-person-card .legal-thumbnail{box-sizing:border-box;width:100%;height:auto;display:grid;grid-template-columns:minmax(0,1fr);place-items:stretch;padding:0}
 [data-family-collections="medical"] .medical-person-card .legal-thumbnail-art{display:block;position:relative;inset:auto;width:100%;height:auto;aspect-ratio:16/9;min-height:120px}
 [data-family-collections="medical"] .medical-person-card .legal-thumbnail-label{position:relative;inset:auto}
-.medical-person-card .medical-hide-person,.medical-show-hidden{min-height:40px;margin-top:8px}
-.medical-person-card .medical-hide-person{position:relative;display:flex;align-items:center;gap:8px;margin-left:auto}
-.medical-hide-person::before{content:"";width:2rem;height:1.15rem;background:#1c3146;border:1px solid #7897b4;border-radius:1rem}
-.medical-hide-person::after{content:"";position:absolute;left:16px;width:.85rem;height:.85rem;background:#e7f2fd;border-radius:50%}
-.medical-hide-person[aria-checked="true"]::before{background:#285581;border-color:#9bdce9}
-.medical-hide-person[aria-checked="true"]::after{transform:translateX(.85rem)}
+:is(.medical-person-card .medical-hide-person,.recreation-person .recreation-hide-person),.medical-show-hidden,.recreation-show-hidden{min-height:40px;margin-top:8px}
+:is(.medical-person-card .medical-hide-person,.recreation-person .recreation-hide-person){position:relative;display:flex;align-items:center;gap:8px;margin-left:auto}
+:is(.medical-hide-person,.recreation-hide-person)::before{content:"";width:2rem;height:1.15rem;background:#1c3146;border:1px solid #7897b4;border-radius:1rem}
+:is(.medical-hide-person,.recreation-hide-person)::after{content:"";position:absolute;left:16px;width:.85rem;height:.85rem;background:#e7f2fd;border-radius:50%}
+:is(.medical-hide-person,.recreation-hide-person)[aria-checked="true"]::before{background:#285581;border-color:#9bdce9}
+:is(.medical-hide-person,.recreation-hide-person)[aria-checked="true"]::after{transform:translateX(.85rem)}
 @media(max-width:1050px){[data-family-collections="medical"] .legal-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){[data-family-collections="medical"] .legal-cards{grid-template-columns:minmax(0,1fr)}}
+
+[data-family-collections="hobbies"] :is(.recreation-person,.recreation-show-hidden)[hidden]{display:none}
+[data-family-collections="hobbies"] .recreation-show-hidden{margin:0 0 12px}
