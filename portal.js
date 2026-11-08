@@ -227,7 +227,8 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
       setControls(s.controls);
       if(window.thReaderAdapter)window.thReaderAdapter.restore(s.reader);
       try{if(s.tasks)document.querySelector('iframe[src*="tracker-tasks"]')?.contentWindow?.portalTaskNavigation?.restore(s.tasks)}catch{}
-      if(s.pet)document.getElementById(s.pet)?.click();
+      if(window.thRestorePetView)window.thRestorePetView(s.pet);
+      else if(s.pet)document.getElementById(s.pet)?.click();
       if('pair'in s&&typeof currentItem!=='undefined'){const item=items.find(x=>x.row===s.pair);if(item)openItem(item,false);else document.getElementById('overlay')?.classList.remove('open');}
       if(s.taskFilter!==undefined)document.querySelector('[data-filter="'+CSS.escape(s.taskFilter)+'"]')?.click();
       scrollTo({top:s.scroll||0,behavior:'instant'});requestAnimationFrame(()=>scrollTo({top:s.scroll||0,behavior:'instant'}));
@@ -410,8 +411,8 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  signOut.onclick=()=>header?.querySelector('.th-sign-out')?.click();
  actions.append(signOut);
  const controls=header?.querySelector('.th-browser-controls');
- const back=controls?.querySelector('[data-th-navigate=back]');
- const backBar=document.createElement('div');backBar.className='th-browser-controls th-mobile-back';bar.prepend(backBar);
+ const toolbar=document.createElement('nav');toolbar.className='th-browser-controls th-mobile-toolbar';
+ toolbar.setAttribute('aria-label','Portal page navigation');bar.prepend(toolbar);
  const search=header?.querySelector('.th-module-search');
  const nav=side.querySelector('nav');
  function moveForPhone(element, destination, insert){
@@ -423,7 +424,10 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
   place();
  }
  moveForPhone(controls,actions,(target,node)=>target.prepend(node));
- moveForPhone(back,backBar,(target,node)=>target.append(node));
+ for(const action of ['back','forward','refresh']){
+  const button=controls?.querySelector('[data-th-navigate='+action+']');
+  moveForPhone(button,toolbar,(target,node)=>target.append(node));
+ }
  moveForPhone(search,nav,(target,node)=>target.before(node));
  let lastFocus;
  function setOpen(open,trigger){
@@ -455,8 +459,9 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  body[data-th-page] .th-mobile-bar{display:grid;width:100%;margin:0!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 12px;padding-top:calc(7px + env(safe-area-inset-top));background:#0e1421;border-bottom:2px solid #376fe6;position:sticky;top:0;z-index:80;min-height:60px;box-sizing:border-box}
  .th-mobile-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#ecf3ff;font:700 17px system-ui}
  .th-mobile-bar button,.th-mobile-close,.th-mobile-actions button{min-height:44px;min-width:44px;border:1px solid #415775;border-radius:9px;background:#172538;color:#ecf3ff;font:600 15px system-ui;padding:8px 12px}
- .th-mobile-bar .th-mobile-back,.th-mobile-actions .th-browser-controls{order:0;flex-basis:auto;margin:0}
- .th-mobile-back:empty{display:none}
+ .th-mobile-bar .th-mobile-toolbar,.th-mobile-actions .th-browser-controls{order:0;flex-basis:auto;margin:0}
+ .th-mobile-toolbar:empty{display:none}
+ .th-mobile-toolbar button{padding:7px}
  body[data-th-page] .th-sidebar{position:fixed!important;inset:0 auto 0 0!important;box-sizing:border-box;width:min(320px,88vw)!important;height:100dvh!important;padding:16px!important;z-index:110;display:flex!important;flex-direction:column;transform:translateX(-105%);visibility:hidden;border:0!important;overflow-y:auto!important;background:#0e1421}
  body.th-mobile-menu-open .th-sidebar{transform:translateX(0)!important;visibility:visible}
  body.th-mobile-menu-open{overflow:hidden}
