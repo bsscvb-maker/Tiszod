@@ -326,3 +326,38 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-scanner-v2:fullscreen .medical-scanner-stage,.medical-scanner-v2.medical-3d-expanded .medical-scanner-stage{min-height:45vh;flex:1}
 @media(min-width:1300px){.medical-command-stage{grid-template-columns:minmax(175px,.8fr) minmax(340px,1.6fr) minmax(210px,1fr)}.medical-scanner-v2 .medical-scanner-stage{min-height:580px}}
 @media(max-width:650px){.medical-scanner-v2 .medical-scanner-stage{min-height:420px}.medical-scanner-v2 .medical-scanner-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Reference-image desktop composition: scanner on left, health overview on right. */
+.medical-reference-layout{display:grid;grid-template-columns:minmax(320px,42%) minmax(0,58%);gap:14px;align-items:stretch}
+.medical-reference-layout .medical-command-stage{display:grid;grid-template-columns:minmax(110px,30%) minmax(0,70%);gap:10px;min-width:0}
+.medical-reference-layout .medical-command-systems{padding:8px;background:transparent;border:0;box-shadow:none}
+.medical-reference-layout .medical-command-systems h3{font-size:.85rem}
+.medical-reference-layout .medical-command-system{min-height:46px;border-color:#145077;background:linear-gradient(120deg,#091b31,#071323);box-shadow:inset 0 0 8px #05bfff1c;margin-bottom:7px;padding:8px;font-size:.78rem}
+.medical-reference-layout .medical-command-stage>.medical-scanner{min-width:0}
+.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:580px}
+.medical-reference-right{display:grid;gap:12px;align-content:start;min-width:0}
+.medical-reference-overview{padding:13px;border:1px solid #0fbde9;border-radius:15px;background:linear-gradient(145deg,#0b263b,#06192b);box-shadow:0 0 18px #05baff38}
+.medical-reference-overview h3{font-size:1.08rem;margin:0 0 12px;color:#e4fcff}
+.medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.medical-reference-overview .medical-command-metric{padding:9px 6px;min-height:93px;text-align:center;border-color:#1b6483}
+.medical-reference-overview .medical-command-metric span{font-size:.66rem}
+.medical-reference-overview .medical-command-metric strong{font-size:clamp(.95rem,1.45vw,1.4rem);white-space:nowrap}
+.medical-reference-overview .medical-command-metric small{font-size:.62rem}
+.medical-reference-middle{display:grid;grid-template-columns:1.4fr .9fr;gap:12px;min-width:0}
+.medical-reference-lower{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;min-width:0}
+.medical-reference-lower .medical-command-journey{grid-column:auto}
+.medical-reference-lower .medical-command-journey,.medical-reference-lower .medical-concept-panel{min-height:220px}
+.medical-reference-layout .medical-concept-composition{grid-template-columns:minmax(95px,1fr) minmax(110px,1fr)}
+.medical-reference-layout .medical-composition-legend>div{font-size:.69rem}
+.medical-command-dashboard{gap:12px}
+.medical-command-dashboard .medical-command-title{padding:4px 0 9px}
+.medical-command-dashboard .medical-command-title strong{font-size:1.1rem}
+.medical-command-dashboard .medical-command-nav{display:none}
+.medical-command-dashboard .medical-concept-panels{grid-template-columns:repeat(3,minmax(0,1fr))}
+.medical-reference-layout .medical-scanner-v2{background:transparent;border:0;box-shadow:none}
+.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{border-color:#1c90c1;box-shadow:inset 0 0 36px #09bcff26,0 0 22px #06c5ff2b}
+.medical-command-dashboard :is(.medical-concept-panel,.medical-command-journey,.medical-reference-overview){box-shadow:inset 0 0 12px #06d5ff0c,0 0 13px #00bfff25}
+@media(min-width:1450px){.medical-reference-layout{grid-template-columns:minmax(420px,42%) minmax(0,58%)}.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:640px}}
+@media(max-width:1250px){.medical-reference-layout{grid-template-columns:1fr}.medical-reference-layout .medical-command-stage{grid-template-columns:minmax(135px,.35fr) minmax(260px,1fr)}.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:470px}}
+@media(max-width:850px){.medical-reference-middle,.medical-reference-lower{grid-template-columns:1fr 1fr}.medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.medical-reference-layout .medical-command-stage{grid-template-columns:1fr}.medical-reference-layout .medical-command-systems{display:flex;flex-wrap:wrap;gap:6px}.medical-reference-layout .medical-command-systems h3,.medical-reference-layout .medical-command-info{flex-basis:100%}.medical-reference-layout .medical-command-system{flex:1 1 100px;width:auto;margin:0}.medical-reference-middle,.medical-reference-lower{grid-template-columns:1fr}.medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.medical-command-dashboard .medical-concept-panels{grid-template-columns:1fr}.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:440px}}
