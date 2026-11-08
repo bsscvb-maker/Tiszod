@@ -639,9 +639,9 @@ function renderRecommended(a){
  }
  for(const group of groups)group.sort((a,b)=>(a.due?.getTime()??Infinity)-(b.due?.getTime()??Infinity)||a.task.task.localeCompare(b.task.task));
  const titles=['Past due dates','Coming up in 60 days','Later or no date listed'];
- const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+(task.notes?'<small style="display:block;white-space:normal">'+esc(task.notes)+'</small>':'')+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+scheduleDateEditor.field(task)+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button></td></tr>').join('')+'</tbody></table></div></section>':'').join('');
+ const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+scheduleDateEditor.notes(task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+scheduleDateEditor.field(task)+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button> '+scheduleDateEditor.action(task)+'</td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2019'?'<p class="recommend-warning">This Ram 3500 is a 2019. Update the vehicle year to match the confirmed record.</p>':'';
- panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected">Complete selected items</button><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Select all items completed during one visit, then choose Complete selected items. New to-dos appear here alongside your imported schedule. Change a due date and select Save date to reschedule an item. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected">Complete selected items</button><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Select all items completed during one visit, then choose Complete selected items. New to-dos appear here alongside your imported schedule. Choose Edit to change a due date or due reading. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
@@ -1503,13 +1503,13 @@ function nextScheduleValues(task,date,reading){
  return {nextDate,nextReading};
 }
 const scheduleDateEditor=createFleetScheduleDateEditor({esc,ownershipDate,ownershipIso,
- getAsset:()=>asset,scheduleFor,writeDate:(row,date)=>fleetWriteCell('Portal Service Schedules','G'+row,date),
+ getAsset:()=>asset,scheduleFor,writeChanges:(row,changes)=>fleetWriteRanges(changes.map(({column,value})=>({sheet:'Portal Service Schedules',range:column+row,values:[[value]]}))),
  workBusy:()=>workDialog.dataset.saving==='true',renderRecommended
 });
 document.getElementById('assetRecommended').addEventListener('click',e=>{
  if(!asset)return;
- const saveDate=e.target.closest('[data-save-due-date]');
- if(saveDate){scheduleDateEditor.save(saveDate);return}
+ const scheduleAction=e.target.closest('[data-edit-schedule],[data-save-schedule],[data-cancel-schedule]');
+ if(scheduleAction){scheduleDateEditor.handle(scheduleAction);return}
  if(scheduleDateEditor.saving)return;
  if(e.target.id==='addScheduledTask'){openWorkDialog('todo');return}
  const button=e.target.closest('[data-complete-row]');
@@ -1564,5 +1564,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-recreation"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-edit"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
 

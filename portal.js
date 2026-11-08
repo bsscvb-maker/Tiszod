@@ -1,3 +1,4 @@
+function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" focusable="false" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="${color}" stroke="#fff" stroke-width="1.5"/><g stroke="#fff" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`;}
 /* Shared activity indicator: counts overlapping loads and saves, including failures. */
 (()=>{
  const active=new Map();let sequence=0,settle=null,shownAt=0;
@@ -103,6 +104,7 @@
   // Keep navigation order and icon spacing consistent on every page.
   if (nav) {
     const badges = [
+      ['admin.html', '#465579', '<path d="M8 9h16M8 16h16M8 23h16"/><circle cx="13" cy="9" r="2.4" fill="#465579"/><circle cx="20" cy="16" r="2.4" fill="#465579"/><circle cx="12" cy="23" r="2.4" fill="#465579"/>'],
       ['career.html', '#635038', '<rect x="6" y="11" width="20" height="13" rx="2"/><path d="M12 11V8h8v3M6 16h20m-10 0v3"/>'],
       ['home-library.html', '#28606e', '<path d="M6 10h7l2 3h11v11H6zM10 17h12m-12 3h8"/>'],
       ['family.html', '#575080', '<circle cx="11.5" cy="11.5" r="3"/><circle cx="21" cy="13" r="2.5"/><path d="M5.5 23v-2a6 6 0 0 1 12 0v2h-12Zm14.5-5.5a5 5 0 0 1 6.5 4.7V23H21"/>'],
@@ -117,7 +119,7 @@
       if (!icon) continue;
       icon.setAttribute('aria-hidden', 'true');
       icon.style.background = 'transparent';
-      icon.innerHTML = `<svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" focusable="false" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="${color}" stroke="#fff" stroke-width="1.5"/><g stroke="#fff" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${glyph}</g></svg>`;
+      icon.innerHTML = portalNavBadge(color, glyph);
     }
     const vehiclesLink=nav.querySelector('[href="vehicles.html"]');
     if(vehiclesLink){
@@ -128,9 +130,9 @@
     if(plan)plan.innerHTML='<span class="th-nav-icon th-plan-icon" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="30" height="30" rx="7" fill="#25477D"/><rect x="8" y="7" width="17" height="21" rx="3" fill="#142A49" stroke="#D5E8FF" stroke-width="1.5"/><rect x="12" y="4" width="9" height="6" rx="2" fill="#8CC9FF"/><path d="m11 16 2 2 4-4M19 16h3M11 23h11" stroke="#DAEEFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Task Tracker</span>';
     const groups=[
       ['Overview',['./','plan-tracker.html']],
-      ['Workspaces',['legal.html','identification.html','career.html','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','hobbies.html']],
+      ['Workspaces',['legal.html','identification.html','career.html','education.html','family.html','finance.html','home-library.html','medical.html','pets.html','hobbies.html','accounts.html']],
       ['Vehicles & gear',['vehicles.html','equipment.html','watercraft.html']],
-      ['System',['accounts.html','admin.html']]
+      ['System',['admin.html']]
     ];
     const known=new Set(groups.flatMap(g=>g[1]));
     const extras=[...nav.querySelectorAll('a')].filter(a=>!known.has(a.getAttribute('href')));
@@ -268,7 +270,7 @@
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['career.html','education.html','equipment.html','family.html','finance.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['accounts.html','admin.html']]];
+  const order=[['Main',['./']],['Modules',['accounts.html','career.html','education.html','equipment.html','family.html','finance.html','garage.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','personal-records.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
@@ -289,47 +291,7 @@
  const old=main.querySelector('.dash-grid');if(old&&!old.children.length)old.remove();
 })();
 
-;(() => {
-function init(){
-const side=document.querySelector('#sidebar,.th-sidebar');if(!side)return;
-const bssc=side.id==='sidebar',labels=[...side.querySelectorAll(bssc?'.nav-label':'.th-nav-label')],items=[...side.querySelectorAll(bssc?'button[data-module]':'a.th-nav-link')];if(!labels.length||!items.length)return;
-const key=bssc?'sidebar-order-v1:bssc':'sidebar-order-v2:tiszod',id=e=>bssc?e.dataset.module:e.getAttribute('href'),map=new Map(items.map(e=>[id(e),e]));
-const groups=labels.map((label,index)=>({label,index,host:bssc?label.nextElementSibling:label.parentElement}));
-const defaults=items.map(el=>{let group=0;for(const g of groups)if(g.label.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)group=g.index;return{id:id(el),group}});
-function normalize(rows){const seen=new Set();return [...(Array.isArray(rows)?rows:[]),...defaults].filter(r=>r&&map.has(r.id)&&!seen.has(r.id)&&seen.add(r.id)).map(r=>({id:r.id,group:Number.isInteger(r.group)&&groups[r.group]?r.group:0}))}
-function apply(){for(const g of groups){const entries=rows.filter(r=>r.group===g.index).map(r=>map.get(r.id));if(bssc)g.host.append(...entries);else{let anchor=g.label;for(const el of entries){anchor.after(el);anchor=el}}}}
-let rows=defaults,editing=false,dragged=null,saved;try{saved=JSON.parse(localStorage.getItem(key));rows=normalize(saved)}catch{}
-if(!bssc&&!Array.isArray(saved)){
-  const moduleGroup=groups.find(({label})=>label.textContent.trim()==='Modules');
-  if(moduleGroup){
-    const moduleName=row=>{const link=map.get(row.id).cloneNode(true);link.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(icon=>icon.remove());return link.textContent.trim()};
-    const modules=rows.filter(row=>row.group===moduleGroup.index).sort((a,b)=>moduleName(a).localeCompare(moduleName(b)));
-    rows=rows.map(row=>row.group===moduleGroup.index?modules.shift():row);
-  }
-}
-apply();
-const style=document.createElement('style');style.textContent='.sidebar-order-open{font:600 11px system-ui!important;margin-left:6px;padding:3px 6px!important;min-height:26px!important;background:#1e293b!important;color:#fff!important;border:1px solid #64748b!important;border-radius:5px;letter-spacing:normal;text-transform:none}.sidebar-drag-handle{display:none;flex:0 0 18px!important;width:18px!important;margin-left:auto;cursor:grab;color:#cbd5e1;font:20px/1 system-ui;touch-action:none}.sidebar-arranging .sidebar-drag-handle{display:inline-flex;align-items:center;justify-content:center}.sidebar-arranging [data-sidebar-item]{outline:1px dashed #64748b;outline-offset:-2px}.sidebar-arranging .sidebar-drop-target{outline:2px solid #67e8d9!important}.sidebar-drag-handle:focus-visible{outline:2px solid #67e8d9}.sidebar-order-status{display:block;color:#fca5a5;font-size:11px}';document.head.append(style);
-const setupHost=document.getElementById('sidebar-setup-controls');
-if(!bssc&&!setupHost)return;
-const toggle=document.createElement('button');toggle.type='button';toggle.className='sidebar-order-open';toggle.textContent=bssc?'Edit order':'⚙ Arrange sidebar menu';toggle.setAttribute('aria-label','Arrange sidebar menu');toggle.setAttribute('aria-pressed','false');if(bssc)labels[0].append(toggle);else{setupHost.append(toggle);toggle.title='Change the order of modules in the left sidebar';toggle.style.cssText='font-size:14px!important;padding:10px 16px!important;margin:0;cursor:pointer'}
 
-const status=document.createElement('span');status.className='sidebar-order-status';status.setAttribute('role','status');toggle.after(status);
-function save(next){try{localStorage.setItem(key,JSON.stringify(next));rows=next;apply();status.textContent=''}catch{status.textContent='Order could not be saved.'}}
-function move(source,target,after){if(source===target)return;const from=rows.find(r=>r.id===source),to=rows.find(r=>r.id===target);if(!from||!to)return;const next=rows.filter(r=>r.id!==source).map(r=>({...r})),at=next.findIndex(r=>r.id===target);next.splice(at+(after?1:0),0,{id:source,group:to.group});save(next)}
-toggle.onclick=()=>{editing=!editing;side.classList.toggle('sidebar-arranging',editing);toggle.textContent=bssc?(editing?'Done':'Edit order'):(editing?'✓ Done arranging':'⚙ Arrange sidebar menu');toggle.setAttribute('aria-pressed',String(editing));toggle.title=editing?'Done arranging modules — changes save automatically':'Sidebar setup: reorder modules'};
-side.addEventListener('click',e=>{if(editing&&e.target.closest('[data-sidebar-item]')){e.preventDefault();e.stopImmediatePropagation()}},true);
-for(const el of items){el.dataset.sidebarItem=id(el);const handle=document.createElement('span');handle.className='sidebar-drag-handle';handle.textContent='⠿';handle.draggable=true;handle.tabIndex=0;handle.setAttribute('role','button');handle.setAttribute('aria-label','Drag to reorder '+el.textContent.trim());handle.title='Drag to reorder; use arrow keys to move';el.append(handle);
-handle.addEventListener('dragstart',e=>{if(!editing){e.preventDefault();return}dragged=id(el);e.dataTransfer.setData('text/plain',dragged);e.dataTransfer.effectAllowed='move';e.stopPropagation()});
-handle.addEventListener('dragend',()=>{dragged=null;side.querySelectorAll('.sidebar-drop-target').forEach(x=>x.classList.remove('sidebar-drop-target'))});
-handle.addEventListener('keydown',e=>{if(!editing||!['ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();const at=rows.findIndex(r=>r.id===id(el)),target=rows[at+(e.key==='ArrowUp'?-1:1)];if(target){move(id(el),target.id,e.key==='ArrowDown');handle.focus()}});
-el.addEventListener('dragover',e=>{if(editing&&dragged){e.preventDefault();el.classList.add('sidebar-drop-target')}});
-el.addEventListener('dragleave',()=>el.classList.remove('sidebar-drop-target'));
-el.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();e.stopPropagation();const after=e.clientY>el.getBoundingClientRect().top+el.getBoundingClientRect().height/2;move(dragged,id(el),after);el.classList.remove('sidebar-drop-target');dragged=null});
-}
-for(const g of groups){g.label.addEventListener('dragover',e=>{if(editing&&dragged)e.preventDefault()});g.label.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();const next=rows.filter(r=>r.id!==dragged).map(r=>({...r}));const at=next.findIndex(r=>r.group>g.index);next.splice(at<0?next.length:at,0,{id:dragged,group:g.index});save(next);dragged=null})}
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
 /* Header Home replaces the redundant sidebar Home. Keep group indices stable. */
 (()=>{const nav=document.querySelector('.th-sidebar nav');if(!nav)return;nav.querySelector('a[href="./"]')?.remove();for(const label of nav.querySelectorAll('.th-nav-label'))if(label.textContent.trim()==='Main')label.hidden=true;})();
 
@@ -619,8 +581,8 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
   const nav=document.querySelector('.th-sidebar nav');
   if(nav){
    const groups=[
-    {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],icon:'▰'},
-    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],icon:'▣'}
+    {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],color:'#355a8a',glyph:'<path d="m5 13 11-6 11 6v12H5zM9 25V14h14v11M9 18h14m-14 4h14"/>'},
+    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],color:'#63547d',glyph:'<rect x="6" y="9" width="20" height="14" rx="2"/><circle cx="12" cy="14" r="2"/><path d="M9 20q3-4 6 0m3-6h5m-5 4h5"/>'}
    ];
    for(const group of groups){
     const links=[...nav.querySelectorAll('a.th-nav-link')].filter(a=>group.members.some(m=>(a.getAttribute('href')||'').split('?')[0]===m));
@@ -629,10 +591,10 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
     const link=existing||document.createElement('a');
     link.href=group.href;link.className='th-nav-link'+(active?' active':'');
     if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
-    link.innerHTML='<span class="th-nav-icon" aria-hidden="true">'+group.icon+'</span><span>'+group.name+'</span>';
+    link.innerHTML='<span class="th-nav-icon" style="background:transparent" aria-hidden="true">'+portalNavBadge(group.color,group.glyph)+'</span><span>'+group.name+'</span>';
     if(!existing){
      if(links.length)links[0].before(link);
-     else nav.querySelector('.th-nav-label')?.after(link);
+     else [...nav.querySelectorAll('.th-nav-label')].find(label=>label.textContent.trim()==='Modules')?.after(link);
     }
     links.forEach(a=>a.remove());
    }
@@ -655,4 +617,46 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',consolidate);
  else consolidate();
+})();
+
+;(() => {
+function init(){
+const side=document.querySelector('#sidebar,.th-sidebar');if(!side)return;
+const bssc=side.id==='sidebar',labels=[...side.querySelectorAll(bssc?'.nav-label':'.th-nav-label')],items=[...side.querySelectorAll(bssc?'button[data-module]':'a.th-nav-link')];if(!labels.length||!items.length)return;
+const key=bssc?'sidebar-order-v1:bssc':'sidebar-order-v3:tiszod',id=e=>bssc?e.dataset.module:e.getAttribute('href'),map=new Map(items.map(e=>[id(e),e]));
+const groups=labels.map((label,index)=>({label,index,host:bssc?label.nextElementSibling:label.parentElement}));
+const defaults=items.map(el=>{let group=0;for(const g of groups)if(g.label.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)group=g.index;return{id:id(el),group}});
+function normalize(rows){const seen=new Set();return [...(Array.isArray(rows)?rows:[]),...defaults].filter(r=>r&&map.has(r.id)&&!seen.has(r.id)&&seen.add(r.id)).map(r=>({id:r.id,group:Number.isInteger(r.group)&&groups[r.group]?r.group:0}))}
+function apply(){for(const g of groups){const entries=rows.filter(r=>r.group===g.index).map(r=>map.get(r.id));if(bssc)g.host.append(...entries);else{let anchor=g.label;for(const el of entries){anchor.after(el);anchor=el}}}}
+let rows=defaults,editing=false,dragged=null,saved;try{saved=JSON.parse(localStorage.getItem(key));rows=normalize(saved)}catch{}
+if(!bssc&&!Array.isArray(saved)){
+  const moduleGroup=groups.find(({label})=>label.textContent.trim()==='Modules');
+  if(moduleGroup){
+    const moduleName=row=>{const link=map.get(row.id).cloneNode(true);link.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(icon=>icon.remove());return link.textContent.trim()};
+    const modules=rows.filter(row=>row.group===moduleGroup.index).sort((a,b)=>moduleName(a).localeCompare(moduleName(b)));
+    rows=rows.map(row=>row.group===moduleGroup.index?modules.shift():row);
+  }
+}
+apply();
+const style=document.createElement('style');style.textContent='.sidebar-order-open{font:600 11px system-ui!important;margin-left:6px;padding:3px 6px!important;min-height:26px!important;background:#1e293b!important;color:#fff!important;border:1px solid #64748b!important;border-radius:5px;letter-spacing:normal;text-transform:none}.sidebar-drag-handle{display:none;flex:0 0 18px!important;width:18px!important;margin-left:auto;cursor:grab;color:#cbd5e1;font:20px/1 system-ui;touch-action:none}.sidebar-arranging .sidebar-drag-handle{display:inline-flex;align-items:center;justify-content:center}.sidebar-arranging [data-sidebar-item]{outline:1px dashed #64748b;outline-offset:-2px}.sidebar-arranging .sidebar-drop-target{outline:2px solid #67e8d9!important}.sidebar-drag-handle:focus-visible{outline:2px solid #67e8d9}.sidebar-order-status{display:block;color:#fca5a5;font-size:11px}';document.head.append(style);
+const setupHost=document.getElementById('sidebar-setup-controls');
+if(!bssc&&!setupHost)return;
+const toggle=document.createElement('button');toggle.type='button';toggle.className='sidebar-order-open';toggle.textContent=bssc?'Edit order':'⚙ Arrange sidebar menu';toggle.setAttribute('aria-label','Arrange sidebar menu');toggle.setAttribute('aria-pressed','false');if(bssc)labels[0].append(toggle);else{setupHost.append(toggle);toggle.title='Change the order of modules in the left sidebar';toggle.style.cssText='font-size:14px!important;padding:10px 16px!important;margin:0;cursor:pointer'}
+
+const status=document.createElement('span');status.className='sidebar-order-status';status.setAttribute('role','status');toggle.after(status);
+function save(next){try{localStorage.setItem(key,JSON.stringify(next));rows=next;apply();status.textContent=''}catch{status.textContent='Order could not be saved.'}}
+function move(source,target,after){if(source===target)return;const from=rows.find(r=>r.id===source),to=rows.find(r=>r.id===target);if(!from||!to)return;const next=rows.filter(r=>r.id!==source).map(r=>({...r})),at=next.findIndex(r=>r.id===target);next.splice(at+(after?1:0),0,{id:source,group:to.group});save(next)}
+toggle.onclick=()=>{editing=!editing;side.classList.toggle('sidebar-arranging',editing);toggle.textContent=bssc?(editing?'Done':'Edit order'):(editing?'✓ Done arranging':'⚙ Arrange sidebar menu');toggle.setAttribute('aria-pressed',String(editing));toggle.title=editing?'Done arranging modules — changes save automatically':'Sidebar setup: reorder modules'};
+side.addEventListener('click',e=>{if(editing&&e.target.closest('[data-sidebar-item]')){e.preventDefault();e.stopImmediatePropagation()}},true);
+for(const el of items){el.dataset.sidebarItem=id(el);const handle=document.createElement('span');handle.className='sidebar-drag-handle';handle.textContent='⠿';handle.draggable=true;handle.tabIndex=0;handle.setAttribute('role','button');handle.setAttribute('aria-label','Drag to reorder '+el.textContent.trim());handle.title='Drag to reorder; use arrow keys to move';el.append(handle);
+handle.addEventListener('dragstart',e=>{if(!editing){e.preventDefault();return}dragged=id(el);e.dataTransfer.setData('text/plain',dragged);e.dataTransfer.effectAllowed='move';e.stopPropagation()});
+handle.addEventListener('dragend',()=>{dragged=null;side.querySelectorAll('.sidebar-drop-target').forEach(x=>x.classList.remove('sidebar-drop-target'))});
+handle.addEventListener('keydown',e=>{if(!editing||!['ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();e.stopPropagation();const at=rows.findIndex(r=>r.id===id(el)),target=rows[at+(e.key==='ArrowUp'?-1:1)];if(target){move(id(el),target.id,e.key==='ArrowDown');handle.focus()}});
+el.addEventListener('dragover',e=>{if(editing&&dragged){e.preventDefault();el.classList.add('sidebar-drop-target')}});
+el.addEventListener('dragleave',()=>el.classList.remove('sidebar-drop-target'));
+el.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();e.stopPropagation();const after=e.clientY>el.getBoundingClientRect().top+el.getBoundingClientRect().height/2;move(dragged,id(el),after);el.classList.remove('sidebar-drop-target');dragged=null});
+}
+for(const g of groups){g.label.addEventListener('dragover',e=>{if(editing&&dragged)e.preventDefault()});g.label.addEventListener('drop',e=>{if(!editing||!dragged)return;e.preventDefault();const next=rows.filter(r=>r.id!==dragged).map(r=>({...r}));const at=next.findIndex(r=>r.group>g.index);next.splice(at<0?next.length:at,0,{id:dragged,group:g.index});save(next);dragged=null})}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
