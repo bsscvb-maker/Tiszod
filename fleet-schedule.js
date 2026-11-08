@@ -11,7 +11,19 @@ function createFleetScheduleDateEditor({esc,ownershipDate,ownershipIso,getAsset,
   if(editing)row.querySelector('input[type="date"]').focus();
   else row.querySelector('[data-edit-schedule]').focus();
  }
+ function selectedRows(){
+  return [...document.querySelectorAll('#assetRecommended [data-select-service]:checked')].map(el=>Number(el.dataset.selectService));
+ }
+ function updateSelection(){
+  const count=selectedRows().length;
+  const button=document.getElementById('completeSelected');
+  const status=document.getElementById('scheduleSelectionCount');
+  button.disabled=count===0;
+  button.textContent=count?'Complete '+count+(count===1?' item':' items'):'Complete selected items';
+  status.textContent=count+' selected';
+ }
  return {
+  selectedRows,updateSelection,
   get saving(){return saving},
   notes(task){
    const notes=String(task.notes??'').trim();
@@ -64,11 +76,12 @@ function createFleetScheduleDateEditor({esc,ownershipDate,ownershipIso,getAsset,
     for(const {key,value} of changes)task[key]=value;
     if(getAsset()===asset&&!document.getElementById('assetView').hidden&&
       !document.getElementById('assetRecommended').hidden){
-     const selected=[...document.querySelectorAll('#assetRecommended [data-select-service]:checked')].map(el=>el.dataset.selectService);
+     const selected=selectedRows();
      renderRecommended(asset);
      for(const el of document.querySelectorAll('#assetRecommended [data-select-service]')){
-      el.checked=selected.includes(el.dataset.selectService);
+      el.checked=selected.includes(Number(el.dataset.selectService));
      }
+     updateSelection();
      document.querySelector('[data-edit-schedule="'+sheetRow+'"]')?.focus();
      document.getElementById('scheduleDateStatus').textContent='Schedule saved for '+task.task+'.';
     }

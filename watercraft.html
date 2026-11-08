@@ -373,7 +373,9 @@ main:has(#categoryView:not([hidden]),#vehicleLoading:not([hidden])) .topline{dis
 #assetRecommended .complete-grid .complete-wide{grid-column:1/-1}
 #assetRecommended .complete-actions{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
 #assetRecommended .complete-actions button{padding:10px 16px;border-radius:5px;border:1px solid #79aaff;background:#315d99;color:white;font-weight:700;cursor:pointer}
-#assetRecommended .complete-actions button:disabled{opacity:.6;cursor:wait}
+#assetRecommended .complete-actions button:disabled{opacity:.6;cursor:default}
+.work-task-picker{max-height:16rem;overflow:auto}
+#assetRecommended tr:has([data-select-service]:checked){background:#223d60}
 #assetRecommended .complete-actions [type=button]{background:#26394f}
 #assetRecommended .complete-message{min-height:20px;color:#b9edcb}
 @media(max-width:600px){#assetRecommended .complete-grid{grid-template-columns:1fr}}
@@ -641,7 +643,7 @@ function renderRecommended(a){
  const titles=['Past due dates','Coming up in 60 days','Later or no date listed'];
  const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+scheduleDateEditor.notes(task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+scheduleDateEditor.field(task)+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button> '+scheduleDateEditor.action(task)+'</td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2019'?'<p class="recommend-warning">This Ram 3500 is a 2019. Update the vehicle year to match the confirmed record.</p>':'';
- panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected">Complete selected items</button><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Select all items completed during one visit, then choose Complete selected items. New to-dos appear here alongside your imported schedule. Choose Edit to change a due date or due reading. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected" disabled>Complete selected items</button><span id="scheduleSelectionCount" role="status">0 selected</span><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Check each item you completed, even across different sections, then choose Complete selected items to record one service visit. New to-dos appear here alongside your imported schedule. Choose Edit to change a due date or due reading. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
@@ -1438,11 +1440,11 @@ document.body.append(workDialog);workDialog.addEventListener('cancel',e=>{if(wor
 workDialog.querySelector('#cancelWorkEntry').onclick=()=>workDialog.close();
 let workTarget=null,workMode='service';
 function openWorkDialog(mode,selected=[]){
- workTarget=asset;workMode=mode;const attention=new Set(dueItems(asset).map(x=>x.task.sheetRow));const tasks=(scheduleFor(asset)?.tasks||[]).filter(task=>attention.has(task.sheetRow)||selected.includes(task.sheetRow)),todo=mode==='todo';
+ workTarget=asset;workMode=mode;const tasks=scheduleFor(asset)?.tasks||[],todo=mode==='todo';
  document.getElementById('workEntryTitle').textContent=todo?'Add service to-do':'Record completed service';
  document.getElementById('workVehicleName').textContent=[asset.year,asset.make,asset.model].join(' ');
  const field=(label,name,type='text',value='',required=false)=>'<label>'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'></label>';
- document.getElementById('workEntryFields').innerHTML=(todo?'': '<fieldset class="complete-wide"><legend>Select the remaining work you completed</legend>'+tasks.map(t=>'<label class="work-check"><input type="checkbox" name="tasks" value="'+t.sheetRow+'" '+(selected.includes(t.sheetRow)?'checked':'')+'>'+esc(t.task)+'</label>').join('')+'</fieldset>')+field(todo?'Service / repair needed':'Other work completed','item','text','',todo)+field(todo?'Date added':'Completed date','date','date',localServiceDate(),true)+field(usesHours(asset)?'Current hours':'Odometer reading','reading','number',mileageFor(asset)?.currentMileage??asset.reportOdometer??'',!todo)+(todo?field('Due date','nextDate','date')+field(usesHours(asset)?'Due at hours':'Due at mileage','nextReading','number')+field('Repeat interval (e.g. 6 months or 5,000 miles; blank for one-time)','interval')+field('Priority','priority','text','Normal'):'')+field(todo?'Estimated cost ($)':'Total visit cost ($)','cost','number')+field('Shop / person doing the work','provider')+'<label class="complete-wide">Notes / symptoms / parts needed<textarea name="notes" rows="3"></textarea></label>';
+ document.getElementById('workEntryFields').innerHTML=(todo?'': '<fieldset class="complete-wide work-task-picker"><legend>Items completed on this visit</legend>'+tasks.map(t=>'<label class="work-check"><input type="checkbox" name="tasks" value="'+t.sheetRow+'" '+(selected.includes(t.sheetRow)?'checked':'')+'>'+esc(t.task)+'</label>').join('')+'</fieldset>')+field(todo?'Service / repair needed':'Other work completed','item','text','',todo)+field(todo?'Date added':'Completed date','date','date',localServiceDate(),true)+field(usesHours(asset)?'Current hours':'Odometer reading','reading','number',mileageFor(asset)?.currentMileage??asset.reportOdometer??'',!todo)+(todo?field('Due date','nextDate','date')+field(usesHours(asset)?'Due at hours':'Due at mileage','nextReading','number')+field('Repeat interval (e.g. 6 months or 5,000 miles; blank for one-time)','interval')+field('Priority','priority','text','Normal'):'')+field(todo?'Estimated cost ($)':'Total visit cost ($)','cost','number')+field('Shop / person doing the work','provider')+'<label class="complete-wide">Notes / symptoms / parts needed<textarea name="notes" rows="3"></textarea></label>';
  const itemCosts=document.createElement('div');itemCosts.id='workItemCosts';itemCosts.className='complete-wide';document.getElementById('workEntryFields').append(itemCosts);updateWorkItemCosts();
  document.getElementById('workEntryStatus').textContent='';workDialog.querySelector('[type=submit]').disabled=false;workDialog.showModal();(workDialog.querySelector('[name=tasks]')||workDialog.querySelector('[name=item]'))?.focus();
 }
@@ -1506,6 +1508,9 @@ const scheduleDateEditor=createFleetScheduleDateEditor({esc,ownershipDate,owners
  getAsset:()=>asset,scheduleFor,writeChanges:(row,changes)=>fleetWriteRanges(changes.map(({column,value})=>({sheet:'Portal Service Schedules',range:column+row,values:[[value]]}))),
  workBusy:()=>workDialog.dataset.saving==='true',renderRecommended
 });
+document.getElementById('assetRecommended').addEventListener('change',e=>{
+ if(e.target.matches('[data-select-service]'))scheduleDateEditor.updateSelection();
+});
 document.getElementById('assetRecommended').addEventListener('click',e=>{
  if(!asset)return;
  const scheduleAction=e.target.closest('[data-edit-schedule],[data-save-schedule],[data-cancel-schedule]');
@@ -1515,8 +1520,8 @@ document.getElementById('assetRecommended').addEventListener('click',e=>{
  const button=e.target.closest('[data-complete-row]');
  if(button){openWorkDialog('service',[Number(button.dataset.completeRow)]);return}
  if(e.target.id==='completeSelected'){
-  const selected=Array.from(document.querySelectorAll('[data-select-service]:checked'),x=>Number(x.dataset.selectService));
-  openWorkDialog('service',selected);
+  const selected=scheduleDateEditor.selectedRows();
+  if(selected.length)openWorkDialog('service',selected);
  }
 });
 document.getElementById('assetPhotoInput').addEventListener('change',async e=>{
@@ -1564,5 +1569,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-edit"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-batch"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
 
