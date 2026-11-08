@@ -282,3 +282,32 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas)>img{display:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.42;pointer-events:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-readout,.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-online{z-index:5;pointer-events:none}
+
+/* Medical concept dashboard: full-width neon panels, preserving actual source data */
+#medical-todd .medical-panel:has(.medical-command-dashboard){background:linear-gradient(140deg,#061427,#0b2238);border-color:#167da7}
+.medical-concept-summary{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
+.medical-concept-panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.medical-concept-panel{min-width:0;padding:15px;border:1px solid #168fba;border-radius:15px;background:linear-gradient(155deg,#0d2b44,#071728);box-shadow:inset 0 0 15px #00bfff11,0 0 14px #00aaff16}
+.medical-concept-panel h3{color:#e4f8ff;margin:0 0 14px;font-size:1.02rem}
+.medical-concept-panel small{color:#95b5c5;font-size:.74rem}
+.medical-concept-composition{display:grid;grid-template-columns:minmax(125px,.9fr) minmax(150px,1.1fr);gap:12px;align-items:center}
+.medical-concept-composition h3{grid-column:1/-1}
+.medical-composition-donut{width:min(100%,190px);aspect-ratio:1;border-radius:50%;background:conic-gradient(#19415d,#0e2336);display:grid;place-items:center;margin:auto;box-shadow:0 0 18px #05bfff44}
+.medical-composition-center{width:72%;height:72%;border-radius:50%;background:#081c2d;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.medical-composition-center strong{font-size:clamp(1.15rem,2.5vw,1.8rem);color:#fff}
+.medical-composition-center small{color:#b3d7e5}
+.medical-composition-legend{display:grid;gap:10px}
+.medical-composition-legend>div{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;background:#0a2438;border-radius:6px;font-size:.76rem}
+.medical-progress-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid #21536b;font-size:.85rem}
+.medical-progress-row strong{color:#8deec6;text-align:right}
+.medical-vital-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.medical-vital-grid>div{border:1px solid #285c79;border-radius:10px;padding:12px 8px;background:#0b253b}
+.medical-vital-grid span,.medical-vital-grid strong{display:block}
+.medical-vital-grid span{color:#a4d7eb;font-size:.72rem}
+.medical-vital-grid strong{font-size:.9rem;margin-top:8px}
+.medical-key-row{display:grid;grid-template-columns:1fr auto;gap:6px 10px;margin-bottom:12px;font-size:.8rem}
+.medical-key-row strong{color:#a9f5e6}
+.medical-key-track{grid-column:1/-1;height:7px;border-radius:8px;background:#193c55;overflow:hidden}
+.medical-key-track span{display:block;height:100%;background:linear-gradient(90deg,#25aaff,#73f5e5);border-radius:8px;box-shadow:0 0 8px #00dfff}
+@media(max-width:900px){.medical-concept-panels{grid-template-columns:1fr 1fr}.medical-concept-summary{grid-template-columns:1fr}}
+@media(max-width:650px){.medical-concept-panels{grid-template-columns:1fr}.medical-concept-composition{grid-template-columns:1fr 1fr}.medical-command-dashboard{gap:10px}}
