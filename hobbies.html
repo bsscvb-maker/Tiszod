@@ -6,16 +6,18 @@
 #legal-view{width:100%;max-height:none;margin:0;overflow:visible}
 #legal-view .recreation-todd-grid > .legal-file{padding:0;overflow:hidden}
 #legal-view .recreation-todd-grid > .legal-file > strong{display:none}
-#legal-view :is(.recreation-todd-grid,.recreation-membership-grid) .legal-thumbnail{height:auto;aspect-ratio:1}
+#legal-view .recreation-todd-grid .legal-thumbnail{height:auto;aspect-ratio:1}
+#legal-view .recreation-membership-grid .legal-thumbnail{height:auto;aspect-ratio:5/3}
 body[data-th-page="hobbies"] #legal-view :is(.recreation-todd-grid,.recreation-membership-grid) .legal-thumbnail-art{inset:0}
-#legal-view .recreation-todd-grid img[src$="indian-cove.webp"],
-#legal-view .recreation-todd-grid img[src$="black-mild-mark.jpg"]{background:#fff}
+#legal-view .recreation-todd-grid img[src$="indian-cove.webp"]{background:#fff}
 #legal-view .recreation-membership-grid .legal-thumbnail-art{background:#0d1520}
 .family-collections .recreation-person{position:relative}
 body[data-th-page="hobbies"] .legal-file > .legal-kind,
 body[data-th-page="hobbies"] .legal-thumbnail-label{display:none}
 body[data-th-page="hobbies"] .legal-thumbnail-art{inset:8px}
 body[data-th-page="hobbies"] .legal-thumbnail img{object-fit:contain;object-position:center}
+body[data-th-page="hobbies"] .recreation-person:is([data-person="Zach"],[data-person="Tracy"]) .legal-thumbnail-art{inset:0}
+body[data-th-page="hobbies"] .recreation-person:is([data-person="Zach"],[data-person="Tracy"]) .legal-thumbnail img{object-fit:cover}
 body[data-th-page="hobbies"] .recreation-person > strong{padding-right:42px}
 #hobby-portrait-status:empty{display:none}
 .recreation-portrait{position:absolute;top:10px;right:14px;width:36px;height:36px;display:grid;place-items:center;border:2px solid #c5d8ef;border-radius:50%;color:#eaf2ff;background:#28415c no-repeat;font-weight:800}
@@ -104,4 +106,4 @@ window.thStart=async()=>{
   }
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
-</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-art"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=20261108-recreation-lazy"></script></body></html>
+</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-photos"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=20261108-recreation-lazy"></script></body></html>

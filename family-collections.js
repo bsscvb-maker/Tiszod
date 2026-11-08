@@ -17,7 +17,7 @@
   'medical/Aiden': 'aiden-medical', 'medical/Alexis': 'alexis-medical',
   'medical/Tracy': 'tracy-medical', 'medical/Todd': 'todd-medical',
   'hobbies/Aiden': 'aiden-recreation', 'hobbies/Alexis': 'alexis-recreation',
-  'hobbies/Todd': 'command-photos/off-road-jaguar-chrome.jpg', 'hobbies/Tracy': 'assets/hobbies/tracy-garden.svg', 'hobbies/Zach': 'assets/hobbies/zach-trail.svg', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
+  'hobbies/Todd': 'command-photos/off-road-jaguar-chrome.jpg', 'hobbies/Tracy': 'assets/hobbies/tracy-garden-photo.jpg', 'hobbies/Zach': 'assets/hobbies/zach-trail-photo.jpg', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
   'family/Aiden/01 School & IEP': 'classroom', 'family/Alexis/01 School': 'alexis-school',
   'family/Aiden/01 School & IEP/Early Childhood Special Education': 'early-childhood',
   'family/Aiden/01 School & IEP/Preschool Screening & Assessment': 'preschool',
@@ -60,7 +60,7 @@
   'hobbies/Alexis/Girl Scouts': 'scouts',
   'hobbies/Alexis/Horseback Riding': 'horse',
   'hobbies/Todd/Tickets': 'assets/hobbies/tickets-concert.jpg',
-  'hobbies/Todd/Black & Mild': 'assets/hobbies/black-mild-mark.jpg',
+  'hobbies/Todd/Black & Mild': 'assets/hobbies/black-mild-cover.jpg',
   'hobbies/Todd/Freebirds': 'freebirds-logo.svg'
  }));
  const coverFor = path => {
