@@ -100,7 +100,7 @@ window.thMedical3D={
      const model=gltf.scene;
      const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
      if(!size.y||!Number.isFinite(size.y))throw new Error('Invalid 3D model bounds');
-     model.position.sub(center);model.scale.setScalar(4.05/size.y);
+     const scale=4.05/size.y;model.scale.setScalar(scale);model.position.copy(center).multiplyScalar(-scale);
      model.traverse(obj=>{if(obj.isMesh){obj.frustumCulled=false;obj.castShadow=false;obj.receiveShadow=false;}});
      realisticBody.add(model);realisticReady=true;
      for(const p of parts)p.visible=state.mode!=='skin';
