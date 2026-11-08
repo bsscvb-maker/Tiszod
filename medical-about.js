@@ -117,26 +117,21 @@
     figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
     const grid=make('dl'),height=heightInches(profile.height);
     const composition=compositionReadings(profile);
-    const scaleWeights=composition.filter(row=>Number.isFinite(asPounds(row)));
-    const weights=[...api.weights().filter(row=>!scaleWeights.some(scale=>scale.date?.slice(0,10)===row.date?.slice(0,10)&&asPounds(scale)===asPounds(row))),...scaleWeights]
-      .sort((a,b)=>measurementTime(a)-measurementTime(b));
-    const current=weights.at(-1),prior=weights.at(-2);
-    const currentWeight=asPounds(current),priorWeight=asPounds(prior);
+    const weights=api.weights().slice(-2).reverse().map(asPounds);
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
-    grid.children[0].after(comparison('Weight',currentWeight,priorWeight,' lb',-1));
-    grid.append(comparison('BMI',current?.bmi??bmiFor(currentWeight,height),prior?.bmi??bmiFor(priorWeight,height)));
     const measurements=make('div');measurements.className='medical-measurements';
     measurements.append(make('h3','Vitals'),grid);
-    if(composition.length){
+    if(composition.length||weights.some(Number.isFinite)){
       const readings=make('dl');
       for(const [label,key,unit,preferred] of [
-        ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',0],
-        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0],['Bone mass','boneMass','%',0]
+        ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',-1],
+        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',1],['Bone mass','boneMass','%',0]
       ]){
         const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
-        readings.append(comparison(label,values[0],values[1],unit,preferred));
+        const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
+        readings.append(comparison(label,pair[0],pair[1],unit,preferred));
       }
       const formatTime=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
       const dates=make('p');dates.className='medical-measurement-dates';
