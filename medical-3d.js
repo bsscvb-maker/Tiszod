@@ -31,6 +31,10 @@ function sampleProfile(profile,y){
  }
  return profile[profile.length-1][1];
 }
+function smoothRange(start,end,value){
+ const t=Math.max(0,Math.min(1,(value-start)/(end-start)));
+ return t*t*(3-2*t);
+}
 function fitFrontReference(vertex){
  const y=vertex.y;
  const armEdge=Math.max(0,Math.min(1,(Math.abs(vertex.x)-.36)/.16));
@@ -39,6 +43,16 @@ function fitFrontReference(vertex){
  const bodyWidth=sampleProfile(BODY_WIDTH,y);
  vertex.x*=bodyWidth+(sampleProfile(ARM_WIDTH,y)-bodyWidth)*arm;
  vertex.y=sampleProfile(FRONT_HEIGHT,y)-.13*arm*Math.max(0,Math.min(1,(1.18-y)/.8));
+
+ // Continue the wrist line into a relaxed inward sweep of the fingers.
+ const fingers=armEdge*(1-smoothRange(-.35,-.11,y))*smoothRange(-.57,-.45,y);
+ vertex.x-=Math.sign(vertex.x)*.062*fingers;
+ vertex.z+=.087*fingers;
+ // The reference is looking slightly upward. Pivot above the neck joint.
+ const chinLift=.14*smoothRange(1.39,1.57,y);
+ const headY=vertex.y-1.48,headZ=vertex.z-.015;
+ vertex.y=1.48+headY*Math.cos(chinLift)+headZ*Math.sin(chinLift);
+ vertex.z=.015+headZ*Math.cos(chinLift)-headY*Math.sin(chinLift);
  return vertex;
 }
 function remapMeshes(THREE,root,{copy=false}={}){
@@ -82,16 +96,17 @@ function getHeadGeometry(THREE){
 }
 
 // Cyan light follows the silhouette as the model rotates.
-function scannerMaterial(THREE,options,edge){
+function scannerMaterial(THREE,options,edge,tint=0x35c6ff){
  const material=new THREE.MeshStandardMaterial(options);
  material.onBeforeCompile=shader=>{
   shader.uniforms.scannerEdge={value:edge};
-  shader.fragmentShader='uniform float scannerEdge;\n'+shader.fragmentShader.replace(
+  shader.uniforms.scannerTint={value:new THREE.Color(tint)};
+  shader.fragmentShader='uniform float scannerEdge;\nuniform vec3 scannerTint;\n'+shader.fragmentShader.replace(
    '#include <emissivemap_fragment>',
    `#include <emissivemap_fragment>
    float grazing=1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0);
-   totalEmissiveRadiance+=vec3(0.035,0.56,1.0)*scannerEdge*
-       (0.35*pow(grazing,2.5)+1.3*pow(grazing,8.0));`
+   totalEmissiveRadiance+=scannerTint*scannerEdge*
+       (0.37*pow(grazing,2.1)+1.55*pow(grazing,8.0));`
   );
  };
  return material;
@@ -114,11 +129,14 @@ function getAtlas(THREE){
   if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
    throw Error('Anatomy atlas layers are incomplete.');
   }
-  const atlasMuscle=scannerMaterial(THREE,{color:0x924b43,roughness:.43,metalness:.17},.86);
+  const atlasMuscle=scannerMaterial(THREE,{color:0x814a47,roughness:.41,metalness:.17},.91);
+  const atlasWarmFiber=scannerMaterial(THREE,{
+   color:0xa76047,emissive:0x8c3515,emissiveIntensity:.19,roughness:.41,metalness:.15
+  },.72);
   const atlasFascia=scannerMaterial(THREE,{color:0x5e809f,roughness:.40,metalness:.24},1.08);
   const atlasBone=scannerMaterial(THREE,{color:0x8caec7,roughness:.48,metalness:.15},.75);
   const atlasCutaway=scannerMaterial(THREE,{
-   color:0x62466c,roughness:.46,transparent:true,opacity:.23,depthWrite:false
+   color:0x735872,roughness:.42,transparent:true,opacity:.30,depthWrite:false
   },.65);
   scene.traverse(node=>{
    if(!node.isMesh)return;
@@ -127,7 +145,8 @@ function getAtlas(THREE){
    while(layer&& !/^(skeleton|superficialmuscles|deepmuscles)$/i.test(layer.name.replace(/[^a-z]/gi,'')))layer=layer.parent;
    if(layer?.name.toLowerCase()==='skeleton')node.material=atlasBone;
    else if(/pectoralismajor|rectusabdominis|externaloblique|serratusanterior/.test(name))node.material=atlasCutaway;
-   else if(/fascia|tendon|aponeurosis|frontalis|orbicularis|temporalis/.test(name))node.material=atlasFascia;
+   else if(/fascia|tendon|aponeurosis|frontalis|orbicularis|temporalis|interosseous|lumbrical/.test(name))node.material=atlasFascia;
+   else if(/biceps|brachioradialis|rectusfemoris|vastus|sartorius|gastrocnemius|tibialisanterior/.test(name))node.material=atlasWarmFiber;
    else node.material=atlasMuscle;
   });
   const scale=4.05/size.y,center=box.getCenter(new THREE.Vector3());
@@ -177,7 +196,11 @@ window.thMedical3D={
    const surface=new THREE.Group(), muscles=new THREE.Group(), face=new THREE.Group(), skeleton=new THREE.Group();
    const organs=new THREE.Group(), skinMeshes=[];
    let atlas,atlasSkeleton,atlasDeep,atlasMuscles,sculptedHead;
-   const atlasFaceMeshes=[];
+   const atlasFaceMeshes=[],atlasJointMeshes=[];
+   const jointGlow=scannerMaterial(THREE,{
+    color:0x327fba,emissive:0x0b4d8d,emissiveIntensity:.35,
+    transparent:true,opacity:.58,depthWrite:false,roughness:.44
+   },1.24,0x71e9ff);
    const headMaterial=scannerMaterial(THREE,{vertexColors:true,roughness:.63,metalness:.08},.80);
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
@@ -283,14 +306,18 @@ window.thMedical3D={
    function system(name){
     const group=new THREE.Group();organs.add(group);systems[name]=group;return group;
    }
-   const lung=organMaterial(0x126ac9,0x1257ff,.73);
-   const violetLung=organMaterial(0x775ad2,0x7d39d7,.66);
+   const lung=scannerMaterial(THREE,{
+    color:0x126ac9,emissive:0x1257ff,emissiveIntensity:.65,roughness:.34,transparent:true,opacity:.79,depthWrite:false
+   },1.25,0x4ce7ff);
+   const violetLung=scannerMaterial(THREE,{
+    color:0x744abe,emissive:0x9529bc,emissiveIntensity:.55,roughness:.37,transparent:true,opacity:.70,depthWrite:false
+   },1.1,0xf49aff);
    const lungDetail=organMaterial(0x66dbff,0x298fff);
    const violetDetail=organMaterial(0xf2abff,0x9c4ce0);
    const lungBranches=organMaterial(0x4296df,0x246cf0,.68);
    const heart=scannerMaterial(THREE,{
     color:0xdf432b,emissive:0xff4925,emissiveIntensity:.68,roughness:.31
-   },.13);
+   },1.05,0xffac59);
    const vessel=organMaterial(0xffbd67,0xff602f);
    const liver=organMaterial(0x263f91,0x153caa),gut=organMaterial(0x6e38d0,0x5226c5),gutEdge=organMaterial(0xb86ef2,0x7734e3);
    const lungs=system('lungs'),cardiac=system('heart'),digestive=system('digestive'),brain=system('brain');
@@ -305,26 +332,51 @@ window.thMedical3D={
     }
     ell(brain,gutEdge,s*.063,1.82,.101,.079,.09,.102);
    }
-   tube(lungs,lungDetail,[[0,1.43,.119],[0,1.26,.132],[0,1.095,.19]],.019);
-   loft(cardiac,heart,[[.66,.095,.286,.014,.022],[.72,.062,.288,.06,.054],[.81,.041,.273,.109,.075],[.9,.035,.24,.102,.073],[.963,.012,.219,.065,.058]]);
+   const airway=organMaterial(0x815b82,0x57375e,.77);
+   tube(lungs,airway,[[0,1.40,.119],[0,1.26,.132],[0,1.095,.19]],.013);
+   loft(cardiac,heart,[
+    [.68,.124,.298,.013,.019],[.73,.111,.306,.055,.057],[.81,.082,.296,.094,.077],
+    [.89,.045,.266,.103,.075],[.947,.026,.234,.079,.062],[.977,.014,.223,.032,.035]
+   ]);
    tube(cardiac,vessel,[[.028,.887,.294],[.029,.981,.273],[.052,1.033,.235],[.112,1.008,.208]],.026);
    tube(cardiac,vessel,[[-.029,.869,.322],[.024,.835,.353],[.043,.764,.336],[.09,.711,.313]],.008);
    tube(cardiac,vessel,[[.022,.837,.352],[-.014,.803,.347],[-.042,.772,.322]],.004);
    tube(cardiac,vessel,[[.042,.775,.338],[.09,.785,.344],[.132,.816,.304]],.004);
    tube(cardiac,vessel,[[.056,.906,.291],[.094,.957,.274],[.154,.958,.237]],.012);
-   ell(digestive,liver,-.094,.62,.151,.184,.085,.112,.22);
-   ell(digestive,organMaterial(0xba6a63,0xae3628),.121,.518,.166,.093,.115,.074,-.47);
-   tube(digestive,gutEdge,[[-.125,.42,.199],[-.154,.29,.215],[-.145,.08,.194],[-.064,.014,.168],[.053,.036,.167],[.141,.117,.179],[.156,.304,.195],[.13,.386,.19],[.016,.401,.185],[-.125,.42,.199]],.025);
-   tube(digestive,gut,Array.from({length:56},(_,i)=>{
-    const t=i/55;
-    return [Math.sin(t*15*Math.PI)*(.077+.027*t),.076+t*.28,.218+Math.cos(t*9*Math.PI)*.021];
-   }),.016);
-   const gutHighlight=organMaterial(0xaa6ff1,0x7e3dee);
-   for(let i=0;i<8;i++){
-    const y=.118+i*.031;
-    tube(digestive,gutHighlight,[[-.14,y,.231],[-.155,y-.008,.226],[-.167,y,.21]],.004);
-    tube(digestive,gutHighlight,[[.133,y,.22],[.15,y-.007,.229],[.168,y,.211]],.004);
+   loft(digestive,liver,[
+    [.505,-.137,.162,.031,.034],[.548,-.117,.174,.114,.079],[.620,-.100,.176,.172,.108],
+    [.684,-.078,.159,.143,.086],[.712,-.088,.142,.054,.033]
+   ]);
+   const stomach=scannerMaterial(THREE,{
+    color:0xac4d60,emissive:0x973a4e,emissiveIntensity:.35,roughness:.40
+   },.63,0xffb18a);
+   loft(digestive,stomach,[
+    [.436,.001,.193,.033,.031],[.461,.049,.211,.092,.060],[.513,.102,.215,.096,.074],
+    [.574,.134,.194,.076,.068],[.622,.113,.165,.048,.047],[.651,.069,.149,.019,.020]
+   ]);
+   const colonPath=[
+    [-.135,.145,.227],[-.153,.220,.235],[-.157,.321,.237],[-.136,.412,.224],
+    [-.070,.430,.231],[.015,.418,.236],[.106,.438,.234],[.166,.454,.213],
+    [.177,.381,.220],[.170,.279,.228],[.158,.181,.221],[.117,.128,.232],
+    [.047,.127,.239],[.008,.093,.243],[.018,.025,.229]
+   ];
+   const colon=tube(digestive,gutEdge,colonPath,.027);
+   const colonCurve=colon.geometry.parameters.path;
+   const colonShade=scannerMaterial(THREE,{
+    color:0x633eae,emissive:0x542bc2,emissiveIntensity:.46,roughness:.39
+   },.54,0xcc8dff);
+   for(let i=0;i<20;i++){
+    const point=colonCurve.getPointAt((i+.5)/20);
+    const lobe=ell(digestive,colonShade,point.x,point.y,point.z,.031,.019,.029);
+    lobe.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),colonCurve.getTangentAt((i+.5)/20));
    }
+   const coils=[
+    [-.103,.375,.242],[-.105,.329,.251],[-.049,.321,.255],[.035,.351,.253],[.111,.343,.247],
+    [.120,.300,.253],[.062,.282,.262],[-.039,.292,.265],[-.108,.271,.255],[-.095,.231,.257],
+    [-.016,.234,.269],[.074,.249,.263],[.113,.221,.251],[.086,.185,.252],[.006,.185,.264],
+    [-.054,.204,.260],[-.082,.168,.253],[-.043,.139,.251],[.014,.154,.252],[.061,.144,.245]
+   ];
+   tube(digestive,gut,coils,.014);
    for(let i=0;i<18;i++)ell(skeleton,pale,0,1.32-i*.083,-.11,.042,.029,.037);
    for(let i=0;i<7;i++)for(const s of [-1,1]){
     const y=1.12-i*.066;
@@ -364,7 +416,13 @@ window.thMedical3D={
     for(const mesh of atlasFaceMeshes)mesh.visible=!showHead;
     if(atlas){
      atlas.visible=detailed;
-     atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=mode==='anatomy'&&selected==='muscle';atlasSkeleton.visible=mode==='scan';
+     atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=mode==='anatomy'&&selected==='muscle';atlasSkeleton.visible=mode==='scan'||mode==='anatomy';
+     const showJoints=mode==='anatomy'&&!['muscle','brain'].includes(selected);
+     atlasSkeleton.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      mesh.visible=mode==='scan'||(showJoints&&mesh.userData.scannerJoint===true);
+     });
+     for(const {mesh,material} of atlasJointMeshes)mesh.material=mode==='scan'?material:jointGlow;
     }
     for(const mesh of skinMeshes)mesh.material=mode==='skin'?skin:mode==='scan'?scan:fascia;
     if(mode==='anatomy')skinMeshes[0].material=torsoAnatomy;
@@ -393,6 +451,13 @@ window.thMedical3D={
      if(name==='deepmuscles')atlasDeep=node;
     });
     body.add(atlas);
+    atlasSkeleton.traverse(mesh=>{
+     if(!mesh.isMesh)return;
+     const name=mesh.name.toLowerCase();
+     if(!/patella|metacarpal|metatarsal|phal(anx|anges)|calcaneus|talus/.test(name))return;
+     mesh.userData.scannerJoint=true;
+     atlasJointMeshes.push({mesh,material:mesh.material});
+    });
     atlas.updateMatrixWorld(true);
     const inverseBody=body.matrixWorld.clone().invert();
     atlasMuscles.traverse(node=>{
@@ -412,10 +477,17 @@ window.thMedical3D={
     state.setMode(state.mode);
    }).catch(error=>{if(stage.isConnected)console.warn('Sculpted scanner head unavailable.',error);});
    const orbit=new THREE.Group();scene.add(orbit);
-   const ringMaterial=new THREE.MeshBasicMaterial({color:0x00dfff,transparent:true,opacity:.55,side:THREE.DoubleSide});
+   const ringMaterial=new THREE.MeshBasicMaterial({
+    color:0x50dcff,transparent:true,opacity:.66,depthWrite:false
+   });
+   const ringGlow=new THREE.MeshBasicMaterial({
+    color:0x078cff,transparent:true,opacity:.13,depthWrite:false,blending:THREE.AdditiveBlending
+   });
    for(const [radius,y,width] of [[.49,-2.10,.011],[.68,-2.13,.019],[.83,-2.16,.008],[1.02,-2.17,.005]]){
     const ring=new THREE.Mesh(new THREE.TorusGeometry(radius,width,8,96),ringMaterial);
     ring.rotation.x=Math.PI/2;ring.position.y=y;orbit.add(ring);
+    const halo=new THREE.Mesh(new THREE.TorusGeometry(radius,width*2.8,8,96),ringGlow);
+    halo.rotation.copy(ring.rotation);halo.position.copy(ring.position);orbit.add(halo);
    }
    const grid=new THREE.GridHelper(5,18,0x127fba,0x124467);grid.position.y=-2.2;scene.add(grid);
    const scanBeam=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.025),new THREE.MeshBasicMaterial({color:0x86f9ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
@@ -449,7 +521,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     lastFrame=t;
