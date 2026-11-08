@@ -19,6 +19,18 @@
   href: link.href
  }));
 
+ function finance(query, matches) {
+  const collections = cardLinks('.finance-collection-cards a');
+  const items = collections.filter(item => matches(item.keywords)).map(item => ({
+   title:item.title, detail:'Open Finance collection', href:item.href
+  }));
+  const searchable = collections.filter(item => /(?:finance-documents|-transactions)\.html$/.test(new URL(item.href).pathname));
+  for (const item of searchable) items.push({
+   title:'Search '+item.title, detail:'Open with your search applied', href:withQuery(item.href,query)
+  });
+  return {items,note:items.length > searchable.length ? 'Matching collections and record searches' : 'Choose a collection to search its records.'};
+ }
+
  function pets() {
   return Array.from(document.querySelectorAll('.pet-tabs [role=tab]')).flatMap(tab => {
    const panel = document.getElementById(tab.getAttribute('aria-controls'));
@@ -242,6 +254,7 @@
   try {
    let outcome;
    if (scope === 'garage') outcome = await garage(query,matches);
+   else if (scope === 'finance') outcome = finance(query,matches);
    else if (scope === 'personal') outcome = await personal(query,matches,() => current === request);
    else if (scope === 'pets') outcome = {items:pets().filter(item => matches([item.title,item.detail,item.keywords].join(' ')))};
    else {

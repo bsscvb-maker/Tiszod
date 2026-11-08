@@ -2,6 +2,7 @@
 (()=>{
  const $=id=>document.getElementById(id),bank=document.body.dataset.bankHistory;
  const config=bank==='way2go'?{title:'Way2Go',sheet:'Portal Way2Go History',limit:1000,defaultSource:'W2Go - July.pdf'}:bank==='dollar'?{title:'Dollar Bank',sheet:'Portal Dollar Bank History',limit:8500,defaultSource:'dollar 2021-2025.xlsx'}:{title:'Capital One 360',sheet:'Portal Capital One History',limit:500,defaultSource:'Capital One.csv'};
+ let initialQuery=new URLSearchParams(location.search).get('q')?.slice(0,120)||'';
  let rows=[],filtered=[],page=1;const pageSize=100;
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const numeric=x=>x===''||x==null?null:Number(x),money=x=>x==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(x);
@@ -14,7 +15,9 @@
    if(data[0]?.[0]!=='ID')throw new Error('The history register headers could not be read.');
    rows=data.slice(1).filter(r=>r[0]).map(r=>({id:r[0],date:r[1]||'',description:r[2]||'',category:r[3]||'',reference:r[4]||'',withdrawal:numeric(r[5]),deposit:numeric(r[6]),net:numeric(r[7]),balance:numeric(r[8]),sourceType:r[9]||'',file:r[10]||'',sourceRow:r[11],comments:r[12]||'',flag:r[13]||'',originalDate:r[14]||'',raw:r[15]||'',kind:r[16]||'Transaction'}));
    options('history-source',[...new Set(rows.map(r=>r.file))],'All sources (may overlap)');options('history-year',[...new Set(rows.filter(r=>r.date).map(r=>r.date.slice(0,4)))].sort().reverse(),'All years');options('history-category',[...new Set(rows.map(r=>r.category).filter(Boolean))].sort(),'All categories');
-   reset();message('');$('th-connection').textContent='Private workbook connected';
+   reset();
+   if(initialQuery){$('history-source').value='';$('history-search').value=initialQuery;initialQuery='';render();}
+   message('');$('th-connection').textContent='Private workbook connected';
   }catch(e){message(e.message,true);throw e}finally{$('history-refresh').disabled=false}
  };
  function amountQuery(text){
