@@ -46,12 +46,24 @@
     const title=make('h3',label);title.prepend(dashboardIcon(symbol));return title;
   }
   const profileFilename = 'TisZod Medical About Me.json';
+  const vitalCards = [
+    ['restingHeartRate','Resting Heart Rate','▣','bpm'],
+    ['heartRate','Heart Rate','♡','bpm'],
+    ['oxygenSaturation','SpO₂','◌','%'],
+    ['heartRateVariability','Heart Rate Variability','⌁','ms']
+  ];
+  const vitalDateLabel = new Intl.DateTimeFormat('en-US',{
+    month:'short',day:'numeric',year:'numeric',timeZone:'UTC'
+  });
   const fields = [
     ['height','Height'], ['age','Age'], ['ageAsOf','Age recorded on'],
     ['pcp','Primary care physician'],
     ['eyeCare','Ophthalmologist or eye-care practice'],
     ['bloodPressure','Latest blood pressure (mmHg)'],['heartRate','Latest heart rate (bpm)'],
     ['oxygenSaturation','Latest SpO₂ (%)'],['temperature','Latest temperature (°F)'],
+    ['restingHeartRate','Latest resting heart rate (bpm)'],
+    ['heartRateVariability','Latest heart rate variability (ms)'],
+    ...vitalCards.map(([key,label])=>[key+'Date',label+' reading date']),
     ['nextInjectionDate','Next injection date'],['nextWeightDate','Next weight check date'],
     ['nextAppointmentDate','Next appointment date']
   ];
@@ -642,14 +654,20 @@
     const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
     vitalsPanel.append(panelHeading('Vitals (Latest)','⌁'));
     const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
-    for(const [key,label,symbol,unit] of [
-      ['bloodPressure','Blood Pressure','▣','mmHg'],['heartRate','Heart Rate','♡','bpm'],
-      ['oxygenSaturation','SpO₂','◌','%'],['temperature','Temperature','♨','°F']
-    ]){
+    for(const [key,label,symbol,unit] of vitalCards){
       const value=String(profile[key]??'').trim();
       const item=make('div');
       item.append(dashboardIcon(symbol),make('span',label),make('strong',value||'—'),
         make('small',value?unit:'Not recorded'));
+      const recorded=profile[key+'Date'];
+      const timestamp=/^\d{4}-\d{2}-\d{2}$/.test(recorded||'') ? Date.parse(recorded) : NaN;
+      if(value&&Number.isFinite(timestamp)){
+        const stamp=make('time',vitalDateLabel.format(timestamp));
+        stamp.dateTime=recorded;
+        const dateLine=make('small');
+        dateLine.append(stamp);
+        item.append(dateLine);
+      }
       vitalGrid.append(item);
     }
     vitalsPanel.id='medical-latest-vitals';
