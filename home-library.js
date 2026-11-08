@@ -29,6 +29,8 @@
   let readingGroup;
   let catalogPath = '';
   const manualBreadcrumb = get('manual-breadcrumb');
+  const manualView = get('library-manual-view');
+  const allManuals = {id: 'all-manual-files'};
   const readerItem = get('library-reader-item');
   let ranked = [];
   let previewTrigger;
@@ -205,7 +207,7 @@
       }
       documents = [...catalog.values()];
       catalogs = Object.fromEntries(sections.map(section => [section, thLibraryCatalog.build(documents.filter(file => file.section === section), section)]));
-      if (!currentCatalog()?.nodes.has(catalogPath)) catalogPath = '';
+      if (!(activeSection === 'Manuals' && catalogPath === allManuals.id) && !currentCatalog()?.nodes.has(catalogPath)) catalogPath = '';
       folders = scanned;
       loaded = true;
       if (failures.length || !saved) {
@@ -606,7 +608,7 @@
     const count = entry.count.toLocaleString() + (entry.count === 1 ? ' file' : ' files');
     status.textContent = activeSection === 'Manuals' && manualIndexUnavailable ? 'The English manuals index is unavailable. Refresh Drive to retry.' :
       searching ? (entries.length ? entries.length.toLocaleString() + ' matching groups' : 'No matching documents.') + (contentStatus ? ' ' + contentStatus : '') :
-      count;
+      activeSection === 'Manuals' && !entry.id ? count + ' across ' + new Set(catalog.byFile.values()).size.toLocaleString() + ' product groups' : count;
     if (!append) results.replaceChildren();
     const start = results.children.length;
     results.append(...entries.slice(start, visible).map(item => catalogCard(item, searching)));
@@ -624,10 +626,13 @@
       .map(file => ({file, rank: score(file, words)}))
       .filter(item => item.rank >= 0)
       .sort((a, b) => b.rank - a.rank || a.file.displayName.localeCompare(b.file.displayName, undefined, {numeric: true}));
-    if (section) { renderCatalog(currentCatalog(), words, append); return; }
+    const listingManuals = section === 'Manuals' && catalogPath === allManuals.id;
+    manualView.hidden = section !== 'Manuals';
+    manualView.textContent = listingManuals ? 'Browse by category' : 'View all manual files';
+    if (section && !listingManuals) { renderCatalog(currentCatalog(), words, append); return; }
     results.classList.remove('manual-card-grid');
     manualBreadcrumb.hidden = true;
-    get('library-results-title').textContent = words.length ? 'Search results' : 'Browse documents';
+    get('library-results-title').textContent = words.length ? 'Search results' : listingManuals ? 'All manual files' : 'Browse documents';
     const shown = Math.min(ranked.length, visible);
     const count = ranked.length === 1 ? '1 document' : ranked.length.toLocaleString() + ' documents';
     const summary = ranked.length ? count + (shown < ranked.length ? ' · Showing ' + shown : '') : 'No matching documents.';
@@ -691,13 +696,13 @@
 
   query.addEventListener('input', () => {
     closePreview();
-    catalogPath = '';
+    if (catalogPath !== allManuals.id) catalogPath = '';
     search(true);
   });
   get('library-search').addEventListener('submit', event => {
     event.preventDefault();
     closePreview();
-    catalogPath = '';
+    if (catalogPath !== allManuals.id) catalogPath = '';
     search(false);
   });
   category.addEventListener('change', () => { closePreview(); visible = pageSize; render(); });
@@ -708,6 +713,7 @@
   });
   refresh.addEventListener('click', retry);
   get('library-home-retry').addEventListener('click', retry);
+  manualView.addEventListener('click', () => moveCatalog(catalogPath === allManuals.id ? null : allManuals));
   more.addEventListener('click', () => { visible += pageSize; render(true); });
   window.thViewAdapter = {
     capture: () => ({catalogPath, query: query.value, category: category.value, globalQuery: globalQuery.value, visible}),
