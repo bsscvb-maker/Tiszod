@@ -240,7 +240,7 @@
         renderInjectionHistory();
         closeForm();
         pending={};
-        historyStatus.textContent=latest?'Injection updated.':'Injection saved.';
+        if(!latest)historyStatus.textContent='Injection saved.';
       }catch(error){
         renderInjectionHistory();
         status.textContent=error.message||'Could not save the dose.';

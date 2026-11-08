@@ -26,12 +26,15 @@ window.thMedicalFolders = (() => {
       .replace(/\b(\d{1,2}:\d{2}):\d{2}(?=\s*(?:AM|PM)?\s*$)/i,'$1');
     const area=make('div');area.className='medical-folder-table';
     area.classList.add('medical-injection-table');
-    const headers=['Dose #','Date','Time (Eastern)','Product','Reported Dose','Notes'];
+    const headers=['Dose #','Date','Time (Eastern)','Product','Reported Dose','Reactions'];
     if(edit)headers.unshift('Actions');
     area.append(table(headers,
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
         {
-          const cells=[item.doseNumber ?? '—',item.date,displayTime(item.time),item.product,item.dose ?? '—',item.notes]
+          const notes=String(item.notes??'').trim();
+          const reactions=!notes||/^(?:none|not recorded|calculated dose|(?:8\.5 mg\/mL vial, )?U-100 syringe\.?)$/i.test(notes)
+            ?'None':notes;
+          const cells=[item.doseNumber ?? '—',item.date,displayTime(item.time),item.product,item.dose ?? '—',reactions]
             .map(value=>value==null||String(value).trim()===''||/^not recorded$/i.test(String(value).trim())?'—':String(value));
           if(!edit)return cells;
           if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return ['—',...cells];
