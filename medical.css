@@ -247,3 +247,32 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-scanner-detail{font-size:.73rem;color:#9cbacb;line-height:1.4}
 .medical-scanner-v2[data-paused] :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.medical-scanner-v2 :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none!important}}
+
+/* Medical command center: iPad-first dashboard */
+.medical-command-dashboard{display:grid;gap:15px;margin:8px 0 22px;color:#e8f7ff}
+.medical-command-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #267a9b;padding-bottom:12px}
+.medical-command-title span{font-size:.74rem;letter-spacing:.14em;color:#65e6ff;font-weight:800}
+.medical-command-title strong{font-size:1.45rem;color:#f4fbff}
+.medical-command-nav{display:flex;flex-wrap:wrap;gap:8px}
+.medical-command-nav a{padding:10px 14px;border:1px solid #24638b;border-radius:9px;color:#b9edff;background:#10283f;text-decoration:none;font-weight:750}
+.medical-command-nav a:hover,.medical-command-nav a:focus-visible{background:#075b80;box-shadow:0 0 12px #04c8ff44}
+.medical-command-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.medical-command-metric{min-width:0;border:1px solid #1689ac;border-radius:12px;background:linear-gradient(150deg,#102f44,#081b2e);padding:12px 10px;box-shadow:inset 0 0 15px #01bfff12,0 4px 18px #0003}
+.medical-command-metric span{display:block;color:#92e9f3;font-size:.75rem;font-weight:800}
+.medical-command-metric strong{display:block;margin:8px 0;color:#fff;font-size:clamp(1.05rem,2vw,1.55rem);font-variant-numeric:tabular-nums}
+.medical-command-metric small{color:#9bd5c9;font-size:.67rem;line-height:1.4}
+.medical-command-stage{display:grid;grid-template-columns:minmax(145px,.8fr) minmax(230px,1.4fr) minmax(160px,1fr);gap:12px;align-items:stretch}
+.medical-command-stage>.medical-scanner{margin:0}
+.medical-command-systems,.medical-command-journey{min-width:0;padding:13px;border:1px solid #197b9d;border-radius:14px;background:linear-gradient(155deg,#0e2a42,#081827)}
+.medical-command-systems h3,.medical-command-journey h3{margin:0 0 12px;color:#9eeaff;font-size:1rem}
+.medical-command-system{display:block;width:100%;margin:0 0 7px;padding:10px 12px;text-align:left;border:1px solid #245878;border-radius:9px;color:#d4edff;background:#102c44;cursor:pointer;font-weight:700}
+.medical-command-system[aria-pressed=true]{border-color:#4be1ff;background:#075578;box-shadow:0 0 14px #00c8ff44}
+.medical-command-info{margin-top:14px;padding:10px;border-left:2px solid #49dbff;color:#a5d3e2;font-size:.76rem;line-height:1.5}
+.medical-command-journey strong{font-size:2rem;color:#6df3a4}
+.medical-command-journey p,.medical-command-journey small{color:#a5d0df;font-size:.8rem}
+.medical-command-journey svg{width:100%;height:auto;margin:15px 0;filter:drop-shadow(0 0 7px #42dbff88)}
+.medical-command-details{border:1px solid #295b73;border-radius:10px;padding:12px;margin-bottom:18px}
+.medical-command-details summary{cursor:pointer;font-weight:800;color:#b5e7ff}
+.medical-command-details .medical-measurements{margin-top:16px}
+@media(max-width:1100px){.medical-command-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.medical-command-stage{grid-template-columns:minmax(135px,.75fr) minmax(220px,1.35fr)}.medical-command-journey{grid-column:1/-1}}
+@media(max-width:650px){.medical-command-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.medical-command-stage{grid-template-columns:minmax(0,1fr)}.medical-command-journey{grid-column:auto}.medical-command-systems{display:flex;flex-wrap:wrap;gap:7px}.medical-command-systems h3,.medical-command-info{flex-basis:100%}.medical-command-system{width:auto;flex:1 1 105px;margin:0}.medical-command-stage .medical-scanner-stage{min-height:420px}}
