@@ -472,7 +472,56 @@
     const dateLabel=make('small',latest?'Latest recorded: '+formatTime.format(measurementTime(latest)):'Awaiting measurements');
     journey.append(dateLabel);
     stage.append(systems,scanner,journey);
-    dashboard.append(title,nav,metrics,stage);
+    const compositionPanel=make('section');compositionPanel.className='medical-concept-panel medical-concept-composition';
+    compositionPanel.append(make('h3','◉ Body Composition'));
+    const donut=make('div');donut.className='medical-composition-donut';
+    const center=make('div');center.className='medical-composition-center';
+    center.append(make('strong',Number.isFinite(latestWeight)?latestWeight.toFixed(1)+' lb':'—'),make('small','Total weight'));
+    donut.append(center);
+    const compositionLegend=make('div');compositionLegend.className='medical-composition-legend';
+    const fat=Number.isFinite(latestReading.bodyFat)?latestReading.bodyFat:null;
+    const muscleValue=Number.isFinite(latestReading.muscle)?latestReading.muscle:null;
+    const remaining=fat!==null&&muscleValue!==null?Math.max(0,100-fat-muscleValue):null;
+    if(fat!==null&&muscleValue!==null){
+      donut.style.background='conic-gradient(#f7bf4a 0 '+fat+'%,#4abfff '+fat+'% '+(fat+muscleValue)+'%,#39d5d1 '+(fat+muscleValue)+'% 100%)';
+      for(const [name,value,color] of [['Body fat',fat,'#f7bf4a'],['Muscle',muscleValue,'#4abfff'],['Other / unclassified',remaining,'#39d5d1']]){
+        const item=make('div');item.append(make('span','● '+name),make('strong',value.toFixed(1)+'%'));item.style.borderLeft='3px solid '+color;compositionLegend.append(item);
+      }
+    }else compositionLegend.append(make('p','Body composition measurements not yet available.'));
+    compositionPanel.append(donut,compositionLegend);
+    const progressPanel=make('section');progressPanel.className='medical-concept-panel';
+    progressPanel.append(make('h3','↗ Progress vs. Prior'));
+    for(const [symbol,label,value,unit,prior] of metricData){
+      const item=make('div');item.className='medical-progress-row';
+      const delta=Number.isFinite(value)&&Number.isFinite(prior)?value-prior:null;
+      item.append(make('span',label),make('strong',delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+unit));
+      progressPanel.append(item);
+    }
+    const panels=make('div');panels.className='medical-concept-panels';
+    const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
+    vitalsPanel.append(make('h3','♡ Vitals (Latest)'));
+    const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
+    for(const [label] of [['Blood pressure'],['Heart rate'],['SpO₂'],['Temperature']]){
+      const item=make('div');item.append(make('span',label),make('strong','Not recorded'));vitalGrid.append(item);
+    }
+    vitalsPanel.append(vitalGrid,make('small','Connect or enter confirmed vital readings to populate these fields.'));
+    const nextPanel=make('section');nextPanel.className='medical-concept-panel';
+    nextPanel.append(make('h3','▣ Next / Upcoming'));
+    for(const [label,detail] of [['Next injection','See injection history'],['Next weigh-in','Not scheduled'],['Next appointment','Not scheduled']]){
+      const item=make('div');item.className='medical-progress-row';item.append(make('span',label),make('strong',detail));nextPanel.append(item);
+    }
+    const keyPanel=make('section');keyPanel.className='medical-concept-panel';
+    keyPanel.append(make('h3','◈ Key Metrics'));
+    for(const [label,key] of [['Body fat','bodyFat'],['Muscle','muscle'],['Body water','water'],['Bone mass','boneMass']]){
+      const value=latestReading[key];
+      const row=make('div');row.className='medical-key-row';
+      row.append(make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
+      const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar);keyPanel.append(row);
+    }
+    const summaryPanels=make('div');summaryPanels.className='medical-concept-summary';
+    summaryPanels.append(compositionPanel,progressPanel);
+    panels.append(vitalsPanel,keyPanel,nextPanel);
+    dashboard.append(title,nav,metrics,stage,summaryPanels,panels);
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
