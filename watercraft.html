@@ -1569,6 +1569,11 @@ category='All Watercraft';
 vehicleQuery=new URLSearchParams(location.search).get('q')?.slice(0,120)||'';
 status=vehicleQuery?'all':'current';
 renderCategory();show('categoryView');
+const reportLink=new URLSearchParams(location.search),linkedAsset=reportLink.get('asset');
+if(linkedAsset){
+ const requested=assets.find(a=>String(a.vin||'').trim().toUpperCase()===linkedAsset||clean([a.year,a.make,a.model].filter(Boolean).join(' '))===linkedAsset);
+ if(requested){asset=requested;renderAsset(reportLink.get('tab')==='recommended'?'recommended':'details');show('assetView');}
+}
 requestAnimationFrame(()=>requestAnimationFrame(refreshAnnualUsage));
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
