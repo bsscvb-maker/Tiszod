@@ -315,32 +315,46 @@
     return item;
   }
 
-  let scannerPaused=false;
+  let scannerPaused=false,scannerLayer='skin';
   function bodyScanner(){
-    const figure=make('figure'), header=make('div'), stage=make('div');
-    figure.className='medical-scanner';
-    figure.setAttribute('aria-label','Body metrics');
+    const figure=make('figure'),header=make('div'),stage=make('div');
+    figure.className='medical-scanner medical-scanner-v2';
+    figure.setAttribute('aria-label','Interactive body scanner — visual illustration, not a medical scan');
     header.className='medical-scanner-header';
     stage.className='medical-scanner-stage';
-    const pause=action('Pause motion',()=>{
-      scannerPaused=!scannerPaused;
-      updateMotion();
-    });
+    const pause=action('Pause motion',()=>{scannerPaused=!scannerPaused;updateMotion()});
     pause.className='medical-scanner-pause';
-    function updateMotion(){
-      figure.toggleAttribute('data-paused',scannerPaused);
-      pause.textContent=scannerPaused?'Resume motion':'Pause motion';
-    }
-    updateMotion();
     const silhouette=make('img');
-    silhouette.src='assets/medical/body-scanner.svg?v=anatomy';silhouette.alt='Generic body diagram';
-    const ring=make('span'), sweep=make('span'), grid=make('span'), target=make('span');
+    silhouette.alt='Illustrated adult male body with natural skin tone';
+    const ring=make('span'),sweep=make('span'),grid=make('span'),target=make('span');
     ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
     grid.className='medical-scanner-grid';target.className='medical-scanner-target';
     for(const layer of [ring,sweep,grid,target])layer.setAttribute('aria-hidden','true');
-    header.append(make('span','Body scan','medical-scanner-title'),pause);
-    stage.append(grid,ring,silhouette,target,sweep);
-    figure.append(header,stage);
+    const controls=make('div');controls.className='medical-scanner-controls';
+    const modes=[['skin','Skin'],['anatomy','Anatomy'],['scan','X-ray']];
+    const buttons=modes.map(([mode,label])=>{
+      const button=action(label,()=>{scannerLayer=mode;updateLayer()});
+      button.className='medical-scanner-mode';button.dataset.mode=mode;controls.append(button);return button;
+    });
+    const badge=make('span','● SYSTEM ONLINE','medical-scanner-online');
+    const readout=make('div','LIVE VISUALIZATION · ILLUSTRATIVE','medical-scanner-readout');
+    const detail=make('div','Select a view to explore the body model. This is an illustration, not a diagnostic scan.','medical-scanner-detail');
+    function updateMotion(){
+      figure.toggleAttribute('data-paused',scannerPaused);
+      pause.textContent=scannerPaused?'Resume motion':'Pause motion';
+      pause.setAttribute('aria-pressed',String(scannerPaused));
+    }
+    function updateLayer(){
+      figure.dataset.layer=scannerLayer;
+      silhouette.src=scannerLayer==='skin'?'assets/medical/body-scanner-skin.svg?v=2':'assets/medical/body-scanner.svg?v=anatomy';
+      silhouette.alt=scannerLayer==='skin'?'Illustrated light-skinned adult male body':'Illustrated anatomical body diagram';
+      buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===scannerLayer)));
+      detail.textContent=scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
+    }
+    header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
+    stage.append(grid,ring,silhouette,target,sweep,badge,readout);
+    figure.append(header,controls,stage,detail);
+    updateMotion();updateLayer();
     return figure;
   }
 
