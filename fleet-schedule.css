@@ -1,0 +1,32 @@
+[data-service-tone="late"] { --service-color:#ffb4bc; --service-bg:#501a27; --service-line:#ff6477; }
+[data-service-tone="soon"] { --service-color:#ffdf87; --service-bg:#453411; --service-line:#e9bd4c; }
+[data-service-tone="ok"] { --service-color:#b9f0cf; --service-bg:#173a2b; --service-line:#5ad18e; }
+[data-service-tone="unknown"] { --service-color:#c2cfe0; --service-bg:#233044; --service-line:#8294ae; }
+.service-due-status {
+ display:inline-block;
+ margin-top:.25rem;
+ padding:.15rem .45rem;
+ border-radius:5px;
+ background:var(--service-bg);
+ color:var(--service-color);
+ font-size:.82em;
+ font-weight:700;
+}
+#assetRecommended tr[data-service-tone] td:first-child { border-left:3px solid var(--service-line); }
+#dueContent li[data-service-tone] { color:var(--service-color); margin:.35rem 0; }
+#reportOutput td[data-service-tone] { color:var(--service-color); font-weight:700; }
+#assetGrid .deadline-row[data-tone="late"] { color:#ffb4bc; background:#501a27; border-color:#ff6477; }
+#assetGrid .deadline-row[data-tone="soon"] { color:#ffdf87; }
+#assetGrid .deadline-row[data-tone="ok"] { color:#b9f0cf; }
+.work-dialog [data-delete] { color:#ffcad0; border-color:#ff6477; }
+.maintenance-starter {
+ margin:1rem 0;
+ padding:1rem;
+ border:1px solid #436687;
+ border-radius:8px;
+ background:#13243a;
+}
+.maintenance-starter h3 { margin:0 0 .5rem; }
+.maintenance-starter ul { padding-left:1.35rem; }
+.maintenance-starter li { margin:.5rem 0; }
+.maintenance-starter a { color:#a9d4ff; text-decoration:underline; }

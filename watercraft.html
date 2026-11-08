@@ -346,7 +346,7 @@ main:has(#categoryView:not([hidden]),#vehicleLoading:not([hidden])) .topline{dis
 #assetView #assetPhoto .asset-photo{display:block;width:100%;height:auto;aspect-ratio:1/1;max-width:100%;max-height:none;object-fit:contain;object-position:center;transform:none;background:transparent;padding:0;box-sizing:border-box}
 @media(max-width:620px){#categoryView #assetGrid .card-photo{flex-basis:42%;width:42%;height:auto}}
 </style>
-<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107-fill"></head>
+<script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="fleet-thumbnails.css?v=20261107-fill"><link rel="stylesheet" href="fleet-schedule.css?v=20261107"></head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>
 #th-auth{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#101d24;color:#e9f5f6;font:16px/1.5 system-ui,sans-serif}
@@ -628,22 +628,21 @@ const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','
 function serviceAssetKey(a){const name=clean(a.make+' '+a.model),legacy=Object.entries(serviceKeys).find(([prefix])=>name.startsWith(prefix))?.[1];return legacy||(a.reportId&&String(a.reportId).startsWith('PDF-')?'report-'+String(a.reportId).slice(4):'')||(a.profileRow?'profile-'+a.profileRow:'item-'+clean(a.year+' '+a.make+' '+a.model))}
 function serviceFor(a){const key=serviceAssetKey(a);return services.filter(s=>clean(s.asset)===clean(key))}
 const scheduleKeys=[[/trek.*7200/, 'trek7200'],[/harley.*(ultra|flhtcui)/,'harleydavidsonultra'],[/lifetime.*spitfire/,'lifetimespitfire'],[/keystone.*bullet/,'keystonebullet'],[/stirling|westbrook.*trailer/,'stirling'],[/makdaddy.*legend/,'makdaddylegend'],[/harley.*(roadglide|fltrk)/,'harleydavidsonroad'],[/ram.*3500/,'ram3500'],[/coleman.*(b200|8200)/,'colemanb200'],[/volpam.*sp03/,'volpamsp03'],[/coolster.*3050/,'coolster3050'],[/ford.*f150/,'fordf150'],[/xpro.*jaguar/,'xprojaguar'],[/ford.*mustang/,'fordmustang'],[/toyota.*4runner/,'toyota4runner'],[/chrysler.*aspen/,'chrysleraspen'],[/honda.*civic/,'hondacivic'],[/husqvarna.*122hd4[5s]/,'husqvarna122hd4s'],[/echo.*pb2520/,'echopb2520'],[/dewalt.*aircompressor/,'dewaltaircompressor'],[/dewalt.*dxpw3425|dewalt.*pressurewasher/,'dewaltdxpw3425'],[/craftsman.*18.*chainsaw/,'craftsman18inchchainsaw'],[/craftsman.*10.*polesaw/,'craftsman10polesaw'],[/husqvarna.*yth24k48/,'husqvarnayth24k48'],[/cubcadet.*kohler/,'cubcadetkohler'],[/husqvarna.*330lx|husqvarna.*weedeater/,'husqvarna330lx'],[/stihl.*fs56/,'stihlfs56']];
-function scheduleFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return schedules[entry?entry[1]:serviceAssetKey(a)]||null}
+function scheduleKeyFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return entry?entry[1]:serviceAssetKey(a)}
+function scheduleFor(a){return schedules[scheduleKeyFor(a)]||null}
 function renderRecommended(a){
- const panel=document.getElementById('assetRecommended'),schedule=scheduleFor(a);
- const today=new Date();today.setHours(0,0,0,0);
- const soon=new Date(today);soon.setDate(soon.getDate()+60);
- const groups=[[],[],[]];
- for(const task of schedule?.tasks||[]){
-  const due=ownershipDate(task.nextDate);
-  const bucket=due&&!Number.isNaN(due.getTime())?(due<today?0:due<=soon?1:2):2;
-  groups[bucket].push({task,due});
+ const panel=document.getElementById('assetRecommended');
+ const groups=[[],[],[],[]],tones=['late','soon','ok','unknown'];
+ for(const task of (scheduleFor(a)?.tasks||[])){
+  const state=dueState(a,task);
+  groups[tones.indexOf(state.tone)].push({task,state});
  }
- for(const group of groups)group.sort((a,b)=>(a.due?.getTime()??Infinity)-(b.due?.getTime()??Infinity)||a.task.task.localeCompare(b.task.task));
- const titles=['Past due dates','Coming up in 60 days','Later or no date listed'];
- const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task})=>'<tr><td><label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+scheduleDateEditor.notes(task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Not recorded')+'</td><td>'+scheduleDateEditor.field(task)+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button> '+scheduleDateEditor.action(task)+'</td></tr>').join('')+'</tbody></table></div></section>':'').join('');
+ for(const group of groups)group.sort((a,b)=>(a.state.days??Infinity)-(b.state.days??Infinity)||a.task.task.localeCompare(b.task.task));
+ const titles=['Past due','Due within 30 days','Due later','Date or reading needed'];
+ const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task,state})=>'<tr data-service-tone="'+state.tone+'"><td>'+
+'<label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+scheduleDateEditor.notes(task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Needs confirmation')+'</td><td>'+esc(task.nextDate||'No date listed')+'<br><span class="service-due-status">'+fleetDueLabel(state.tone)+'</span>'+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button> '+scheduleDateEditor.action(task)+'</td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2019'?'<p class="recommend-warning">This Ram 3500 is a 2019. Update the vehicle year to match the confirmed record.</p>':'';
- panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected" disabled>Complete selected items</button><span id="scheduleSelectionCount" role="status">0 selected</span><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Check each item you completed, even across different sections, then choose Complete selected items to record one service visit. New to-dos appear here alongside your imported schedule. Choose Edit to change a due date or due reading. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected" disabled>Complete selected items</button><span id="scheduleSelectionCount" role="status">0 selected</span><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Check each item you completed, even across different sections, then choose Complete selected items to record one service visit. New to-dos appear here alongside your imported schedule. Choose Edit to update a scheduled item. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+fleetMaintenancePlanMarkup(fleetMaintenancePlan(a,scheduleFor(a)?.tasks||[]),esc)+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
@@ -749,7 +748,7 @@ function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{ti
  if(mode==='not-required')return {tone:'disabled',text:'Not required'};
  if(mode==='unknown'||!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return {tone:'unknown',text:'Date needed — confirm'};
  const n=Math.round((Date.parse(date+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/86400000),label=new Date(date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',year:'numeric'});
- return {tone:n<0?'late':n<30?'urgent':n<=90?'soon':'ok',text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
+ return {tone:fleetDueTone(n,null,0),text:label+' · '+(n<0?'OVERDUE '+(-n)+' days':n===0?'DUE TODAY':'Due in '+n+' days')};
 }
 function deadlineCard(a){
  const muted=['sold','inactive'].includes(clean(a.status));
@@ -983,7 +982,7 @@ function renderAsset(tab='details'){
  for(const [name,id] of [['details','assetDetails'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended'],['fuel','assetFuel']])document.getElementById(id).hidden=name!==tab;
  vehicleDocuments.render(tab,asset);
 }
-function dueState(a,task,windowDays=60){
+function dueState(a,task,windowDays=30){
  const today=new Date();today.setHours(0,0,0,0);const date=ownershipDate(task.nextDate);
  const days=date&&!Number.isNaN(date.getTime())?Math.round((date-today)/86400000):null;
  const reading=Number(String(mileageFor(a)?.currentMileage??'').replace(/,/g,''));const target=Number(String(task.nextReading??'').replace(/,/g,''));
@@ -991,19 +990,19 @@ function dueState(a,task,windowDays=60){
  const remaining=hasReading?target-reading:null;
  const due=days!==null&&days<=0||remaining!==null&&remaining<=0;
  const soon=!due&&(days!==null&&days<=windowDays||remaining!==null&&remaining<= (usesHours(a)?20:500));
- return {due,soon,days,remaining,reason:[days!==null?(days<0?Math.abs(days)+' days past due':days===0?'due today':'due in '+days+' days'):'',remaining!==null?(remaining<=0?'reading passed':'in '+cardNumber(remaining)+' '+(usesHours(a)?'hours':'miles')):''].filter(Boolean).join(' · ')||'No next due date or reading'};
+ return {due,soon,days,remaining,tone:fleetDueTone(days,remaining,usesHours(a)?20:500),reason:[days!==null?(days<0?Math.abs(days)+' days past due':days===0?'due today':'due in '+days+' days'):'',remaining!==null?(remaining<0?'reading passed':remaining===0?'due at current reading':'in '+cardNumber(remaining)+' '+(usesHours(a)?'hours':'miles')):''].filter(Boolean).join(' · ')||'No next due date or reading'};
 }
 function dueItems(a){return ['active','managed'].includes(clean(a.status))?(scheduleFor(a)?.tasks||[]).map(task=>({task,state:dueState(a,task)})).filter(x=>x.state.due||x.state.soon).sort((x,y)=>Number(y.state.due)-Number(x.state.due)||((x.state.days??Infinity)-(y.state.days??Infinity))):[]}
-function openDueReminder(a){if(clean(a?.status)!=='active')return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li><strong>'+esc(x.task.task)+'</strong> — '+(x.state.due?'Due':'Coming up')+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
+function openDueReminder(a){if(!a)return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);if(!items.length)return;document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li data-service-tone="'+x.state.tone+'"><strong>'+esc(x.task.task)+'</strong> — '+fleetDueLabel(x.state.tone)+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
 let appliedReport={type:'due',section:'all',vehicle:'all',vehicleStatus:'active',windowDays:30};
 function reportData(){const {type,section,vehicle,vehicleStatus,windowDays}=appliedReport,items=assets.filter(a=>(section==='all'||a.category===section)&&(vehicle==='all'||String(a.id)===vehicle)&&(vehicleStatus==='all'||clean(a.status)===vehicleStatus)),name=a=>[a.year,a.make,a.model].filter(Boolean).join(' ');let columns=[],rows=[];
- if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of scheduleFor(a)?.tasks||[]){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,state.due?'Due':state.soon?'Coming up':state.reason,task.nextDate||'',task.nextReading||'',cardReading(a,mileageFor(a))])}}}
+ if(type==='due'||type==='schedule'){columns=['Vehicle','Section','Service item','Status','Next due date','Next due reading','Current reading'];for(const a of items){for(const task of (scheduleFor(a)?.tasks||[])){const state=dueState(a,task,windowDays);if(type==='due'&&!state.due&&!state.soon)continue;rows.push([name(a),a.category,task.task,fleetDueLabel(state.tone),task.nextDate||'',task.nextReading||'',cardReading(a,mileageFor(a))])}}}
  else if(type==='history'){columns=['Vehicle','Section','Date','Service item','Reading','Cost','Notes'];for(const a of items)for(const entry of serviceFor(a))rows.push([name(a),a.category,entry.date,entry.item,entry.odometer,entry.cost,entry.notes]);rows.sort((a,b)=>String(b[2]).localeCompare(String(a[2])))}
  else if(type==='readings'){columns=['Vehicle','Section','Status','Unit','Starting reading','Current reading','Tracking since'];rows=items.map(a=>{const m=mileageFor(a);return[name(a),a.category,a.status,usesHours(a)?'Hours':'Miles',m?.startMileage??a.reportOdometer??'',cardReading(a,m),m?.serviceStart||'']})}
  else if(type==='inventory'){columns=['Vehicle','Section','Status','HIN / serial number','Plate','Engine','Current reading'];rows=items.map(a=>[name(a),a.category,a.status,a.vin,a.tag,a.engine,mileageFor(a)?.currentMileage||''])}
  else {columns=['Vehicle','Section','Missing fields'];rows=items.map(a=>[name(a),a.category,[!a.photoFileId&&!a.photo?'Photo':'',showCardEngine(a)&&cardEngine(a)==='Not recorded'?'Engine':'',!a.vin?'HIN / serial number':'',cardReading(a,mileageFor(a))==='Not recorded'?'Mileage / reading':''].filter(Boolean).join(', ')]).filter(row=>row[2])}
  return {columns,rows};}
-function renderReport(){const {columns,rows}=reportData();document.getElementById('reportSummary').textContent=serviceLoaded?rows.length+' record'+(rows.length===1?'':'s'):'Loading service records…';document.getElementById('reportOutput').innerHTML=rows.length?'<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+esc(cell??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>No matching records.</p>'}
+function renderReport(){const {columns,rows}=reportData();document.getElementById('reportSummary').textContent=serviceLoaded?rows.length+' record'+(rows.length===1?'':'s'):'Loading service records…';document.getElementById('reportOutput').innerHTML=rows.length?'<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map((cell,index)=>'<td'+(index===3&&['due','schedule'].includes(appliedReport.type)?' data-service-tone="'+(['late','soon','ok','unknown'].find(tone=>fleetDueLabel(tone)===cell)||'unknown')+'"':'')+'>'+esc(cell??'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'<p>No matching records.</p>'}
 const reportSection=document.getElementById('reportSection');reportSection.innerHTML+=[...new Set(assets.map(a=>a.category).filter(Boolean))].sort().map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
 function updateReportVehicles(){const section=reportSection.value,vehicleStatus=document.getElementById('reportStatus').value,select=document.getElementById('reportVehicle'),previous=select.value;const matching=assets.filter(a=>(section==='all'||a.category===section)&&(vehicleStatus==='all'||clean(a.status)===vehicleStatus)).sort((a,b)=>[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' ')));select.innerHTML='<option value="all">All items in selection</option>'+matching.map(a=>'<option value="'+esc(a.id)+'">'+esc([a.year,a.make,a.model].filter(Boolean).join(' '))+'</option>').join('');if(matching.some(a=>String(a.id)===previous))select.value=previous;}
 reportSection.addEventListener('change',updateReportVehicles);document.getElementById('reportStatus').addEventListener('change',updateReportVehicles);updateReportVehicles();
@@ -1461,14 +1460,14 @@ document.getElementById('workEntryForm').addEventListener('submit',async e=>{
  e.preventDefault();const form=e.target,a=workTarget,data=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]'),message=document.getElementById('workEntryStatus');
  const selected=new FormData(form).getAll('tasks').map(Number),tasks=(scheduleFor(a)?.tasks||[]).filter(t=>selected.includes(t.sheetRow));
  if(workMode==='service'&&!tasks.length&&!data.item.trim()){message.textContent='Select at least one service item or describe the work completed.';return}
- if(button.disabled||scheduleDateEditor.saving)return;
+ if(button.disabled||scheduleDateEditor.saving||maintenancePlanSaving)return;
  button.disabled=true;workDialog.dataset.saving='true';document.getElementById('cancelWorkEntry').disabled=true;message.textContent='Recording service…';let saved=false;
  try{
   checkedReading(data.reading);if(data.nextReading)checkedReading(data.nextReading);
   await ensureProfileRow(a);
   const notes=[workMode==='todo'&&'Added: '+data.date,data.provider&&'Shop / person: '+data.provider,workMode==='todo'&&data.priority&&'Priority: '+data.priority,workMode==='todo'&&data.cost&&'Estimated cost: $'+data.cost,data.notes].filter(Boolean).join(' · ');
   if(workMode==='todo'){
-   const match=scheduleKeys.find(([pattern])=>pattern.test(clean([a.make,a.model,a.name].filter(Boolean).join(' ')))),key=match?match[1]:serviceAssetKey(a),name=[a.year,a.make,a.model].join(' ');
+   const key=scheduleKeyFor(a),name=[a.year,a.make,a.model].join(' ');
    const row=await fleetAppendRow('Portal Service Schedules',[key,name,data.item.trim(),data.interval,'','',data.nextDate,data.nextReading,notes]);saved=true;
    (schedules[key]||={sourceName:name,tasks:[]}).tasks.push({sheetRow:row,task:data.item.trim(),interval:data.interval,lastDate:'',lastReading:'',nextDate:data.nextDate,nextReading:data.nextReading,notes});
   }else{
@@ -1504,16 +1503,32 @@ function nextScheduleValues(task,date,reading){
  const nextReading=distance&&String(reading).trim()!==''&&Number.isFinite(base)?String(base+Number(distance[1].replace(/,/g,''))):'';
  return {nextDate,nextReading};
 }
+let maintenancePlanSaving=false;
+async function addMaintenancePlan(button){
+ if(maintenancePlanSaving||scheduleDateEditor.saving||workDialog.dataset.saving)return;
+ const a=asset,status=document.getElementById('maintenancePlanStatus');
+ maintenancePlanSaving=button.disabled=true;status.textContent='Adding missing maintenance items…';
+ try{
+  const count=await saveFleetMaintenancePlan(a,scheduleKeyFor(a),schedules,localServiceDate());
+  if(count)await touchAsset(a).catch(()=>{});
+  if(asset===a&&!document.getElementById('assetRecommended').hidden){
+   renderRecommended(a);
+   document.getElementById('scheduleDateStatus').textContent=count?count+' maintenance item'+(count===1?' added.':'s added.'):'The starter items are already scheduled.';
+  }
+ }catch(error){status.textContent=error.message||'Could not add the plan. Try again.'}
+ finally{maintenancePlanSaving=button.disabled=false}
+}
 const scheduleDateEditor=createFleetScheduleDateEditor({esc,ownershipDate,ownershipIso,
  getAsset:()=>asset,scheduleFor,writeChanges:(row,changes)=>fleetWriteRanges(changes.map(({column,value})=>({sheet:'Portal Service Schedules',range:column+row,values:[[value]]}))),
- workBusy:()=>workDialog.dataset.saving==='true',renderRecommended
+ workBusy:()=>workDialog.dataset.saving==='true'||maintenancePlanSaving,renderRecommended,usesHours,addTask:()=>openWorkDialog('todo')
 });
 document.getElementById('assetRecommended').addEventListener('change',e=>{
  if(e.target.matches('[data-select-service]'))scheduleDateEditor.updateSelection();
 });
 document.getElementById('assetRecommended').addEventListener('click',e=>{
- if(!asset)return;
- const scheduleAction=e.target.closest('[data-edit-schedule],[data-save-schedule],[data-cancel-schedule]');
+ if(!asset||maintenancePlanSaving)return;
+ if(e.target.id==='addMaintenancePlan'){addMaintenancePlan(e.target);return}
+ const scheduleAction=e.target.closest('[data-edit-schedule]');
  if(scheduleAction){scheduleDateEditor.handle(scheduleAction);return}
  if(scheduleDateEditor.saving)return;
  if(e.target.id==='addScheduledTask'){openWorkDialog('todo');return}
@@ -1569,5 +1584,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-batch"></script><script src="sheets.js?v=20261107-vehicle-usage"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
 
