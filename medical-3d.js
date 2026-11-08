@@ -66,12 +66,31 @@ window.thMedical3D={
     link(body,[side*.23,-1.02,0],[side*.25,-1.94,.02],.16,.105,skin);
     ell(body,side*.25,-2.01,.12,.145,.11,.27,skin);
    }
+   // Independent organ layer adds volumetric anatomical landmarks in anatomy and scan views.
+   const organs=new THREE.Group();body.add(organs);
+   const organMat=(color,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness:.56,transparent:opacity<1,opacity,side:THREE.DoubleSide});
+   const lungMat=organMat(0x78c6e9,.86),heartMat=organMat(0xd33d52),liverMat=organMat(0x8b3c43),stomachMat=organMat(0xeaa0a5),gutMat=organMat(0xcb8197),brainMat=organMat(0xd8a9b4),spineMat=organMat(0xf2e8d4);
+   function organ(x,y,z,sx,sy,sz,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,20),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);organs.add(m);return m}
+   organ(-.16,1.03,.18,.16,.32,.12,lungMat);
+   organ(.16,1.03,.18,.16,.32,.12,lungMat);
+   organ(.035,.93,.32,.115,.14,.095,heartMat);
+   organ(-.13,.55,.17,.23,.12,.12,liverMat);
+   organ(.15,.48,.17,.12,.18,.1,stomachMat);
+   for(let i=0;i<5;i++)organ(Math.sin(i*2)*.11,.25+(i%3)*.09,.22,.13,.065,.08,gutMat);
+   organ(0,1.66,.02,.19,.15,.17,brainMat);
+   for(let i=0;i<18;i++)organ(0,1.34-i*.073,-.12,.052,.04,.05,spineMat);
+   const ribMat=organMat(0xe7dfcd,.78);
+   for(let i=0;i<8;i++)for(const side of [-1,1]){
+     const rib=new THREE.Mesh(new THREE.TorusGeometry(.18+i*.012,.012,6,32,Math.PI*.8),ribMat);
+     rib.position.set(side*.13,1.22-i*.072,.08);rib.rotation.y=side*.3;rib.rotation.z=side*.13;organs.add(rib);
+   }
+   organs.visible=false;
    // Dynamic mode swaps physical surface materials without changing the rotatable geometry.
    state.setMode=mode=>{
-    state.mode=mode;
+    state.mode=mode;organs.visible=mode!=='skin';
     for(const p of parts){
      if(p.material===hair||p.material===eye)continue;
-     p.material=mode==='skin'?skin:mode==='anatomy'?muscle:mode==='scan'?scan:skin;
+     p.material=mode==='skin'?skin:mode==='anatomy'?new THREE.MeshStandardMaterial({color:0xc56e68,transparent:true,opacity:.32,roughness:.6,depthWrite:false}):mode==='scan'?scan:skin;
     }
     if(mode==='skin'){parts[0].material=skin;parts[1].material=hair;}
     if(mode==='anatomy'){parts[1].material=hair;}
