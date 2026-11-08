@@ -13,7 +13,7 @@ window.thMedicalFolders = (() => {
       for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
     return el;
   }
-  function injectionHistory(entries,edit,copy) {
+  function injectionHistory(entries,edit) {
     const rows=(Array.isArray(entries)?entries:[]).filter(item=>/tirzepatide|zepbound/i.test(item?.product||''));
     if(!rows.length)return make('p','No recorded tirzepatide or Zepbound injections are available.');
     const minutes=time=>{
@@ -37,14 +37,7 @@ window.thMedicalFolders = (() => {
           button.type='button';
           button.setAttribute('aria-label','Edit injection '+item.date+(item.time?' '+item.time:''));
           button.onclick=()=>edit(item);
-          const actions=make('div');
-          actions.className='medical-injection-row-actions';
-          const template=make('button','Use as template');
-          template.type='button';
-          template.setAttribute('aria-label','Use injection '+item.date+(item.time?' '+item.time:'')+' as template');
-          template.onclick=()=>copy(item);
-          actions.append(button,template);
-          return [actions,...cells];
+          return [button,...cells];
         }),false));
     for(const row of area.querySelectorAll('tr'))row.lastElementChild.classList.add('medical-injection-notes');
     area.tabIndex=0;

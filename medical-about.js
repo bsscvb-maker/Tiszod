@@ -132,7 +132,7 @@
       rows.textContent='The private injection log is loading or unavailable.';
       return;
     }
-    rows.replaceChildren(thMedicalFolders.injectionHistory(injections,row=>editDose(row),row=>copyDose(row)));
+    rows.replaceChildren(thMedicalFolders.injectionHistory(injections,row=>editDose(row)));
   }
   function openInjectionHistory(){
     const dialog=$('medical-injection-history');
