@@ -230,3 +230,20 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
  .medical-scanner :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none}
  .medical-scanner .medical-scanner-pause{display:none}
 }
+
+/* TisZod Medical scanner v2: responsive high-tech visual interface */
+.medical-scanner-v2{border-color:#39bfe4;box-shadow:0 0 0 1px #14668a inset,0 0 26px #0bb9ff22;background:linear-gradient(150deg,#0c1d32,#071326)}
+.medical-scanner-v2 .medical-scanner-header{gap:10px;flex-wrap:wrap}
+.medical-scanner-v2 .medical-scanner-title{font-weight:800;color:#76ecff}
+.medical-scanner-controls{display:flex;gap:6px;flex-wrap:wrap}
+.medical-scanner-mode{flex:1;min-width:62px;min-height:36px;border:1px solid #386a86;border-radius:8px;background:#10253b;color:#cceaf9;font-weight:700;cursor:pointer}
+.medical-scanner-mode[aria-pressed="true"]{border-color:#58e7ff;color:#fff;background:#09567a;box-shadow:inset 0 0 14px #08bfff55,0 0 12px #00bfff55}
+.medical-scanner-v2 .medical-scanner-stage{min-height:440px;border-color:#0ac6f488;background:radial-gradient(ellipse at 50% 35%,#124769 0%,#081c38 50%,#030b1b 100%);box-shadow:inset 0 0 35px #00b8ff22}
+.medical-scanner-v2 .medical-scanner-stage img{inset:4% 9%;width:82%;height:90%;filter:drop-shadow(0 0 9px #4edaff88);animation:medical-scanner-turn 7s ease-in-out infinite alternate}
+.medical-scanner-v2[data-layer="skin"] .medical-scanner-stage img{filter:drop-shadow(0 0 10px #31c6ff99)}
+.medical-scanner-v2[data-layer="scan"] .medical-scanner-stage img{filter:grayscale(1) brightness(1.5) contrast(1.25) drop-shadow(0 0 14px #a1eaff);opacity:.8}
+.medical-scanner-online{position:absolute;top:10px;left:10px;color:#7ef8bc;font:700 10px ui-monospace,monospace;letter-spacing:.06em;z-index:4;text-shadow:0 0 10px #20ff9a}
+.medical-scanner-readout{position:absolute;bottom:10px;left:10px;right:10px;color:#81e8ff;font:700 10px ui-monospace,monospace;letter-spacing:.06em;text-align:center;z-index:4;background:#061727bb;padding:5px}
+.medical-scanner-detail{font-size:.73rem;color:#9cbacb;line-height:1.4}
+.medical-scanner-v2[data-paused] :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.medical-scanner-v2 :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none!important}}
