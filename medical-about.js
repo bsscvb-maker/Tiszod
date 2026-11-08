@@ -50,22 +50,34 @@
   let injections=[];
   let addedDoses=[];
   let doseLogReady=false;
+  let editDose;
   const doseFileTag="appProperties has { key='tiszodRecord' and value='medicalInjection' }";
   const injectionKey=row=>row.date+'|'+(/zepbound/i.test(row.product)?'zepbound':'tirzepatide');
-  const doseIdentity=row=>[injectionKey(row),row.time,row.dose].join('|');
+  function doseTime(row){
+    if(/^\d{2}:\d{2}(?::\d{2})?$/.test(row.time24||''))return row.time24;
+    const time=String(row.time||'').trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
+    if(!time)return '';
+    const hours=Number(time[1])%12+(time[4].toUpperCase()==='PM'?12:0);
+    return String(hours).padStart(2,'0')+':'+time[2]+(time[3]&&time[3]!=='00'?':'+time[3]:'');
+  }
+  const doseIdentity=row=>[injectionKey(row),doseTime(row).slice(0,5)].join('|');
+  const sourceIdentity=row=>JSON.stringify([injectionKey(row),doseTime(row),row.dose||'',row.doseNumber||'']);
+  const canEditDose=row=>Boolean(row.dose)&&!/^(?:missed|postponed)\b/i.test(row.notes||'');
 
   function syncInjections(){
     const entered=Array.isArray(medicationSource?.injections)?medicationSource.injections:[];
     const legacy=Array.isArray(savedProfile.folderSummaries?.injections)?savedProfile.folderSummaries.injections:[];
     const enteredKeys=new Set(entered.map(injectionKey));
-    injections=[...legacy.filter(row=>!enteredKeys.has(injectionKey(row))),...entered];
-    const known=new Set(injections.map(doseIdentity));
-    let nextNumber=Math.max(0,...injections.map(row=>Number(row.doseNumber)||0));
-    for(const row of [...addedDoses].sort((a,b)=>a.date.localeCompare(b.date)||a.time24.localeCompare(b.time24))){
+    const original=[...legacy.filter(row=>!enteredKeys.has(injectionKey(row))),...entered];
+    const superseded=new Set(addedDoses.map(row=>row.replaces).filter(Boolean));
+    injections=original.filter(row=>!superseded.has(sourceIdentity(row)));
+    const known=new Set(injections.filter(canEditDose).map(doseIdentity));
+    let nextNumber=Math.max(0,...original.concat(addedDoses).map(row=>Number(row.doseNumber)||0));
+    for(const row of [...addedDoses].sort((a,b)=>a.date.localeCompare(b.date)||doseTime(a).localeCompare(doseTime(b)))){
       const key=doseIdentity(row);
       if(known.has(key))continue;
       known.add(key);
-      injections.push({...row,doseNumber:++nextNumber});
+      injections.push({...row,doseNumber:row.doseNumber||++nextNumber});
     }
     api.onFolderSummaries?.({...savedProfile.folderSummaries,injections});
   }
@@ -75,47 +87,66 @@
     return Promise.all(files.map(async file=>{
       const response=await thDriveFetch(file.id,{cache:'no-store'});
       if(!response.ok)throw Error('The private injection log could not be read.');
-      return response.json();
+      return {...await response.json(),driveId:file.id};
     }));
   }
 
-  async function writeDose(row, pending){
+  async function writeDose(row, pending, driveId){
     if(!thAuthorized())throw Error('Sign in again to save the dose.');
     const headers={Authorization:'Bearer '+thToken};
-    if(!pending.id){
-      const generated=await fetch('https://www.googleapis.com/drive/v3/files/generateIds?count=1&space=drive',{headers,cache:'no-store'});
-      if(!generated.ok)throw Error('Drive could not prepare the dose record.');
-      [pending.id]=(await generated.json()).ids;
+    const upload='https://www.googleapis.com/upload/drive/v3/files';
+    let response;
+    if(driveId){
+      response=await fetch(upload+'/'+encodeURIComponent(driveId)+'?uploadType=media&fields=id',{
+        method:'PATCH',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify(row)
+      });
+    }else{
+      if(!pending.id){
+        const generated=await fetch('https://www.googleapis.com/drive/v3/files/generateIds?count=1&space=drive',{headers,cache:'no-store'});
+        if(!generated.ok)throw Error('Drive could not prepare the dose record.');
+        [pending.id]=(await generated.json()).ids;
+      }
+      driveId=pending.id;
+      const boundary='tiszod-'+crypto.randomUUID();
+      const metadata={id:driveId,name:'TisZod Injection Entry.json',mimeType:'application/json',appProperties:{tiszodRecord:'medicalInjection'}};
+      const body=new Blob([
+        '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
+        '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(row)+'\r\n--'+boundary+'--\r\n'
+      ]);
+      response=await fetch(upload+'?uploadType=multipart&fields=id',{
+        method:'POST',headers:{...headers,'Content-Type':'multipart/related; boundary='+boundary},body
+      });
     }
-    const boundary='tiszod-'+crypto.randomUUID();
-    const metadata={id:pending.id,name:'TisZod Injection Entry.json',mimeType:'application/json',appProperties:{tiszodRecord:'medicalInjection'}};
-    const body=new Blob([
-      '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
-      '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(row)+'\r\n--'+boundary+'--\r\n'
-    ]);
-    const response=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
-      method:'POST',headers:{...headers,'Content-Type':'multipart/related; boundary='+boundary},body
-    });
-    if(response.ok)return;
-    if(response.status===409){
-      const existing=await thDriveFetch(pending.id,{cache:'no-store'});
-      if(existing.ok&&doseIdentity(await existing.json())===doseIdentity(row))return;
-    }
-    throw Error(response.status===401?'Sign in again to save the dose.':'Drive could not save the dose. Try again.');
+    if(!response.ok&&response.status!==409)
+      throw Error(response.status===401?'Sign in again to save the dose.':'Drive could not save the dose. Try again.');
+    const readback=await thDriveFetch(driveId,{cache:'no-store'});
+    const saved=readback.ok?await readback.json():null;
+    if(!saved||Object.entries(row).some(([key,value])=>saved[key]!==value))
+      throw Error('Drive could not confirm this save. Try again or reload the history.');
+    return {...saved,driveId};
   }
 
+  function renderInjectionHistory(){
+    const rows=$('medical-injection-rows');
+    if(!doseLogReady&&injections.length===0){
+      rows.textContent='The private injection log is loading or unavailable.';
+      return;
+    }
+    rows.replaceChildren(thMedicalFolders.injectionHistory(injections,doseLogReady?row=>editDose(row):null));
+  }
   function openInjectionHistory(){
     const dialog=$('medical-injection-history');
-    $('medical-injection-rows').replaceChildren(thMedicalFolders.injectionHistory(injections));
+    renderInjectionHistory();
     if(!dialog.open)dialog.showModal();
   }
 
   function setupDoseForm(){
     const form=$('medical-injection-entry');
-    const panel=form.closest('details');
     const fields=form.elements;
-    const status=form.querySelector('[role="status"]');
+    const status=$('medical-dose-status');
+    const submit=form.querySelector('[type="submit"]');
     let pending={};
+    let editing=null;
     function setEasternNow(){
       const parts=new Intl.DateTimeFormat('en-US',{
         timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',
@@ -125,44 +156,91 @@
       fields.date.value=[now.year,now.month,now.day].join('-');
       fields.time.value=now.hour+':'+now.minute;
     }
-    form.querySelector('[data-dose-now]').onclick=setEasternNow;
-    panel.ontoggle=()=>{if(panel.open&&!fields.date.value)setEasternNow();};
+    function closeForm(){
+      form.hidden=true;
+      editing=null;
+      $('medical-dose-add').focus();
+    }
+    editDose=row=>{
+      if(submit.disabled)return;
+      status.textContent='';
+      if(!doseLogReady){status.textContent='The private dose log is unavailable. Reload Medical and try again.';return;}
+      pending={};
+      editing=row||null;
+      form.reset();
+      fields.time.required=!row||Boolean(doseTime(row));
+      fields.mg.required=!row||Boolean(row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]);
+      if(row){
+        fields.date.value=row.date;
+        fields.time.value=doseTime(row);
+        fields.product.value=/zepbound/i.test(row.product)?'Zepbound':'Compounded tirzepatide + B12';
+        fields.mg.value=row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]??'';
+        fields.units.value=row.units??String(row.dose).match(/([\d.]+)\s*(?:syringe\s*)?units?\b/i)?.[1]??'';
+        fields.notes.value=row.notes||'';
+      }else setEasternNow();
+      submit.textContent=row?'Save changes':'Save injection';
+      $('medical-dose-form-title').textContent=row?'Edit injection':'Add injection';
+      form.hidden=false;
+      fields.date.focus();
+    };
+    $('medical-dose-add').onclick=()=>editDose();
+    form.querySelector('[data-dose-cancel]').onclick=closeForm;
+    $('medical-injection-history').addEventListener('close',()=>{if(!submit.disabled)form.hidden=true;});
     form.onsubmit=async event=>{
       event.preventDefault();
-      if(!doseLogReady){status.textContent='The private dose log is unavailable. Reload Medical and try again.';return;}
+      if(!doseLogReady||submit.disabled)return;
       const mg=fields.mg.value;
       const units=fields.units.value;
-      if(!mg&&!units){status.textContent='Enter the dose in mg or syringe units.';fields.mg.focus();return;}
-      const [hours,minutes]=fields.time.value.split(':');
+      const time24=fields.time.value;
+      const [hours,minutes,seconds]=time24.split(':');
       const row={
-        date:fields.date.value,time24:fields.time.value,
-        time:(Number(hours)%12||12)+':'+minutes+(Number(hours)<12?' AM':' PM'),
+        date:fields.date.value,time24,
+        time:time24?(Number(hours)%12||12)+':'+minutes+(seconds&&seconds!=='00'?':'+seconds:'')+(Number(hours)<12?' AM':' PM'):'',
         product:fields.product.value,
-        dose:[mg&&mg+' mg',units&&units+' units'].filter(Boolean).join(' · '),
+        mg:mg?Number(mg):null,units:units?Number(units):null,
+        dose:mg?[mg+' mg',units&&units+' units'].filter(Boolean).join(' · '):editing?.dose||'',
         notes:fields.notes.value.trim()
       };
-      const snapshot=JSON.stringify(row);
-      if(pending.snapshot!==snapshot)pending={snapshot};
+      if(editing){
+        row.doseNumber=editing.doseNumber??null;
+        if(editing.replaces||!editing.driveId)row.replaces=editing.replaces||sourceIdentity(editing);
+      }
       const inputs=[...form.elements];
       inputs.forEach(input=>input.disabled=true);
+      $('medical-dose-add').disabled=true;
       status.textContent='Saving to your private injection log…';
       try{
-        if(injections.some(entry=>doseIdentity(entry)===doseIdentity(row))){
-          status.textContent='This dose is already in your injection history.';
-          return;
-        }
-        await writeDose(row,pending);
-        addedDoses.push(row);
+        addedDoses=await readAddedDoses();
         syncInjections();
-        if($('medical-injection-history').open)openInjectionHistory();
-        form.reset();
-        setEasternNow();
+        const isEdited=entry=>editing&&(editing.driveId?entry.driveId===editing.driveId:
+          sourceIdentity(entry)===sourceIdentity(editing)||entry.replaces===row.replaces);
+        const latest=injections.find(isEdited);
+        if(editing&&!latest)throw Error('This entry changed elsewhere. Reopen the history and try again.');
+        if(editing&&latest.driveId&&(sourceIdentity(latest)!==sourceIdentity(editing)||latest.notes!==editing.notes))
+          throw Error('This entry changed elsewhere. Reopen the history and try again.');
+        const duplicate=injections.find(entry=>canEditDose(entry)&&!isEdited(entry)&&doseIdentity(entry)===doseIdentity(row));
+        if(duplicate&&(!pending.id||duplicate.driveId!==pending.id))throw Error('A dose for this product is already logged at that date and time.');
+        if(!editing)row.doseNumber=duplicate?.doseNumber??Math.max(0,...injections.map(entry=>Number(entry.doseNumber)||0))+1;
+        const snapshot=JSON.stringify(row);
+        if(pending.snapshot!==snapshot)pending={snapshot};
+        const saved=await writeDose(row,pending,latest?.driveId);
+        addedDoses=[...addedDoses.filter(entry=>entry.driveId!==saved.driveId),saved];
+        syncInjections();
+        renderInjectionHistory();
+        closeForm();
         pending={};
-        status.textContent='Dose saved to your private injection history.';
-      }catch(error){status.textContent=error.message||'Could not save the dose.';}
-      finally{inputs.forEach(input=>input.disabled=false);}
+        status.textContent=latest?'Injection updated.':'Injection saved.';
+      }catch(error){
+        renderInjectionHistory();
+        status.textContent=error.message||'Could not save the dose.';
+      }finally{
+        inputs.forEach(input=>input.disabled=false);
+        $('medical-dose-add').disabled=false;
+        if(form.hidden&&$('medical-injection-history').open)$('medical-dose-add').focus();
+      }
     };
   }
+
   function loggedMedicationAmount(name, dose) {
     const compound = /^compounded tirzepatide (?:with|\+) b12$/i;
     if(compound.test(name)&&medicationSource?.reportedDose)return medicationSource.reportedDose;
@@ -212,6 +290,40 @@
     return item;
   }
 
+  let scannerPaused=false;
+  function bodyScanner(height){
+    const figure=make('figure'), header=make('div'), stage=make('div'), metrics=make('dl');
+    figure.className='medical-scanner';
+    figure.setAttribute('aria-label','Body metrics');
+    header.className='medical-scanner-header';
+    stage.className='medical-scanner-stage';
+    metrics.className='medical-scanner-metrics';
+    const pause=action('Pause motion',()=>{
+      scannerPaused=!scannerPaused;
+      updateMotion();
+    });
+    pause.className='medical-scanner-pause';
+    function updateMotion(){
+      figure.toggleAttribute('data-paused',scannerPaused);
+      pause.textContent=scannerPaused?'Resume motion':'Pause motion';
+    }
+    updateMotion();
+    const silhouette=make('img');
+    silhouette.src='assets/medical/body-scanner.svg';silhouette.alt='Generic body diagram';
+    const ring=make('span'), sweep=make('span');
+    ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
+    ring.setAttribute('aria-hidden','true');sweep.setAttribute('aria-hidden','true');
+    const addMetric=(label,value)=>{
+      if(!value)return;
+      const item=make('div');item.append(make('dt',label),make('dd',value));metrics.append(item);
+    };
+    addMetric('Height',height);
+    header.append(make('span','Body metrics','medical-scanner-title'),pause);
+    stage.append(ring,silhouette,sweep);
+    figure.append(header,stage,metrics);
+    return {figure,addMetric};
+  }
+
   function renderProfile() {
     const target=$('medical-about-profile'), stamp=$('medical-profile-updated');
     const composition=compositionReadings(profile);
@@ -233,9 +345,7 @@
       stamp.textContent='Profile as of '+label;
     }
     const overview=make('div');overview.className='medical-body-profile';
-    const figure=make('figure'),silhouette=make('img');
-    silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body reference';
-    figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
+    const scanner=bodyScanner(profile.height);
     const grid=make('dl'),height=heightInches(profile.height);
     const weights=weighIns.slice(-2).reverse().map(asPounds);
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
@@ -252,6 +362,8 @@
         const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
         const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
         readings.append(comparison(label,pair[0],pair[1],unit,preferred));
+        if(['weight','bmi','bodyFat','muscle','water'].includes(key)&&Number.isFinite(pair[0]))
+          scanner.addMetric(key==='weight'?'Weight':key==='bmi'?'BMI':label,rounded(pair[0])+unit);
       }
       const dates=make('p');dates.className='medical-measurement-dates';
       for(const [index,label] of ['Current','Prior'].entries()){
@@ -262,7 +374,7 @@
       if(Number.isFinite(updated))dates.append(make('span','Updated: '+formatTime.format(updated)));
       measurements.append(make('h3','Body composition'),dates,readings);
     }
-    overview.append(figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
+    overview.append(scanner.figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
@@ -338,7 +450,7 @@
     inputs.height.focus();
   }
   async function loadProfile() {
-    const medication=api.medicationSource?.().catch(()=>null);
+    const medication=api.medicationSource().catch(()=>undefined);
     const doseLog=readAddedDoses().catch(()=>null);
     const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
@@ -352,10 +464,10 @@
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
     let storedDoses;
     [compositionSource,medicationSource,storedDoses]=await Promise.all([source,medication,doseLog]);
-    doseLogReady=Array.isArray(storedDoses);
+    doseLogReady=Array.isArray(storedDoses)&&medicationSource!==undefined;
     addedDoses=storedDoses||[];
     syncInjections();
-    if($('medical-injection-history').open)openInjectionHistory();
+    if($('medical-injection-history').open)renderInjectionHistory();
     api.onWeighIns?.(savedProfile.weighIns);
     try {
       const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
@@ -366,7 +478,7 @@
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
   }
   window.thMedicalAbout = {
-    careTeam,
+    careTeam,openInjectionHistory,
     start(options) {
       api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       addedDoses=[]; doseLogReady=false;

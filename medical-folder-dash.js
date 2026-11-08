@@ -3,17 +3,17 @@ window.thMedicalFolders = (() => {
   function source(record,open,back,label='Open document'){
     const button=make('button',label);button.type='button';button.onclick=()=>open(record,back);return button;
   }
-  function table(headers,rows){
+  function table(headers,rows,clickRow=true){
     const el=make('table'), head=make('thead'), body=make('tbody'), labels=make('tr');
     for(const header of headers){const th=make('th',header);th.scope='col';labels.append(th);}
     head.append(labels);el.append(head,body);
     for(const row of rows){const tr=make('tr');
-      const link=row.find(item=>item?.tagName==='BUTTON');
+      const link=clickRow&&row.find(item=>item?.tagName==='BUTTON');
       if(link){tr.classList.add('medical-click-row');tr.onclick=event=>{if(!event.target.closest('button,a'))link.click();};}
       for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
     return el;
   }
-  function injectionHistory(entries) {
+  function injectionHistory(entries,edit) {
     const rows=(Array.isArray(entries)?entries:[]).filter(item=>/tirzepatide|zepbound/i.test(item?.product||''));
     if(!rows.length)return make('p','No recorded tirzepatide or Zepbound injections are available.');
     const minutes=time=>{
@@ -23,9 +23,25 @@ window.thMedicalFolders = (() => {
       return (period?Number(hour)%12+(period.toUpperCase()==='PM'?12:0):Number(hour))*60+Number(minute);
     };
     const area=make('div');area.className='medical-folder-table';
-    area.append(table(['Dose #','Date','Time (Eastern)','Product','Reported dose','Notes'],
+    area.classList.add('medical-injection-table');
+    const headers=['Dose #','Date','Time (Eastern)','Product','Reported Dose','Notes'];
+    if(edit)headers.push('Action');
+    area.append(table(headers,
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
-        [item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes].map(value=>value==null||value===''?'Not recorded':String(value)))));
+        {
+          const cells=[item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes]
+            .map(value=>value==null||value===''?'Not recorded':String(value));
+          if(!edit)return cells;
+          if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return [...cells,'—'];
+          const button=make('button','Edit');
+          button.type='button';
+          button.setAttribute('aria-label','Edit injection '+item.date+(item.time?' '+item.time:''));
+          button.onclick=()=>edit(item);
+          return [...cells,button];
+        }),false));
+    area.tabIndex=0;
+    area.setAttribute('role','region');
+    area.setAttribute('aria-label','Injection history table');
     return area;
   }
   const sorted=(records,date)=>[...records].sort((a,b)=>date(b).localeCompare(date(a))||a.name.localeCompare(b.name));
@@ -84,8 +100,10 @@ window.thMedicalFolders = (() => {
       const injections=summary().injections||[];
       if(injections.length){
         const log=make('details');log.open=true;
-        log.append(make('summary','Tirzepatide / Zepbound injection log'),
-          injectionHistory(injections));
+        const manage=make('button','Manage injections');
+        manage.type='button';
+        manage.onclick=()=>thMedicalAbout.openInjectionHistory();
+        log.append(make('summary','Tirzepatide / Zepbound injection log'),manage,injectionHistory(injections));
         box.append(log);
       }
       const search=make('input');search.type='search';search.placeholder='Search medications';search.setAttribute('aria-label','Search medication history');
