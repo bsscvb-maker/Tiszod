@@ -11,9 +11,21 @@ function kind(r){const m=r.mimeType||'';return m==='application/pdf'?'pdf':m.sta
 function link(r){return r.webViewLink||'https://drive.google.com/file/d/'+encodeURIComponent(r.id)+'/view'}
 function display(r){return r.name.replace(/\.(pdf|docx?|xlsx?|xlsm|png|jpe?g|txt)$/i,'').replace(/_/g,' ')}
 function crumbs(){ $('fd-crumbs').innerHTML=trail.map((f,i)=>'<button type="button" data-crumb="'+i+'" '+(i===trail.length-1?'aria-current="page"':'')+'>'+esc(f.name)+'</button>').join('<span aria-hidden="true">/</span>')}
+function folderCover(name) {
+ const themes = [
+  [/tax|norfolk|irs/i,'career/folders/pc-tax.webp'],
+  [/bank|statement|checking|savings/i,'career/folders/pc-banking.webp'],
+  [/retire|investment|stocks/i,'career/folders/iqvia-retirement.jpg'],
+  [/paystub|earnings|payroll|budget/i,'career/folders/shop-paperwork.webp'],
+  [/benefit|insurance|medicaid|hipp|social security/i,'family-unique/health-forms.webp'],
+  [/bills|payments|invoice|receipt/i,'career/folders/pc-payment-terminal.webp'],
+  [/house|rental|lease|property|campground/i,'family-unique/keepsakes.webp']
+ ];
+ return 'assets/' + (themes.find(([pattern]) => pattern.test(name))?.[1] || 'family-unique/folders.webp');
+}
 function render(){const q=$('fd-search').value.trim().toLowerCase(),type=$('fd-type').value,filtered=rows.filter(r=>(!q||[r.name,r.path].join(' ').toLowerCase().includes(q))&&(!type||kind(r)===type));crumbs();
 const folders=filtered.filter(r=>r.mimeType===FOLDER).sort((a,b)=>(labels[a.name]||a.name).localeCompare(labels[b.name]||b.name));
-$('fd-folders').innerHTML=folders.map(r=>'<button type="button" class="fd-folder" data-folder="'+esc(r.id)+'"><span class="fd-folder-icon" aria-hidden="true">▤</span><strong>'+esc(labels[r.name]||r.name)+'</strong><small>'+esc(hints[r.name]||'Browse documents and subfolders')+'</small><span class="fd-arrow" aria-hidden="true">↗</span></button>').join('');
+$('fd-folders').innerHTML=folders.map(r=>'<button type="button" class="fd-folder" data-folder="'+esc(r.id)+'"><img class="fd-folder-cover" src="'+folderCover(r.name)+'" alt="" loading="lazy"><span class="fd-folder-copy"><strong>'+esc(labels[r.name]||r.name)+'</strong><small>'+esc(hints[r.name]||'Browse documents and subfolders')+'</small></span></button>').join('');
 const files=filtered.filter(r=>r.mimeType!==FOLDER).sort((a,b)=>(b.modifiedTime||'').localeCompare(a.modifiedTime||'')||a.name.localeCompare(b.name)),visible=files.slice(0,page*60);
 $('fd-files').innerHTML=(files.length?'<div class="fd-list-heading"><h2>Documents</h2><span>'+files.length+' file'+(files.length===1?'':'s')+'</span></div>':'')+visible.map(r=>'<article class="fd-file"><span class="fd-file-icon">'+esc(kind(r).toUpperCase())+'</span><div><h3>'+esc(display(r))+'</h3><small>'+esc(r.path||trail.slice(1).map(x=>x.name).join(' / ')||'Finance')+'</small>'+(r.modifiedTime?'<small>Updated '+esc(new Date(r.modifiedTime).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}))+'</small>':'')+'</div><div class="fd-file-actions"><button type="button" data-open="'+esc(r.id)+'">'+(r.privateReference?'Open in Drive ↗':'View')+'</button><a href="'+esc(link(r))+'" target="_blank" rel="noopener noreferrer" aria-label="Open '+esc(r.name)+' in Drive">Drive ↗</a></div></article>').join('')+(!filtered.length?'<div class="fd-empty">'+(q?'No matching documents.':'This folder has no matching files yet.')+'</div>':'');$('fd-more').hidden=visible.length>=files.length;
 }
