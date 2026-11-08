@@ -600,7 +600,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
   if(nav){
    const groups=[
     {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],color:'#355a8a',glyph:'<path d="m5 13 11-6 11 6v12H5zM9 25V14h14v11M9 18h14m-14 4h14"/>'},
-    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],color:'#63547d',glyph:'<rect x="6" y="9" width="20" height="14" rx="2"/><circle cx="12" cy="14" r="2"/><path d="M9 20q3-4 6 0m3-6h5m-5 4h5"/>'}
+    {name:'Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],color:'#63547d',glyph:'<rect x="6" y="9" width="20" height="14" rx="2"/><circle cx="12" cy="14" r="2"/><path d="M9 20q3-4 6 0m3-6h5m-5 4h5"/>'}
    ];
    for(const group of groups){
     const links=[...nav.querySelectorAll('a.th-nav-link')].filter(a=>group.members.some(m=>(a.getAttribute('href')||'').split('?')[0]===m));
@@ -621,7 +621,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
   if(cards.length){
    const groups=[
     {name:'Garage',href:'garage.html',members:['vehicles.html','watercraft.html','equipment.html'],desc:'Vehicles, watercraft, and equipment',icon:'▰'},
-    {name:'Personal Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],desc:'Family, identification, education, and medical',icon:'▣'}
+    {name:'Records',href:'personal-records.html',members:['family.html','identification.html','education.html','medical.html'],desc:'Family, identification, education, and medical',icon:'▣'}
    ];
    for(const g of groups){
     const matches=[...document.querySelectorAll('a.workspace')].filter(a=>g.members.includes(a.getAttribute('href')));
