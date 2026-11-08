@@ -856,7 +856,7 @@ const {annualVehicleUsage,compareVehicleUsage,annualUsageLabel,refreshAnnualUsag
  serviceAssetKey,specRecord,isLegend,clean,mileageFor,ownershipDate,ownershipText,ownershipIso,cardNumber,usesHours,esc
 });
 function cardPhotoOverride(a){
- return String(a.year)==='2023'&&/harley.*(roadglide|fltrk)/.test(clean(a.make+' '+a.model))?'command-photos/road-glide-2023-gravel-cutout.jpg':'';
+ return String(a.year)==='2023'&&/harley.*(roadglide|fltrk)/.test(clean(a.make+' '+a.model))?'command-photos/road-glide-2023-overlook.jpg':'';
 }
 function renderCategory(){
  photoObserver?.disconnect();
@@ -878,7 +878,7 @@ function renderCategory(){
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const override=cardPhotoOverride(a);
-  const photo=override?'command-photos/road-glide-2023-overlook.jpg':a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
+  const photo=override||a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
   const photoClass=override?' card-photo--road-glide':String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=photo||a.photoFileId?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
@@ -1095,7 +1095,7 @@ document.getElementById('assetGrid').addEventListener('change',async e=>{
  catch(error){input.value=prior;const message=document.createElement('span');message.className='card-status-error';message.setAttribute('role','alert');message.textContent=error.message||'Could not save status.';input.parentElement.append(message)}
  finally{input.disabled=false}
 });
-document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview);if(a)previewPhoto(a,cardPhotoOverride(a)||a.photoObjectUrl||a.photo);return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
+document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview),img=preview.querySelector('img');if(a&&img&&!img.hidden)previewPhoto(a,img.currentSrc||img.getAttribute('src'));return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
 let mileageTarget=null;
  document.querySelector('#mileageForm [name="mode"]').addEventListener('change',e=>{
   const hours=usesHours(mileageTarget),adding=e.target.value==='add';
@@ -1136,7 +1136,7 @@ document.getElementById('mileageForm').addEventListener('submit',async e=>{
  }catch(error){message.textContent=error.message}
  finally{button.disabled=false}
 });
-document.getElementById('assetPhoto').addEventListener('click',e=>{if(e.target.matches('img')&&asset)previewPhoto(asset,asset.photoObjectUrl||asset.photo)});
+document.getElementById('assetPhoto').addEventListener('click',e=>{if(e.target.matches('img')&&asset)previewPhoto(asset,e.target.currentSrc||e.target.getAttribute('src'))});
 document.getElementById('closePhotoPreview').addEventListener('click',()=>document.getElementById('photoPreview').close());
 document.getElementById('photoPreview').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
 document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
