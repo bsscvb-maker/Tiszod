@@ -361,3 +361,19 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 @media(max-width:1250px){.medical-reference-layout{grid-template-columns:1fr}.medical-reference-layout .medical-command-stage{grid-template-columns:minmax(135px,.35fr) minmax(260px,1fr)}.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:470px}}
 @media(max-width:850px){.medical-reference-middle,.medical-reference-lower{grid-template-columns:1fr 1fr}.medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.medical-reference-layout .medical-command-stage{grid-template-columns:1fr}.medical-reference-layout .medical-command-systems{display:flex;flex-wrap:wrap;gap:6px}.medical-reference-layout .medical-command-systems h3,.medical-reference-layout .medical-command-info{flex-basis:100%}.medical-reference-layout .medical-command-system{flex:1 1 100px;width:auto;margin:0}.medical-reference-middle,.medical-reference-lower{grid-template-columns:1fr}.medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.medical-command-dashboard .medical-concept-panels{grid-template-columns:1fr}.medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:440px}}
+
+/* Reference-matched lower dashboard row: vitals / medications / upcoming */
+.medical-command-dashboard .medical-concept-panels{grid-template-columns:1.1fr 1.2fr .85fr;align-items:stretch}
+.medical-reference-medications .medical-regimen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.medical-reference-medications .medical-regimen>:is(section,button){min-width:0;margin:0;padding:0;overflow:hidden;border:1px solid #26617d;border-radius:9px;background:#0c2538;color:#e5f6ff;text-align:left;display:flex;flex-direction:column}
+.medical-reference-medications .medical-regimen figure,.medical-reference-medications .medical-regimen-photo{display:block;margin:0;width:100%;height:82px;background:#07383e;overflow:hidden}
+.medical-reference-medications .medical-regimen img{display:block;width:100%;height:100%;object-fit:contain}
+.medical-reference-medications .medical-regimen :is(div,.medical-regimen-copy){display:block;padding:8px;font-size:.7rem;line-height:1.35}
+.medical-reference-medications .medical-regimen strong{display:block;color:#f4fbff;font-size:.76rem;margin-bottom:5px}
+.medical-reference-medications .medical-regimen p{margin:3px 0;color:#b5d9e7}
+.medical-reference-layout .medical-command-journey svg{min-height:130px}
+.medical-reference-layout .medical-command-journey strong{font-size:1.8rem}
+.medical-reference-layout .medical-command-systems h3{display:none}
+.medical-reference-layout .medical-command-info{font-size:.67rem}
+@media(max-width:1100px){.medical-command-dashboard .medical-concept-panels{grid-template-columns:1fr 1fr}.medical-reference-medications{grid-column:span 2}}
+@media(max-width:650px){.medical-command-dashboard .medical-concept-panels{grid-template-columns:1fr}.medical-reference-medications{grid-column:auto}.medical-reference-medications .medical-regimen{grid-template-columns:repeat(3,minmax(0,1fr))}}
