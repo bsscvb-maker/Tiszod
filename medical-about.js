@@ -52,6 +52,39 @@
     ['oxygenSaturation','SpO₂','◌','%'],
     ['heartRateVariability','Heart Rate Variability','⌁','ms']
   ];
+  const vitalKeys = vitalCards.flatMap(([key])=>[key,key+'Date']);
+  const vitalTag = "appProperties has { key='tiszodRecord' and value='medicalVitals' }";
+  let syncedVitals = {};
+  function mergeVitals(base){
+    const merged={...base};
+    for(const [key] of vitalCards){
+      const date=key+'Date';
+      if(syncedVitals[key] && (!base[key] || syncedVitals[date]>=(base[date]||''))){
+        merged[key]=syncedVitals[key];
+        merged[date]=syncedVitals[date];
+      }
+    }
+    return merged;
+  }
+  async function loadVitals(){
+    const files=await api.list("'me' in owners and "+vitalTag);
+    const rows=await Promise.all(files.map(async file=>{
+      const response=await thDriveFetch(file.id,{cache:'no-store'});
+      if(!response.ok)throw Error('Private vitals could not be loaded.');
+      return response.json();
+    }));
+    const latest={};
+    for(const row of rows.sort((a,b)=>String(a.savedAt).localeCompare(String(b.savedAt)))){
+      for(const [key] of vitalCards){
+        const date=key+'Date';
+        if(row[key]&&row[date]&&row[date]>=(latest[date]||'')){
+          latest[key]=row[key];
+          latest[date]=row[date];
+        }
+      }
+    }
+    return latest;
+  }
   const vitalDateLabel = new Intl.DateTimeFormat('en-US',{
     month:'short',day:'numeric',year:'numeric',timeZone:'UTC'
   });
@@ -144,8 +177,12 @@
     }));
   }
 
-  async function writeDose(row, pending, driveId){
-    if(!thAuthorized())throw Error('Sign in again to save the dose.');
+  function writeDose(row,pending,driveId){
+    return writeMedicalRecord(row,pending,driveId,'TisZod Injection Entry.json','medicalInjection');
+  }
+
+  async function writeMedicalRecord(row,pending,driveId,name,recordType){
+    if(!thAuthorized())throw Error('Sign in again to save the record.');
     const headers={Authorization:'Bearer '+thToken};
     const upload='https://www.googleapis.com/upload/drive/v3/files';
     let response;
@@ -156,12 +193,12 @@
     }else{
       if(!pending.id){
         const generated=await fetch('https://www.googleapis.com/drive/v3/files/generateIds?count=1&space=drive',{headers,cache:'no-store'});
-        if(!generated.ok)throw Error('Drive could not prepare the dose record.');
+        if(!generated.ok)throw Error('Drive could not prepare the record.');
         [pending.id]=(await generated.json()).ids;
       }
       driveId=pending.id;
       const boundary='tiszod-'+crypto.randomUUID();
-      const metadata={id:driveId,name:'TisZod Injection Entry.json',mimeType:'application/json',appProperties:{tiszodRecord:'medicalInjection'}};
+      const metadata={id:driveId,name,mimeType:'application/json',appProperties:{tiszodRecord:recordType}};
       const body=new Blob([
         '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
         '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(row)+'\r\n--'+boundary+'--\r\n'
@@ -171,7 +208,7 @@
       });
     }
     if(!response.ok&&response.status!==409)
-      throw Error(response.status===401?'Sign in again to save the dose.':'Drive could not save the dose. Try again.');
+      throw Error(response.status===401?'Sign in again to save the record.':'Drive could not save the record. Try again.');
     const readback=await thDriveFetch(driveId,{cache:'no-store'});
     const saved=readback.ok?await readback.json():null;
     if(!saved||Object.entries(row).some(([key,value])=>saved[key]!==value))
@@ -800,7 +837,32 @@
     currentField.append(current); form.append(currentField);
     const submit = make('button','Save in this browser'), message = make('p');
     message.setAttribute('role','status');
-    form.append(submit,action('Cancel',renderProfile),message);
+    const pending={};
+    const sync=action('Save vitals across devices',async()=>{
+      const row=Object.fromEntries(vitalKeys.map(key=>[key,inputs[key].value.trim()]));
+      if(vitalCards.some(([key])=>!row[key]||!row[key+'Date']||!Number.isFinite(Number(row[key])))){
+        message.textContent='Enter a number and date for each vital.';
+        return;
+      }
+      const signature=JSON.stringify(row);
+      if(pending.signature!==signature){
+        pending.signature=signature;
+        pending.id=undefined;
+        pending.savedAt=new Date().toISOString();
+      }
+      const buttons=Array.from(form.querySelectorAll('button'));
+      buttons.forEach(button=>button.disabled=true);
+      message.textContent='Saving private vitals…';
+      try{
+        await writeMedicalRecord({...row,savedAt:pending.savedAt},pending,undefined,
+          'TisZod Vitals Entry.json','medicalVitals');
+        syncedVitals=await loadVitals();
+        profile=mergeVitals(profile);
+        renderProfile();
+      }catch(error){message.textContent=error.message;}
+      finally{buttons.forEach(button=>button.disabled=false);}
+    });
+    form.append(submit,sync,action('Cancel',renderProfile),message);
     form.onsubmit = event => {
       event.preventDefault();
       const next = Object.fromEntries(Object.entries(inputs).map(([key,input]) => [key,input.value.trim()]));
@@ -808,7 +870,7 @@
       next.profileUpdatedAt=new Date().toISOString();
       try {localStorage.setItem(api.key+':about',JSON.stringify(next));}
       catch {message.textContent = 'This browser could not save the profile.';return;}
-      profile = {...savedProfile,...next}; renderProfile();
+      profile = mergeVitals({...savedProfile,...next}); renderProfile();
     };
     target.replaceChildren(form);
     inputs.height.focus();
@@ -816,6 +878,7 @@
   async function loadProfile() {
     const medication=api.medicationSource().catch(()=>undefined);
     const doseLog=readAddedDoses().catch(()=>null);
+    const vitals=loadVitals().catch(()=>null);
     const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
       const files = await api.list("'me' in owners and name = '"+profileFilename+"'");
@@ -835,6 +898,9 @@
       profile={...savedProfile,...local};
     }
     catch {profile = savedProfile;}
+    const privateVitals=await vitals;
+    if(privateVitals){syncedVitals=privateVitals;profile=mergeVitals(profile);}
+    else loadMessage+=' Private vitals could not be loaded.';
     api.onWeighIns?.(chartWeighIns(savedProfile));
     if (!$('medical-about-profile').querySelector('form')) renderProfile();
     void doseLog.then(storedDoses=>{
@@ -872,7 +938,7 @@
     careTeam,openInjectionHistory,
     start(options) {
       addMedicalSidebar();
-      api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
+      api = options; profile = {}; savedProfile = {}; syncedVitals = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       addedDoses=[]; doseLogReady=false;
       const historyButton=$('medical-injection-open');
       if(historyButton)historyButton.onclick=openInjectionHistory;
