@@ -197,11 +197,11 @@ if(r){const live=await thValues("'Education Records'!A"+r.row+":B"+r.row,'UNFORM
 const res=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+suffix,{method,headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},body:JSON.stringify({values})});if(!res.ok)throw Error('Save failed. Check your connection and retry.');await window.thStart()}
 async function loadPortraits(){
  try{
-  const rows=await thValues("'Identification Records'!D1:E2000",'UNFORMATTED_VALUE');
-  const photos=new Map(rows.filter(([key,value])=>typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)));
+  const photos=thPersonPortraits.parse(await thValues(thPersonPortraits.range,'UNFORMATTED_VALUE'));
   for(const badge of $('education-people').querySelectorAll('.education-portrait')){
    const person=badge.closest('[data-person]').dataset.person;
-   const source=photos.get('person-photo:'+person);
+   const source=photos.get(thPersonPortraits.nameKey(person));
+   if(person==='Zach')badge.hidden=!source;
    badge.style.backgroundImage=source?'url("'+source+'")':'';
    badge.classList.toggle('has-custom-portrait',Boolean(source));
   }
@@ -220,7 +220,7 @@ window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}reco
 
 
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
-const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexis',Tracy:'Tracy'};
+const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexis',Tracy:'Tracy',Zach:'Zach'};
 const visibilityKey='tiszod-education-hidden-people';
 let hiddenPeople=new Set(),showHiddenPeople=false;
 try{
@@ -343,7 +343,7 @@ function render(){
  const workspace=document.querySelector('.education');
  workspace.dataset.person=view;
  workspace.classList.toggle('education-landing',landing);
- const showDocuments=!careerLanding&&Boolean(dedicated||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
+ const showDocuments=!careerLanding&&Boolean(dedicated||q||selectedPerson==='Todd'||selectedPerson==='Tracy'||selectedPerson==='Zach'||(selectedPerson&&records.some(r=>owner(r.data)===view&&!isBook(r.data))));
  $('education-documents').hidden=!showDocuments;
  if(!showDocuments)return;
  const booksView=bookMode||selectedCategory==='Books'||$('education-category').value==='Books';bookTools.hidden=!booksView;

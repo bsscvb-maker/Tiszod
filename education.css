@@ -33,7 +33,8 @@
 .education-people [data-person=Tracy] span:not(.education-portrait){color:#f6cddd}
 .education-people [data-person=Tracy] .education-portrait{background-position:97.9167% 41%;border-color:#ffd1e1}
 .education-people [data-person=Tracy] .education-portrait.has-custom-portrait{background-position:center}
-.education[data-person=Tracy] [data-family-collections=education]{display:none}
+.education-people .education-portrait[hidden]{display:none}
+.education:is([data-person=Tracy],[data-person=Zach]) [data-family-collections=education]{display:none}
 @media(max-width:1050px){.education-people{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.education-people{grid-template-columns:1fr}}
 .education-books-nav{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 1rem}

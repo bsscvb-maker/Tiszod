@@ -5,6 +5,7 @@
     if (name === 'aiden') return 'Aiden';
     if (name === 'alexis' || name === 'alexa') return 'Alexis';
     if (name === 'tracy') return 'Tracy';
+    if (name === 'zach') return 'Zach';
     return 'Todd';
   }
 
