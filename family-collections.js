@@ -143,8 +143,24 @@
   return card;
  }
 
+ async function loadRecreationPortraits() {
+  try {
+   return thPersonPortraits.parse(await thValues(thPersonPortraits.range,'UNFORMATTED_VALUE'));
+  } catch {
+   try {
+    return thPersonPortraits.parse(await thValues(thPersonPortraits.range,'UNFORMATTED_VALUE'));
+   } catch {
+    document.getElementById('hobby-portrait-status').textContent='Profile photos could not load. Use Refresh to try again.';
+    return new Map();
+   }
+  }
+ }
+
  async function render() {
-  if (area === 'hobbies') window.thFamilyRecreationSearchEntries = undefined;
+  if (area === 'hobbies') {
+   window.thFamilyRecreationSearchEntries = undefined;
+   document.getElementById('hobby-portrait-status').textContent='';
+  }
   mount.hidden = false;
   mount.replaceChildren();
   const heading = document.createElement('h2');
@@ -156,9 +172,8 @@
   cards.className = 'legal-cards';
   mount.append(heading, status, cards);
   try {
-   const personFolders = await readPeopleFolders();
-   const portraitRows=area==='hobbies'?await thValues("'Identification Records'!D1:E2000",'UNFORMATTED_VALUE').catch(()=>[]):[];
-   const portraits=new Map(portraitRows.flatMap(([key,value])=>typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?[[key.slice(13),value]]:[]));
+   const portraitRead=area==='hobbies'?loadRecreationPortraits():Promise.resolve(new Map());
+   const [personFolders,portraits]=await Promise.all([readPeopleFolders(),portraitRead]);
    const members = ['education', 'identification'].includes(area) ? people.slice(0, 2)
     : area === 'hobbies' ? ['Todd','Aiden','Alexis','Zach','Tracy'] : people;
    const results = await Promise.allSettled(members.map(async name => {
@@ -179,7 +194,7 @@
      avatar.className='recreation-portrait';
      avatar.dataset.person=name;
      avatar.setAttribute('aria-hidden','true');
-     const portrait=portraits.get(name);
+     const portrait=portraits.get(thPersonPortraits.nameKey(name));
      if(portrait){
       avatar.style.backgroundImage='url('+portrait+')';
       avatar.style.backgroundSize='cover';

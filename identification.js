@@ -23,13 +23,10 @@ window.thStart=async()=>{
 let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
 let documentOrders=new Map(),orderSaving=false,arrangeDocuments=false;
 let hiddenPeople=new Set(['Heather','Alexis']),showHiddenPeople=false,visibilitySaving=false;
-const visibilityRange="'Identification Records'!D1:E2000";
+const visibilityRange=thPersonPortraits.range;
 let personPortraits=new Map();
 function applyVisibility(rows){
- personPortraits=new Map(rows.flatMap(([key,value])=>
-  typeof key==='string'&&key.startsWith('person-photo:')&&typeof value==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?
-   [[key.slice(13),value]]:[]
- ));
+ personPortraits=thPersonPortraits.parse(rows);
  documentOrders=new Map();
  hiddenPeople=new Set(['Heather','Alexis']);
  for(const [key,value] of rows){if(typeof key==='string'&&key.startsWith('document-order:')){try{const ids=JSON.parse(value);if(Array.isArray(ids))documentOrders.set(key.slice(15),ids.filter(id=>typeof id==='string'))}catch{}}}
@@ -108,7 +105,7 @@ function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)ret
 const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Tracy’s Father']};
 function groupCard(label,count,attribute,value){
  const profile=attribute==='data-person'?(personStyles[label]||['other',label.charAt(0),'Documents']):null;
- const portrait=personPortraits.get(label)||'';
+ const portrait=personPortraits.get(thPersonPortraits.nameKey(label))||'';
  const hasPhoto=portrait||['Todd','Aiden','Alexis','Tracy'].includes(label);
  const portraitStyle=portrait?' style="background-image:url('+portrait+');background-size:cover;background-position:center"':'';
  const avatar=profile?
