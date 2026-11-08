@@ -23,9 +23,9 @@ window.thMedicalFolders = (() => {
       return (period?Number(hour)%12+(period.toUpperCase()==='PM'?12:0):Number(hour))*60+Number(minute);
     };
     const area=make('div');area.className='medical-folder-table';
-    area.append(table(['Date','Time (Eastern)','Product','Reported dose'],
+    area.append(table(['Dose #','Date','Time (Eastern)','Product','Reported dose','Notes'],
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
-        [item.date,item.time,item.product,item.dose].map(value=>value==null||value===''?'Not recorded':String(value)))));
+        [item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes].map(value=>value==null||value===''?'Not recorded':String(value)))));
     return area;
   }
   const sorted=(records,date)=>[...records].sort((a,b)=>date(b).localeCompare(date(a))||a.name.localeCompare(b.name));

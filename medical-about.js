@@ -47,16 +47,17 @@
     return inches?Number(inches[1]):0;
   }
   const isCompoundedTirzepatide=name=>/^compounded tirzepatide\b/i.test(name);
+  let injections=[];
   function openInjectionHistory(){
     const dialog=$('medical-injection-history');
-    $('medical-injection-rows').replaceChildren(thMedicalFolders.injectionHistory(savedProfile.folderSummaries?.injections));
+    $('medical-injection-rows').replaceChildren(thMedicalFolders.injectionHistory(injections));
     if(!dialog.open)dialog.showModal();
   }
   function loggedMedicationAmount(name, dose) {
     const compound = /^compounded tirzepatide (?:with|\+) b12$/i;
     if(compound.test(name)&&medicationSource?.reportedDose)return medicationSource.reportedDose;
     if (!compound.test(name) || dose !== 'Current dose to confirm') return dose;
-    const latest = (savedProfile.folderSummaries?.injections || [])
+    const latest = injections
       .filter(entry => compound.test(entry.product) && /^\d{4}-\d{2}-\d{2}$/.test(entry.date))
       .sort((a,b) => b.date.localeCompare(a.date))[0];
     return latest?.dose?.match(/^(\d+(?:\.\d+)? mL)(?: reported)?$/i)?.[1] || dose;
@@ -239,7 +240,12 @@
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
     [compositionSource,medicationSource]=await Promise.all([source,medication]);
-    api.onFolderSummaries?.(savedProfile.folderSummaries);
+    const entered=Array.isArray(medicationSource?.injections)?medicationSource.injections:[];
+    const legacy=Array.isArray(savedProfile.folderSummaries?.injections)?savedProfile.folderSummaries.injections:[];
+    const entryKey=row=>row.date+'|'+(/zepbound/i.test(row.product)?'zepbound':'tirzepatide');
+    const enteredKeys=new Set(entered.map(entryKey));
+    injections=[...legacy.filter(row=>!enteredKeys.has(entryKey(row))),...entered];
+    api.onFolderSummaries?.({...savedProfile.folderSummaries,injections});
     api.onWeighIns?.(savedProfile.weighIns);
     try {
       const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
@@ -252,7 +258,7 @@
   window.thMedicalAbout = {
     careTeam,
     start(options) {
-      api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; loadMessage = '';
+      api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       $('medical-about-edit').onclick = edit;
       renderProfile(); void loadProfile();
     },

@@ -218,7 +218,8 @@
     $('medical-admin-folders').hidden=!admin.length;
     $('medical-admin-cards').replaceChildren(...admin.map(entry=>thDriveRecords.card(entry)));
     entries=entries.filter(entry=>!isAdministrative(entry.originalName||entry.name));
-    const choices = [['All files',entries],...entries.filter(entry=>entry.folder||entry.directReader).map(entry=>[entry.name,[entry]])];
+    entries=entries.filter(entry=>!/^(aiden|alexis)$/i.test(entry.originalName||entry.name));
+    const choices = entries.filter(entry=>entry.folder||entry.directReader).map(entry=>[entry.name,[entry]]);
     const controls = choices.map(([label,items],index) => {
       const tab=button(label,()=>select(index));
       tab.id='medical-folder-tab-'+index;
@@ -235,11 +236,15 @@
     });
     function select(index) {
       controls.forEach((control,i)=>{control.setAttribute('aria-selected',String(i===index));control.tabIndex=i===index?0:-1;});
+      panel.setAttribute('role','tabpanel');
       panel.setAttribute('aria-labelledby',controls[index].id);
       panel.replaceChildren(...choices[index][1].map(entry=>thDriveRecords.card(entry)));
     }
     tabs.replaceChildren(...controls);
-    select(0);
+    panel.removeAttribute('role');
+    panel.setAttribute('aria-label','Browse records');
+    panel.replaceChildren(...entries.map(entry=>thDriveRecords.card(entry)));
+    controls.forEach((control,index)=>{control.setAttribute('aria-selected','false');control.tabIndex=index===0?0:-1;});
   }
   async function loadWeight() {
     try {
