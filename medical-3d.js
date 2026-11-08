@@ -7,6 +7,63 @@ const ATLAS_URL='https://cdn.jsdelivr.net/gh/Charleeh/ecorche@320805e06aee51e2e6
 const ADDONS='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/';
 let atlasPromise;
 let headGeometryPromise;
+
+// Front-view proportions traced from the reference, in model units.
+const FRONT_HEIGHT=[
+ [-2.11,-2.11],[-1.78,-1.72],[-1.03,-.91],[-.48,-.46],
+ [.04,.01],[.58,.64],[1.17,1.22],[1.42,1.43],[1.96,1.96]
+];
+const BODY_WIDTH=[
+ [-2.11,1.03],[-1.85,1.24],[-1.45,1.27],[-1.02,1.30],
+ [-.66,1.22],[-.29,1.18],[.07,1.08],[.52,1.11],
+ [.92,1.20],[1.22,1.22],[1.43,1.03],[1.96,1.03]
+];
+const ARM_WIDTH=[
+ [-.55,1.20],[-.30,1.23],[-.02,1.25],[.32,1.30],
+ [.65,1.27],[1.00,1.27],[1.23,1.30],[1.43,1.05]
+];
+function sampleProfile(profile,y){
+ for(let i=1;i<profile.length;i++){
+  const [upper,value]=profile[i];
+  if(y>upper)continue;
+  const [lower,previous]=profile[i-1];
+  return previous+(value-previous)*Math.max(0,(y-lower)/(upper-lower));
+ }
+ return profile[profile.length-1][1];
+}
+function fitFrontReference(vertex){
+ const y=vertex.y;
+ const armEdge=Math.max(0,Math.min(1,(Math.abs(vertex.x)-.36)/.16));
+ const arm=armEdge*armEdge*(3-2*armEdge)*
+  Math.max(0,Math.min(1,(y+.55)/.18))*Math.max(0,Math.min(1,(1.43-y)/.18));
+ const bodyWidth=sampleProfile(BODY_WIDTH,y);
+ vertex.x*=bodyWidth+(sampleProfile(ARM_WIDTH,y)-bodyWidth)*arm;
+ vertex.y=sampleProfile(FRONT_HEIGHT,y)-.13*arm*Math.max(0,Math.min(1,(1.18-y)/.8));
+ return vertex;
+}
+function remapMeshes(THREE,root,{copy=false}={}){
+ root.updateMatrixWorld(true);
+ const vertex=new THREE.Vector3();
+ root.traverse(mesh=>{
+  if(!mesh.isMesh)return;
+  const matrix=mesh.matrixWorld;
+  const inverse=matrix.clone().invert();
+  const geometry=copy?mesh.geometry.clone():mesh.geometry;
+  const source=geometry.getAttribute('position');
+  const fitted=new Float32Array(source.count*3);
+  for(let i=0;i<source.count;i++){
+   vertex.fromBufferAttribute(source,i).applyMatrix4(matrix);
+   fitFrontReference(vertex).applyMatrix4(inverse).toArray(fitted,i*3);
+  }
+  geometry.setAttribute('position',new THREE.BufferAttribute(fitted,3));
+  // Replace the atlas's quantized normals before recomputing the fitted surface.
+  geometry.deleteAttribute('normal');
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  mesh.geometry=geometry;
+ });
+}
 const HEAD_URL='assets/medical/sculpted-scanner-head.json';
 
 function getHeadGeometry(THREE){
@@ -75,6 +132,7 @@ function getAtlas(THREE){
   });
   const scale=4.05/size.y,center=box.getCenter(new THREE.Vector3());
   scene.scale.setScalar(scale);scene.position.set(-center.x*scale,-2.11-box.min.y*scale,-center.z*scale);
+  remapMeshes(THREE,scene);
   return scene;
  })().catch(error=>{atlasPromise=undefined;throw error;});
 }
@@ -283,6 +341,8 @@ window.thMedical3D={
     const marker=new THREE.Mesh(new THREE.TorusGeometry(radius,.009,8,64),wholeBodyMaterial);
     marker.rotation.x=Math.PI/2;marker.position.y=y;wholeBody.add(marker);
    }
+   for(const layer of [surface,muscles,face,skeleton,organs])remapMeshes(THREE,layer,{copy:true});
+   sphere.dispose();
    const organCenters=Object.fromEntries(Object.entries(systems).map(([name,group])=>
     [name,new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3())]));
    stage.dataset.model='anatomy-v2';
@@ -341,11 +401,12 @@ window.thMedical3D={
      const bounds=node.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverseBody,node.matrixWorld));
      if(bounds.min.y>1.39)atlasFaceMeshes.push(node);
     });
-    stage.dataset.model='ecorche-atlas';state.setMode(state.mode);
+    stage.dataset.model='reference-fitted-atlas';state.setMode(state.mode);
    }).catch(error=>{if(stage.isConnected)console.warn('Detailed atlas unavailable; anatomy illustration retained.',error);});
    void getHeadGeometry(THREE).then(template=>{
     if(state.disposed||!stage.isConnected)return;
     sculptedHead=new THREE.Mesh(template.clone(),headMaterial);
+    remapMeshes(THREE,sculptedHead);
     body.add(sculptedHead);
     stage.dataset.sculptedHead='true';
     state.setMode(state.mode);
