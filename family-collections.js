@@ -208,14 +208,15 @@
   cards.before(toggle);
   function updateVisibility(){
    toggle.hidden=!hidden.size;
-   toggle.textContent=(showHidden?'Hide hidden people':'Show hidden people')+' ('+hidden.size+')';
+   if(!hidden.size)showHidden=false;
+   toggle.textContent=showHidden?'Back to visible people':'Show hidden people ('+hidden.size+')';
    toggle.setAttribute('aria-pressed',String(showHidden));
    for(const card of entries){
     const name=card.dataset.person,isHidden=hidden.has(name);
-    card.hidden=isHidden&&!showHidden;
+    card.hidden=showHidden?!isHidden:isHidden;
     const button=card.querySelector('.medical-hide-person');
     button.textContent=isHidden?'Unhide':'Hide';
-    button.setAttribute('aria-label',button.textContent+' '+name);
+    button.setAttribute('aria-label','Hide '+name);
     button.setAttribute('aria-checked',String(isHidden));
    }
   }
@@ -230,7 +231,7 @@
     if(hidden.has(name))hidden.delete(name);else hidden.add(name);
     try{localStorage.setItem(key,JSON.stringify([...hidden]));}catch{}
     updateVisibility();
-    if(card.hidden)toggle.focus();
+    if(card.hidden)(toggle.hidden?cards.querySelector('.medical-person-card:not([hidden]) button'):toggle)?.focus();
    };
    card.append(button);
   }

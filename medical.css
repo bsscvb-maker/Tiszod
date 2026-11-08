@@ -149,7 +149,10 @@
 }
 
 #medical-todd{margin:0 0 24px}
-#medical-todd>summary,#medical-admin-folders>summary{cursor:pointer;padding:14px 16px;border:1px solid #3a5c6e;border-radius:10px;background:#142332;color:#e5f3f5;font-weight:750}
-#medical-todd[open]>summary,#medical-admin-folders[open]>summary{margin-bottom:14px}
+#medical-content:has(#medical-todd:not([hidden])) :is(.medical-hero,#medical-people){display:none}
+#medical-todd-title{margin:12px 0}
+.medical-back{color:#a4eee1}
+#medical-admin-folders>summary{cursor:pointer;padding:14px 16px;border:1px solid #3a5c6e;border-radius:10px;background:#142332;color:#e5f3f5;font-weight:750}
+#medical-admin-folders[open]>summary{margin-bottom:14px}
 #medical-admin-folders{margin-top:16px}
 body[data-th-page="medical"] .medical-themed-card > .legal-kind{display:none}

@@ -22,6 +22,7 @@
 .medical-person-card .medical-hide-person{position:relative;display:flex;align-items:center;gap:8px;margin-left:auto}
 .medical-hide-person::before{content:"";width:2rem;height:1.15rem;background:#1c3146;border:1px solid #7897b4;border-radius:1rem}
 .medical-hide-person::after{content:"";position:absolute;left:16px;width:.85rem;height:.85rem;background:#e7f2fd;border-radius:50%}
+.medical-hide-person[aria-checked="true"]::before{background:#285581;border-color:#9bdce9}
 .medical-hide-person[aria-checked="true"]::after{transform:translateX(.85rem)}
 @media(max-width:1050px){[data-family-collections="medical"] .legal-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){[data-family-collections="medical"] .legal-cards{grid-template-columns:minmax(0,1fr)}}
