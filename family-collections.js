@@ -142,7 +142,8 @@
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
    coverPath: [area, coverName],
-   coverFor: area==='medical'?path=>path.length===2?'assets/medical/mythic-book.svg':coverFor(path):coverFor,
+   coverFor,
+   ...(area==='medical'&&name==='Todd'?{directReader:true,readerUrl:'#medical-todd',kindLabel:'Folder'}:{}),
    virtualFiles: records
   });
   return card;

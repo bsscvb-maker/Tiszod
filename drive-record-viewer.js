@@ -331,7 +331,14 @@ function legalFileCard(record,back){
     return showLegalRecord(record,back);
    };
   }
-  if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
+  if(window.thMedicalCardCover){
+   card.classList.add('medical-themed-card');
+   const image=document.createElement('img');
+   image.alt='';
+   image.loading='lazy';
+   image.src=thMedicalCardCover(record);
+   art.replaceChildren(image);
+  }else if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
    const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
     JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]),

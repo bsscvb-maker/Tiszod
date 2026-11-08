@@ -1,6 +1,7 @@
 (() => {
   const categories = ['Prescriptions', 'Providers & Visits', 'Labs & Screening', 'Dental', 'Insurance', 'Billing & Receipts', 'Immunizations', 'Body Composition'];
   const folderLabels = {'Billing & Receipts':'Billing','Labs & Screening':'Test Result','Providers & Visits':'Providers'};
+  const isAdministrative = name => /^(?:\d{2}[ ._-]+)?(?:admin(?:istrative)? access|quarantine)\b/i.test(name);
   const canonical = name => Object.keys(folderLabels).find(key => folderLabels[key] === name) || name;
   const collections = {
     'Prescriptions': ['prescriptions','teal'],
@@ -211,6 +212,10 @@
   }
   function renderCollections(entries) {
     const tabs = $('medical-folder-tabs'), panel = $('medical-folders');
+    const admin=entries.filter(entry=>isAdministrative(entry.originalName||entry.name));
+    $('medical-admin-folders').hidden=!admin.length;
+    $('medical-admin-cards').replaceChildren(...admin.map(entry=>thDriveRecords.card(entry)));
+    entries=entries.filter(entry=>!isAdministrative(entry.originalName||entry.name));
     const choices = [['All files',entries],...entries.filter(entry=>entry.folder||entry.directReader).map(entry=>[entry.name,[entry]])];
     const controls = choices.map(([label,items],index) => {
       const tab=button(label,()=>select(index));
@@ -245,6 +250,15 @@
     } catch (error) {console.warn('Could not read the weight series.',error.name);}
     updateWeights();
   }
+  function revealTodd(hash=location.hash){
+    if(['#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title'].includes(hash))$('medical-todd').open=true;
+    if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
+  }
+  window.addEventListener('hashchange',()=>revealTodd());
+  $('medical-content').addEventListener('click',event=>{
+    const link=event.target.closest('a[href^="#"]');
+    if(link)revealTodd(link.hash);
+  });
   window.thStart = async () => {
     workbookWeights = []; manualWeights = []; browserWeights = []; weights = []; folderSummaries = {};
     $('medical-content').hidden = false;
@@ -260,7 +274,7 @@
       const files = (await children(root.id)).filter(file => !exclude(file));
       const folders = files.filter(file => file.folder);
       const rootFiles = files.filter(file => !file.folder);
-      const indexed = await Promise.allSettled(folders.map(folder => walk(folder,[folder.name],new Set())));
+      const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));
       records = indexed.flatMap(r => r.status === 'fulfilled' ? r.value : []);
       records.push(...rootFiles.map(file => ({...file,path:['Body Composition'],category:'Body Composition',kind:'Document',date:dateFromName(file.name)})));
       workbook = rootFiles.find(f => /^body composition(?: metrics)?\.xlsx$/i.test(f.name));
@@ -284,14 +298,7 @@
       }).sort((a,b)=>rank(a.name)-rank(b.name));
       cards.push({id:'medical-care-team',name:'Care Team',folder:true,dashboardOnly:true,dashboard:()=>thMedicalAbout.careTeam(),medicalCoverImage:'assets/medical/care-team.svg'});
       cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.webp'});
-      function revealTimeline(){
-        if(location.hash==='#timeline-title') $('medical-timeline-panel').hidden=false;
-      }
-      window.addEventListener('hashchange',revealTimeline);
-      $('medical-content').addEventListener('click',event=>{
-        if(event.target.closest('a[href="#timeline-title"]')) $('medical-timeline-panel').hidden=false;
-      });
-      revealTimeline();
+      revealTodd();
       renderCollections(cards);
       $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
@@ -316,7 +323,10 @@
         status.textContent='Weigh-in saved.';
       };
       const query = new URLSearchParams(location.search).get('q');
-      if (query) $('medical-search').value = query.slice(0,120);
+      if (query) {
+        $('medical-search').value=query.slice(0,120);
+        revealTodd('#timeline-title');
+      }
       renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       const importForm=$('medical-import-weigh-ins');
       importForm.onsubmit=async event=>{
