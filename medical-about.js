@@ -353,7 +353,22 @@
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
     stage.append(grid,ring,silhouette,target,sweep,badge,readout);
-    const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);figure.append(header,controls,stage,detail);
+    const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);
+    const full=action('⛶ Full screen',()=>threeState?.toggleFullscreen?.());full.className='medical-scanner-mode';controls.append(full);
+    const quality=make('select');quality.className='medical-scanner-quality';quality.setAttribute('aria-label','3D graphics quality');
+    for(const [value,label] of [['auto','Graphics: Auto'],['low','Graphics: Low'],['high','Graphics: High']]){
+      const option=make('option',label);option.value=value;quality.append(option);
+    }
+    quality.value='auto';quality.onchange=()=>threeState?.setQuality?.(quality.value);controls.append(quality);
+    const directions=make('div');directions.className='medical-3d-directions';
+    directions.textContent='Windows: drag to rotate, scroll to zoom. iPad/iPhone: drag to rotate, pinch to zoom.';
+    const moveControls=make('div');moveControls.className='medical-3d-move-controls';
+    for(const [label,delta] of [['↶ Rotate left',-.3],['Rotate right ↷',.3]]){
+      const b=action(label,()=>threeState?.rotate?.(delta));b.className='medical-scanner-mode';moveControls.append(b);
+    }
+    for(const [label,delta] of [['＋ Zoom in',-.65],['－ Zoom out',.65]]){
+      const b=action(label,()=>threeState?.zoomBy?.(delta));b.className='medical-scanner-mode';moveControls.append(b);
+    }figure.append(header,controls,stage,moveControls,directions,detail);
     if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
     updateMotion();updateLayer();
     return figure;
