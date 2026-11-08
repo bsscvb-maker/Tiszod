@@ -8,7 +8,7 @@
   family: 'Family records', education: 'School records by person', medical: 'Medical records by person',
   hobbies: 'Family activities', identification: 'Family identification records'
  };
- const photo = name => name.startsWith('assets/') ? name : 'assets/family-unique/' + name + '.webp';
+ const photo = name => /\.(?:jpg|png|webp)$/.test(name) ? name : 'assets/family-unique/' + name + '.webp';
  // A photograph is assigned to one location only. The viewer illustrates all other locations individually.
  const photos = new Map(Object.entries({
   'family/Aiden': 'aiden-family', 'family/Alexis': 'alexis-family',
@@ -56,12 +56,14 @@
   'education/Alexis/01 School': 'assets/family/school-reports.webp',
   'hobbies/Aiden/Activities & Sports': 'assets/family/sports.webp',
   'hobbies/Alexis/Activities & Volunteering': 'assets/family/volunteering.webp',
-  'hobbies/Todd/Tickets': 'assets/family/archive.webp'
+  'hobbies/Todd/Tickets': 'assets/family/archive.webp',
+  'hobbies/Todd/Black & Mild': 'assets/hobbies/black-and-mild-logo.png',
+  'hobbies/Todd/Freebirds': 'freebirds-boot.jpg'
  }));
  const coverFor = path => {
   const key = path.join('/').replace(/^((?:family|medical|hobbies)\/(?:Aiden|Alexis)\/)0[2-5] /, '$1');
   const name = photos.get(key);
-  return name ? photo(name) : undefined;
+  return name ? photo(name) : area==='hobbies'?recreationFolderCover(path):undefined;
  };
  const decorate = (record, parent) => ({
   ...record,
@@ -105,7 +107,8 @@
   if (area === 'education') return [school];
   if (area === 'medical') return name === 'Todd' ? toddMedical : name === 'Tracy' ? files : [health];
   if (area === 'hobbies') return name === 'Todd'
-   ? [get('Tickets'), ...files.filter(file => /running club group photos/i.test(file.name))]
+   ? [link('Black & Mild','black-mild.html'), link('Freebirds','freebirds.html'),
+      get('Tickets'), ...files.filter(file => /running club group photos/i.test(file.name))]
    : [activities];
   if (area === 'identification') {
    if (name === 'Alexis') return [keep.find(exact('DMV & Driver Records'))];

@@ -335,7 +335,7 @@ function legalFileCard(record,back){
    const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
     JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]),
-    careerFolder?careerFolderSymbol(record.coverPath??[record.name]):undefined
+    (careerFolder||record.folder&&record.coverPath?.[0]==='hobbies')?careerFolderSymbol(record.coverPath??[record.name]):undefined
    );
    const image=document.createElement('img');
    image.alt='';
@@ -344,7 +344,7 @@ function legalFileCard(record,back){
    const medicalImage=record.medicalArt&&'assets/medical/'+record.medicalArt+'.webp';
    const recreationImage=record.cover&&'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
    image.onerror=()=>{image.onerror=null;image.src=fallback();};
-   image.src=folderPhoto||record.medicalCoverImage||medicalImage||recreationImage||fallback();
+   image.src=recreationImage||folderPhoto||record.medicalCoverImage||medicalImage||fallback();
    art.replaceChildren(image);
    if(careerFolder&&!folderPhoto){
     legalCoverJobs.set(button,async()=>{
