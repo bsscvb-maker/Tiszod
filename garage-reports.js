@@ -50,7 +50,7 @@
     if (/boat|watercraft/i.test(category) || /waverunner|jetski|seadoo|sailboat/.test(name)) return 'Watercraft';
     if (/equipment|tractor|small engine/i.test(category)) return 'Equipment';
     if (/makdaddylegend/.test(name)) return 'Vehicles';
-    if (/off.road|atv|quad|moped|scooter|mini bike|bicycle/i.test(category) || /jaguar200|colemanb200|trek7200/.test(name)) return 'Off-Road';
+    if (/off.road|atv|quad|moped|scooter|mini bike|bicycle|golf cart/i.test(category) || /jaguar200|colemanb200|trek7200/.test(name)) return 'Off-Road';
     return 'Vehicles';
   }
 
