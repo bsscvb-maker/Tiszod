@@ -330,7 +330,7 @@
     ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
     grid.className='medical-scanner-grid';target.className='medical-scanner-target';
     for(const layer of [ring,sweep,grid,target])layer.setAttribute('aria-hidden','true');
-    const controls=make('div');controls.className='medical-scanner-controls';
+    let threeState=null;const controls=make('div');controls.className='medical-scanner-controls';
     const modes=[['skin','Skin'],['anatomy','Anatomy'],['scan','X-ray']];
     const buttons=modes.map(([mode,label])=>{
       const button=action(label,()=>{scannerLayer=mode;updateLayer()});
@@ -340,12 +340,12 @@
     const readout=make('div','LIVE VISUALIZATION · ILLUSTRATIVE','medical-scanner-readout');
     const detail=make('div','Select a view to explore the body model. This is an illustration, not a diagnostic scan.','medical-scanner-detail');
     function updateMotion(){
-      figure.toggleAttribute('data-paused',scannerPaused);
+      figure.toggleAttribute('data-paused',scannerPaused);if(threeState)threeState.paused=scannerPaused;
       pause.textContent=scannerPaused?'Resume motion':'Pause motion';
       pause.setAttribute('aria-pressed',String(scannerPaused));
     }
     function updateLayer(){
-      figure.dataset.layer=scannerLayer;
+      figure.dataset.layer=scannerLayer;if(threeState?.setMode)threeState.setMode(scannerLayer);
       silhouette.src=scannerLayer==='skin'?'assets/medical/body-scanner-skin.svg?v=2':'assets/medical/body-scanner.svg?v=anatomy';
       silhouette.alt=scannerLayer==='skin'?'Illustrated light-skinned adult male body':'Illustrated anatomical body diagram';
       buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===scannerLayer)));
@@ -353,7 +353,7 @@
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
     stage.append(grid,ring,silhouette,target,sweep,badge,readout);
-    figure.append(header,controls,stage,detail);
+    const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);figure.append(header,controls,stage,detail);\n    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
     updateMotion();updateLayer();
     return figure;
   }
