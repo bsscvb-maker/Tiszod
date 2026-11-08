@@ -16,7 +16,7 @@
     ['pcp','Primary care physician'],
     ['eyeCare','Ophthalmologist or eye-care practice']
   ];
-  let api, profile = {}, savedProfile = {}, compositionSource=null, loadMessage = '';
+  let api, profile = {}, savedProfile = {}, compositionSource=null, medicationSource=null, loadMessage = '';
 
   function careTeam() {
     const team=make('section');team.className='medical-folder-dashboard medical-care-team';
@@ -46,8 +46,15 @@
     const inches=raw.match(/^(\d+(?:\.\d+)?)\s*(?:in|inches|["″])$/i);
     return inches?Number(inches[1]):0;
   }
+  const isCompoundedTirzepatide=name=>/^compounded tirzepatide\b/i.test(name);
+  function openInjectionHistory(){
+    const dialog=$('medical-injection-history');
+    $('medical-injection-rows').replaceChildren(thMedicalFolders.injectionHistory(savedProfile.folderSummaries?.injections));
+    if(!dialog.open)dialog.showModal();
+  }
   function loggedMedicationAmount(name, dose) {
     const compound = /^compounded tirzepatide (?:with|\+) b12$/i;
+    if(compound.test(name)&&medicationSource?.reportedDose)return medicationSource.reportedDose;
     if (!compound.test(name) || dose !== 'Current dose to confirm') return dose;
     const latest = (savedProfile.folderSummaries?.injections || [])
       .filter(entry => compound.test(entry.product) && /^\d{4}-\d{2}-\d{2}$/.test(entry.date))
@@ -159,7 +166,12 @@
           image.src='assets/medical/'+visual[1]+(visual[1]==='tirzepatide-vial'?'-pink.svg':'-imprint.webp');image.alt=visual[2];
           picture.append(image);card.append(picture);
         }
-        info.append(make('strong',name));
+        if(isCompoundedTirzepatide(name)){
+          const title=action(name,openInjectionHistory);
+          title.className='medical-injection-link';
+          title.setAttribute('aria-haspopup','dialog');
+          info.append(title);
+        }else info.append(make('strong',name));
         const amount=loggedMedicationAmount(name,dose);
         if(amount)info.append(make('p',amount));
         if(schedule)info.append(make('p',schedule));
@@ -208,6 +220,7 @@
     inputs.height.focus();
   }
   async function loadProfile() {
+    const medication=api.medicationSource?.().catch(()=>null);
     const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
       const files = await api.list("'me' in owners and name = '"+profileFilename+"'");
@@ -218,7 +231,7 @@
       } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
-    compositionSource=await source;
+    [compositionSource,medicationSource]=await Promise.all([source,medication]);
     api.onFolderSummaries?.(savedProfile.folderSummaries);
     api.onWeighIns?.(savedProfile.weighIns);
     try {
@@ -232,7 +245,7 @@
   window.thMedicalAbout = {
     careTeam,
     start(options) {
-      api = options; profile = {}; savedProfile = {}; compositionSource=null; loadMessage = '';
+      api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; loadMessage = '';
       $('medical-about-edit').onclick = edit;
       renderProfile(); void loadProfile();
     },

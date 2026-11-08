@@ -58,7 +58,8 @@
   }
   const children = id => list("'" + escapeQuery(id) + "' in parents");
   const compositionFilename='TisZod About Me - Body Composition.json';
-  const exclude = file => file.name===compositionFilename|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
+  const medicationFilename='TisZod About Me - Medication.json';
+  const exclude = file => [compositionFilename,medicationFilename].includes(file.name)|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
   function dateFromName(name) {
     const match = name.match(/\b((?:19|20)\d\d)[.\/-](0[1-9]|1[0-2])(?:[.\/-](0[1-9]|[12]\d|3[01]))?(?![.\/-]\d)/);
     if (match) {
@@ -371,17 +372,21 @@
         } catch {status.textContent='Could not import the file. Use a scale CSV with Weight (lb) and Date/Time columns.';}
         finally {button.disabled=false;}
       };
+      let toddFiles;
+      async function readToddSource(filename){
+        if(!toddFolder)return null;
+        toddFiles??=children(toddFolder.id);
+        const sources=(await toddFiles).filter(file=>!file.folder&&file.name===filename);
+        if(sources.length>1)throw Error('More than one private source was found.');
+        if(!sources.length)return null;
+        const response=await thDriveFetch(sources[0].id,{cache:'no-store'});
+        if(!response.ok)throw Error('Private source could not load.');
+        return response.json();
+      }
       thMedicalAbout.start({
         key, list,
-        async compositionSource(){
-          if(!toddFolder)return null;
-          const sources=(await children(toddFolder.id)).filter(file=>!file.folder&&file.name===compositionFilename);
-          if(sources.length>1)throw Error('More than one body composition source was found.');
-          if(!sources.length)return null;
-          const response=await thDriveFetch(sources[0].id,{cache:'no-store'});
-          if(!response.ok)throw Error('Body composition source could not load.');
-          return response.json();
-        },
+        compositionSource:()=>readToddSource(compositionFilename),
+        medicationSource:()=>readToddSource(medicationFilename),
         onFolderSummaries: value => {
           folderSummaries=value||{};
           const hidden = new Set(folderSummaries.hiddenBillingIds||[]);

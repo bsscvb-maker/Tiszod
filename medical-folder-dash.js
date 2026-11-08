@@ -13,6 +13,21 @@ window.thMedicalFolders = (() => {
       for(const item of row){const td=make('td');if(typeof item==='string')td.textContent=item;else td.append(item);tr.append(td);}body.append(tr);}
     return el;
   }
+  function injectionHistory(entries) {
+    const rows=(Array.isArray(entries)?entries:[]).filter(item=>/tirzepatide|zepbound/i.test(item?.product||''));
+    if(!rows.length)return make('p','No recorded tirzepatide or Zepbound injections are available.');
+    const minutes=time=>{
+      const match=String(time||'').match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+      if(!match)return -1;
+      const [,hour,minute,period]=match;
+      return (period?Number(hour)%12+(period.toUpperCase()==='PM'?12:0):Number(hour))*60+Number(minute);
+    };
+    const area=make('div');area.className='medical-folder-table';
+    area.append(table(['Date','Time (Eastern)','Product','Reported dose'],
+      [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
+        [item.date,item.time,item.product,item.dose].map(value=>value==null||value===''?'Not recorded':String(value)))));
+    return area;
+  }
   const sorted=(records,date)=>[...records].sort((a,b)=>date(b).localeCompare(date(a))||a.name.localeCompare(b.name));
   const title = name=>name.replace(/\.[^.]+$/,'').replace(/^(?:19|20)\d\d(?:[-.]\d\d){1,2}\s*[-–]\s*/,'');
   const insuranceMatchers = [
@@ -70,7 +85,7 @@ window.thMedicalFolders = (() => {
       if(injections.length){
         const log=make('details');log.open=true;
         log.append(make('summary','Tirzepatide / Zepbound injection log'),
-          table(['Date','Time (Eastern)','Product','Reported dose'],[...injections].sort((a,b)=>b.date.localeCompare(a.date)).map(item=>[item.date,item.time,item.product,item.dose])));
+          injectionHistory(injections));
         box.append(log);
       }
       const search=make('input');search.type='search';search.placeholder='Search medications';search.setAttribute('aria-label','Search medication history');
@@ -162,5 +177,5 @@ window.thMedicalFolders = (() => {
     }
     return {...folder,dashboard:back=>recordsView(children,section+' overview','Newest dated records first. Open a supporting document for full details.',back),hideSupporting:true};
   }
-  return {enrich};
+  return {enrich,injectionHistory};
 })();
