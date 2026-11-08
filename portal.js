@@ -82,7 +82,7 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
     nav.append(link);
   }
   if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html')&&document.body.dataset.thPage==='education';a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
-  if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts &amp; Access</span>';nav.append(a);}
+  if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts</span>';nav.append(a);}
   if (nav && !nav.querySelector('[href="career.html"]')) {
     const link = document.createElement('a');
     const current = document.body.dataset.thPage === 'career';
