@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#355873"/><stop offset="1" stop-color="#dca16e"/>
+    </linearGradient>
+    <path id="pine" d="M0 0 24 41h-11l19 29H18l20 27H4v18h-8V97h-34l20-27h-14l19-29h-11z"/>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h640v360H0z"/>
+  <circle fill="#ffd697" cx="454" cy="91" r="35"/>
+  <path fill="#506579" d="M0 239 163 97l96 87L374 68l153 150 113-49v191H0z"/>
+  <path fill="#d8d4cb" d="m127 128 36-31 43 39-39-12-14 14zm199-12 48-48 62 61-53-18-12 12-17-14z"/>
+  <path fill="#324f55" d="M0 235q144-52 302 9t338-13v129H0z"/>
+  <path fill="#253c3b" d="M0 273q124-48 282-13t358-7v107H0z"/>
+  <path fill="#ad8c66" d="M240 360q72-52 139-75 20-9-5-21 50 10 29 23-58 31-91 73z"/>
+  <g fill="#1d3336">
+    <use href="#pine" transform="translate(77 143) scale(1.7)"/><use href="#pine" transform="translate(144 200) scale(1.15)"/>
+    <use href="#pine" transform="translate(556 169) scale(1.45)"/><use href="#pine" transform="translate(611 130) scale(1.9)"/>
+  </g>
+</svg>
