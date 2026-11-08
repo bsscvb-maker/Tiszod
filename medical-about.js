@@ -354,7 +354,7 @@
     return item;
   }
 
-  let scannerPaused=false,scannerLayer='skin';
+  let scannerPaused=false,scannerLayer='anatomy';
   function bodyScanner(){
     const figure=make('figure'),header=make('div'),stage=make('div');
     figure.className='medical-scanner medical-scanner-v2';
@@ -383,7 +383,8 @@
     }
     function updateLayer(){
       figure.dataset.layer=scannerLayer;if(threeState?.setMode)threeState.setMode(scannerLayer);
-      silhouette.src=scannerLayer==='skin'?'assets/medical/body-scanner-skin.svg?v=2':'assets/medical/body-scanner.svg?v=anatomy';
+      const assets={skin:'body-scanner-skin.svg?v=2',anatomy:'body-scanner-anatomy.svg?v=1',scan:'body-scanner.svg?v=anatomy'};
+      silhouette.src='assets/medical/'+assets[scannerLayer];
       silhouette.alt=scannerLayer==='skin'?'Illustrated light-skinned adult male body':'Illustrated anatomical body diagram';
       buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===scannerLayer)));
       detail.textContent=scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
@@ -409,7 +410,8 @@
     const tools=make('details');tools.className='medical-scanner-tools';
     tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail);
     figure.append(stage,tools);
-    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
+    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);state?.setSystem?.(figure.dataset.system);if(state)state.paused=scannerPaused;if(!state?.rotate)directions.textContent='3D is unavailable on this device. Use Skin, Anatomy or X-ray to change the illustration.'});
+    figure.addEventListener('medical-system',event=>threeState?.setSystem?.(event.detail));
     updateMotion();updateLayer();
     return figure;
   }
@@ -497,6 +499,7 @@
         info.hidden=false;
         info.textContent=description+' · illustrative body-system overview, not a medical finding.';
         scanner.dataset.system=name.toLowerCase();
+        scanner.dispatchEvent(new CustomEvent('medical-system',{detail:scanner.dataset.system}));
       });
       const icon=dashboardIcon(glyph);
       const caption=make('span',name);caption.append(make('small',description));
