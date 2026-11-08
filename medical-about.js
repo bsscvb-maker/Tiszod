@@ -355,7 +355,7 @@
     return item;
   }
 
-  let scannerPaused=false,scannerLayer='anatomy';
+  let scannerPaused=false,scannerLayer='anatomy',scannerSystem='';
   function bodyScanner(){
     const figure=make('figure'),header=make('div'),stage=make('div');
     figure.className='medical-scanner medical-scanner-v2';
@@ -501,26 +501,48 @@
     const stage=make('div');stage.className='medical-command-stage';
     const systems=make('aside');systems.className='medical-command-systems';
     systems.append(make('h3','Explore body systems'));
-    const bodySystems=[['brain','Brain','Cognitive'],['♡','Heart','Cardiovascular'],['lungs','Lungs','Respiratory'],['flame','Metabolism','Endocrine'],['digestive','Digestive','GI Health'],['muscle','Muscle','Strength'],['⬡','Bone','Skeletal'],['◌','Hydration','Body Water'],['▱','Body Fat','Composition']];
-    const info=make('div','Select a body system to explore the illustration. This visualization does not diagnose conditions.','medical-command-info');
-    for(const [glyph,name,description] of bodySystems){
+    const reading=(value,unit)=>Number.isFinite(value)?value.toFixed(1)+unit:'No recorded reading';
+    const vital=(value,unit)=>String(value??'').trim()?String(value).trim()+' '+unit:'No recorded reading';
+    const bodySystems=[
+      ['brain','brain','Brain','Cognitive','Brain anatomy · no cognitive score is tracked'],
+      ['heart','♡','Heart','Cardiovascular','Heart rate · '+vital(profile.heartRate,'bpm')],
+      ['lungs','lungs','Lungs','Respiratory','Blood oxygen · '+vital(profile.oxygenSaturation,'%')],
+      ['metabolism','flame','Metabolism','Endocrine','Thyroid anatomy · no thyroid reading is tracked'],
+      ['digestive','digestive','Digestive','GI Health','Stomach and intestines · anatomy illustration'],
+      ['muscle','muscle','Muscle','Strength','Recorded muscle · '+reading(pairs.muscle[0],'%')],
+      ['bone','⬡','Bone','Skeletal','Recorded bone mass · '+reading(pairs.boneMass[0],'%')],
+      ['hydration','◌','Hydration','Body Water','Recorded body water · '+reading(pairs.water[0],'%')],
+      ['fat','▱','Body Fat','Composition','Recorded body fat · '+reading(pairs.bodyFat[0],'%')]
+    ];
+    const info=make('div');info.className='medical-system-readout';info.hidden=true;
+    info.setAttribute('role','status');
+    scanner.append(info);
+    function showSystem(id){
+      scannerSystem=id;
+      scanner.dataset.system=id;
+      for(const button of systems.querySelectorAll('button[data-system]')){
+        button.setAttribute('aria-pressed',String(button.dataset.system===id));
+      }
+      const selected=bodySystems.find(([key])=>key===id);
+      info.hidden=!selected;
+      if(selected)info.replaceChildren(make('strong',selected[2]),make('span',selected[4]));
+      else info.replaceChildren();
+      scanner.dispatchEvent(new CustomEvent('medical-system',{detail:id}));
+    }
+    for(const [id,glyph,name,description] of bodySystems){
       const button=action(null,()=>{
-        systems.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-        info.hidden=false;
-        info.textContent=description+' · illustrative body-system overview, not a medical finding.';
-        const system=name.toLowerCase();
-        if(scannerLayer==='skin'||system==='bone'){
-          scanner.querySelector('[data-mode="'+(system==='bone'?'scan':'anatomy')+'"]')?.click();
-        }
-        scanner.dataset.system=system;
-        scanner.dispatchEvent(new CustomEvent('medical-system',{detail:scanner.dataset.system}));
+        if(scannerSystem===id){showSystem('');return;}
+        const mode=id==='bone'?'scan':'anatomy';
+        if(scannerLayer!==mode)scanner.querySelector('[data-mode="'+mode+'"]')?.click();
+        showSystem(id);
       });
       const icon=dashboardIcon(glyph);
       const caption=make('span',name);caption.append(make('small',description));
       button.append(icon,caption);
+      button.dataset.system=id;
       button.className='medical-command-system';button.setAttribute('aria-pressed','false');systems.append(button);
     }
-    info.hidden=true;systems.append(info);
+    showSystem(scannerSystem);
     const journey=make('section');journey.className='medical-command-journey medical-concept-panel';
     journey.append(make('h3','Weight Journey'));
     const series=weighIns.map(row=>({weight:asPounds(row),time:measurementTime(row)}))

@@ -637,3 +637,25 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-command-stage>.medical-scanner:is(:fullscreen,.medical-3d-expanded) .medical-scanner-stage {
   height:auto;min-height:45vh;
 }
+
+/* The active system has a persistent readout without moving the dashboard panels. */
+.medical-system-readout {
+  position:absolute;inset:auto 8px 23px;z-index:6;pointer-events:none;
+  display:grid;gap:2px;padding:6px 8px;border:1px solid #387698;border-radius:8px;
+  color:#e5f9ff;background:#061729ee;text-align:center;font:12px/1.25 Arial,sans-serif;
+}
+.medical-system-readout[hidden] {display:none}
+.medical-system-readout strong {color:#8beaff}
+.medical-scanner-v2[data-system]:not([data-system=""]) .medical-scanner-stage:not(:has(canvas))::before {
+  z-index:3;left:26%;right:26%;top:var(--system-top,28%);height:var(--system-height,22%);
+  border-color:var(--system-color,#8beaff);box-shadow:0 0 20px var(--system-color,#38cfff);
+}
+.medical-scanner-v2[data-system="brain"] {--system-top:4%;--system-height:13%;--system-color:#aa8aff}
+.medical-scanner-v2[data-system="heart"] {--system-top:27%;--system-height:14%;--system-color:#ff805c}
+.medical-scanner-v2[data-system="lungs"] {--system-top:23%;--system-height:21%}
+.medical-scanner-v2[data-system="metabolism"] {--system-top:16%;--system-height:9%;--system-color:#ffd578}
+.medical-scanner-v2[data-system="digestive"] {--system-top:37%;--system-height:19%;--system-color:#bc83ff}
+.medical-scanner-v2:is([data-system="muscle"],[data-system="bone"],[data-system="hydration"],[data-system="fat"]) {
+  --system-top:8%;--system-height:80%;
+}
+.medical-scanner-v2[data-system="fat"] {--system-color:#ffc957}

@@ -188,7 +188,7 @@ window.thMedical3D={
    for(const s of [-1,1]){
     loft(lungs,lung,[[.61,s*.135,.174,.035,.034],[.70,s*.166,.184,.117,.067],[.89,s*.18,.19,.133,.071],[1.074,s*.159,.163,.091,.059],[1.185,s*.121,.13,.03,.026]]);
     for(let i=0;i<3;i++)tube(lungs,lungDetail,[[s*.065,1.08,.235],[s*.135,.96-i*.035,.259],[s*(.23-i*.023),.91-i*.069,.249]],.005);
-    ell(brain,gutEdge,s*.063,1.82,.041,.079,.09,.103);
+    ell(brain,gutEdge,s*.063,1.82,.101,.079,.09,.102);
    }
    tube(lungs,lungDetail,[[0,1.43,.119],[0,1.26,.132],[0,1.095,.19]],.019);
    loft(cardiac,heart,[[.66,.095,.286,.014,.022],[.72,.062,.288,.06,.054],[.81,.041,.273,.109,.075],[.9,.035,.24,.102,.073],[.963,.012,.219,.065,.058]]);
@@ -203,6 +203,17 @@ window.thMedical3D={
     const y=1.12-i*.066;
     tube(skeleton,pale,[[0,y+.02,-.117],[s*.18,y,-.108],[s*.29,y-.038,.006],[s*.21,y-.06,.138],[0,y-.048,.16]],.012);
    }
+   const thyroid=system('metabolism');
+   const endocrine=organMaterial(0xffbe49,0xff8725);
+   for(const side of [-1,1])ell(thyroid,endocrine,side*.045,1.31,.152,.037,.065,.027,side*.25);
+   tube(thyroid,endocrine,[[-.045,1.29,.166],[0,1.285,.179],[.045,1.29,.166]],.014);
+   thyroid.visible=false;
+   const wholeBody=new THREE.Group();body.add(wholeBody);
+   const wholeBodyMaterial=new THREE.MeshBasicMaterial({color:0x55dbff,transparent:true,opacity:.55,depthWrite:false});
+   for(const [y,radius] of [[1.1,.62],[.45,.54],[-.25,.72],[-1.3,.52]]){
+    const marker=new THREE.Mesh(new THREE.TorusGeometry(radius,.009,8,64),wholeBodyMaterial);
+    marker.rotation.x=Math.PI/2;marker.position.y=y;wholeBody.add(marker);
+   }
    const organCenters=Object.fromEntries(Object.entries(systems).map(([name,group])=>
     [name,new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3())]));
    stage.dataset.model='anatomy-v2';
@@ -210,11 +221,17 @@ window.thMedical3D={
     state.mode=mode;
     const detailed=Boolean(atlas)&&mode!=='skin';
     surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
-    organs.visible=mode!=='skin';skeleton.visible=!detailed&&mode==='scan';
+    const selected=state.system;
+    const whole=selected==='hydration'||selected==='fat';
+    organs.visible=mode!=='skin'&&!whole&&selected!=='muscle'&&selected!=='bone';
+    skeleton.visible=!detailed&&mode==='scan';
+    wholeBody.visible=whole&&mode!=='skin';
+    wholeBodyMaterial.color.setHex(selected==='fat'?0xffc957:0x55dbff);
+    thyroid.visible=selected==='metabolism';
     face.visible=!detailed&&mode!=='scan';
     if(atlas){
      atlas.visible=detailed;
-     atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=false;atlasSkeleton.visible=mode==='scan'||state.system==='bone';
+     atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=mode==='anatomy'&&selected==='muscle';atlasSkeleton.visible=mode==='scan';
     }
     for(const mesh of skinMeshes)mesh.material=mode==='skin'?skin:mode==='scan'?scan:fascia;
     if(mode==='anatomy')skinMeshes[0].material=torsoAnatomy;
@@ -222,10 +239,12 @@ window.thMedical3D={
    };
    state.setSystem=name=>{
     state.system=name;
-    const target=name==='metabolism'?'digestive':name;
+    const target=name;
     for(const [key,group] of Object.entries(systems)){
      const scale=key===target?1.12:1;
      group.scale.setScalar(scale);group.position.copy(organCenters[key]).multiplyScalar(1-scale);
+     if(['heart','lungs','digestive','metabolism','brain'].includes(target))group.visible=key===target;
+     else group.visible=true;
     }
     state.setMode(state.mode);
    };
