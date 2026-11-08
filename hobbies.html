@@ -4,7 +4,13 @@
 <link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><style>.hobby-page{max-width:1100px;margin:auto}</style><link rel="stylesheet" href="family-collections.css?v=20261108-recreation-cards"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="module-search.css?v=1"><style>
 .hobby-page:has(~ #legal-view:not([hidden])){display:none}
 #legal-view{width:100%;max-height:none;margin:0;overflow:visible}
-.recreation-view-kicker{margin-top:16px}
+#legal-view .recreation-todd-grid > .legal-file{padding:0;overflow:hidden}
+#legal-view .recreation-todd-grid > .legal-file > strong{display:none}
+#legal-view :is(.recreation-todd-grid,.recreation-membership-grid) .legal-thumbnail{height:auto;aspect-ratio:1}
+body[data-th-page="hobbies"] #legal-view :is(.recreation-todd-grid,.recreation-membership-grid) .legal-thumbnail-art{inset:0}
+#legal-view .recreation-todd-grid img[src$="indian-cove.webp"],
+#legal-view .recreation-todd-grid img[src$="black-mild-mark.jpg"]{background:#fff}
+#legal-view .recreation-membership-grid .legal-thumbnail-art{background:#0d1520}
 .family-collections .recreation-person{position:relative}
 body[data-th-page="hobbies"] .legal-file > .legal-kind,
 body[data-th-page="hobbies"] .legal-thumbnail-label{display:none}
@@ -27,16 +33,15 @@ body[data-th-page="hobbies"] .recreation-person > strong{padding-right:42px}
 <div class="th-app-main"><header class="th-app-topbar"><div><strong>Recreation</strong><small>Clubs and recreation records</small></div><span class="th-connection" id="th-connection">Connecting…</span></header><main class="th-page-content portal-section"><section class="hobby-page"><header class="portal-section-hero"><div class="portal-section-kicker">TISZOD / RECREATION</div><h1>Recreation</h1><p>Clubs, memberships, and activity records.</p></header><section class="family-collections" data-family-collections="hobbies" hidden></section><p id="hobby-status" role="status"></p><p id="hobby-portrait-status" role="status"></p><form class="module-search" data-search-scope="hobbies" role="search" aria-label="Search Recreation folders and files"><label for="module-search-query">Search Recreation folders and files</label><div class="module-search-row"><input id="module-search-query" type="search" maxlength="120" autocomplete="off" placeholder="Try Striders, camping, or Freebirds" required><button type="submit">Search all</button></div><p class="module-search-status" role="status"></p><ul class="module-search-results" aria-label="Search results"></ul></form></section>
 <section class="legal-view" id="legal-view" aria-labelledby="legal-view-title" hidden>
  <div class="legal-actions"><button type="button" id="legal-view-back" hidden>Back to folder</button><button type="button" id="legal-view-close">← Recreation</button></div>
- <div class="portal-section-kicker recreation-view-kicker">TisZod / Recreation</div>
  <h2 id="legal-view-title" tabindex="-1"></h2>
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </section></main></div></div>
-<script src="drive-record-viewer.js?v=20261108-recreation-navigation"></script>
+<script src="drive-record-viewer.js?v=20261108-recreation-memberships"></script>
 <script>
 const hobbyLogos = new Map([
  ['backwoods hunt club', { file: 'backwoods.svg', fallback: '🌲' }],
- ['big ugly brewing – ton up club', { file: 'big-ugly-brewing.png' }],
+ ['big ugly brewing – ton up club', { file: 'big-ugly-official.png' }],
  ['indian cove resort', { file: 'indian-cove.webp', fallback: '🏕', official: true }],
  ['tidewater striders', { file: 'tidewater-striders.png', fallback: '👟', official: true }],
  ['windsor hunt club', { file: 'windsor.svg', fallback: '🦌' }]
@@ -47,6 +52,15 @@ function recreationFolderCover(path){
  const name=String(path[1]).trim().toLowerCase().replace(/\s*[-–—]\s*/g,' – ').replace(/^backwoods huntclub$/,'backwoods hunt club');
  const logo=hobbyLogos.get(name);
  return logo?'assets/hobbies/'+logo.file:undefined;
+}
+async function bigUglyMemberships(folder){
+ const items=await thDriveRecords.children(folder);
+ const history=items.find(item=>item.folder&&/^Membership History$/i.test(item.name));
+ const archived=history?await thDriveRecords.children(history):[];
+ const year=item=>Number(item.name.match(/\b20\d{2}\b/)?.[0]||0);
+ return [...items,...archived]
+  .filter(item=>!item.folder&&/membership/i.test(item.name))
+  .sort((a,b)=>year(b)-year(a));
 }
 window.thStart=async()=>{
  window.thRecreationSearchEntries=undefined;
@@ -70,6 +84,10 @@ window.thStart=async()=>{
    const indianCove = String(name).trim().toLowerCase() === 'indian cove resort';
    const tidewaterStriders = String(name).trim().toLowerCase() === 'tidewater striders';
    const folder = { name, id, folder: true, url: url.href, resourceKey, indianCove, tidewaterStriders, coverFor:recreationFolderCover, coverPath:['hobbies',name] };
+   if (/^big ugly brewing\b/i.test(name)) {
+    folder.recreationMemberships=true;
+    folder.virtualFiles=()=>bigUglyMemberships(folder);
+   }
    if (tidewaterStriders) tidewaterFolder=folder;
    if (indianCove) indianCoveFolder=folder;
    if(isBackwoods){folder.readerUrl='backwoods-bylaws.html';backwoodsFolder=folder}
@@ -86,4 +104,4 @@ window.thStart=async()=>{
   }
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
-</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-lazy"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=20261108-recreation-lazy"></script></body></html>
+</script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-art"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=20261108-recreation-lazy"></script></body></html>

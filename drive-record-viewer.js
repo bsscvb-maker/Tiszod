@@ -568,7 +568,10 @@ async function showLegalRecord(record,back){
   container.append(summary,status);legalViewerBody.append(container);
  }
  status.textContent='Loading folder…';
- const files=document.createElement('div');files.className='legal-cards';container.append(files);
+ const files=document.createElement('div');files.className='legal-cards';
+ if(record.recreationMemberships)files.classList.add('recreation-membership-grid');
+ if(record.coverPath?.join('/')==='hobbies/Todd')files.classList.add('recreation-todd-grid');
+ container.append(files);
  const more=document.createElement('button');more.type='button';more.dataset.thDriveMore='';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;

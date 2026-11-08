@@ -59,8 +59,8 @@
   'hobbies/Aiden/Running': 'running',
   'hobbies/Alexis/Girl Scouts': 'scouts',
   'hobbies/Alexis/Horseback Riding': 'horse',
-  'hobbies/Todd/Tickets': 'assets/hobbies/tickets.svg',
-  'hobbies/Todd/Black & Mild': 'assets/hobbies/black-and-mild-logo.png',
+  'hobbies/Todd/Tickets': 'assets/hobbies/tickets-concert.jpg',
+  'hobbies/Todd/Black & Mild': 'assets/hobbies/black-mild-mark.jpg',
   'hobbies/Todd/Freebirds': 'freebirds-logo.svg'
  }));
  const coverFor = path => {
