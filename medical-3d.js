@@ -87,28 +87,11 @@ window.thMedical3D={
      rib.position.set(side*.13,1.22-i*.072,.08);rib.rotation.y=side*.3;rib.rotation.z=side*.13;organs.add(rib);
    }
    organs.visible=false;
-   // Replace the primitive skin with a CC0 MakeHuman-derived professional sculpted body mesh.
-   // Source: kblood/CharacterCreator output/base_body.glb (CC0 model data).
+   // Disable the unvalidated external mesh that rendered as exploded polygons on iPad.
+   // Retain a stable 360-degree procedural body until a verified professional asset is available.
    const realisticBody=new THREE.Group();body.add(realisticBody);
-   let realisticReady=false;
-   const MODEL_URL='https://raw.githubusercontent.com/kblood/CharacterCreator/master/output/base_body.glb';
-   (async()=>{
-    try{
-     const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js/+esm');
-     const gltf=await new GLTFLoader().loadAsync(MODEL_URL);
-     if(state.disposed)return;
-     const model=gltf.scene;
-     const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-     if(!size.y||!Number.isFinite(size.y))throw new Error('Invalid 3D model bounds');
-     const scale=4.05/size.y;model.scale.setScalar(scale);model.position.copy(center).multiplyScalar(-scale);
-     model.traverse(obj=>{if(obj.isMesh){obj.frustumCulled=false;obj.castShadow=false;obj.receiveShadow=false;}});
-     realisticBody.add(model);realisticReady=true;
-     for(const p of parts)p.visible=state.mode!=='skin';
-     realisticBody.visible=state.mode==='skin';
-     stage.dataset.model='realistic';
-     figure.querySelector('.medical-scanner-detail')?.append(document.createTextNode(' · Professional CC0 body mesh loaded'));
-    }catch(error){stage.dataset.model='fallback';console.warn('Professional model unavailable, retaining interactive fallback',error)}
-   })();
+   const realisticReady=false;
+   stage.dataset.model='stable-fallback';
    // Dynamic mode swaps physical surface materials without changing the rotatable geometry.
    state.setMode=mode=>{
     state.mode=mode;organs.visible=mode!=='skin';realisticBody.visible=realisticReady&&mode==='skin';for(const p of parts)p.visible=!realisticReady||mode!=='skin';
