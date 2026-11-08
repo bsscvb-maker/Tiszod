@@ -68,7 +68,9 @@
     const entered=Array.isArray(medicationSource?.injections)?medicationSource.injections:[];
     const legacy=Array.isArray(savedProfile.folderSummaries?.injections)?savedProfile.folderSummaries.injections:[];
     const enteredKeys=new Set(entered.map(injectionKey));
-    const original=[...legacy.filter(row=>!enteredKeys.has(injectionKey(row))),...entered];
+    const removedPostponements=new Set(medicationSource?.removedPostponements||[]);
+    const original=[...legacy.filter(row=>!enteredKeys.has(injectionKey(row))),...entered]
+      .filter(row=>row.dose||!/^postponed\b/i.test(row.notes||'')||!removedPostponements.has(injectionKey(row)));
     const superseded=new Set(addedDoses.map(row=>row.replaces).filter(Boolean));
     injections=original.filter(row=>!superseded.has(sourceIdentity(row)));
     const known=new Set(injections.filter(canEditDose).map(doseIdentity));
