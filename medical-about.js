@@ -406,7 +406,76 @@
       if(Number.isFinite(updated))dates.append(make('span','Updated: '+formatTime.format(updated)));
       measurements.append(make('h3','Body composition'),dates,readings);
     }
-    overview.append(scanner,measurements);target.replaceChildren(overview,make('h3','Current medications'));
+    // Interactive mission-control overview, using only existing recorded measurements.
+    const dashboard=make('section');dashboard.className='medical-command-dashboard';
+    const title=make('div');title.className='medical-command-title';
+    title.append(make('span','✦ TISZOD / HEALTH COMMAND CENTER'),make('strong','Body Intelligence'));
+    const nav=make('nav');nav.className='medical-command-nav';nav.setAttribute('aria-label','Medical dashboard shortcuts');
+    const shortcuts=[['Overview','#medical-about'],['Weight journey','#weight-title'],['Injection history','#medical-injection-open'],['Records','#medical-browse']];
+    shortcuts.forEach(([label,href])=>{
+      const a=make('a',label);a.href=href;
+      if(label==='Injection history')a.onclick=event=>{event.preventDefault();openInjectionHistory()};
+      nav.append(a);
+    });
+    const metrics=make('div');metrics.className='medical-command-metrics';
+    const latestReading=composition[0]||{};
+    const previousReading=composition[1]||{};
+    const latestWeight=Number.isFinite(latestReading.weight)?(latestReading.unit?asPounds(latestReading):latestReading.weight):weights[0];
+    const metricData=[
+      ['⚖','Weight',latestWeight,'lb',Number.isFinite(previousReading.weight)?(previousReading.unit?asPounds(previousReading):previousReading.weight):weights[1]],
+      ['◈','BMI',latestReading.bmi,'',previousReading.bmi],
+      ['◉','Body fat',latestReading.bodyFat,'%',previousReading.bodyFat],
+      ['◆','Muscle',latestReading.muscle,'%',previousReading.muscle],
+      ['◌','Water',latestReading.water,'%',previousReading.water],
+      ['⬡','Bone mass',latestReading.boneMass,'%',previousReading.boneMass]
+    ];
+    for(const [symbol,label,value,unit,prior] of metricData){
+      const card=make('div');card.className='medical-command-metric';
+      card.append(make('span',symbol+' '+label));
+      card.append(make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'));
+      const change=make('small');
+      if(Number.isFinite(value)&&Number.isFinite(prior)){
+        const delta=value-prior;
+        change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit+' vs prior';
+      }else change.textContent='No comparison available';
+      card.append(change);metrics.append(card);
+    }
+    const stage=make('div');stage.className='medical-command-stage';
+    const systems=make('aside');systems.className='medical-command-systems';
+    systems.append(make('h3','Explore body systems'));
+    const bodySystems=[['♡','Heart','Cardiovascular system'],['◉','Brain','Nervous system'],['◌','Lungs','Respiratory system'],['◆','Muscles','Musculoskeletal system'],['⬡','Bones','Skeletal system'],['◈','Digestion','Digestive system'],['◍','Hydration','Body water']];
+    const info=make('div','Select a body system to explore the illustration. This visualization does not diagnose conditions.','medical-command-info');
+    for(const [glyph,name,description] of bodySystems){
+      const button=action(glyph+' '+name,()=>{
+        systems.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+        info.textContent=description+' · illustrative body-system overview, not a medical finding.';
+        scanner.dataset.system=name.toLowerCase();
+      });
+      button.className='medical-command-system';button.setAttribute('aria-pressed','false');systems.append(button);
+    }
+    systems.append(info);
+    const journey=make('section');journey.className='medical-command-journey';
+    journey.append(make('h3','Weight journey'));
+    const validWeights=weighIns.map(asPounds).filter(Number.isFinite);
+    if(validWeights.length>1){
+      const first=validWeights[0],last=validWeights[validWeights.length-1],change=last-first;
+      journey.append(make('strong',(change>0?'+':'')+change.toFixed(1)+' lb'));
+      journey.append(make('p','Change from first to latest recorded weigh-in'));
+      const spark=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      spark.setAttribute('viewBox','0 0 320 100');spark.setAttribute('role','img');spark.setAttribute('aria-label','Weight trend from first to latest entry');
+      const low=Math.min(...validWeights),high=Math.max(...validWeights),span=high-low||1;
+      const points=validWeights.map((v,i)=>(i*320/(validWeights.length-1)).toFixed(1)+','+(90-(v-low)*75/span).toFixed(1)).join(' ');
+      const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+      line.setAttribute('points',points);line.setAttribute('fill','none');line.setAttribute('stroke','#62e5ff');line.setAttribute('stroke-width','3');line.setAttribute('stroke-linejoin','round');spark.append(line);journey.append(spark);
+    }else journey.append(make('p','More weigh-ins are needed for a trend.'));
+    const dateLabel=make('small',latest?'Latest recorded: '+formatTime.format(measurementTime(latest)):'Awaiting measurements');
+    journey.append(dateLabel);
+    stage.append(systems,scanner,journey);
+    dashboard.append(title,nav,metrics,stage);
+    const details=make('details');details.className='medical-command-details';
+    const summary=make('summary','Detailed measurements and comparisons');
+    details.append(summary,measurements);
+    target.replaceChildren(dashboard,details,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
