@@ -459,7 +459,7 @@
     const stage=make('div');stage.className='medical-command-stage';
     const systems=make('aside');systems.className='medical-command-systems';
     systems.append(make('h3','Explore body systems'));
-    const bodySystems=[['♡','Heart','Cardiovascular system'],['◉','Brain','Nervous system'],['◌','Lungs','Respiratory system'],['◆','Muscles','Musculoskeletal system'],['⬡','Bones','Skeletal system'],['◈','Digestion','Digestive system'],['◍','Hydration','Body water']];
+    const bodySystems=[['◉','Brain','Nervous system'],['♡','Heart','Cardiovascular system'],['♧','Lungs','Respiratory system'],['ϟ','Metabolism','Endocrine system'],['◈','Digestive','Digestive system'],['◆','Muscle','Musculoskeletal system'],['⬡','Bone','Skeletal system'],['◍','Hydration','Body water'],['▱','Body Fat','Body composition']];
     const info=make('div','Select a body system to explore the illustration. This visualization does not diagnose conditions.','medical-command-info');
     for(const [glyph,name,description] of bodySystems){
       const button=action(glyph+' '+name,()=>{
@@ -481,6 +481,7 @@
       spark.setAttribute('viewBox','0 0 320 100');spark.setAttribute('role','img');spark.setAttribute('aria-label','Weight trend from first to latest entry');
       const low=Math.min(...validWeights),high=Math.max(...validWeights),span=high-low||1;
       const points=validWeights.map((v,i)=>(i*320/(validWeights.length-1)).toFixed(1)+','+(90-(v-low)*75/span).toFixed(1)).join(' ');
+      const area=document.createElementNS('http://www.w3.org/2000/svg','polygon');area.setAttribute('points','0,100 '+points+' 320,100');area.setAttribute('fill','#6b4acb');area.setAttribute('fill-opacity','.25');spark.append(area);
       const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
       line.setAttribute('points',points);line.setAttribute('fill','none');line.setAttribute('stroke','#62e5ff');line.setAttribute('stroke-width','3');line.setAttribute('stroke-linejoin','round');spark.append(line);journey.append(spark);
     }else journey.append(make('p','More weigh-ins are needed for a trend.'));
@@ -550,7 +551,7 @@
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
-    target.replaceChildren(dashboard,details,make('h3','Current medications'));
+    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,keyPanel);target.replaceChildren(dashboard,details);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
@@ -584,7 +585,7 @@
         card.append(info);
         grid.append(card);
       }
-      target.append(grid);
+      medicationPanel.append(grid);
     }else{
       const reviewed=api.records().filter(record=>record.kind==='Medication record'&&api.current(record));
       if(reviewed.length){
@@ -592,8 +593,8 @@
         for(const record of reviewed){
           const item=make('li');item.append(action(api.current(record),()=>api.open(record)));list.append(item);
         }
-        target.append(list);
-      }else target.append(make('p','No current medications have been confirmed.'));
+        medicationPanel.append(list);
+      }else medicationPanel.append(make('p','No current medications have been confirmed.'));
     }
     if(loadMessage)target.append(make('p',loadMessage));
   }
