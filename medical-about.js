@@ -308,7 +308,7 @@
   function compositionReadings(profile) {
     const history=Array.isArray(profile.bodyCompositionHistory)?profile.bodyCompositionHistory:[];
     const scale=Array.isArray(profile.weighIns)?profile.weighIns.filter(row=>
-      ['bmi','bodyFat','muscle','water'].some(key=>Number.isFinite(row?.[key]))):[];
+      ['bmi','bodyFat','muscle','water','boneMass'].some(key=>Number.isFinite(row?.[key]))):[];
     const confirmed=Array.isArray(compositionSource?.readings)?compositionSource.readings.filter(row=>Number.isFinite(measurementTime(row))):[];
     const measurements=['weight','bmi','bodyFat','muscle','water','boneMass'];
     const sameReading=(row,entry)=>row.date?.slice(0,10)===entry.date?.slice(0,10)&&
@@ -319,7 +319,8 @@
     const byTime=new Map();
     for(const row of readings){
       const time=measurementTime(row);
-      byTime.set(time,{...byTime.get(time),...row});
+      const values=Object.fromEntries(Object.entries(row).filter(([,value])=>value!==null&&value!==undefined&&value!==''));
+      byTime.set(time,{...byTime.get(time),...values});
     }
     return [...byTime.entries()].sort(([a],[b])=>b-a).map(([,row])=>row);
   }
@@ -408,7 +409,11 @@
       const b=action(label,()=>threeState?.zoomBy?.(delta));b.className='medical-scanner-mode';moveControls.append(b);
     }
     const tools=make('details');tools.className='medical-scanner-tools';
-    tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail);
+    const credits=make('small','Model credits: ');
+    const atlasLink=make('a','Écorché');atlasLink.href='https://github.com/Charleeh/ecorche';
+    const license=make('a','CC BY-SA 4.0');license.href='https://creativecommons.org/licenses/by-sa/4.0/';
+    credits.append(atlasLink,document.createTextNode(' · BodyParts3D (DBCLS) and Z-Anatomy (Gauthier Kervyn) · '),license);
+    tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail,credits);
     figure.append(stage,tools);
     if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);state?.setSystem?.(figure.dataset.system);if(state)state.paused=scannerPaused;if(!state?.rotate)directions.textContent='3D is unavailable on this device. Use Skin, Anatomy or X-ray to change the illustration.'});
     figure.addEventListener('medical-system',event=>threeState?.setSystem?.(event.detail));
@@ -438,7 +443,16 @@
     }
     const scanner=bodyScanner();
     const grid=make('dl'),height=heightInches(profile.height);
-    const weights=weighIns.slice(-2).reverse().map(asPounds);
+    const metricsFor=(key,rows=composition)=>rows.filter(row=>Number.isFinite(row[key])).slice(0,2);
+    const weightRows=weighIns.filter(row=>Number.isFinite(asPounds(row))).slice(-2).reverse();
+    const weights=weightRows.map(asPounds);
+    const weightPair=weights.length?weights:metricsFor('weight').map(row=>row.unit?asPounds(row):row.weight);
+    const bmiPair=metricsFor('bmi').map(row=>row.bmi);
+    const pairs={
+      weight:weightPair,bmi:bmiPair.length?bmiPair:weightPair.map(pounds=>bmiFor(pounds,height)),
+      bodyFat:metricsFor('bodyFat').map(row=>row.bodyFat),muscle:metricsFor('muscle').map(row=>row.muscle),
+      water:metricsFor('water').map(row=>row.water),boneMass:metricsFor('boneMass').map(row=>row.boneMass)
+    };
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
@@ -450,9 +464,8 @@
         ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',-1],
         ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0],['Bone mass','boneMass','%',0]
       ]){
-        const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
-        const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
-        readings.append(comparison(label,pair[0],pair[1],unit,preferred));
+        const [current,prior]=pairs[key];
+        readings.append(comparison(label,current,prior,unit,preferred));
       }
       const dates=make('p');dates.className='medical-measurement-dates';
       for(const [index,label] of ['Current','Prior'].entries()){
@@ -466,24 +479,21 @@
     // Interactive mission-control overview, using only existing recorded measurements.
     const dashboard=make('section');dashboard.className='medical-command-dashboard';
     const metrics=make('div');metrics.className='medical-command-metrics';
-    const latestReading=composition[0]||{};
-    const previousReading=composition[1]||{};
-    const latestWeight=Number.isFinite(latestReading.weight)?(latestReading.unit?asPounds(latestReading):latestReading.weight):weights[0];
+    const latestWeight=pairs.weight[0];
     const metricData=[
-      ['⚖','Weight',latestWeight,' lb',Number.isFinite(previousReading.weight)?(previousReading.unit?asPounds(previousReading):previousReading.weight):weights[1]],
-      ['◈','BMI',latestReading.bmi,'',previousReading.bmi],
-      ['◉','Body fat',latestReading.bodyFat,'%',previousReading.bodyFat],
-      ['◆','Muscle',latestReading.muscle,'%',previousReading.muscle],
-      ['◌','Water',latestReading.water,'%',previousReading.water],
-      ['⬡','Bone mass',latestReading.boneMass,'%',previousReading.boneMass]
-    ];
-    for(const [symbol,label,value,unit,prior] of metricData){
+      ['⚖','Weight',' lb','weight'],['◈','BMI','','bmi'],['◉','Body Fat','%','bodyFat'],
+      ['◆','Muscle','%','muscle'],['◌','Water','%','water'],['⬡','Bone Mass','%','boneMass']
+    ].map(([symbol,label,unit,key])=>[symbol,label,pairs[key][0],unit,pairs[key][1],key]);
+    for(const [symbol,label,value,unit,prior,key] of metricData){
       const card=make('div');card.className='medical-command-metric';
       card.append(dashboardIcon(symbol),make('span',label));
       card.append(make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'));
+      const source=key==='weight'?weightRows[0]:metricsFor(key)[0];
+      if(source)card.title='Recorded '+(source.date||formatTime.format(measurementTime(source)));
+      if(key==='bmi'&&!bmiPair.length&&Number.isFinite(value))card.title='Estimated from recorded weight and profile height';
       const change=make('small');
       if(Number.isFinite(value)&&Number.isFinite(prior)){
-        const delta=value-prior;
+        const delta=rounded(rounded(value)-rounded(prior));
         change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit;
       }else change.textContent='—';
       card.append(change);metrics.append(card);
@@ -498,7 +508,11 @@
         systems.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
         info.hidden=false;
         info.textContent=description+' · illustrative body-system overview, not a medical finding.';
-        scanner.dataset.system=name.toLowerCase();
+        const system=name.toLowerCase();
+        if(scannerLayer==='skin'||system==='bone'){
+          scanner.querySelector('[data-mode="'+(system==='bone'?'scan':'anatomy')+'"]')?.click();
+        }
+        scanner.dataset.system=system;
         scanner.dispatchEvent(new CustomEvent('medical-system',{detail:scanner.dataset.system}));
       });
       const icon=dashboardIcon(glyph);
@@ -576,16 +590,18 @@
     center.append(make('strong',Number.isFinite(latestWeight)?latestWeight.toFixed(1)+' lb':'—'),make('small','Total weight'));
     donut.append(center);
     const compositionLegend=make('div');compositionLegend.className='medical-composition-legend';
-    const fat=Number.isFinite(latestReading.bodyFat)?latestReading.bodyFat:null;
+    const fat=pairs.bodyFat[0]??null;
     if(fat!==null){
       donut.style.background='conic-gradient(#ffc743 0 '+fat+'%,#46d8ff '+fat+'% 100%)';
       donut.title='Ring shows body fat and remaining weight. The legend includes overlapping scale estimates.';
     }
-    for(const [name,value,color] of [['Body Fat',fat,'#ffca37'],['Muscle',latestReading.muscle,'#59b8f6'],
-      ['Water',latestReading.water,'#42dffa'],['Bone Mass',latestReading.boneMass,'#bf7cff']]){
+    for(const [name,key,color] of [['Body Fat','bodyFat','#ffca37'],['Muscle','muscle','#59b8f6'],
+      ['Water','water','#42dffa'],['Bone Mass','boneMass','#bf7cff']]){
+      const row=metricsFor(key)[0];
+      const value=row?.[key], weight=row?.unit?asPounds(row):row?.weight;
       const item=make('div');const label=make('span',name);label.style.setProperty('--swatch',color);
       const amount=Number.isFinite(value)?value.toFixed(1)+'%':'—';
-      const pounds=Number.isFinite(value)&&Number.isFinite(latestWeight)?' ('+(value*latestWeight/100).toFixed(1)+' lb)':'';
+      const pounds=Number.isFinite(value)&&Number.isFinite(weight)?' ('+(value*weight/100).toFixed(1)+' lb)':'';
       item.append(label,make('strong',amount+pounds));compositionLegend.append(item);
     }
     compositionPanel.append(donut,compositionLegend);
@@ -593,7 +609,7 @@
     progressPanel.append(make('h3','Progress vs. Prior'));
     for(const [symbol,label,value,unit,prior] of metricData){
       const item=make('div');item.className='medical-progress-row';
-      const delta=Number.isFinite(value)&&Number.isFinite(prior)?value-prior:null;
+      const delta=Number.isFinite(value)&&Number.isFinite(prior)?rounded(rounded(value)-rounded(prior)):null;
       const arrow=delta===null||rounded(delta)===0?'—':delta>0?'↑':'↓';
       const direction=make('i',arrow);direction.setAttribute('aria-hidden','true');
       const description=make('span',label);description.prepend(direction);
@@ -636,7 +652,7 @@
     const keyPanel=make('section');keyPanel.className='medical-concept-panel medical-key-panel';
     keyPanel.append(panelHeading('Key Metrics','◈'));
     for(const [label,key,symbol] of [['Body Fat','bodyFat','▱'],['Muscle','muscle','muscle'],['Body Water','water','◌'],['Bone Mass','boneMass','⬡']]){
-      const value=latestReading[key];
+      const value=pairs[key][0];
       const row=make('div');row.className='medical-key-row';
       row.append(dashboardIcon(symbol),make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
       const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar);keyPanel.append(row);
@@ -646,10 +662,11 @@
     const right=make('div');right.className='medical-reference-right';
     const overviewCard=make('section');overviewCard.className='medical-reference-overview';
     const scanDate=make('small');scanDate.className='medical-panel-date';
-    const scanTime=measurementTime(composition[0]);
+    const scanReading=composition.find(row=>['bmi','bodyFat','muscle','water','boneMass'].some(key=>Number.isFinite(row[key])));
+    const scanTime=measurementTime(scanReading);
     if(Number.isFinite(scanTime)){
-      const dateOnly=composition[0].date?.length===10 && scanTime===Date.parse(composition[0].date);
-      scanDate.textContent='Last scan: '+(dateOnly?composition[0].date:formatTime.format(scanTime));
+      const dateOnly=scanReading.date?.length===10 && scanTime===Date.parse(scanReading.date);
+      scanDate.textContent='Last scan: '+(dateOnly?scanReading.date:formatTime.format(scanTime));
     }
     const healthTitle=make('h3','Health Overview');healthTitle.prepend(dashboardIcon('⌁'));
     overviewCard.append(healthTitle,scanDate,metrics);

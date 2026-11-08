@@ -3,6 +3,47 @@
 const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 let modulePromise;
 function getThree(){return modulePromise??=import(THREE_URL)}
+const ATLAS_URL='https://cdn.jsdelivr.net/gh/Charleeh/ecorche@320805e06aee51e2e6f6b22533eb2a59d43f2d4d/model/ecorche.meshopt.glb';
+const ADDONS='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/';
+let atlasPromise;
+function getAtlas(THREE){
+ return atlasPromise??=(async()=>{
+  const [{GLTFLoader},{MeshoptDecoder},response]=await Promise.all([
+   import(ADDONS+'loaders/GLTFLoader.js'),import(ADDONS+'libs/meshopt_decoder.module.js'),
+   fetch(ATLAS_URL,{referrerPolicy:'no-referrer',signal:AbortSignal.timeout(20000)})
+  ]);
+  if(!response.ok)throw Error('Anatomy atlas could not be downloaded.');
+  const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const {scene}=await loader.parseAsync(await response.arrayBuffer(),'');
+  const box=new THREE.Box3().setFromObject(scene),size=box.getSize(new THREE.Vector3());
+  if(!Number.isFinite(size.y)||size.y<1||size.y>2.5||size.x/size.y>.85||size.z/size.y>.55){
+   throw Error('Anatomy atlas bounds were unexpected.');
+  }
+  const layerNames=new Set();
+  scene.traverse(node=>layerNames.add(node.name.replace(/[^a-z]/gi,'').toLowerCase()));
+  if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
+   throw Error('Anatomy atlas layers are incomplete.');
+  }
+  const atlasMuscle=new THREE.MeshStandardMaterial({color:0x8e4651,roughness:.55,metalness:.18});
+  const atlasFascia=new THREE.MeshStandardMaterial({color:0x597ea9,roughness:.48,metalness:.25});
+  const atlasBone=new THREE.MeshStandardMaterial({color:0x7c9cb9,roughness:.56,metalness:.15});
+  const atlasCutaway=atlasMuscle.clone();
+  atlasCutaway.transparent=true;atlasCutaway.opacity=.29;atlasCutaway.depthWrite=false;
+  scene.traverse(node=>{
+   if(!node.isMesh)return;
+   const name=node.name.replace(/[^a-z]/gi,'').toLowerCase();
+   let layer=node.parent;
+   while(layer&& !/^(skeleton|superficialmuscles|deepmuscles)$/i.test(layer.name.replace(/[^a-z]/gi,'')))layer=layer.parent;
+   if(layer?.name.toLowerCase()==='skeleton')node.material=atlasBone;
+   else if(/pectoralismajor|rectusabdominis|externaloblique|serratusanterior/.test(name))node.material=atlasCutaway;
+   else if(/fascia|tendon|aponeurosis|frontalis|orbicularis|temporalis/.test(name))node.material=atlasFascia;
+   else node.material=atlasMuscle;
+  });
+  const scale=4.05/size.y,center=box.getCenter(new THREE.Vector3());
+  scene.scale.setScalar(scale);scene.position.set(-center.x*scale,-2.11-box.min.y*scale,-center.z*scale);
+  return scene;
+ })().catch(error=>{atlasPromise=undefined;throw error;});
+}
 const active=new WeakMap();
 window.thMedical3D={
  async mount(stage,figure){
@@ -36,6 +77,7 @@ window.thMedical3D={
    const pale=new THREE.MeshStandardMaterial({color:0xbcc9d6,roughness:.55});
    const surface=new THREE.Group(), muscles=new THREE.Group(), face=new THREE.Group(), skeleton=new THREE.Group();
    const organs=new THREE.Group(), skinMeshes=[];
+   let atlas,atlasSkeleton,atlasDeep,atlasMuscles;
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
@@ -166,8 +208,14 @@ window.thMedical3D={
    stage.dataset.model='anatomy-v2';
    state.setMode=mode=>{
     state.mode=mode;
-    muscles.visible=mode==='anatomy';organs.visible=mode!=='skin';skeleton.visible=mode==='scan';
-    face.visible=mode!=='scan';
+    const detailed=Boolean(atlas)&&mode!=='skin';
+    surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
+    organs.visible=mode!=='skin';skeleton.visible=!detailed&&mode==='scan';
+    face.visible=!detailed&&mode!=='scan';
+    if(atlas){
+     atlas.visible=detailed;
+     atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=false;atlasSkeleton.visible=mode==='scan'||state.system==='bone';
+    }
     for(const mesh of skinMeshes)mesh.material=mode==='skin'?skin:mode==='scan'?scan:fascia;
     if(mode==='anatomy')skinMeshes[0].material=torsoAnatomy;
     brain.visible=mode==='scan'||state.system==='brain';
@@ -179,9 +227,21 @@ window.thMedical3D={
      const scale=key===target?1.12:1;
      group.scale.setScalar(scale);group.position.copy(organCenters[key]).multiplyScalar(1-scale);
     }
-    brain.visible=state.mode==='scan'||target==='brain';
+    state.setMode(state.mode);
    };
    state.setMode(state.mode);
+   void getAtlas(THREE).then(template=>{
+    if(state.disposed||!stage.isConnected)return;
+    atlas=template.clone(true);
+    const normalize=name=>name.replace(/[^a-z]/gi,'').toLowerCase();
+    atlas.traverse(node=>{
+     const name=normalize(node.name);
+     if(name==='skeleton')atlasSkeleton=node;
+     if(name==='superficialmuscles')atlasMuscles=node;
+     if(name==='deepmuscles')atlasDeep=node;
+    });
+    body.add(atlas);stage.dataset.model='ecorche-atlas';state.setMode(state.mode);
+   }).catch(error=>{if(stage.isConnected)console.warn('Detailed atlas unavailable; anatomy illustration retained.',error);});
    const orbit=new THREE.Group();scene.add(orbit);
    const ringMaterial=new THREE.MeshBasicMaterial({color:0x00dfff,transparent:true,opacity:.55,side:THREE.DoubleSide});
    for(const y of [-2.13]){
@@ -215,13 +275,16 @@ window.thMedical3D={
    state.rotate=(delta)=>{state.yaw+=delta};
    state.zoomBy=(delta)=>{state.zoom=Math.max(5.3,Math.min(11,state.zoom+delta))};
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
-   let frame=0,clock=0;
+   let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    requestAnimationFrame(render);
+    if(t-lastFrame<1000/30&&!pointers.size)return;
+    lastFrame=t;
     scanBeam.visible=state.mode==='scan';body.rotation.y=state.yaw;body.rotation.x=state.pitch;if(!state.paused){clock=t*.001;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
-    camera.position.set(0,0,state.zoom);camera.lookAt(0,-.1,0);renderer.render(scene,camera);frame=requestAnimationFrame(render);
+    camera.position.set(0,0,state.zoom);camera.lookAt(0,-.1,0);renderer.render(scene,camera);
    }
-   frame=requestAnimationFrame(render);
+   requestAnimationFrame(render);
   }catch(err){stage.dataset.threeError='true';console.warn('3D scanner unavailable; 2D fallback retained.',err)}
   return state;
  }
