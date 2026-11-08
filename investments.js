@@ -1,12 +1,12 @@
 'use strict';(()=>{
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let records=[],selected=false;
-const status=t=>$('investment-status').textContent=t;
+const status=t=>{const el=$('investment-status');el.textContent=t;el.hidden=!t;};
 const docs=()=>records.filter(r=>r.data.kind!=='collection');
 const collection=()=>records.find(r=>r.data.kind==='collection');
 const preview=d=>'https://drive.google.com/file/d/'+encodeURIComponent(d.fileId)+'/preview';
 const valid=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:''}catch{return ''}};
-window.thStart=async()=>{const rows=await thValues("'Investment Records'!A1:B1000",'UNFORMATTED_VALUE');if(rows[0]?.[0]!=='ID')throw Error('Investment records unavailable.');records=rows.slice(1).filter(r=>r[0]).map((r,i)=>({id:r[0],row:i+2,data:JSON.parse(r[1]||'{}')}));render();status('Private investment records connected.');};
+window.thStart=async()=>{const rows=await thValues("'Investment Records'!A1:B1000",'UNFORMATTED_VALUE');if(rows[0]?.[0]!=='ID')throw Error('Investment records unavailable.');records=rows.slice(1).filter(r=>r[0]).map((r,i)=>({id:r[0],row:i+2,data:JSON.parse(r[1]||'{}')}));render();status('');};
 function render(){
 $('investment-summary').hidden=selected;$('investment-detail').hidden=!selected;
 const c=collection()?.data||{},active=docs().filter(r=>!r.data.deleted),cover=active.find(r=>r.data.name.includes('Original stock'));
