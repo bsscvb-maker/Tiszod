@@ -262,7 +262,21 @@
     $('medical-todd').hidden=!inTodd;
     if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
   }
-  window.addEventListener('hashchange',()=>revealTodd());
+  let medicalLoad;
+  function ensureMedicalDetails(){
+    medicalLoad??=loadMedicalDetails().then(loaded=>{
+      if(!loaded)medicalLoad=undefined;
+    },error=>{medicalLoad=undefined;throw error;});
+    return medicalLoad;
+  }
+  function loadForTodd(){
+    if(!$('medical-todd').hidden&&thAuthorized()){
+      void ensureMedicalDetails().catch(error=>{
+        $('medical-status').textContent=error.message||'Medical records could not be loaded.';
+      });
+    }
+  }
+  window.addEventListener('hashchange',()=>{revealTodd();loadForTodd();});
   $('medical-landing-search').addEventListener('submit',event=>{
     event.preventDefault();
     const query=$('medical-landing-query').value.trim();
@@ -270,7 +284,8 @@
     $('medical-search').value=query;
     visitFilter='';
     revealTodd('#timeline-title');
-    resetResults();
+    if(!$('medical-dashboard').hidden)resetResults();
+    loadForTodd();
     if(location.hash!=='#timeline-title')location.hash='timeline-title';
     else $('timeline-title').scrollIntoView();
   });
@@ -279,6 +294,11 @@
     if(link)revealTodd(link.hash);
   });
   window.thStart = async () => {
+    $('medical-content').hidden = false;
+    revealTodd();
+    if(!$('medical-todd').hidden||new URLSearchParams(location.search).get('q'))await ensureMedicalDetails();
+  };
+  async function loadMedicalDetails(){
     workbookWeights = []; manualWeights = []; browserWeights = []; weights = []; folderSummaries = {};
     $('medical-content').hidden = false;
     $('medical-dashboard').hidden = true;
@@ -403,9 +423,11 @@
         open: record => thDriveRecords.open(record)
       });
       void loadWeight();
+      return true;
     } catch(error) {
       if (error.status === 401) throw error;
       $('medical-status').textContent = error.message || 'Medical records could not be loaded.';
+      return false;
     }
-  };
+  }
 })();

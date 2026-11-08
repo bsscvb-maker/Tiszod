@@ -573,7 +573,7 @@ async function showLegalRecord(record,back){
  async function loadPage(pageToken){
   more.disabled=true;
   try{
-   const result=record.virtualFiles?{files:typeof record.virtualFiles==='function'?record.virtualFiles():record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
+   const result=record.virtualFiles?{files:typeof record.virtualFiles==='function'?await record.virtualFiles():record.virtualFiles}:await legalFolderPage(record,pageToken,request.signal);
    if(request.signal.aborted)return;
    const order=record.childOrder;
    const entries=order?[...result.files].sort((a,b)=>

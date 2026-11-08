@@ -225,30 +225,39 @@
   updateVisibility();
  }
 
- async function renderMedicalPeople(cards,status){
+ let medicalFolders;
+ function getMedicalFolders(){
+  medicalFolders??=readPeopleFolders().catch(error=>{medicalFolders=undefined;throw error;});
+  return medicalFolders;
+ }
+ function renderMedicalPeople(cards,status){
   const members=['Todd','Tracy','Aiden','Alexis','Zach'];
-  const notices=[];
-  const [folders,portraits]=await Promise.all([
-   readPeopleFolders().catch(()=>{notices.push('Family folders could not load.');return [];}),
-   loadPortraits(()=>notices.push('Profile photos could not load.'))
-  ]);
-  const missing=[];
-  const entries=await Promise.all(members.map(async name=>{
-   const original=folders.find(file=>file.folder&&file.name.trim().toLowerCase()===name.toLowerCase());
-   let files=[];
-   if(name!=='Todd'&&original){
-    try{files=await thDriveRecords.children(original)}catch{missing.push(name)}
-   }
-   const records=(await recordsFor(name,files)).map(record=>decorate(record,[area,name]));
-   const card=personCard(name,original,records);
+  const entries=members.map(name=>{
+   let pendingRecords;
+   const loadRecords=()=>pendingRecords??=(async()=>{
+    const folders=await getMedicalFolders();
+    const original=folders.find(file=>file.folder&&file.name.trim().toLowerCase()===name.toLowerCase());
+    const files=original?await thDriveRecords.children(original):[];
+    return (await recordsFor(name,files)).map(record=>decorate(record,[area,name]));
+   })().catch(error=>{pendingRecords=undefined;throw error;});
+   const card=personCard(name,undefined,loadRecords);
    card.classList.add('medical-person-card');
    card.dataset.person=name;
-   appendPortrait(card,name,portraits);
+   appendPortrait(card,name,new Map());
    return card;
-  }));
+  });
   renderHideablePeople(cards,entries);
-  if(missing.length)notices.push('Could not open records for '+missing.join(', ')+'.');
-  status.textContent=notices.join(' ');
+  status.textContent='';
+  void loadPortraits(()=>{
+   if(cards.isConnected)status.textContent='Profile photos could not load.';
+  }).then(portraits=>{
+   if(!cards.isConnected||!portraits.size)return;
+   for(const card of entries){
+    if(!portraits.has(thPersonPortraits.nameKey(card.dataset.person)))continue;
+    card.querySelector('.medical-person-portrait')?.remove();
+    appendPortrait(card,card.dataset.person,portraits);
+   }
+  });
  }
 
  async function render() {
