@@ -15,7 +15,7 @@ window.thStart=async()=>{
  try{applyVisibility(await thValues(visibilityRange,'UNFORMATTED_VALUE'))}catch{preferenceError=true}
  if(!ready){const query=new URLSearchParams(location.search).get('q');if(query)$('identity-search').value=query.slice(0,120);}
  ready=true;render();
- message(preferenceError?'Documents loaded. Visibility preferences could not refresh; please retry Refresh.':invalid?'Documents loaded. '+invalid+' invalid record(s) could not be displayed.':'Private identification records connected.');
+ message(preferenceError?'Documents loaded. Visibility preferences could not refresh; please retry Refresh.':invalid?'Documents loaded. '+invalid+' invalid record(s) could not be displayed.':'');
  $('th-connection').textContent='Private workbook connected';
 };
 
@@ -51,10 +51,6 @@ async function saveVisibility(person,desired){
  }catch(err){message(err.message)}finally{visibilitySaving=false;render()}
 }
 const personIsHidden=p=>hiddenPeople.has(p)||String(p||'').split(' & ').some(name=>hiddenPeople.has(name));
-const visibilityBar=document.createElement('div');
-visibilityBar.className='identity-visibility';
-visibilityBar.innerHTML='<button type="button" id="identity-show-hidden" aria-pressed="false">Show hidden people</button><small>Hide people here or inside their section. Use Show hidden people to view or unhide them.</small>';
-$('identity-count').before(visibilityBar);
 $('identity-show-hidden').onclick=()=>{showHiddenPeople=!showHiddenPeople;selectedPerson='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value='';$('identity-view').value='active';render()};
 const visibilityStyle=document.createElement('style');
 visibilityStyle.textContent='.identity-visibility{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}.identity-visibility small{opacity:.75}.identity-person-wrap{display:flex;flex-direction:column;min-width:0;gap:8px}.identity-person-wrap>.person-record{width:100%;flex:1;box-sizing:border-box}.identity-person-wrap{background:#122a41;border-radius:12px;padding-bottom:10px}.identity-person-wrap>.identity-person-visibility{margin-right:10px}.record-breadcrumb>strong{margin-right:auto}.identity-person-wrap>.identity-person-visibility{align-self:flex-end;min-height:44px;padding:8px 16px}.identity-person-wrap.is-hidden>.person-record{border-style:dashed}.identity-person-visibility{display:flex;align-items:center;gap:10px}.identity-switch-track{display:inline-flex;width:38px;height:22px;border-radius:20px;background:#526277;padding:3px;box-sizing:border-box}.identity-switch-track:before{content:"";width:16px;height:16px;border-radius:50%;background:white;transition:transform .15s}.identity-person-visibility[aria-checked="true"] .identity-switch-track{background:#16794b}.identity-person-visibility[aria-checked="true"] .identity-switch-track:before{transform:translateX(16px)}';
@@ -129,7 +125,11 @@ function render(){
  const list=records.filter(r=>!!r.data.deleted===deleted&&(deleted||!!r.data.hidden===hiddenDocuments)&&(showHiddenPeople||!personIsHidden(r.data.person))&&(!person||r.data.person===person)&&(!category||r.data.category===category)&&[r.data.name,r.data.person,r.data.category,r.data.folder,r.data.notes].join(' ').toLowerCase().includes(q));
  $('identity-pin-section').hidden=true;
  const grid=$('identity-grid'),chosen=person||selectedPerson;
- const heading=grid.previousElementSibling;
+ const heading=$('identity-results-heading');
+ const landing=!q&&!chosen&&!category&&!deleted&&!hiddenDocuments;
+ heading.hidden=landing;
+ $('identity-filters').hidden=landing;
+ if(landing)$('identity-filters').open=false;
  let shown=list,html='<div class="record-breadcrumb"><button data-record-back="root">← '+(isEducation?'Education':'People')+'</button>';
  if(!isEducation&&chosen){shown=shown.filter(r=>(r.data.person||'General')===chosen);html+='<strong>'+esc(chosen)+'</strong>'+(!deleted&&!hiddenDocuments?'<button type="button" data-arrange-documents aria-pressed="'+String(arrangeDocuments)+'" '+(orderSaving?'disabled':'')+'>'+(arrangeDocuments?'Done':'Arrange documents')+'</button>':'')+'<button type="button" data-toggle-person="'+esc(chosen)+'" data-hide-value="'+String(!hiddenPeople.has(chosen))+'" '+(visibilitySaving?'disabled':'')+'>'+(hiddenPeople.has(chosen)?'Unhide ':'Hide ')+esc(chosen)+'</button>';}
  if(isEducation&&selectedCategory){shown=shown.filter(r=>(r.data.category||'Other')===selectedCategory);html+='<strong>'+esc(selectedCategory)+'</strong>';}
@@ -176,7 +176,7 @@ document.querySelector('.identification').addEventListener('click',e=>{
   }
  }
  if(b.dataset.folder){selectedFolder=b.dataset.folder;recordPage=1;render()}
- if(b.dataset.recordBack){arrangeDocuments=false;selectedFolder='';if(b.dataset.recordBack==='agency')selectedCategory='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value=''}recordPage=1;render()}
+ if(b.dataset.recordBack){arrangeDocuments=false;selectedFolder='';if(b.dataset.recordBack==='agency')selectedCategory='';if(b.dataset.recordBack==='root'){selectedPerson='';selectedCategory='';$('identity-person').value='';$('identity-category').value='';$('identity-search').value='';$('identity-view').value='active'}recordPage=1;render()}
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
 function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('identity-form');f.reset();for(const k of ['name','person','category','url','expires','notes'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('identity-save-status').textContent='';$('identity-dialog').showModal()}
