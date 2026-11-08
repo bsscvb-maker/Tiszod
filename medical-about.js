@@ -103,21 +103,30 @@
 
   function renderProfile() {
     const target=$('medical-about-profile'), stamp=$('medical-profile-updated');
-    const updated=Date.parse(profile.profileUpdatedAt);
-    stamp.hidden=!Number.isFinite(updated);
-    if(!stamp.hidden){
-      stamp.dateTime=new Date(updated).toISOString();
-      stamp.textContent='Profile as of '+new Intl.DateTimeFormat('en-US',{
-        timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'
-      }).format(updated);
+    const composition=compositionReadings(profile);
+    const weighIns=api.weights();
+    const formatTime=new Intl.DateTimeFormat('en-US',{
+      timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'
+    });
+    const latest=[{time:Date.parse(profile.profileUpdatedAt)},composition[0],weighIns.at(-1)]
+      .filter(row=>Number.isFinite(measurementTime(row)))
+      .sort((a,b)=>measurementTime(b)-measurementTime(a))[0];
+    stamp.hidden=!latest;
+    if(latest){
+      const time=measurementTime(latest);
+      const dateOnly=latest.date?.length===10&&time===Date.parse(latest.date);
+      stamp.dateTime=dateOnly?latest.date:new Date(time).toISOString();
+      const label=dateOnly?new Intl.DateTimeFormat('en-US',{
+        timeZone:'UTC',month:'short',day:'numeric',year:'numeric'
+      }).format(time):formatTime.format(time);
+      stamp.textContent='Profile as of '+label;
     }
     const overview=make('div');overview.className='medical-body-profile';
     const figure=make('figure'),silhouette=make('img');
     silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body reference';
     figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
     const grid=make('dl'),height=heightInches(profile.height);
-    const composition=compositionReadings(profile);
-    const weights=api.weights().slice(-2).reverse().map(asPounds);
+    const weights=weighIns.slice(-2).reverse().map(asPounds);
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
@@ -133,7 +142,6 @@
         const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
         readings.append(comparison(label,pair[0],pair[1],unit,preferred));
       }
-      const formatTime=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
       const dates=make('p');dates.className='medical-measurement-dates';
       for(const [index,label] of ['Current','Prior'].entries()){
         const row=composition[index];
