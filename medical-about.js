@@ -536,7 +536,7 @@
     }
     const summaryPanels=make('div');summaryPanels.className='medical-concept-summary';
     summaryPanels.append(compositionPanel,progressPanel);
-    panels.append(vitalsPanel,keyPanel,nextPanel);
+    panels.append(vitalsPanel,nextPanel);
     const hero=make('div');hero.className='medical-reference-layout';
     const right=make('div');right.className='medical-reference-right';
     const overviewCard=make('section');overviewCard.className='medical-reference-overview';
@@ -551,7 +551,7 @@
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
-    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,keyPanel);target.replaceChildren(dashboard,details);
+    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
