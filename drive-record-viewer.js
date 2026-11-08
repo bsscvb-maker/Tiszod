@@ -5,15 +5,17 @@ const legalViewerBody=document.getElementById('legal-view-body');
 const legalViewerBack=document.getElementById('legal-view-back');
 let legalViewRequest;
 const inlineViewer=legalViewer.tagName!=='DIALOG';
+const tracksFolders=!inlineViewer||document.body.dataset.thPage==='hobbies';
 const navigationCards=new WeakMap();
 let openTrail=[], navigationVersion=0;
 function saveTrail(trail){
+ window.portalNavigation?.replace();
  const state={...history.state,thDriveTrail:trail};
  if(window.portalNavigation)window.portalNavigation.push(state,location.href);
  else history.pushState(state,'');
 }
 function closeFromNavigation(){
- if(!inlineViewer&&openTrail.length){
+ if(tracksFolders&&openTrail.length){
   navigationVersion++;
   openTrail=[];
   saveTrail([]);
@@ -21,13 +23,13 @@ function closeFromNavigation(){
  closeLegalRecord();
 }
 async function restoreNavigation(){
- if(inlineViewer)return;
+ if(!tracksFolders)return;
  const trail=history.state?.thDriveTrail||[];
  if(JSON.stringify(trail)===JSON.stringify(openTrail))return;
  const version=++navigationVersion;
  if(!trail.length){
   openTrail=[];
-  if(legalViewer.open)closeLegalRecord();
+  if(inlineViewer?!legalViewer.hidden:legalViewer.open)closeLegalRecord();
   return;
  }
  if(typeof thAuthorized==='function'&&!thAuthorized())return;
@@ -48,7 +50,7 @@ async function restoreNavigation(){
   await showLegalRecord(entry.record,entry.back);
  }
 }
-if(!inlineViewer){
+if(tracksFolders){
  addEventListener('popstate',()=>void restoreNavigation());
  addEventListener('pageshow',event=>{if(event.persisted)void restoreNavigation()});
  legalViewer.addEventListener('cancel',event=>{
@@ -267,6 +269,18 @@ function careerFolderSymbol(path){
  }
  return 'M3 6h7l2 3h9v11H3z';
 }
+const recreationSymbols=[
+ [/baseball|basketball|football|soccer|tennis|sports?|gym|ymca/i,'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3v18M6 5a10 10 0 0 1 0 14m12-14a10 10 0 0 0 0 14'],
+ [/water|swim|surf|kayak|boat/i,'M2 15c3-4 5 4 9 0s6 4 11 0M2 20c3-4 5 4 9 0s6 4 11 0M5 11l2-3h10l2 3'],
+ [/run|race|schedule|calendar|banquet|picnic|event/i,'M4 6h16v15H4zM8 3v6m8-6v6M4 11h16m-12 5h3m2 0h3'],
+ [/camp|hunt|trail|park|outdoor|woods/i,'M2 20 9 7l4 7 3-5 6 11zM9 7l2-4 2 4'],
+ [/member|board|receipt|ticket|dues|billing|rule|document/i,'M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5'],
+ [/photo|picture|album/i,'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M16 9h.01']
+];
+function recreationFolderSymbol(path){
+ const name=path?.at(-1)||'';
+ return recreationSymbols.find(([pattern])=>pattern.test(name))?.[1]||careerFolderSymbol(path||[]);
+}
 function uniqueCover(key,symbol){
  // Each location gets an original composition, including archives with no usable preview.
  let state=2166136261;
@@ -320,14 +334,15 @@ function legalFileCard(record,back){
   label.append(labelTitle);
   button.append(art,label);
   if(!record.directReader){
-   if(!inlineViewer&&record.id){
-    button.dataset.thDriveId=record.id;
+   const navigationId=record.id||(tracksFolders&&record.virtualFiles?JSON.stringify(record.coverPath||[record.name]):'');
+   if(tracksFolders&&navigationId){
+    button.dataset.thDriveId=navigationId;
     navigationCards.set(button,{record,back});
    }
    button.onclick=()=>{
-    if(!inlineViewer&&record.id){
+    if(tracksFolders&&navigationId){
      navigationVersion++;
-     openTrail=legalViewerBody.contains(button)?[...openTrail,record.id]:[record.id];
+     openTrail=legalViewerBody.contains(button)?[...openTrail,navigationId]:[navigationId];
      saveTrail(openTrail);
     }
     return showLegalRecord(record,back);
@@ -345,7 +360,7 @@ function legalFileCard(record,back){
    const folderPhoto=medicalStriders?null:record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
     JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]),
-    (careerFolder||record.folder&&record.coverPath?.[0]==='hobbies')?careerFolderSymbol(record.coverPath??[record.name]):undefined
+    document.body.dataset.thPage==='hobbies'?recreationFolderSymbol(record.coverPath??[record.name]):careerFolder?careerFolderSymbol(record.coverPath??[record.name]):undefined
    );
    const image=document.createElement('img');
    image.alt='';
@@ -419,7 +434,7 @@ async function showLegalRecord(record,back){
  legalViewRequest?.abort();
  const request=new AbortController();
  legalViewRequest=request;
- legalViewerBack.hidden=!back;legalViewerBack.onclick=!inlineViewer&&openTrail.length>1?()=>history.back():back||null;
+ legalViewerBack.hidden=!back;legalViewerBack.onclick=tracksFolders&&openTrail.length>1?()=>history.back():back||null;
  document.getElementById('legal-view-title').textContent=record.displayName??record.name;
  const actions=document.getElementById('legal-view-actions');
  actions.replaceChildren();

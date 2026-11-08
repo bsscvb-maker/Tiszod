@@ -1,9 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="22 24 156 230" preserveAspectRatio="none">
   <defs>
     <linearGradient id="hologram" x2="0" y2="1">
       <stop stop-color="#86f7ec" stop-opacity=".78"/>
       <stop offset="1" stop-color="#2474a4" stop-opacity=".36"/>
     </linearGradient>
+    <pattern id="mesh" width="14" height="10" patternUnits="userSpaceOnUse">
+      <path d="M0 10 7 0l7 10M0 10h14" fill="none" stroke="#b5fdf4" stroke-opacity=".45" stroke-width=".65"/>
+    </pattern>
     <pattern id="lines" width="5" height="5" patternUnits="userSpaceOnUse">
       <path d="M0 1h5" stroke="#b5fdf4" stroke-opacity=".25"/>
     </pattern>
@@ -17,6 +20,7 @@
     <circle cx="100" cy="54" r="19"/>
     <use href="#body"/>
   </g>
+  <g fill="url(#mesh)"><circle cx="100" cy="54" r="18"/><use href="#body"/></g>
   <g fill="url(#lines)"><circle cx="100" cy="54" r="18"/><use href="#body"/></g>
   <g fill="#b2fff1" stroke="#264e68">
     <circle cx="100" cy="108" r="4"/><circle cx="76" cy="169" r="3"/><circle cx="124" cy="169" r="3"/>

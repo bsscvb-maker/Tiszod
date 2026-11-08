@@ -291,13 +291,12 @@
   }
 
   let scannerPaused=false;
-  function bodyScanner(height){
-    const figure=make('figure'), header=make('div'), stage=make('div'), metrics=make('dl');
+  function bodyScanner(){
+    const figure=make('figure'), header=make('div'), stage=make('div');
     figure.className='medical-scanner';
     figure.setAttribute('aria-label','Body metrics');
     header.className='medical-scanner-header';
     stage.className='medical-scanner-stage';
-    metrics.className='medical-scanner-metrics';
     const pause=action('Pause motion',()=>{
       scannerPaused=!scannerPaused;
       updateMotion();
@@ -310,18 +309,14 @@
     updateMotion();
     const silhouette=make('img');
     silhouette.src='assets/medical/body-scanner.svg';silhouette.alt='Generic body diagram';
-    const ring=make('span'), sweep=make('span');
+    const ring=make('span'), sweep=make('span'), grid=make('span'), target=make('span');
     ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
-    ring.setAttribute('aria-hidden','true');sweep.setAttribute('aria-hidden','true');
-    const addMetric=(label,value)=>{
-      if(!value)return;
-      const item=make('div');item.append(make('dt',label),make('dd',value));metrics.append(item);
-    };
-    addMetric('Height',height);
-    header.append(make('span','Body metrics','medical-scanner-title'),pause);
-    stage.append(ring,silhouette,sweep);
-    figure.append(header,stage,metrics);
-    return {figure,addMetric};
+    grid.className='medical-scanner-grid';target.className='medical-scanner-target';
+    for(const layer of [ring,sweep,grid,target])layer.setAttribute('aria-hidden','true');
+    header.append(make('span','Body scan','medical-scanner-title'),pause);
+    stage.append(grid,ring,silhouette,target,sweep);
+    figure.append(header,stage);
+    return figure;
   }
 
   function renderProfile() {
@@ -345,7 +340,7 @@
       stamp.textContent='Profile as of '+label;
     }
     const overview=make('div');overview.className='medical-body-profile';
-    const scanner=bodyScanner(profile.height);
+    const scanner=bodyScanner();
     const grid=make('dl'),height=heightInches(profile.height);
     const weights=weighIns.slice(-2).reverse().map(asPounds);
     for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
@@ -362,8 +357,6 @@
         const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
         const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
         readings.append(comparison(label,pair[0],pair[1],unit,preferred));
-        if(['weight','bmi','bodyFat','muscle','water'].includes(key)&&Number.isFinite(pair[0]))
-          scanner.addMetric(key==='weight'?'Weight':key==='bmi'?'BMI':label,rounded(pair[0])+unit);
       }
       const dates=make('p');dates.className='medical-measurement-dates';
       for(const [index,label] of ['Current','Prior'].entries()){
@@ -374,7 +367,7 @@
       if(Number.isFinite(updated))dates.append(make('span','Updated: '+formatTime.format(updated)));
       measurements.append(make('h3','Body composition'),dates,readings);
     }
-    overview.append(scanner.figure,measurements);target.replaceChildren(overview,make('h3','Current medications'));
+    overview.append(scanner,measurements);target.replaceChildren(overview,make('h3','Current medications'));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
