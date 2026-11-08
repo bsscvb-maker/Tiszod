@@ -127,7 +127,7 @@
       const readings=make('dl');
       for(const [label,key,unit,preferred] of [
         ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',-1],
-        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',1],['Bone mass','boneMass','%',0]
+        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0],['Bone mass','boneMass','%',0]
       ]){
         const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
         const pair=values.length?values:key==='weight'?weights:key==='bmi'?weights.map(pounds=>bmiFor(pounds,height)):[];
