@@ -656,19 +656,34 @@
     vitalsPanel.append(vitalGrid);
     const nextPanel=make('section');nextPanel.className='medical-concept-panel';nextPanel.id='medical-upcoming';
     nextPanel.append(panelHeading('Next / Upcoming','calendar'));
-    const eastern=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+    const eastern=new Intl.DateTimeFormat('en-US',{
+      timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+    });
     const parts=Object.fromEntries(eastern.formatToParts(Date.now()).map(({type,value})=>[type,value]));
     const today=[parts.year,parts.month,parts.day].join('-');
     const upcoming=dates=>dates.filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date||'')&&date>=today&&Number.isFinite(Date.parse(date))).sort()[0];
     const nextDate=new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    const saturdayRegimen=String(profile.currentList||'').split('\n').some(entry=>{
+      const [name,,schedule]=entry.split('|').map(value=>value.trim());
+      return isCompoundedTirzepatide(name)&&/^Saturday nights?$/i.test(schedule||'');
+    });
+    const saturday=new Date(today);
+    const daysUntilSaturday=(6-saturday.getUTCDay()+7)%7;
+    const cutoffPassed=Number(parts.hour)*60+Number(parts.minute)>20*60+45;
+    saturday.setUTCDate(saturday.getUTCDate()+(daysUntilSaturday===0&&cutoffPassed?7:daysUntilSaturday));
+    const saturdayDate=saturdayRegimen?saturday.toISOString().slice(0,10):undefined;
+    const scheduledInjection=upcoming([profile.nextInjectionDate,medicationSource?.nextInjectionDate]
+      .filter(date=>!(saturdayRegimen&&cutoffPassed&&daysUntilSaturday===0&&date===today)));
+    const injectionDate=scheduledInjection||saturdayDate;
     for(const [label,symbol,date] of [
-      ['Next Injection','syringe',upcoming([profile.nextInjectionDate,medicationSource?.nextInjectionDate])],
+      ['Next Injection','syringe',injectionDate],
       ['Next Weight Check','⚖',upcoming([profile.nextWeightDate])],
       ['Next Appointment','calendar',upcoming([profile.nextAppointmentDate,...(api.upcomingAppointments?.()||[])])]
     ]){
       const injection=label==='Next Injection';
       const item=injection?action(null,openInjectionHistory):make('div');
-      const copy=make('span');copy.append(make('b',label),make('span',date?nextDate.format(Date.parse(date)):injection?'See injection history':'Not scheduled'));
+      const copy=make('span');copy.append(make('b',label),make('span',date?nextDate.format(Date.parse(date))+(injection&&date===saturdayDate?' at 8:45 PM ET':''):injection?'See injection history':'Not scheduled'));
       item.className='medical-progress-row';item.append(dashboardIcon(symbol),copy);nextPanel.append(item);
     }
     const keyPanel=make('section');keyPanel.className='medical-concept-panel medical-key-panel';
