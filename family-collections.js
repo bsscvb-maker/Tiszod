@@ -1,7 +1,7 @@
 /* Family collections are resolved in the signed-in browser. */
 (() => {
  const mount = document.querySelector('[data-family-collections]');
- const area = mount.dataset.familyCollections;
+ const area = mount?.dataset.familyCollections || 'identification';
  if (area === 'education' && ['books','career'].includes(new URLSearchParams(location.search).get('view'))) return;
  const people = ['Aiden', 'Alexis', 'Tracy', 'Todd'];
  const labels = {
@@ -124,7 +124,7 @@
   return [...files, keepsakes];
  }
 
- function personCard(name, original, records) {
+ function personCard(name, original, records, coverName = name) {
   const description = {
    family: 'Browse records',
    education: 'Browse school records',
@@ -136,7 +136,7 @@
    ...original, name, folder: true, driveAction: area === 'family',
    url: area === 'family' ? original.url : undefined,
    cardLabel: description[area],
-   coverPath: [area, name],
+   coverPath: [area, coverName],
    coverFor,
    virtualFiles: records
   });
@@ -176,6 +176,39 @@
   } catch {
    status.textContent = 'Could not load the TisZod ' + sourceFolder + ' folder. Check that your signed-in Google account has access.';
   }
+ }
+
+ if (area === 'identification') {
+  let folders;
+  window.thRenderIdentificationCollection = async (name, section) => {
+   section.textContent = 'Loading ID records?';
+   try {
+    folders ??= readPeopleFolders().catch(error => {
+     folders = undefined;
+     throw error;
+    });
+    const original = (await folders).find(file => file.folder && file.name === name);
+    const files = await thDriveRecords.children(original);
+    const records = (await recordsFor(name, files)).filter(Boolean).map(record => decorate(record, [area, name]));
+    if (!section.isConnected) return;
+    if (!records.length) {
+     section.remove();
+     return;
+    }
+    const cards = document.createElement('div');
+    cards.className = 'legal-cards';
+    cards.append(personCard('Identification archive', original, records, name));
+    section.replaceChildren(cards);
+   } catch {
+    if (section.isConnected) section.textContent = 'Could not load the ID archive. Reopen this person to retry.';
+   }
+  };
+  const start = window.thStart;
+  window.thStart = (...args) => {
+   folders = undefined;
+   return start(...args);
+  };
+  return;
  }
 
  const start = window.thStart;

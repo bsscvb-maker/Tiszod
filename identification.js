@@ -149,10 +149,19 @@ function render(){
   const count=shown.filter(r=>agencyKey(r)===key).length;
   return count?'<article class="identity-card visual-record agency-card"><button type="button" class="agency-open record-link" data-record-category="'+esc(key)+'"><img class="agency-logo record-preview" src="'+logo+'" alt=""><span class="record-caption"><strong>'+esc(title)+'</strong><small>'+esc(chosen)+' · '+(key==='Hunter Education'?'Hunter Education':key)+' · '+count+' '+(count===1?'document':'documents')+'</small></span></button><footer>'+['Hide','Edit','Delete'].map(action=>'<button type="button" data-record-category="'+esc(key)+'" data-agency-action="'+action.toLowerCase()+'" aria-label="'+action+' a document in '+esc(title)+'">'+action+'</button>').join('')+'</footer></article>':'';
  }).join(''):'';
+ const archive=ready&&groupView&&!agency&&!arrangeDocuments&&['Aiden','Alexis'].includes(chosen)&&window.thRenderIdentificationCollection;
  const documents=groupCards?shown.filter(r=>!agencyKey(r)):shown;
  const sorted=documents.sort((a,b)=>compareDocuments(a,b,chosen));
  const afterBoating=chosen==='Todd'&&groupCards&&sorted.some(r=>r.data.name==='Boating License');
  grid.innerHTML=html+(afterBoating?'':groupCards)+sorted.map(r=>orderedCard(r,chosen,deleted)+(afterBoating&&r.data.name==='Boating License'?groupCards:'')).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
+ if(archive){
+  const section=document.createElement('section');
+  section.className='family-collections';
+  section.style.gridColumn='1 / -1';
+  section.setAttribute('aria-label','Identification archive');
+  grid.firstElementChild.after(section);
+  archive(chosen,section);
+ }
 }
 document.querySelector('.identification').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
