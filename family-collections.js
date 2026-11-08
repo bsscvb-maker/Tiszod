@@ -143,6 +143,7 @@
  }
 
  async function render() {
+  if (area === 'hobbies') window.thFamilyRecreationSearchEntries = undefined;
   mount.hidden = false;
   mount.replaceChildren();
   const heading = document.createElement('h2');
@@ -167,10 +168,12 @@
      section.append(...records.map(record => thDriveRecords.card({...record, cardLabel: 'Browse school records'})));
      return section;
     }
-    if (records.length) return personCard(name, original, records);
+    if (records.length) return {card:personCard(name, original, records), records};
     throw Error('Collection unavailable.');
    }));
-   cards.replaceChildren(...results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []));
+   const available = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+   cards.replaceChildren(...available.map(entry => entry.card || entry));
+   if (area === 'hobbies') window.thFamilyRecreationSearchEntries = available.flatMap(entry => entry.records || []);
    const unavailable = members.filter((_, i) => results[i].status === 'rejected');
    status.textContent = unavailable.length ? 'Could not load collections for ' + unavailable.join(', ') + '.' : '';
   } catch {

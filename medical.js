@@ -315,6 +315,8 @@
         weighInForm.reset();
         status.textContent='Weigh-in saved.';
       };
+      const query = new URLSearchParams(location.search).get('q');
+      if (query) $('medical-search').value = query.slice(0,120);
       renderResults(); $('medical-dashboard').hidden = false; $('medical-jump').hidden = false;
       const importForm=$('medical-import-weigh-ins');
       importForm.onsubmit=async event=>{

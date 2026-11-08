@@ -13,6 +13,7 @@ window.thStart=async()=>{
  records=rows.slice(1).flatMap((r,i)=>{if(!r[0])return [];try{const data=JSON.parse(r[1]||'{}');if(!data||typeof data!=='object'||Array.isArray(data))throw Error();return [{id:r[0],row:i+2,data}]}catch{invalid++;return []}});
  let preferenceError=false;
  try{applyVisibility(await thValues(visibilityRange,'UNFORMATTED_VALUE'))}catch{preferenceError=true}
+ if(!ready){const query=new URLSearchParams(location.search).get('q');if(query)$('identity-search').value=query.slice(0,120);}
  ready=true;render();
  message(preferenceError?'Documents loaded. Visibility preferences could not refresh; please retry Refresh.':invalid?'Documents loaded. '+invalid+' invalid record(s) could not be displayed.':'Private identification records connected.');
  $('th-connection').textContent='Private workbook connected';

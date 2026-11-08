@@ -1577,7 +1577,10 @@ document.getElementById('openFuelCapture').onclick=openFuel;
 document.getElementById('logAssetFuel').onclick=openFuel;
 document.querySelector('#reportVehicle').parentElement.firstChild.textContent=workspaceTitle;
 document.querySelector('#deleteAssetButton').textContent='Delete '+workspaceTitle.toLowerCase();
-category='All Equipment';status='current';renderCategory();show('categoryView');
+category='All Equipment';
+vehicleQuery=new URLSearchParams(location.search).get('q')?.slice(0,120)||'';
+status=vehicleQuery?'all':'current';
+renderCategory();show('categoryView');
 requestAnimationFrame(()=>requestAnimationFrame(refreshAnnualUsage));
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
@@ -1596,5 +1599,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261107-fixed-sidebar"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="equipment-photos.js?v=20261102-compressor-todd"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-search-links"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="equipment-photos.js?v=20261102-compressor-todd"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
 

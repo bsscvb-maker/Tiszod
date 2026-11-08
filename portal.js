@@ -238,9 +238,9 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
     for(const button of document.querySelectorAll('.th-browser-controls [data-th-navigate="back"]'))button.disabled=!canBack;
     for(const button of document.querySelectorAll('.th-browser-controls [data-th-navigate="forward"]'))button.disabled=!canForward;
   }
-  function replace(view=capture()){history.replaceState({...history.state,thNav:{index:current()?.index||0,view}},'');}
+  function replace(view=capture()){history.replaceState({...history.state,thNav:{index:current()?.index||0,view,awaitingQuery:!dataReady&&current()?.awaitingQuery}},'');}
   function record(before){const after=capture();const comparable=s=>JSON.stringify({...s,scroll:0});if(comparable(before)===comparable(after))return;replace(before);push(history.state,location.href);}
-  function init(){const prior=current();if(prior){ready=true;if(dataReady||typeof window.thStart!=='function')restore(prior.view);}else{const index=Number(sessionStorage.getItem(key)||0);sessionStorage.removeItem(key);history.replaceState({...history.state,thNav:{index,view:capture()}},'');sessionStorage.setItem(maxKey,index);ready=true;}update();}
+  function init(){const prior=current();if(prior){ready=true;if(dataReady||typeof window.thStart!=='function')restore(prior.view);}else{const index=Number(sessionStorage.getItem(key)||0);sessionStorage.removeItem(key);history.replaceState({...history.state,thNav:{index,view:capture(),awaitingQuery:typeof window.thStart==='function'&&new URLSearchParams(location.search).has('q')}},'');sessionStorage.setItem(maxKey,index);ready=true;}update();}
   document.addEventListener('click',e=>{const action=e.target.closest('.th-browser-controls [data-th-navigate]')?.dataset.thNavigate;if(!action)return;if(action==='back')history.back();if(action==='forward')history.forward();if(action==='refresh'){replace();location.reload();}if(action==='home'){replace();sessionStorage.setItem(key,(current()?.index||0)+1);location.href=portalHome;}});
   addEventListener('popstate',()=>{clearTimeout(inputTimer);restore(current()?.view);});
   addEventListener('pagehide',()=>{if(ready&&!restoring)replace()});
@@ -263,7 +263,7 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
   window.portalNavigation={push,replace,before:(fromChange=false)=>{if(ready&&!restoring)frameBefore=fromChange?(current()?.view||capture()):capture()},after:()=>{if(!ready||restoring||!frameBefore)return;const before=frameBefore;frameBefore=null;record(before)}};
   function connectFrame(){const frame=document.querySelector('iframe[src*="tracker-tasks"]');if(!frame)return;frame.addEventListener('load',()=>{if(current()?.view?.tasks)restore(current().view);else if(ready)replace()})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{init();connectFrame()},{once:true});else{init();connectFrame();}
-  const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const saved=dataReady?capture():current()?.view;const result=await start(...args);dataReady=true;ready=true;if(saved)restore(saved);await window.thDriveRecords?.restoreNavigation?.();replace();return result;};
+  const start=window.thStart;if(typeof start==='function')window.thStart=async(...args)=>{const prior=current();const saved=dataReady?capture():prior?.awaitingQuery?null:prior?.view;const result=await start(...args);dataReady=true;ready=true;if(saved)restore(saved);await window.thDriveRecords?.restoreNavigation?.();replace();return result;};
 })();
 
 /* Unified personal portal presentation. Moves existing elements; never copies club records. */

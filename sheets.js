@@ -332,10 +332,11 @@ async function thTab(position) {
   const rows = await thValues("'" + sheet.title.replace(/'/g,"''") + "'!A1:T300");
   return {title:sheet.title,rows,rowCount:sheet.gridProperties.rowCount,columnCount:Math.min(sheet.gridProperties.columnCount,20)};
 }
-document.getElementById('th-auth').classList.add('th-auth-ready');
-document.getElementById('th-sign-in').addEventListener('click', thSignIn);
-if (thToken) {
-  document.getElementById('th-auth').hidden=true;
+const thAuthGate = document.getElementById('th-auth');
+if (thAuthGate) thAuthGate.classList.add('th-auth-ready');
+document.getElementById('th-sign-in')?.addEventListener('click', thSignIn);
+if (thToken && thAuthGate) {
+  thAuthGate.hidden=true;
   document.documentElement.classList.remove('th-session-pending');
   Promise.resolve().then(() => window.thStart()).then(() => {
     document.getElementById('th-auth').hidden = true;
@@ -348,13 +349,20 @@ if (thToken) {
   });
 }
 
-if(thNeedsDriveConsent)thStatus('Sign in once to connect Google Drive, books, and pictures with your portal session.');
+if(thNeedsDriveConsent && thAuthGate)thStatus('Sign in once to connect Google Drive, books, and pictures with your portal session.');
 // Keep the same portal session across tabs; signing out clears every tab.
 addEventListener('storage',event=>{
  if(event.key!==TH_SESSION_KEY)return;
  let saved;try{saved=JSON.parse(event.newValue||'null')}catch{}
  if(saved?.expiresAt>Date.now()+30000&&thHasScopes(saved.scope)){thToken=saved.token;thExpiresAt=saved.expiresAt;sessionStorage.setItem(TH_SESSION_KEY,event.newValue);window.dispatchEvent(new Event('tiszod-drive-books-connected'));}
- else {thClearSession();document.getElementById('th-auth').hidden=false;document.documentElement.classList.remove('th-session-pending');thStatus('Sign in to reconnect your portal and Google Drive.');}
+ else {
+  thClearSession();
+  if (thAuthGate) {
+   thAuthGate.hidden=false;
+   document.documentElement.classList.remove('th-session-pending');
+   thStatus('Sign in to reconnect your portal and Google Drive.');
+  }
+ }
 });
 if(thNeedsDriveConsent)document.documentElement.classList.remove('th-session-pending');
 
