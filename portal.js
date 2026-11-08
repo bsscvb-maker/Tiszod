@@ -104,6 +104,7 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
   // Keep navigation order and icon spacing consistent on every page.
   if (nav) {
     const badges = [
+      ['accounts.html', '#74592e', '<circle cx="11.5" cy="12" r="4.5"/><path d="m15 15.5 9 9m-3-3 3-3m-6 0 2.5-2.5"/>'],
       ['admin.html', '#465579', '<path d="M8 9h16M8 16h16M8 23h16"/><circle cx="13" cy="9" r="2.4" fill="#465579"/><circle cx="20" cy="16" r="2.4" fill="#465579"/><circle cx="12" cy="23" r="2.4" fill="#465579"/>'],
       ['career.html', '#635038', '<rect x="6" y="11" width="20" height="13" rx="2"/><path d="M12 11V8h8v3M6 16h20m-10 0v3"/>'],
       ['home-library.html', '#28606e', '<path d="M6 10h7l2 3h11v11H6zM10 17h12m-12 3h8"/>'],
