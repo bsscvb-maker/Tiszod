@@ -878,7 +878,7 @@ function renderCategory(){
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const override=cardPhotoOverride(a);
-  const photo=override?'command-photos/road-glide-2023-thumbnail.jpg':a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
+  const photo=override?'command-photos/road-glide-2023-overlook.jpg':a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
   const photoClass=override?' card-photo--road-glide':String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
   const picture=photo||a.photoFileId?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
