@@ -6,6 +6,23 @@ function getThree(){return modulePromise??=import(THREE_URL)}
 const ATLAS_URL='https://cdn.jsdelivr.net/gh/Charleeh/ecorche@320805e06aee51e2e6f6b22533eb2a59d43f2d4d/model/ecorche.meshopt.glb';
 const ADDONS='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/';
 let atlasPromise;
+let headGeometryPromise;
+const HEAD_URL='assets/medical/sculpted-scanner-head.json';
+
+function getHeadGeometry(THREE){
+ return headGeometryPromise??=(async()=>{
+  const response=await fetch(HEAD_URL);
+  if(!response.ok)throw Error('Sculpted head could not be downloaded.');
+  const {positions,colors,indices}=await response.json();
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  return geometry;
+ })().catch(error=>{headGeometryPromise=undefined;throw error;});
+}
 
 // Cyan light follows the silhouette as the model rotates.
 function scannerMaterial(THREE,options,edge){
@@ -101,7 +118,9 @@ window.thMedical3D={
    const pale=new THREE.MeshStandardMaterial({color:0xbcc9d6,roughness:.55});
    const surface=new THREE.Group(), muscles=new THREE.Group(), face=new THREE.Group(), skeleton=new THREE.Group();
    const organs=new THREE.Group(), skinMeshes=[];
-   let atlas,atlasSkeleton,atlasDeep,atlasMuscles;
+   let atlas,atlasSkeleton,atlasDeep,atlasMuscles,sculptedHead;
+   const atlasFaceMeshes=[];
+   const headMaterial=scannerMaterial(THREE,{vertexColors:true,roughness:.63,metalness:.08},.80);
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
@@ -146,7 +165,8 @@ window.thMedical3D={
    skinMeshes.push(loft(surface,skin,neck));
    const head=[[1.48,0,.06,.045,.055],[1.53,0,.051,.105,.109],[1.61,0,.027,.147,.137],
     [1.72,0,.019,.156,.155],[1.81,0,.013,.152,.151],[1.89,0,.002,.132,.135],[1.95,0,0,.073,.082],[1.97,0,0,.007,.01]];
-   skinMeshes.push(loft(surface,skin,head));
+   const proceduralHead=loft(surface,skin,head);
+   skinMeshes.push(proceduralHead);
    ell(face,hair,0,1.88,-.037,.145,.087,.124);
    ell(face,skin,0,1.674,.17,.028,.057,.034);
    ell(face,skin,0,1.637,.182,.039,.019,.029);
@@ -206,16 +226,21 @@ window.thMedical3D={
     const group=new THREE.Group();organs.add(group);systems[name]=group;return group;
    }
    const lung=organMaterial(0x126ac9,0x1257ff,.73);
+   const violetLung=organMaterial(0x775ad2,0x7d39d7,.66);
    const lungDetail=organMaterial(0x66dbff,0x298fff);
+   const violetDetail=organMaterial(0xf2abff,0x9c4ce0);
    const lungBranches=organMaterial(0x4296df,0x246cf0,.68);
-   const heart=organMaterial(0xdd3824,0xff3f1a),vessel=organMaterial(0xfcb252,0xf75129);
-   const liver=organMaterial(0x9d3038,0xb31830),gut=organMaterial(0x6e38d0,0x5226c5),gutEdge=organMaterial(0xb86ef2,0x7734e3);
+   const heart=scannerMaterial(THREE,{
+    color:0xdf432b,emissive:0xff4925,emissiveIntensity:.68,roughness:.31
+   },.13);
+   const vessel=organMaterial(0xffbd67,0xff602f);
+   const liver=organMaterial(0x263f91,0x153caa),gut=organMaterial(0x6e38d0,0x5226c5),gutEdge=organMaterial(0xb86ef2,0x7734e3);
    const lungs=system('lungs'),cardiac=system('heart'),digestive=system('digestive'),brain=system('brain');
    for(const s of [-1,1]){
-    loft(lungs,lung,[[.61,s*.135,.174,.035,.034],[.70,s*.166,.184,.117,.067],[.89,s*.18,.19,.133,.071],[1.074,s*.159,.163,.091,.059],[1.185,s*.121,.13,.03,.026]]);
+    loft(lungs,s<0?lung:violetLung,[[.61,s*.135,.174,.035,.034],[.70,s*.166,.184,.117,.067],[.89,s*.18,.19,.133,.071],[1.074,s*.159,.163,.091,.059],[1.185,s*.121,.13,.03,.026]]);
     for(let i=0;i<4;i++){
      const y=.99-i*.067,x=.159+i*.013;
-     tube(lungs,lungDetail,[[s*.057,1.086,.236],[s*.109,1.025-i*.038,.259],[s*x,y,.273],[s*(x+.062),y-.029,.255]],.0046);
+     tube(lungs,s<0?lungDetail:violetDetail,[[s*.057,1.086,.236],[s*.109,1.025-i*.038,.259],[s*x,y,.273],[s*(x+.062),y-.029,.255]],.0046);
      for(const slope of [-1,1]){
       tube(lungs,lungBranches,[[s*x,y,.274],[s*(x+.033),y+slope*.023,.278],[s*(x+.069),y+slope*.044,.258]],.0025);
      }
@@ -272,7 +297,11 @@ window.thMedical3D={
     wholeBody.visible=whole&&mode!=='skin';
     wholeBodyMaterial.color.setHex(selected==='fat'?0xffc957:0x55dbff);
     thyroid.visible=selected==='metabolism';
-    face.visible=!detailed&&mode!=='scan';
+    const showHead=Boolean(sculptedHead)&&mode==='anatomy'&&selected!=='brain';
+    if(sculptedHead)sculptedHead.visible=showHead;
+    proceduralHead.visible=!showHead;
+    face.visible=!detailed&&mode!=='scan'&&!showHead;
+    for(const mesh of atlasFaceMeshes)mesh.visible=!showHead;
     if(atlas){
      atlas.visible=detailed;
      atlasMuscles.visible=mode==='anatomy';atlasDeep.visible=mode==='anatomy'&&selected==='muscle';atlasSkeleton.visible=mode==='scan';
@@ -303,8 +332,24 @@ window.thMedical3D={
      if(name==='superficialmuscles')atlasMuscles=node;
      if(name==='deepmuscles')atlasDeep=node;
     });
-    body.add(atlas);stage.dataset.model='ecorche-atlas';state.setMode(state.mode);
+    body.add(atlas);
+    atlas.updateMatrixWorld(true);
+    const inverseBody=body.matrixWorld.clone().invert();
+    atlasMuscles.traverse(node=>{
+     if(!node.isMesh)return;
+     node.geometry.computeBoundingBox();
+     const bounds=node.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverseBody,node.matrixWorld));
+     if(bounds.min.y>1.39)atlasFaceMeshes.push(node);
+    });
+    stage.dataset.model='ecorche-atlas';state.setMode(state.mode);
    }).catch(error=>{if(stage.isConnected)console.warn('Detailed atlas unavailable; anatomy illustration retained.',error);});
+   void getHeadGeometry(THREE).then(template=>{
+    if(state.disposed||!stage.isConnected)return;
+    sculptedHead=new THREE.Mesh(template.clone(),headMaterial);
+    body.add(sculptedHead);
+    stage.dataset.sculptedHead='true';
+    state.setMode(state.mode);
+   }).catch(error=>{if(stage.isConnected)console.warn('Sculpted scanner head unavailable.',error);});
    const orbit=new THREE.Group();scene.add(orbit);
    const ringMaterial=new THREE.MeshBasicMaterial({color:0x00dfff,transparent:true,opacity:.55,side:THREE.DoubleSide});
    for(const [radius,y,width] of [[.49,-2.10,.011],[.68,-2.13,.019],[.83,-2.16,.008],[1.02,-2.17,.005]]){
@@ -343,7 +388,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     lastFrame=t;
