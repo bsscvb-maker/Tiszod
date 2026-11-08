@@ -30,7 +30,7 @@ window.thMedicalFolders = (() => {
       [...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||minutes(b.time)-minutes(a.time)).map(item=>
         {
           const cells=[item.doseNumber ?? '—',item.date,item.time,item.product,item.dose ?? '—',item.notes]
-            .map(value=>value==null||value===''?'Not recorded':String(value));
+            .map(value=>value==null||String(value).trim()===''||/^not recorded$/i.test(String(value).trim())?'—':String(value));
           if(!edit)return cells;
           if(!item.dose||/^(?:missed|postponed)\b/i.test(item.notes||''))return ['—',...cells];
           const button=make('button','Edit');
