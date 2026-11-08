@@ -106,6 +106,7 @@
     return [...unique.values()];
   }
   function statuses(record) {
+    if (record.kind === 'Appointment record') return ['Scheduled','Needs review'];
     if (record.kind === 'Medication record') return ['Current','Past','Prescription written','Fill documented','Needs review'];
     if (record.kind === 'Billing record' || record.kind === 'Receipt') return ['Confirmed open','Paid','Needs review'];
     if (record.category === 'Providers & Visits') return ['Visit confirmed','Needs review'];
@@ -134,6 +135,10 @@
       if (['Current','Past','Prescription written','Fill documented','Visit confirmed'].includes(select.value) &&
           (!label.value.trim() || (['Prescription written','Fill documented','Visit confirmed'].includes(select.value) && !date.value))) {
         error.textContent = 'Enter the name and, for a visit, prescription, or fill, the event date.';
+        return;
+      }
+      if(select.value==='Scheduled'&&!date.value){
+        error.textContent='Enter the scheduled appointment date.';
         return;
       }
       const next = {...review,[record.id]:{status:select.value,label:label.value.trim(),date:date.value,amount:amount.value,dose:dose.value.trim(),schedule:schedule.value.trim()}};
@@ -246,16 +251,20 @@
     panel.replaceChildren(...entries.map(entry=>thDriveRecords.card(entry)));
     controls.forEach((control,index)=>{control.setAttribute('aria-selected','false');control.tabIndex=index===0?0:-1;});
   }
-  async function loadWeight() {
-    try {
-      if (workbook && thAuthorized()) {
-        const response = await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(workbook.id)+'?alt=media&supportsAllDrives=true',{
-          headers:{Authorization:'Bearer '+thToken},cache:'no-store'
-        });
-        if (response.ok) workbookWeights = await readMedicalWeights(await response.arrayBuffer());
-      }
-    } catch (error) {console.warn('Could not read the weight series.',error.name);}
+  async function loadWeight(sources) {
+    const results=await Promise.allSettled(sources.map(async file=>{
+      const response=await thDriveFetch(file.id,{cache:'no-store'});
+      if(!response.ok)throw Error('Weight workbook could not load.');
+      return readMedicalWeights(await response.arrayBuffer());
+    }));
+    const rows=results.flatMap(result=>result.status==='fulfilled'?result.value:[]);
+    // Prefer a reading with an explicit unit when two workbooks have the same timestamp.
+    workbookWeights=[...new Map(rows.sort((a,b)=>Number(Boolean(a.unit))-Number(Boolean(b.unit)))
+      .map(row=>[row.time,row])).values()].sort((a,b)=>a.time-b.time);
     updateWeights();
+    if(results.some(result=>result.status==='rejected')){
+      $('weight-history').append(node('p','Some weight workbooks could not be read.'));
+    }
   }
   function revealTodd(hash=location.hash){
     const inTodd=['#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title','#medical-dashboard','#medical-latest-vitals','#medical-body-scan','#medical-current-medications','#medical-upcoming'].includes(hash);
@@ -293,10 +302,18 @@
     const link=event.target.closest('a[href^="#"]');
     if(link)revealTodd(link.hash);
   });
+  const overviewRoute=()=>['#medical-todd','#medical-dashboard'].includes(location.hash);
+  const showOverviewTop=()=>scrollTo({top:0,behavior:'instant'});
+  document.querySelector('.medical-nav-overview').addEventListener('click',()=>{
+    requestAnimationFrame(()=>{if(overviewRoute())showOverviewTop();});
+  });
   window.thStart = async () => {
     $('medical-content').hidden = false;
     revealTodd();
     if(!$('medical-todd').hidden||new URLSearchParams(location.search).get('q'))await ensureMedicalDetails();
+    if(overviewRoute()&&!new URLSearchParams(location.search).has('q')){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{if(overviewRoute())showOverviewTop();}));
+    }
   };
   async function loadMedicalDetails(){
     indexReady=false;
@@ -392,10 +409,20 @@
           if(indexReady)renderResults();
         }, onWeighIns: readings => {manualWeights=readings;updateWeights();}, records: () => records, weights: () => weights, workbook: () => workbook,
         eventName, eventDate, confirmedEvents,
+        upcomingAppointments:()=>records.filter(record=>record.kind==='Appointment record'
+          && /^\d{4}-\d{2}-\d{2}$/.test(detail(record).date||'')
+          && status(record)==='Scheduled'
+          && !/cancel(?:led|ed|lation)/i.test(record.name)).map(record=>detail(record).date),
         current: record => status(record) === 'Current' ? [eventName(record),detail(record).dose,detail(record).schedule].filter(Boolean).join(' · ') : '',
         open: record => thDriveRecords.open(record)
       });
-      void loadWeight();
+      const weightWorkbook=file=>!file.folder&&/^(?:body composition(?: metrics)?|(?:tiszod )?weight (?:history|journey|log)|weigh[- ]?ins?)\.xlsx$/i.test(file.name);
+      const weightFolders=folders.filter(folder=>/^(?:body composition|weight(?: history| journey| log)?)$/i.test(folder.name));
+      void Promise.allSettled([toddFiles||Promise.resolve([]),...weightFolders.map(folder=>children(folder.id))])
+        .then(results=>{
+          const sources=[...rootFiles,...results.flatMap(result=>result.status==='fulfilled'?result.value:[])].filter(weightWorkbook);
+          return loadWeight([...new Map(sources.map(file=>[file.id,file])).values()]);
+        });
       $('medical-status').textContent = 'Loading document collections and timeline…';
       $('medical-count').textContent = 'Indexing records…';
       const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));

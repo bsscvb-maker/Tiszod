@@ -11,6 +11,16 @@
     return element;
   };
   const iconPaths={
+    'brain':'M12 5a3 3 0 0 0-6-1 3 3 0 0 0-3 4 4 4 0 0 0 1 7 4 4 0 0 0 8 2V5zm0 0a3 3 0 0 1 6-1 3 3 0 0 1 3 4 4 4 0 0 1-1 7 4 4 0 0 1-8 2M7 8c2 0 3 1 3 3m7-3c-2 0-3 1-3 3m-7 4c1-2 2-2 3-2m7 2c-1-2-2-2-3-2',
+    'lungs':'M12 2v9m0-4-4 4m4-4 4 4M9 8c-3-4-7 6-7 10 0 2 3 3 7 0V8zm6 0c3-4 7 6 7 10 0 2-3 3-7 0V8z',
+    'flame':'M12 2c2 5 1 7 3 9 1-2 2-3 2-5 3 3 5 6 4 10a9 9 0 0 1-18-1c0-3 2-7 4-9 0 3 1 4 2 5 1-3 2-6 3-9z',
+    'digestive':'M12 2v5c0 2 1 3 3 2 3-2 6 0 6 4 0 5-4 8-8 8-3 0-4-2-6-2-1 0-2 1-2 2H2c0-4 2-6 6-6 3 0 4-1 4-3 0-2-3-3-3-6V2',
+    'muscle':'M3 17l2-7 4-6h5l2 2-3 3-2-1-2 6c3-2 6-2 8 0 3-2 5 1 5 4 0 3-3 4-6 3H6z',
+    'calendar':'M3 5h18v16H3zm0 5h18M7 2v5m10-5v5M7 14h2m3 0h2m3 0h2M7 17h2m3 0h2',
+    'pill':'M5 19a5 5 0 0 1 0-7l7-7a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7 0zm3-10 7 7',
+    'syringe':'m17 3 4 4M19 5l-3 3m-4-2 6 6m-5-5-8 8 4 4 8-8m-9 7-5 5',
+    'lab':'M9 3h6m-5 0v7L4 20h16l-6-10V3M7 15h10',
+    'shield':'m12 2 8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6zm-3 10 2 2 4-4',
     '⚖':'M5 8h14l2 13H3L5 8zm4 0V6a3 3 0 0 1 6 0v2m-3 5v3',
     '◈':'M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm1 9h3l2-5 2 10 2-5h2',
     '◉':'M12 2c-5 3-8 7-8 12a8 8 0 0 0 16 0c0-4-3-7-5-9l-1 5-2-8zm0 10c-2 2-3 4-3 5a3 3 0 0 0 6 0c0-1-1-3-3-5z',
@@ -32,11 +42,18 @@
     svg.setAttribute('viewBox','0 0 24 24');line.setAttribute('d',path);svg.append(line);icon.append(svg);
     return icon;
   }
+  function panelHeading(label,symbol){
+    const title=make('h3',label);title.prepend(dashboardIcon(symbol));return title;
+  }
   const profileFilename = 'TisZod Medical About Me.json';
   const fields = [
     ['height','Height'], ['age','Age'], ['ageAsOf','Age recorded on'],
     ['pcp','Primary care physician'],
-    ['eyeCare','Ophthalmologist or eye-care practice']
+    ['eyeCare','Ophthalmologist or eye-care practice'],
+    ['bloodPressure','Latest blood pressure (mmHg)'],['heartRate','Latest heart rate (bpm)'],
+    ['oxygenSaturation','Latest SpO₂ (%)'],['temperature','Latest temperature (°F)'],
+    ['nextInjectionDate','Next injection date'],['nextWeightDate','Next weight check date'],
+    ['nextAppointmentDate','Next appointment date']
   ];
   let api, profile = {}, savedProfile = {}, compositionSource=null, medicationSource=null, loadMessage = '';
 
@@ -472,7 +489,7 @@
     const stage=make('div');stage.className='medical-command-stage';
     const systems=make('aside');systems.className='medical-command-systems';
     systems.append(make('h3','Explore body systems'));
-    const bodySystems=[['◉','Brain','Cognitive'],['♡','Heart','Cardiovascular'],['♧','Lungs','Respiratory'],['ϟ','Metabolism','Endocrine'],['◈','Digestive','GI Health'],['◆','Muscle','Strength'],['⬡','Bone','Skeletal'],['◍','Hydration','Body water'],['▱','Body Fat','Composition']];
+    const bodySystems=[['brain','Brain','Cognitive'],['♡','Heart','Cardiovascular'],['lungs','Lungs','Respiratory'],['flame','Metabolism','Endocrine'],['digestive','Digestive','GI Health'],['muscle','Muscle','Strength'],['⬡','Bone','Skeletal'],['◌','Hydration','Body Water'],['▱','Body Fat','Composition']];
     const info=make('div','Select a body system to explore the illustration. This visualization does not diagnose conditions.','medical-command-info');
     for(const [glyph,name,description] of bodySystems){
       const button=action(null,()=>{
@@ -499,6 +516,7 @@
       const low=Math.floor(minimum/step)*step;
       const high=Math.max(low+step,Math.ceil(maximum/step)*step);
       const dateFormat=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+      const fullDate=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
       const svg=(tag,attributes={})=>{
         const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
         for(const [key,value] of Object.entries(attributes))node.setAttribute(key,value);
@@ -538,18 +556,18 @@
       const summary=make('div');summary.className='medical-chart-summary';
       const signed=value=>(value>0?'+':'')+value.toFixed(1);
       const peak=series.reduce((max,row)=>row.weight>max.weight?row:max);
-      summary.append(make('span','Total Change'),make('strong',signed(change)+' lb'),
+      summary.append(make('span','Total Change'),make('strong',(change<0?'↓ ':change>0?'↑ ':'')+signed(change)+' lb'),
         make('b',signed(change/first.weight*100)+'%'),
         make('span','Peak: '+peak.weight.toFixed(1)+' lb'),
         make('small',dateFormat.format(peak.time)),make('span','Current: '+last.weight.toFixed(1)+' lb'),
         make('small',dateFormat.format(last.time)));
       const chart=make('div');chart.className='medical-chart-layout';chart.append(spark,summary);
-      const since=make('small','Since '+dateFormat.format(first.time));since.className='medical-panel-date';journey.append(since,chart);
+      const since=make('small','Since '+fullDate.format(first.time));since.className='medical-panel-date';journey.append(since,chart);
     }else journey.append(make('p','More weigh-ins are needed for a trend.'));
     stage.id='medical-body-scan';
     stage.append(systems,scanner);
     const compositionPanel=make('section');compositionPanel.className='medical-concept-panel medical-concept-composition';
-    compositionPanel.append(make('h3','◉ Body Composition'));
+    compositionPanel.append(panelHeading('Body Composition','muscle'));
     const donut=make('div');donut.className='medical-composition-donut';
     const center=make('div');center.className='medical-composition-center';
     center.append(make('strong',Number.isFinite(latestWeight)?latestWeight.toFixed(1)+' lb':'—'),make('small','Total weight'));
@@ -569,7 +587,7 @@
     }
     compositionPanel.append(donut,compositionLegend);
     const progressPanel=make('section');progressPanel.className='medical-concept-panel';
-    progressPanel.append(make('h3','↗ Progress vs. Prior'));
+    progressPanel.append(make('h3','Progress vs. Prior'));
     for(const [symbol,label,value,unit,prior] of metricData){
       const item=make('div');item.className='medical-progress-row';
       const delta=Number.isFinite(value)&&Number.isFinite(prior)?value-prior:null;
@@ -581,26 +599,43 @@
     }
     const panels=make('div');panels.className='medical-concept-panels';
     const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
-    vitalsPanel.append(make('h3','♡ Vitals (Latest)'));
+    vitalsPanel.append(panelHeading('Vitals (Latest)','⌁'));
     const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
-    for(const [label,symbol] of [['Blood pressure','▣'],['Heart rate','♡'],['SpO₂','◌'],['Temperature','♨']]){
+    for(const [key,label,symbol,unit] of [
+      ['bloodPressure','Blood Pressure','▣','mmHg'],['heartRate','Heart Rate','♡','bpm'],
+      ['oxygenSaturation','SpO₂','◌','%'],['temperature','Temperature','♨','°F']
+    ]){
+      const value=String(profile[key]??'').trim();
       const item=make('div');
-      item.append(dashboardIcon(symbol),make('span',label),make('strong','Not recorded'));vitalGrid.append(item);
+      item.append(dashboardIcon(symbol),make('span',label),make('strong',value||'—'),
+        make('small',value?unit:'Not recorded'));
+      vitalGrid.append(item);
     }
     vitalsPanel.id='medical-latest-vitals';
     vitalsPanel.append(vitalGrid);
     const nextPanel=make('section');nextPanel.className='medical-concept-panel';nextPanel.id='medical-upcoming';
-    nextPanel.append(make('h3','▣ Next / Upcoming'));
-    for(const [label,detail] of [['Next injection','See injection history'],['Next weigh-in','Not scheduled'],['Next appointment','Not scheduled']]){
-      const item=label==='Next injection'?action(null,openInjectionHistory):make('div');
-      item.className='medical-progress-row';item.append(make('span',label),make('strong',detail));nextPanel.append(item);
+    nextPanel.append(panelHeading('Next / Upcoming','calendar'));
+    const eastern=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+    const parts=Object.fromEntries(eastern.formatToParts(Date.now()).map(({type,value})=>[type,value]));
+    const today=[parts.year,parts.month,parts.day].join('-');
+    const upcoming=dates=>dates.filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date||'')&&date>=today&&Number.isFinite(Date.parse(date))).sort()[0];
+    const nextDate=new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+    for(const [label,symbol,date] of [
+      ['Next Injection','syringe',upcoming([profile.nextInjectionDate,medicationSource?.nextInjectionDate])],
+      ['Next Weight Check','⚖',upcoming([profile.nextWeightDate])],
+      ['Next Appointment','calendar',upcoming([profile.nextAppointmentDate,...(api.upcomingAppointments?.()||[])])]
+    ]){
+      const injection=label==='Next Injection';
+      const item=injection?action(null,openInjectionHistory):make('div');
+      const copy=make('span');copy.append(make('b',label),make('span',date?nextDate.format(Date.parse(date)):injection?'See injection history':'Not scheduled'));
+      item.className='medical-progress-row';item.append(dashboardIcon(symbol),copy);nextPanel.append(item);
     }
-    const keyPanel=make('section');keyPanel.className='medical-concept-panel';
-    keyPanel.append(make('h3','◈ Key Metrics'));
-    for(const [label,key] of [['Body fat','bodyFat'],['Muscle','muscle'],['Body water','water'],['Bone mass','boneMass']]){
+    const keyPanel=make('section');keyPanel.className='medical-concept-panel medical-key-panel';
+    keyPanel.append(panelHeading('Key Metrics','◈'));
+    for(const [label,key,symbol] of [['Body Fat','bodyFat','▱'],['Muscle','muscle','muscle'],['Body Water','water','◌'],['Bone Mass','boneMass','⬡']]){
       const value=latestReading[key];
       const row=make('div');row.className='medical-key-row';
-      row.append(make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
+      row.append(dashboardIcon(symbol),make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
       const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar);keyPanel.append(row);
     }
     panels.append(vitalsPanel,nextPanel);
@@ -625,7 +660,7 @@
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
-    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
+    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Current Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
@@ -633,12 +668,11 @@
         const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
         const hasHistory=isCompoundedTirzepatide(name);
         const card=hasHistory?action(null,openInjectionHistory):make('section');
-        const info=make(hasHistory?'span':'div');
+        const info=make(hasHistory?'span':'div');info.className='medical-regimen-copy';
         if(hasHistory){
           card.className='medical-injection-card';
           card.setAttribute('aria-haspopup','dialog');
           card.setAttribute('aria-label',name+' injection history');
-          info.className='medical-regimen-copy';
         }
         const visuals=[
           [/citalopram/i,'citalopram','Tablet marked 0 and 6 separated by a score line'],
@@ -654,7 +688,11 @@
         }
         info.append(make('strong',name));
         const amount=loggedMedicationAmount(name,dose);
-        if(amount)info.append(make(hasHistory?'span':'p',amount));
+        if(amount){
+          const compact=amount.replace(/syringe units/gi,'units').replace(/,?\s*patient-reported(?=\))/gi,'');
+          const dosage=make(hasHistory?'span':'p',compact);
+          dosage.title=amount;info.append(dosage);
+        }
         if(schedule)info.append(make(hasHistory?'span':'p',schedule));
         card.append(info);
         grid.append(card);
@@ -678,7 +716,7 @@
     const inputs = {};
     for (const [key,label] of fields) {
       const input = make(key === 'conditions' || key.endsWith('Note') ? 'textarea' : 'input');
-      if (key === 'ageAsOf') input.type = 'date';
+      if (key === 'ageAsOf' || key.endsWith('Date')) input.type = 'date';
       input.value = profile[key] || ''; inputs[key] = input;
       const field = make('label',label); field.append(input); form.append(field);
     }
@@ -740,17 +778,17 @@
     const group=make('div');group.className='medical-sidebar-tools';
     const heading=make('div','Medical tools');heading.className='th-nav-label';group.append(heading);
     const shortcuts=[
-      ['⌁','Vitals & Trends','#medical-latest-vitals'],['♙','Body Composition','#medical-body-scan'],
-      ['⌁','Weight Journey','#weight-title'],['▱','Medications','#medical-current-medications'],
-      ['♢','Injection History',null],['⚗','Lab Results','#medical-browse'],
-      ['▣','Appointments','#medical-upcoming'],['◈','Insurance & Providers','#medical-browse']
+      ['⌁','Vitals & Trends','#medical-latest-vitals'],['muscle','Body Composition','#medical-body-scan'],
+      ['⚖','Weight Journey','#weight-title'],['pill','Medications','#medical-current-medications'],
+      ['syringe','Injection History',null],['lab','Lab Results','#medical-browse'],
+      ['calendar','Appointments','#medical-upcoming'],['shield','Insurance & Providers','#medical-browse']
     ];
     for(const [symbol,label,href] of shortcuts){
       const link=href?make('a'):action(null,openInjectionHistory);
       if(href)link.href=href;
       else link.setAttribute('aria-haspopup','dialog');
       link.className='th-nav-link';
-      const icon=make('span',symbol);icon.className='th-nav-icon';icon.setAttribute('aria-hidden','true');
+      const icon=dashboardIcon(symbol);icon.className='th-nav-icon';
       link.append(icon,document.createTextNode(label));group.append(link);
     }
     system.before(group);

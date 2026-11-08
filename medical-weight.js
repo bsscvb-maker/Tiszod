@@ -45,7 +45,7 @@ async function readMedicalWeights(buffer) {
   const series = [];
   for (const name of [...entries.keys()].filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k))) {
     const doc = await xml(name);
-    let dateCol, weightCol, unit;
+    let dateCol, weightCol, unitCol, unit;
     const readings = [];
     for (const row of tags(doc,'row')) {
       const values = Object.fromEntries(tags(row,'c').map(cell=>{
@@ -59,6 +59,7 @@ async function readMedicalWeights(buffer) {
         dateCol = cols.find(col=>dateColumn.test(String(values[col]).trim()));
         weightCol = cols.find(col=>weightColumn.test(String(values[col]).trim()));
         if (!dateCol || !weightCol) {weightCol = undefined; continue;}
+        unitCol = cols.find(col=>/^(?:weight )?units?$/i.test(String(values[col]).trim()));
         const header = String(values[weightCol]);
         unit = /kg|kilogram/i.test(header) ? 'kg' : /lbs?|pound/i.test(header) ? 'lb' : '';
         continue;
@@ -67,14 +68,15 @@ async function readMedicalWeights(buffer) {
       const raw = String(values[weightCol] ?? '').trim();
       const match = raw.match(/^(\d+(?:[.,]\d+)?)\s*(kg|lb|lbs)?$/i);
       const weight = match ? Number(match[1].replace(',','.')) : NaN;
-      const measured = match?.[2]?.toLowerCase().replace('lbs','lb') || unit;
+      const rowUnit=String(values[unitCol]||'').trim();
+      const measured=match?.[2]?.toLowerCase().replace('lbs','lb')
+        || (/^(?:kg|kilograms?)$/i.test(rowUnit)?'kg':/^(?:lbs?|pounds?)$/i.test(rowUnit)?'lb':unit);
       if (!Number.isFinite(time) || time<startDate || time>latestDate || !(weight>0)) continue;
       readings.push({time,weight,unit:measured,date:new Date(time).toISOString().slice(0,10)});
     }
     if (readings.length) series.push(readings);
   }
-  // Keep each workbook series coherent when multiple sheets or units exist.
-  const units = series.flatMap(rows=>['lb','kg',''].map(unit=>rows.filter(row=>row.unit===unit)));
-  const best = units.sort((a,b)=>b.length-a.length)[0] || [];
-  return [...new Map(best.map(row=>[row.time,row])).values()].sort((a,b)=>a.time-b.time);
+  const known=series.flat().filter(row=>row.unit);
+  const rows=known.length?known:(series.sort((a,b)=>b.length-a.length)[0]||[]);
+  return [...new Map(rows.map(row=>[row.time,row])).values()].sort((a,b)=>a.time-b.time);
 }
