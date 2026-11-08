@@ -48,10 +48,120 @@
   }
   const isCompoundedTirzepatide=name=>/^compounded tirzepatide\b/i.test(name);
   let injections=[];
+  let addedDoses=[];
+  let doseLogReady=false;
+  const doseFileTag="appProperties has { key='tiszodRecord' and value='medicalInjection' }";
+  const injectionKey=row=>row.date+'|'+(/zepbound/i.test(row.product)?'zepbound':'tirzepatide');
+  const doseIdentity=row=>[injectionKey(row),row.time,row.dose].join('|');
+
+  function syncInjections(){
+    const entered=Array.isArray(medicationSource?.injections)?medicationSource.injections:[];
+    const legacy=Array.isArray(savedProfile.folderSummaries?.injections)?savedProfile.folderSummaries.injections:[];
+    const enteredKeys=new Set(entered.map(injectionKey));
+    injections=[...legacy.filter(row=>!enteredKeys.has(injectionKey(row))),...entered];
+    const known=new Set(injections.map(doseIdentity));
+    let nextNumber=Math.max(0,...injections.map(row=>Number(row.doseNumber)||0));
+    for(const row of [...addedDoses].sort((a,b)=>a.date.localeCompare(b.date)||a.time24.localeCompare(b.time24))){
+      const key=doseIdentity(row);
+      if(known.has(key))continue;
+      known.add(key);
+      injections.push({...row,doseNumber:++nextNumber});
+    }
+    api.onFolderSummaries?.({...savedProfile.folderSummaries,injections});
+  }
+
+  async function readAddedDoses(){
+    const files=await api.list("'me' in owners and "+doseFileTag);
+    return Promise.all(files.map(async file=>{
+      const response=await thDriveFetch(file.id,{cache:'no-store'});
+      if(!response.ok)throw Error('The private injection log could not be read.');
+      return response.json();
+    }));
+  }
+
+  async function writeDose(row, pending){
+    if(!thAuthorized())throw Error('Sign in again to save the dose.');
+    const headers={Authorization:'Bearer '+thToken};
+    if(!pending.id){
+      const generated=await fetch('https://www.googleapis.com/drive/v3/files/generateIds?count=1&space=drive',{headers,cache:'no-store'});
+      if(!generated.ok)throw Error('Drive could not prepare the dose record.');
+      [pending.id]=(await generated.json()).ids;
+    }
+    const boundary='tiszod-'+crypto.randomUUID();
+    const metadata={id:pending.id,name:'TisZod Injection Entry.json',mimeType:'application/json',appProperties:{tiszodRecord:'medicalInjection'}};
+    const body=new Blob([
+      '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
+      '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(row)+'\r\n--'+boundary+'--\r\n'
+    ]);
+    const response=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+      method:'POST',headers:{...headers,'Content-Type':'multipart/related; boundary='+boundary},body
+    });
+    if(response.ok)return;
+    if(response.status===409){
+      const existing=await thDriveFetch(pending.id,{cache:'no-store'});
+      if(existing.ok&&doseIdentity(await existing.json())===doseIdentity(row))return;
+    }
+    throw Error(response.status===401?'Sign in again to save the dose.':'Drive could not save the dose. Try again.');
+  }
+
   function openInjectionHistory(){
     const dialog=$('medical-injection-history');
     $('medical-injection-rows').replaceChildren(thMedicalFolders.injectionHistory(injections));
     if(!dialog.open)dialog.showModal();
+  }
+
+  function setupDoseForm(){
+    const form=$('medical-injection-entry');
+    const panel=form.closest('details');
+    const fields=form.elements;
+    const status=form.querySelector('[role="status"]');
+    let pending={};
+    function setEasternNow(){
+      const parts=new Intl.DateTimeFormat('en-US',{
+        timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',
+        hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+      }).formatToParts(new Date());
+      const now=Object.fromEntries(parts.map(part=>[part.type,part.value]));
+      fields.date.value=[now.year,now.month,now.day].join('-');
+      fields.time.value=now.hour+':'+now.minute;
+    }
+    form.querySelector('[data-dose-now]').onclick=setEasternNow;
+    panel.ontoggle=()=>{if(panel.open&&!fields.date.value)setEasternNow();};
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      if(!doseLogReady){status.textContent='The private dose log is unavailable. Reload Medical and try again.';return;}
+      const mg=fields.mg.value;
+      const units=fields.units.value;
+      if(!mg&&!units){status.textContent='Enter the dose in mg or syringe units.';fields.mg.focus();return;}
+      const [hours,minutes]=fields.time.value.split(':');
+      const row={
+        date:fields.date.value,time24:fields.time.value,
+        time:(Number(hours)%12||12)+':'+minutes+(Number(hours)<12?' AM':' PM'),
+        product:fields.product.value,
+        dose:[mg&&mg+' mg',units&&units+' units'].filter(Boolean).join(' · '),
+        notes:fields.notes.value.trim()
+      };
+      const snapshot=JSON.stringify(row);
+      if(pending.snapshot!==snapshot)pending={snapshot};
+      const inputs=[...form.elements];
+      inputs.forEach(input=>input.disabled=true);
+      status.textContent='Saving to your private injection log…';
+      try{
+        if(injections.some(entry=>doseIdentity(entry)===doseIdentity(row))){
+          status.textContent='This dose is already in your injection history.';
+          return;
+        }
+        await writeDose(row,pending);
+        addedDoses.push(row);
+        syncInjections();
+        if($('medical-injection-history').open)openInjectionHistory();
+        form.reset();
+        setEasternNow();
+        pending={};
+        status.textContent='Dose saved to your private injection history.';
+      }catch(error){status.textContent=error.message||'Could not save the dose.';}
+      finally{inputs.forEach(input=>input.disabled=false);}
+    };
   }
   function loggedMedicationAmount(name, dose) {
     const compound = /^compounded tirzepatide (?:with|\+) b12$/i;
@@ -229,6 +339,7 @@
   }
   async function loadProfile() {
     const medication=api.medicationSource?.().catch(()=>null);
+    const doseLog=readAddedDoses().catch(()=>null);
     const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
       const files = await api.list("'me' in owners and name = '"+profileFilename+"'");
@@ -239,13 +350,12 @@
       } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
       else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
     } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
-    [compositionSource,medicationSource]=await Promise.all([source,medication]);
-    const entered=Array.isArray(medicationSource?.injections)?medicationSource.injections:[];
-    const legacy=Array.isArray(savedProfile.folderSummaries?.injections)?savedProfile.folderSummaries.injections:[];
-    const entryKey=row=>row.date+'|'+(/zepbound/i.test(row.product)?'zepbound':'tirzepatide');
-    const enteredKeys=new Set(entered.map(entryKey));
-    injections=[...legacy.filter(row=>!enteredKeys.has(entryKey(row))),...entered];
-    api.onFolderSummaries?.({...savedProfile.folderSummaries,injections});
+    let storedDoses;
+    [compositionSource,medicationSource,storedDoses]=await Promise.all([source,medication,doseLog]);
+    doseLogReady=Array.isArray(storedDoses);
+    addedDoses=storedDoses||[];
+    syncInjections();
+    if($('medical-injection-history').open)openInjectionHistory();
     api.onWeighIns?.(savedProfile.weighIns);
     try {
       const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
@@ -259,6 +369,10 @@
     careTeam,
     start(options) {
       api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
+      addedDoses=[]; doseLogReady=false;
+      const historyButton=$('medical-injection-open');
+      if(historyButton)historyButton.onclick=openInjectionHistory;
+      if($('medical-injection-entry'))setupDoseForm();
       $('medical-about-edit').onclick = edit;
       renderProfile(); void loadProfile();
     },
