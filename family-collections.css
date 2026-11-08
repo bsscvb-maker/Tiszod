@@ -5,16 +5,23 @@
 
 [data-family-collections="medical"] .legal-file{position:relative}
 [data-family-collections="medical"] .medical-person-card>strong{padding-right:50px}
-[data-family-collections="medical"] .legal-thumbnail-art{height:auto;aspect-ratio:16/10}
-[data-family-collections="medical"] .legal-thumbnail-art img{width:100%;height:100%;object-fit:cover}
-.medical-person-card[data-person="Tracy"] .legal-thumbnail-art img{filter:hue-rotate(300deg)}
-.medical-person-card[data-person="Aiden"] .legal-thumbnail-art img{filter:hue-rotate(35deg)}
-.medical-person-card[data-person="Alexis"] .legal-thumbnail-art img{filter:hue-rotate(65deg)}
-.medical-person-card[data-person="Zach"] .legal-thumbnail-art img{filter:saturate(.62)}
-.medical-person-portrait{position:absolute;top:9px;right:12px;width:42px;height:42px;display:grid;place-items:center;border:2px solid #e2c791;border-radius:50%;color:#eef5fb;background:#233646 no-repeat;font-weight:800}
+.medical-person-portrait{position:absolute;top:3.3rem;right:.9rem;width:clamp(47px,7vw,74px);aspect-ratio:1;z-index:1;display:grid;place-items:center;border:2px solid #e2c791;border-radius:50%;color:#eef5fb;background:#233646 no-repeat;font-weight:800}
 .medical-person-portrait.has-photo{background-image:url('command-photos/family-portraits.jpg');background-size:460% auto}
 .medical-person-portrait[data-person="Todd"]{background-position:34.0278% 41%}
 .medical-person-portrait[data-person="Alexis"]{background-position:65.9722% 41%}
 .medical-person-portrait[data-person="Tracy"]{background-position:97.9167% 41%}
 .medical-person-portrait[data-person="Aiden"]{background:url('command-photos/aiden-portrait.jpg?v=2') center/cover no-repeat}
 [data-family-collections="medical"] p[role="status"]:empty{display:none}
+
+[data-family-collections="medical"] .legal-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+[data-family-collections="medical"] .medical-person-card[hidden]{display:none}
+[data-family-collections="medical"] .medical-person-card .legal-thumbnail{height:auto;display:block;aspect-ratio:auto}
+[data-family-collections="medical"] .medical-person-card .legal-thumbnail-art{position:relative;inset:auto;aspect-ratio:16/9}
+[data-family-collections="medical"] .medical-person-card .legal-thumbnail-label{position:relative;inset:auto}
+.medical-person-card .medical-hide-person,.medical-show-hidden{min-height:40px;margin-top:8px}
+.medical-person-card .medical-hide-person{position:relative;display:flex;align-items:center;gap:8px;margin-left:auto}
+.medical-hide-person::before{content:"";width:2rem;height:1.15rem;background:#1c3146;border:1px solid #7897b4;border-radius:1rem}
+.medical-hide-person::after{content:"";position:absolute;left:16px;width:.85rem;height:.85rem;background:#e7f2fd;border-radius:50%}
+.medical-hide-person[aria-checked="true"]::after{transform:translateX(.85rem)}
+@media(max-width:1050px){[data-family-collections="medical"] .legal-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){[data-family-collections="medical"] .legal-cards{grid-template-columns:minmax(0,1fr)}}

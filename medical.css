@@ -152,5 +152,4 @@
 #medical-todd>summary,#medical-admin-folders>summary{cursor:pointer;padding:14px 16px;border:1px solid #3a5c6e;border-radius:10px;background:#142332;color:#e5f3f5;font-weight:750}
 #medical-todd[open]>summary,#medical-admin-folders[open]>summary{margin-bottom:14px}
 #medical-admin-folders{margin-top:16px}
-body[data-th-page="medical"] .medical-themed-card .legal-thumbnail-art{height:auto;aspect-ratio:16/10;min-height:0}
-body[data-th-page="medical"] .medical-themed-card .legal-thumbnail-art img{display:block;width:100%;height:100%;object-fit:cover}
+body[data-th-page="medical"] .medical-themed-card > .legal-kind{display:none}

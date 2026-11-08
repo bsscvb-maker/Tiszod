@@ -198,7 +198,44 @@
    appendPortrait(card,name,portraits);
    return card;
   }));
+  const key='tiszod-medical-hidden-people';
+  let hidden=new Set();
+  try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))hidden=new Set(saved.filter(name=>members.includes(name)));}catch{}
+  let showHidden=false;
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='medical-show-hidden';
+  cards.before(toggle);
+  function updateVisibility(){
+   toggle.hidden=!hidden.size;
+   toggle.textContent=(showHidden?'Hide hidden people':'Show hidden people')+' ('+hidden.size+')';
+   toggle.setAttribute('aria-pressed',String(showHidden));
+   for(const card of entries){
+    const name=card.dataset.person,isHidden=hidden.has(name);
+    card.hidden=isHidden&&!showHidden;
+    const button=card.querySelector('.medical-hide-person');
+    button.textContent=isHidden?'Unhide':'Hide';
+    button.setAttribute('aria-label',button.textContent+' '+name);
+    button.setAttribute('aria-checked',String(isHidden));
+   }
+  }
+  toggle.onclick=()=>{showHidden=!showHidden;updateVisibility();};
+  for(const card of entries){
+   const button=document.createElement('button');
+   button.type='button';
+   button.className='medical-hide-person';
+   button.setAttribute('role','switch');
+   button.onclick=()=>{
+    const name=card.dataset.person;
+    if(hidden.has(name))hidden.delete(name);else hidden.add(name);
+    try{localStorage.setItem(key,JSON.stringify([...hidden]));}catch{}
+    updateVisibility();
+    if(card.hidden)toggle.focus();
+   };
+   card.append(button);
+  }
   cards.replaceChildren(...entries);
+  updateVisibility();
   if(missing.length)notices.push('Could not open records for '+missing.join(', ')+'.');
   status.textContent=notices.join(' ');
  }

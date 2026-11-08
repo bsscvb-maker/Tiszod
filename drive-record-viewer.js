@@ -296,12 +296,14 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
  const careerFolder=record.folder&&document.body.dataset.thPage==='career';
+ const medicalStriders=document.body.dataset.thPage==='medical'&&Boolean(window.thMedicalCardCover);
  card.className='legal-file';
  if(careerFolder){
   card.classList.add('career-folder-tile');
   if(record.coverPath?.length===2&&record.coverPath[0]==='Employers')card.classList.add('career-employer-tile');
  }
- if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
+ if(medicalStriders)card.classList.add('medical-themed-card');
+ else if((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)card.classList.add('medical-photo-card');caption.textContent=record.displayName??record.name;caption.title=record.name;actions.className='legal-actions';
  const type=document.createElement('span');type.className='legal-kind';type.textContent=record.kindLabel??(record.map?'Map':record.directReader?(record.cardLabel?'Timeline':'Rules'):record.folder?'Folder':'Document');card.append(type,caption);
  if(record.id||record.directReader||record.virtualFiles){
   const button=document.createElement(record.directReader?'a':'button');
@@ -313,7 +315,7 @@ function legalFileCard(record,back){
   if(careerFolder)button.setAttribute('aria-label','Open '+(record.displayName??record.name));
   const art=document.createElement('span'),label=document.createElement('span'),labelTitle=document.createElement('span');
   art.className='legal-thumbnail-art';art.textContent='Loading cover…';art.style.fontSize='.85rem';art.setAttribute('aria-hidden','true');
-  label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage)?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
+  label.className='legal-thumbnail-label';labelTitle.className='legal-thumbnail-title';labelTitle.textContent=(!medicalStriders&&((record.folder&&record.medicalCover)||record.medicalArt||record.medicalCoverImage))?record.name:record.cardLabel||(record.map?'Enlarge map':record.directReader?'Search rules':record.folder?'Browse files':'Preview');
   if(careerFolder)labelTitle.textContent=record.displayName??record.name;
   label.append(labelTitle);
   button.append(art,label);
@@ -331,15 +333,16 @@ function legalFileCard(record,back){
     return showLegalRecord(record,back);
    };
   }
-  if(window.thMedicalCardCover){
-   card.classList.add('medical-themed-card');
+  const medicalCover=medicalStriders&&(record.folder||record.directReader)?thMedicalCardCover(record):null;
+  if(medicalCover){
    const image=document.createElement('img');
    image.alt='';
    image.loading='lazy';
-   image.src=thMedicalCardCover(record);
+   image.dataset.photo='';
+   image.src=medicalCover;
    art.replaceChildren(image);
-  }else if(record.folder||record.directReader||record.medicalArt||record.medicalCoverImage){
-   const folderPhoto=record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
+  }else if(record.folder||record.directReader||(!medicalStriders&&(record.medicalArt||record.medicalCoverImage))){
+   const folderPhoto=medicalStriders?null:record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
     JSON.stringify(record.coverPath?[...record.coverPath,record.id]:[document.body.dataset.thPage,record.id,record.name]),
     (careerFolder||record.folder&&record.coverPath?.[0]==='hobbies')?careerFolderSymbol(record.coverPath??[record.name]):undefined
@@ -351,7 +354,7 @@ function legalFileCard(record,back){
    const medicalImage=record.medicalArt&&'assets/medical/'+record.medicalArt+'.webp';
    const recreationImage=record.cover&&'assets/hobbies/'+record.cover+'.webp'+(record.cover==='striders-trailer'?'?v=power-logo':'');
    image.onerror=()=>{image.onerror=null;image.src=fallback();};
-   image.src=recreationImage||folderPhoto||record.medicalCoverImage||medicalImage||fallback();
+   image.src=medicalStriders?fallback():recreationImage||folderPhoto||record.medicalCoverImage||medicalImage||fallback();
    art.replaceChildren(image);
    if(careerFolder&&!folderPhoto){
     legalCoverJobs.set(button,async()=>{
