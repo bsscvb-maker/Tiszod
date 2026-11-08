@@ -258,7 +258,7 @@
     updateWeights();
   }
   function revealTodd(hash=location.hash){
-    const inTodd=['#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title'].includes(hash);
+    const inTodd=['#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title','#medical-dashboard','#medical-latest-vitals','#medical-body-scan','#medical-current-medications','#medical-upcoming'].includes(hash);
     $('medical-todd').hidden=!inTodd;
     if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
   }

@@ -10,6 +10,28 @@
     element.type = 'button'; element.onclick = onClick;
     return element;
   };
+  const iconPaths={
+    '⚖':'M5 8h14l2 13H3L5 8zm4 0V6a3 3 0 0 1 6 0v2m-3 5v3',
+    '◈':'M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm1 9h3l2-5 2 10 2-5h2',
+    '◉':'M12 2c-5 3-8 7-8 12a8 8 0 0 0 16 0c0-4-3-7-5-9l-1 5-2-8zm0 10c-2 2-3 4-3 5a3 3 0 0 0 6 0c0-1-1-3-3-5z',
+    '◆':'M5 17l10-12a3 3 0 0 1 5 4L10 21H4zm7-8 5 4',
+    '◌':'M12 2c-2 4-7 8-7 13a7 7 0 0 0 14 0c0-5-5-9-7-13zM8 15a4 4 0 0 0 2 4',
+    '⬡':'M8 7 6 5a2 2 0 0 0-3 3l2 2a2 2 0 0 0 2 1l6 6a2 2 0 0 0 1 2l2 2a2 2 0 0 0 3-3l-2-2a2 2 0 0 0-2-1L9 9a2 2 0 0 0-1-2z',
+    '♡':'M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13zM3 12h5l2-3 3 6 2-3h6',
+    '♨':'M10 14V5a2 2 0 1 1 4 0v9a4 4 0 1 1-4 0zm2-5v8',
+    '▣':'M3 5h18v14H3zm2 7h4l2-3 2 6 2-3h4',
+    '⌁':'M2 12h5l2-4 3 9 3-13 2 8h5',
+    '▱':'M3 8l9-5 9 5-9 5zm0 4 9 5 9-5m-18 4 9 5 9-5'
+  };
+  function dashboardIcon(symbol){
+    const path=iconPaths[symbol];
+    const icon=make('i');icon.setAttribute('aria-hidden','true');
+    if(!path){icon.textContent=symbol;return icon;}
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    const line=document.createElementNS(svg.namespaceURI,'path');
+    svg.setAttribute('viewBox','0 0 24 24');line.setAttribute('d',path);svg.append(line);icon.append(svg);
+    return icon;
+  }
   const profileFilename = 'TisZod Medical About Me.json';
   const fields = [
     ['height','Height'], ['age','Age'], ['ageAsOf','Age recorded on'],
@@ -336,8 +358,6 @@
       const button=action(label,()=>{scannerLayer=mode;updateLayer()});
       button.className='medical-scanner-mode';button.dataset.mode=mode;controls.append(button);return button;
     });
-    const badge=make('span','● SYSTEM ONLINE','medical-scanner-online');
-    const readout=make('div','LIVE VISUALIZATION · ILLUSTRATIVE','medical-scanner-readout');
     const detail=make('div','Select a view to explore the body model. This is an illustration, not a diagnostic scan.','medical-scanner-detail');
     function updateMotion(){
       figure.toggleAttribute('data-paused',scannerPaused);if(threeState)threeState.paused=scannerPaused;
@@ -352,7 +372,7 @@
       detail.textContent=scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
-    stage.append(grid,ring,silhouette,target,sweep,badge,readout);
+    stage.append(grid,ring,silhouette,target,sweep);
     const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);
     const full=action('⛶ Full screen',()=>threeState?.toggleFullscreen?.());full.className='medical-scanner-mode';controls.append(full);
     const quality=make('select');quality.className='medical-scanner-quality';quality.setAttribute('aria-label','3D graphics quality');
@@ -368,7 +388,10 @@
     }
     for(const [label,delta] of [['＋ Zoom in',-.65],['－ Zoom out',.65]]){
       const b=action(label,()=>threeState?.zoomBy?.(delta));b.className='medical-scanner-mode';moveControls.append(b);
-    }figure.append(header,controls,stage,moveControls,directions,detail);
+    }
+    const tools=make('details');tools.className='medical-scanner-tools';
+    tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail);
+    figure.append(stage,tools);
     if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
     updateMotion();updateLayer();
     return figure;
@@ -394,7 +417,6 @@
       }).format(time):formatTime.format(time);
       stamp.textContent='Profile as of '+label;
     }
-    const overview=make('div');overview.className='medical-body-profile';
     const scanner=bodyScanner();
     const grid=make('dl'),height=heightInches(profile.height);
     const weights=weighIns.slice(-2).reverse().map(asPounds);
@@ -424,21 +446,12 @@
     }
     // Interactive mission-control overview, using only existing recorded measurements.
     const dashboard=make('section');dashboard.className='medical-command-dashboard';
-    const title=make('div');title.className='medical-command-title';
-    title.append(make('span','✦ TISZOD / HEALTH COMMAND CENTER'),make('strong','Body Intelligence'));
-    const nav=make('nav');nav.className='medical-command-nav';nav.setAttribute('aria-label','Medical dashboard shortcuts');
-    const shortcuts=[['Overview','#medical-about'],['Weight journey','#weight-title'],['Injection history','#medical-injection-open'],['Records','#medical-browse']];
-    shortcuts.forEach(([label,href])=>{
-      const a=make('a',label);a.href=href;
-      if(label==='Injection history')a.onclick=event=>{event.preventDefault();openInjectionHistory()};
-      nav.append(a);
-    });
     const metrics=make('div');metrics.className='medical-command-metrics';
     const latestReading=composition[0]||{};
     const previousReading=composition[1]||{};
     const latestWeight=Number.isFinite(latestReading.weight)?(latestReading.unit?asPounds(latestReading):latestReading.weight):weights[0];
     const metricData=[
-      ['⚖','Weight',latestWeight,'lb',Number.isFinite(previousReading.weight)?(previousReading.unit?asPounds(previousReading):previousReading.weight):weights[1]],
+      ['⚖','Weight',latestWeight,' lb',Number.isFinite(previousReading.weight)?(previousReading.unit?asPounds(previousReading):previousReading.weight):weights[1]],
       ['◈','BMI',latestReading.bmi,'',previousReading.bmi],
       ['◉','Body fat',latestReading.bodyFat,'%',previousReading.bodyFat],
       ['◆','Muscle',latestReading.muscle,'%',previousReading.muscle],
@@ -447,46 +460,93 @@
     ];
     for(const [symbol,label,value,unit,prior] of metricData){
       const card=make('div');card.className='medical-command-metric';
-      card.append(make('span',symbol+' '+label));
+      card.append(dashboardIcon(symbol),make('span',label));
       card.append(make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'));
       const change=make('small');
       if(Number.isFinite(value)&&Number.isFinite(prior)){
         const delta=value-prior;
-        change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit+' vs prior';
-      }else change.textContent='No comparison available';
+        change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit;
+      }else change.textContent='—';
       card.append(change);metrics.append(card);
     }
     const stage=make('div');stage.className='medical-command-stage';
     const systems=make('aside');systems.className='medical-command-systems';
     systems.append(make('h3','Explore body systems'));
-    const bodySystems=[['◉','Brain','Nervous system'],['♡','Heart','Cardiovascular system'],['♧','Lungs','Respiratory system'],['ϟ','Metabolism','Endocrine system'],['◈','Digestive','Digestive system'],['◆','Muscle','Musculoskeletal system'],['⬡','Bone','Skeletal system'],['◍','Hydration','Body water'],['▱','Body Fat','Body composition']];
+    const bodySystems=[['◉','Brain','Cognitive'],['♡','Heart','Cardiovascular'],['♧','Lungs','Respiratory'],['ϟ','Metabolism','Endocrine'],['◈','Digestive','GI Health'],['◆','Muscle','Strength'],['⬡','Bone','Skeletal'],['◍','Hydration','Body water'],['▱','Body Fat','Composition']];
     const info=make('div','Select a body system to explore the illustration. This visualization does not diagnose conditions.','medical-command-info');
     for(const [glyph,name,description] of bodySystems){
-      const button=action(glyph+' '+name,()=>{
+      const button=action(null,()=>{
         systems.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+        info.hidden=false;
         info.textContent=description+' · illustrative body-system overview, not a medical finding.';
         scanner.dataset.system=name.toLowerCase();
       });
+      const icon=dashboardIcon(glyph);
+      const caption=make('span',name);caption.append(make('small',description));
+      button.append(icon,caption);
       button.className='medical-command-system';button.setAttribute('aria-pressed','false');systems.append(button);
     }
-    systems.append(info);
-    const journey=make('section');journey.className='medical-command-journey';
-    journey.append(make('h3','Weight journey'));
-    const validWeights=weighIns.map(asPounds).filter(Number.isFinite);
-    if(validWeights.length>1){
-      const first=validWeights[0],last=validWeights[validWeights.length-1],change=last-first;
-      journey.append(make('strong',(change>0?'+':'')+change.toFixed(1)+' lb'));
-      journey.append(make('p','Change from first to latest recorded weigh-in'));
-      const spark=document.createElementNS('http://www.w3.org/2000/svg','svg');
-      spark.setAttribute('viewBox','0 0 320 100');spark.setAttribute('role','img');spark.setAttribute('aria-label','Weight trend from first to latest entry');
-      const low=Math.min(...validWeights),high=Math.max(...validWeights),span=high-low||1;
-      const points=validWeights.map((v,i)=>(i*320/(validWeights.length-1)).toFixed(1)+','+(90-(v-low)*75/span).toFixed(1)).join(' ');
-      const area=document.createElementNS('http://www.w3.org/2000/svg','polygon');area.setAttribute('points','0,100 '+points+' 320,100');area.setAttribute('fill','#6b4acb');area.setAttribute('fill-opacity','.25');spark.append(area);
-      const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');
-      line.setAttribute('points',points);line.setAttribute('fill','none');line.setAttribute('stroke','#62e5ff');line.setAttribute('stroke-width','3');line.setAttribute('stroke-linejoin','round');spark.append(line);journey.append(spark);
+    info.hidden=true;systems.append(info);
+    const journey=make('section');journey.className='medical-command-journey medical-concept-panel';
+    journey.append(make('h3','Weight Journey'));
+    const series=weighIns.map(row=>({weight:asPounds(row),time:measurementTime(row)}))
+      .filter(row=>Number.isFinite(row.weight)&&Number.isFinite(row.time)).sort((a,b)=>a.time-b.time);
+    if(series.length>1){
+      const first=series[0],last=series.at(-1),change=last.weight-first.weight;
+      const minimum=Math.min(...series.map(row=>row.weight));
+      const maximum=Math.max(...series.map(row=>row.weight));
+      const step=Math.max(5,Math.ceil((maximum-minimum)/30)*5);
+      const low=Math.floor(minimum/step)*step;
+      const high=Math.max(low+step,Math.ceil(maximum/step)*step);
+      const dateFormat=new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+      const svg=(tag,attributes={})=>{
+        const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
+        for(const [key,value] of Object.entries(attributes))node.setAttribute(key,value);
+        return node;
+      };
+      const spark=svg('svg',{viewBox:'0 0 300 181',role:'img','aria-label':'Recorded weight over time'});
+      const defs=svg('defs'), gradient=svg('linearGradient',{id:'medical-weight-area',x2:'0',y2:'1'});
+      gradient.append(svg('stop',{'stop-color':'#b658ff','stop-opacity':'.74'}),
+        svg('stop',{offset:'100%','stop-color':'#6b4acb','stop-opacity':'.04'}));
+      defs.append(gradient);spark.append(defs);
+      for(let index=0;index<=6;index++){
+        const x=34+index*40;
+
+        const date=svg('text',{x,y:178,'text-anchor':'middle'});
+        date.textContent=dateFormat.format(first.time+index*(last.time-first.time)/6);
+        spark.append(svg('path',{d:`M${x} 12V162`,class:'medical-chart-grid'}),date);
+      }
+      for(let tick=high;tick>=low;tick-=step){
+        const y=162-(tick-low)*150/(high-low);
+        const label=svg('text',{x:2,y:y+4});label.textContent=tick;
+        spark.append(svg('path',{d:`M34 ${y}H274`,class:'medical-chart-grid'}),label);
+      }
+      const points=series.map(({weight,time},index)=>{
+        const progress=last.time===first.time?index/(series.length-1):(time-first.time)/(last.time-first.time);
+        return [34+progress*240,162-(weight-low)*150/(high-low)];
+      });
+      const path=points.map(pair=>pair.join(',')).join(' ');
+      spark.append(svg('polygon',{points:'34,162 '+path+' 274,162',fill:'url(#medical-weight-area)'}),
+        svg('polyline',{points:path,fill:'none',stroke:'#d68aff','stroke-width':'2'}));
+      points.forEach(([cx,cy],index)=>{
+        if(points.length<=24||index===points.length-1)spark.append(svg('circle',{cx,cy,r:index===points.length-1?4:2,fill:'#f0c4ff'}));
+      });
+      const [lastX,lastY]=points.at(-1), labelX=lastX-59,labelY=Math.max(1,lastY-29);
+      const tip=svg('text',{x:labelX+28,y:labelY+14,'text-anchor':'middle',class:'medical-chart-label'});
+      tip.textContent=last.weight.toFixed(1)+' lb';
+      spark.append(svg('rect',{x:labelX,y:labelY,width:57,height:21,rx:5,fill:'#06451f',stroke:'#56cf67'}),tip);
+      const summary=make('div');summary.className='medical-chart-summary';
+      const signed=value=>(value>0?'+':'')+value.toFixed(1);
+      const peak=series.reduce((max,row)=>row.weight>max.weight?row:max);
+      summary.append(make('span','Total Change'),make('strong',signed(change)+' lb'),
+        make('b',signed(change/first.weight*100)+'%'),
+        make('span','Peak: '+peak.weight.toFixed(1)+' lb'),
+        make('small',dateFormat.format(peak.time)),make('span','Current: '+last.weight.toFixed(1)+' lb'),
+        make('small',dateFormat.format(last.time)));
+      const chart=make('div');chart.className='medical-chart-layout';chart.append(spark,summary);
+      const since=make('small','Since '+dateFormat.format(first.time));since.className='medical-panel-date';journey.append(since,chart);
     }else journey.append(make('p','More weigh-ins are needed for a trend.'));
-    const dateLabel=make('small',latest?'Latest recorded: '+formatTime.format(measurementTime(latest)):'Awaiting measurements');
-    journey.append(dateLabel);
+    stage.id='medical-body-scan';
     stage.append(systems,scanner);
     const compositionPanel=make('section');compositionPanel.className='medical-concept-panel medical-concept-composition';
     compositionPanel.append(make('h3','◉ Body Composition'));
@@ -496,35 +556,44 @@
     donut.append(center);
     const compositionLegend=make('div');compositionLegend.className='medical-composition-legend';
     const fat=Number.isFinite(latestReading.bodyFat)?latestReading.bodyFat:null;
-    const muscleValue=Number.isFinite(latestReading.muscle)?latestReading.muscle:null;
-    const remaining=fat!==null?Math.max(0,100-fat):null;
     if(fat!==null){
-      donut.style.background='conic-gradient(#f7bf4a 0 '+fat+'%,#39d5d1 '+fat+'% 100%)';
-      for(const [name,value,color] of [['Body fat',fat,'#f7bf4a'],['Not body fat',remaining,'#39d5d1'],...(muscleValue!==null?[['Muscle (separate measure)',muscleValue,'#4abfff']]:[])]){
-        const item=make('div');item.append(make('span','● '+name),make('strong',value.toFixed(1)+'%'));item.style.borderLeft='3px solid '+color;compositionLegend.append(item);
-      }
-    }else compositionLegend.append(make('p','Body composition measurements not yet available.'));
+      donut.style.background='conic-gradient(#ffc743 0 '+fat+'%,#46d8ff '+fat+'% 100%)';
+      donut.title='Ring shows body fat and remaining weight. The legend includes overlapping scale estimates.';
+    }
+    for(const [name,value,color] of [['Body Fat',fat,'#ffca37'],['Muscle',latestReading.muscle,'#59b8f6'],
+      ['Water',latestReading.water,'#42dffa'],['Bone Mass',latestReading.boneMass,'#bf7cff']]){
+      const item=make('div');const label=make('span',name);label.style.setProperty('--swatch',color);
+      const amount=Number.isFinite(value)?value.toFixed(1)+'%':'—';
+      const pounds=Number.isFinite(value)&&Number.isFinite(latestWeight)?' ('+(value*latestWeight/100).toFixed(1)+' lb)':'';
+      item.append(label,make('strong',amount+pounds));compositionLegend.append(item);
+    }
     compositionPanel.append(donut,compositionLegend);
     const progressPanel=make('section');progressPanel.className='medical-concept-panel';
     progressPanel.append(make('h3','↗ Progress vs. Prior'));
     for(const [symbol,label,value,unit,prior] of metricData){
       const item=make('div');item.className='medical-progress-row';
       const delta=Number.isFinite(value)&&Number.isFinite(prior)?value-prior:null;
-      item.append(make('span',label),make('strong',delta===null?'—':(delta>0?'+':'')+delta.toFixed(1)+unit));
+      const arrow=delta===null||rounded(delta)===0?'—':delta>0?'↑':'↓';
+      const direction=make('i',arrow);direction.setAttribute('aria-hidden','true');
+      const description=make('span',label);description.prepend(direction);
+      item.append(description,make('strong',delta===null?'—':rounded(delta)===0?'No change':(delta>0?'+':'')+delta.toFixed(1)+unit));
       progressPanel.append(item);
     }
     const panels=make('div');panels.className='medical-concept-panels';
     const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
     vitalsPanel.append(make('h3','♡ Vitals (Latest)'));
     const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
-    for(const [label] of [['Blood pressure'],['Heart rate'],['SpO₂'],['Temperature']]){
-      const item=make('div');item.append(make('span',label),make('strong','Not recorded'));vitalGrid.append(item);
+    for(const [label,symbol] of [['Blood pressure','▣'],['Heart rate','♡'],['SpO₂','◌'],['Temperature','♨']]){
+      const item=make('div');
+      item.append(dashboardIcon(symbol),make('span',label),make('strong','Not recorded'));vitalGrid.append(item);
     }
-    vitalsPanel.append(vitalGrid,make('small','Connect or enter confirmed vital readings to populate these fields.'));
-    const nextPanel=make('section');nextPanel.className='medical-concept-panel';
+    vitalsPanel.id='medical-latest-vitals';
+    vitalsPanel.append(vitalGrid);
+    const nextPanel=make('section');nextPanel.className='medical-concept-panel';nextPanel.id='medical-upcoming';
     nextPanel.append(make('h3','▣ Next / Upcoming'));
     for(const [label,detail] of [['Next injection','See injection history'],['Next weigh-in','Not scheduled'],['Next appointment','Not scheduled']]){
-      const item=make('div');item.className='medical-progress-row';item.append(make('span',label),make('strong',detail));nextPanel.append(item);
+      const item=label==='Next injection'?action(null,openInjectionHistory):make('div');
+      item.className='medical-progress-row';item.append(make('span',label),make('strong',detail));nextPanel.append(item);
     }
     const keyPanel=make('section');keyPanel.className='medical-concept-panel';
     keyPanel.append(make('h3','◈ Key Metrics'));
@@ -534,24 +603,29 @@
       row.append(make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
       const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar);keyPanel.append(row);
     }
-    const summaryPanels=make('div');summaryPanels.className='medical-concept-summary';
-    summaryPanels.append(compositionPanel,progressPanel);
     panels.append(vitalsPanel,nextPanel);
     const hero=make('div');hero.className='medical-reference-layout';
     const right=make('div');right.className='medical-reference-right';
     const overviewCard=make('section');overviewCard.className='medical-reference-overview';
-    overviewCard.append(make('h3','⌁ Health Overview'),metrics);
+    const scanDate=make('small');scanDate.className='medical-panel-date';
+    const scanTime=measurementTime(composition[0]);
+    if(Number.isFinite(scanTime)){
+      const dateOnly=composition[0].date?.length===10 && scanTime===Date.parse(composition[0].date);
+      scanDate.textContent='Last scan: '+(dateOnly?composition[0].date:formatTime.format(scanTime));
+    }
+    const healthTitle=make('h3','Health Overview');healthTitle.prepend(dashboardIcon('⌁'));
+    overviewCard.append(healthTitle,scanDate,metrics);
     const middle=make('div');middle.className='medical-reference-middle';
     middle.append(compositionPanel,progressPanel);
     const lower=make('div');lower.className='medical-reference-lower';
     lower.append(journey,keyPanel);
     right.append(overviewCard,middle,lower);
     hero.append(stage,right);
-    dashboard.append(title,nav,hero,panels);
+    dashboard.append(hero,panels);
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
-    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
+    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(make('h3','▱ Current Medications'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
@@ -585,7 +659,7 @@
         card.append(info);
         grid.append(card);
       }
-      medicationPanel.append(grid);
+      const count=make('small','('+userList.length+')');count.className='medical-panel-date';medicationPanel.append(count,grid);
     }else{
       const reviewed=api.records().filter(record=>record.kind==='Medication record'&&api.current(record));
       if(reviewed.length){
@@ -659,9 +733,32 @@
       if (!$('medical-about-profile').querySelector('form')) renderProfile();
     });
   }
+  function addMedicalSidebar(){
+    const sidebar=document.querySelector('.th-sidebar nav');
+    const system=[...sidebar?.querySelectorAll('.th-nav-label')||[]].find(label=>label.textContent.trim()==='System');
+    if(!system||sidebar.querySelector('.medical-sidebar-tools'))return;
+    const group=make('div');group.className='medical-sidebar-tools';
+    const heading=make('div','Medical tools');heading.className='th-nav-label';group.append(heading);
+    const shortcuts=[
+      ['⌁','Vitals & Trends','#medical-latest-vitals'],['♙','Body Composition','#medical-body-scan'],
+      ['⌁','Weight Journey','#weight-title'],['▱','Medications','#medical-current-medications'],
+      ['♢','Injection History',null],['⚗','Lab Results','#medical-browse'],
+      ['▣','Appointments','#medical-upcoming'],['◈','Insurance & Providers','#medical-browse']
+    ];
+    for(const [symbol,label,href] of shortcuts){
+      const link=href?make('a'):action(null,openInjectionHistory);
+      if(href)link.href=href;
+      else link.setAttribute('aria-haspopup','dialog');
+      link.className='th-nav-link';
+      const icon=make('span',symbol);icon.className='th-nav-icon';icon.setAttribute('aria-hidden','true');
+      link.append(icon,document.createTextNode(label));group.append(link);
+    }
+    system.before(group);
+  }
   window.thMedicalAbout = {
     careTeam,openInjectionHistory,
     start(options) {
+      addMedicalSidebar();
       api = options; profile = {}; savedProfile = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       addedDoses=[]; doseLogReady=false;
       const historyButton=$('medical-injection-open');
