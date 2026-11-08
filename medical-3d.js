@@ -6,6 +6,22 @@ function getThree(){return modulePromise??=import(THREE_URL)}
 const ATLAS_URL='https://cdn.jsdelivr.net/gh/Charleeh/ecorche@320805e06aee51e2e6f6b22533eb2a59d43f2d4d/model/ecorche.meshopt.glb';
 const ADDONS='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/';
 let atlasPromise;
+
+// Cyan light follows the silhouette as the model rotates.
+function scannerMaterial(THREE,options,edge){
+ const material=new THREE.MeshStandardMaterial(options);
+ material.onBeforeCompile=shader=>{
+  shader.uniforms.scannerEdge={value:edge};
+  shader.fragmentShader='uniform float scannerEdge;\n'+shader.fragmentShader.replace(
+   '#include <emissivemap_fragment>',
+   `#include <emissivemap_fragment>
+   float grazing=1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0);
+   totalEmissiveRadiance+=vec3(0.035,0.56,1.0)*scannerEdge*
+       (0.35*pow(grazing,2.5)+1.3*pow(grazing,8.0));`
+  );
+ };
+ return material;
+}
 function getAtlas(THREE){
  return atlasPromise??=(async()=>{
   const [{GLTFLoader},{MeshoptDecoder},response]=await Promise.all([
@@ -24,11 +40,12 @@ function getAtlas(THREE){
   if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
    throw Error('Anatomy atlas layers are incomplete.');
   }
-  const atlasMuscle=new THREE.MeshStandardMaterial({color:0x8e4651,roughness:.55,metalness:.18});
-  const atlasFascia=new THREE.MeshStandardMaterial({color:0x597ea9,roughness:.48,metalness:.25});
-  const atlasBone=new THREE.MeshStandardMaterial({color:0x7c9cb9,roughness:.56,metalness:.15});
-  const atlasCutaway=atlasMuscle.clone();
-  atlasCutaway.transparent=true;atlasCutaway.opacity=.29;atlasCutaway.depthWrite=false;
+  const atlasMuscle=scannerMaterial(THREE,{color:0x924b43,roughness:.43,metalness:.17},.86);
+  const atlasFascia=scannerMaterial(THREE,{color:0x5e809f,roughness:.40,metalness:.24},1.08);
+  const atlasBone=scannerMaterial(THREE,{color:0x8caec7,roughness:.48,metalness:.15},.75);
+  const atlasCutaway=scannerMaterial(THREE,{
+   color:0x62466c,roughness:.46,transparent:true,opacity:.23,depthWrite:false
+  },.65);
   scene.traverse(node=>{
    if(!node.isMesh)return;
    const name=node.name.replace(/[^a-z]/gi,'').toLowerCase();
@@ -62,14 +79,21 @@ window.thMedical3D={
    renderer.domElement.style.touchAction='none';
    stage.append(renderer.domElement);
    const body=new THREE.Group();scene.add(body);
-   scene.add(new THREE.HemisphereLight(0x8bc9ff,0x203859,1.45));
-   const key=new THREE.DirectionalLight(0xe6f4ff,2.1);key.position.set(3,5,5);scene.add(key);
-   const rim=new THREE.DirectionalLight(0x1ebfff,3.3);rim.position.set(-4,2,-4);scene.add(rim);
+   scene.add(new THREE.HemisphereLight(0xaedaff,0x263248,1.25));
+   const key=new THREE.DirectionalLight(0xeaf6ff,2.55);key.position.set(1,5,4);scene.add(key);
+   for(const side of [-1,1]){
+    const rim=new THREE.DirectionalLight(0x2bbfff,3.2);
+    rim.position.set(side*4,1,-2);scene.add(rim);
+   }
+   const bounce=new THREE.PointLight(0x2bdfff,12,5);
+   bounce.position.set(0,-2.2,1.2);scene.add(bounce);
    const skin=new THREE.MeshStandardMaterial({color:0x997363,roughness:.72});
-   const fascia=new THREE.MeshStandardMaterial({color:0x22436a,roughness:.52,metalness:.24});
-   const fiber=new THREE.MeshStandardMaterial({color:0x894957,roughness:.56,metalness:.2});
-   const tendon=new THREE.MeshStandardMaterial({color:0x608ac2,roughness:.46,metalness:.24});
-   const torsoAnatomy=fascia.clone();torsoAnatomy.transparent=true;torsoAnatomy.opacity=.45;torsoAnatomy.depthWrite=false;
+   const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
+   const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
+   const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
+   const torsoAnatomy=scannerMaterial(THREE,{
+    color:0x284670,roughness:.45,transparent:true,opacity:.42,depthWrite:false
+   },.8);
    const scan=new THREE.MeshStandardMaterial({color:0x267fba,emissive:0x082d57,transparent:true,opacity:.22,depthWrite:false,roughness:.35});
    const hair=new THREE.MeshStandardMaterial({color:0x171822,roughness:.86});
    const shadow=new THREE.MeshStandardMaterial({color:0x594047,roughness:.78});
@@ -181,23 +205,43 @@ window.thMedical3D={
    function system(name){
     const group=new THREE.Group();organs.add(group);systems[name]=group;return group;
    }
-   const lung=organMaterial(0x117bda,0x1257f2,.86),lungDetail=organMaterial(0x59d8ff,0x176fff);
+   const lung=organMaterial(0x126ac9,0x1257ff,.73);
+   const lungDetail=organMaterial(0x66dbff,0x298fff);
+   const lungBranches=organMaterial(0x4296df,0x246cf0,.68);
    const heart=organMaterial(0xdd3824,0xff3f1a),vessel=organMaterial(0xfcb252,0xf75129);
    const liver=organMaterial(0x9d3038,0xb31830),gut=organMaterial(0x6e38d0,0x5226c5),gutEdge=organMaterial(0xb86ef2,0x7734e3);
    const lungs=system('lungs'),cardiac=system('heart'),digestive=system('digestive'),brain=system('brain');
    for(const s of [-1,1]){
     loft(lungs,lung,[[.61,s*.135,.174,.035,.034],[.70,s*.166,.184,.117,.067],[.89,s*.18,.19,.133,.071],[1.074,s*.159,.163,.091,.059],[1.185,s*.121,.13,.03,.026]]);
-    for(let i=0;i<3;i++)tube(lungs,lungDetail,[[s*.065,1.08,.235],[s*.135,.96-i*.035,.259],[s*(.23-i*.023),.91-i*.069,.249]],.005);
+    for(let i=0;i<4;i++){
+     const y=.99-i*.067,x=.159+i*.013;
+     tube(lungs,lungDetail,[[s*.057,1.086,.236],[s*.109,1.025-i*.038,.259],[s*x,y,.273],[s*(x+.062),y-.029,.255]],.0046);
+     for(const slope of [-1,1]){
+      tube(lungs,lungBranches,[[s*x,y,.274],[s*(x+.033),y+slope*.023,.278],[s*(x+.069),y+slope*.044,.258]],.0025);
+     }
+    }
     ell(brain,gutEdge,s*.063,1.82,.101,.079,.09,.102);
    }
    tube(lungs,lungDetail,[[0,1.43,.119],[0,1.26,.132],[0,1.095,.19]],.019);
    loft(cardiac,heart,[[.66,.095,.286,.014,.022],[.72,.062,.288,.06,.054],[.81,.041,.273,.109,.075],[.9,.035,.24,.102,.073],[.963,.012,.219,.065,.058]]);
    tube(cardiac,vessel,[[.028,.887,.294],[.029,.981,.273],[.052,1.033,.235],[.112,1.008,.208]],.026);
    tube(cardiac,vessel,[[-.029,.869,.322],[.024,.835,.353],[.043,.764,.336],[.09,.711,.313]],.008);
+   tube(cardiac,vessel,[[.022,.837,.352],[-.014,.803,.347],[-.042,.772,.322]],.004);
+   tube(cardiac,vessel,[[.042,.775,.338],[.09,.785,.344],[.132,.816,.304]],.004);
+   tube(cardiac,vessel,[[.056,.906,.291],[.094,.957,.274],[.154,.958,.237]],.012);
    ell(digestive,liver,-.094,.62,.151,.184,.085,.112,.22);
    ell(digestive,organMaterial(0xba6a63,0xae3628),.121,.518,.166,.093,.115,.074,-.47);
    tube(digestive,gutEdge,[[-.125,.42,.199],[-.154,.29,.215],[-.145,.08,.194],[-.064,.014,.168],[.053,.036,.167],[.141,.117,.179],[.156,.304,.195],[.13,.386,.19],[.016,.401,.185],[-.125,.42,.199]],.025);
-   tube(digestive,gut,Array.from({length:35},(_,i)=>[Math.sin(i*.72)*.102,.071+i*.0086,.202+Math.cos(i*.72)*.018]),.021);
+   tube(digestive,gut,Array.from({length:56},(_,i)=>{
+    const t=i/55;
+    return [Math.sin(t*15*Math.PI)*(.077+.027*t),.076+t*.28,.218+Math.cos(t*9*Math.PI)*.021];
+   }),.016);
+   const gutHighlight=organMaterial(0xaa6ff1,0x7e3dee);
+   for(let i=0;i<8;i++){
+    const y=.118+i*.031;
+    tube(digestive,gutHighlight,[[-.14,y,.231],[-.155,y-.008,.226],[-.167,y,.21]],.004);
+    tube(digestive,gutHighlight,[[.133,y,.22],[.15,y-.007,.229],[.168,y,.211]],.004);
+   }
    for(let i=0;i<18;i++)ell(skeleton,pale,0,1.32-i*.083,-.11,.042,.029,.037);
    for(let i=0;i<7;i++)for(const s of [-1,1]){
     const y=1.12-i*.066;
@@ -263,16 +307,19 @@ window.thMedical3D={
    }).catch(error=>{if(stage.isConnected)console.warn('Detailed atlas unavailable; anatomy illustration retained.',error);});
    const orbit=new THREE.Group();scene.add(orbit);
    const ringMaterial=new THREE.MeshBasicMaterial({color:0x00dfff,transparent:true,opacity:.55,side:THREE.DoubleSide});
-   for(const y of [-2.13]){
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(.75,.012,8,90),ringMaterial);
+   for(const [radius,y,width] of [[.49,-2.10,.011],[.68,-2.13,.019],[.83,-2.16,.008],[1.02,-2.17,.005]]){
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(radius,width,8,96),ringMaterial);
     ring.rotation.x=Math.PI/2;ring.position.y=y;orbit.add(ring);
    }
    const grid=new THREE.GridHelper(5,18,0x127fba,0x124467);grid.position.y=-2.2;scene.add(grid);
    const scanBeam=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.025),new THREE.MeshBasicMaterial({color:0x86f9ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
    scanBeam.position.z=.58;scanBeam.visible=false;scene.add(scanBeam);
+   const frameCenter=new THREE.Vector3(0,-.10,0);
+   let frameDistance=7.2;
    const resize=()=>{
     if(!stage.isConnected)return;
-    const width=Math.max(stage.clientWidth,200),height=Math.max(stage.clientHeight,350);
+    const width=Math.max(stage.clientWidth,1),height=Math.max(stage.clientHeight,1);
+    frameDistance=Math.max(6.95,2.75/(width/height));
     renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
    };
    const observer=new ResizeObserver(resize);observer.observe(stage);resize();
@@ -301,7 +348,7 @@ window.thMedical3D={
     if(t-lastFrame<1000/30&&!pointers.size)return;
     lastFrame=t;
     scanBeam.visible=state.mode==='scan';body.rotation.y=state.yaw;body.rotation.x=state.pitch;if(!state.paused){clock=t*.001;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
-    camera.position.set(0,0,state.zoom);camera.lookAt(0,-.1,0);renderer.render(scene,camera);
+    camera.position.set(0,.25,frameDistance+state.zoom-7.2);camera.lookAt(frameCenter);renderer.render(scene,camera);
    }
    requestAnimationFrame(render);
   }catch(err){stage.dataset.threeError='true';console.warn('3D scanner unavailable; 2D fallback retained.',err)}
