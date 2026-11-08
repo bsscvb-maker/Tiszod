@@ -311,3 +311,9 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-key-track span{display:block;height:100%;background:linear-gradient(90deg,#25aaff,#73f5e5);border-radius:8px;box-shadow:0 0 8px #00dfff}
 @media(max-width:900px){.medical-concept-panels{grid-template-columns:1fr 1fr}.medical-concept-summary{grid-template-columns:1fr}}
 @media(max-width:650px){.medical-concept-panels{grid-template-columns:1fr}.medical-concept-composition{grid-template-columns:1fr 1fr}.medical-command-dashboard{gap:10px}}
+
+.medical-concept-topnav{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;margin:8px 0 20px}
+.medical-concept-topnav :is(a,button){min-width:0;min-height:58px;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 5px;border:1px solid #1d577f;border-radius:10px;background:linear-gradient(145deg,#102b4a,#07192e);color:#d9f1ff;font:700 .76rem system-ui;text-decoration:none;cursor:pointer}
+.medical-concept-topnav :is(a,button):hover,.medical-concept-topnav :is(a,button):focus-visible{background:#09557b;outline:2px solid #41d9ff}
+@media(max-width:1100px){.medical-concept-topnav{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:550px){.medical-concept-topnav{grid-template-columns:repeat(3,minmax(0,1fr))}}
