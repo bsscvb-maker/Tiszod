@@ -486,7 +486,7 @@
     }else journey.append(make('p','More weigh-ins are needed for a trend.'));
     const dateLabel=make('small',latest?'Latest recorded: '+formatTime.format(measurementTime(latest)):'Awaiting measurements');
     journey.append(dateLabel);
-    stage.append(systems,scanner,journey);
+    stage.append(systems,scanner);
     const compositionPanel=make('section');compositionPanel.className='medical-concept-panel medical-concept-composition';
     compositionPanel.append(make('h3','◉ Body Composition'));
     const donut=make('div');donut.className='medical-composition-donut';
@@ -496,10 +496,10 @@
     const compositionLegend=make('div');compositionLegend.className='medical-composition-legend';
     const fat=Number.isFinite(latestReading.bodyFat)?latestReading.bodyFat:null;
     const muscleValue=Number.isFinite(latestReading.muscle)?latestReading.muscle:null;
-    const remaining=fat!==null&&muscleValue!==null?Math.max(0,100-fat-muscleValue):null;
-    if(fat!==null&&muscleValue!==null){
-      donut.style.background='conic-gradient(#f7bf4a 0 '+fat+'%,#4abfff '+fat+'% '+(fat+muscleValue)+'%,#39d5d1 '+(fat+muscleValue)+'% 100%)';
-      for(const [name,value,color] of [['Body fat',fat,'#f7bf4a'],['Muscle',muscleValue,'#4abfff'],['Other / unclassified',remaining,'#39d5d1']]){
+    const remaining=fat!==null?Math.max(0,100-fat):null;
+    if(fat!==null){
+      donut.style.background='conic-gradient(#f7bf4a 0 '+fat+'%,#39d5d1 '+fat+'% 100%)';
+      for(const [name,value,color] of [['Body fat',fat,'#f7bf4a'],['Not body fat',remaining,'#39d5d1'],...(muscleValue!==null?[['Muscle (separate measure)',muscleValue,'#4abfff']]:[])]){
         const item=make('div');item.append(make('span','● '+name),make('strong',value.toFixed(1)+'%'));item.style.borderLeft='3px solid '+color;compositionLegend.append(item);
       }
     }else compositionLegend.append(make('p','Body composition measurements not yet available.'));
@@ -536,7 +536,17 @@
     const summaryPanels=make('div');summaryPanels.className='medical-concept-summary';
     summaryPanels.append(compositionPanel,progressPanel);
     panels.append(vitalsPanel,keyPanel,nextPanel);
-    dashboard.append(title,nav,metrics,stage,summaryPanels,panels);
+    const hero=make('div');hero.className='medical-reference-layout';
+    const right=make('div');right.className='medical-reference-right';
+    const overviewCard=make('section');overviewCard.className='medical-reference-overview';
+    overviewCard.append(make('h3','⌁ Health Overview'),metrics);
+    const middle=make('div');middle.className='medical-reference-middle';
+    middle.append(compositionPanel,progressPanel);
+    const lower=make('div');lower.className='medical-reference-lower';
+    lower.append(journey,keyPanel);
+    right.append(overviewCard,middle,lower);
+    hero.append(stage,right);
+    dashboard.append(title,nav,hero,panels);
     const details=make('details');details.className='medical-command-details';
     const summary=make('summary','Detailed measurements and comparisons');
     details.append(summary,measurements);
