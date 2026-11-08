@@ -1,9 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 174 290" preserveAspectRatio="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 174 290" preserveAspectRatio="xMidYMid meet">
   <defs>
+    <filter id="rim" x="-.3" y="-.2" width="1.6" height="1.4" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2.1"/>
+    </filter>
+    <radialGradient id="face" cx=".41" cy=".28" r=".72">
+      <stop stop-color="#aac5d6"/><stop offset=".48" stop-color="#48677f"/><stop offset="1" stop-color="#121c32"/>
+    </radialGradient>
     <linearGradient id="body-light">
       <stop stop-color="#66dcff"/><stop offset=".2" stop-color="#274c76"/><stop offset=".5" stop-color="#101a36"/><stop offset=".84" stop-color="#304a73"/><stop offset="1" stop-color="#8bf3ff"/>
     </linearGradient>
-    <linearGradient id="fiber"><stop stop-color="#23486e"/><stop offset=".5" stop-color="#ac5966"/><stop offset=".7" stop-color="#60324b"/><stop offset="1" stop-color="#2a3d66"/></linearGradient>
+    <linearGradient id="fiber"><stop stop-color="#23486e"/><stop offset=".5" stop-color="#b97568"/><stop offset=".7" stop-color="#693845"/><stop offset="1" stop-color="#2a3d66"/></linearGradient>
     <linearGradient id="lung"><stop stop-color="#00bffc"/><stop offset=".6" stop-color="#145ceb"/><stop offset="1" stop-color="#0c2860"/></linearGradient>
     <radialGradient id="heart"><stop stop-color="#ffbc65"/><stop offset=".5" stop-color="#e64c33"/><stop offset="1" stop-color="#7c142a"/></radialGradient>
     <path id="figure" d="M87 8c-10 0-16 8-16 18l1 6c-4-2-4 5 0 8 2 7 5 11 9 14v7
@@ -15,7 +21,8 @@
       c0-10-6-18-16-18z"/>
     <clipPath id="inside"><use href="#figure"/></clipPath>
   </defs>
-  <use href="#figure" fill="url(#body-light)" stroke="#8beaff" stroke-width="1.25"/>
+  <use href="#figure" fill="none" stroke="#31c9ff" stroke-width="3" opacity=".85" filter="url(#rim)"/>
+  <use href="#figure" fill="url(#body-light)" stroke="#a8f4ff" stroke-width="1.05"/>
   <g clip-path="url(#inside)">
     <path id="fibers" fill="url(#fiber)" stroke="#a97b91" stroke-width=".4"
       d="M86 78C71 69 59 73 55 86c9 9 19 13 31 9z
@@ -31,11 +38,21 @@
     </g>
     <path d="M84 77c-6-7-12 3-16 13-6 13-4 21 5 22 6-1 11-4 12-10zM90 77c6-7 12 3 16 13 6 13 4 21-5 22-6-1-11-4-12-10z" fill="url(#lung)" stroke="#51cfff" stroke-width=".85"/>
     <path d="M87 66v18m0-4-11 10-6 14m6-14 3 11m8-20 12 10 6 13m-6-13-3 10" fill="none" stroke="#93e8ff" stroke-width=".8"/>
+    <path d="M76 90l-5 1m3 6-5 1m8 2 3 5m19-14 6 2m-7 4 5 3m-7 0-3 6" fill="none" stroke="#7edbff" stroke-width=".45" opacity=".8"/>
     <path d="M85 91c1-7 5-9 8-7 3 2 2 5 5 7 6 3 6 8 3 14-2 5-5 8-9 11-6-3-10-9-10-15 0-4 1-7 3-10z" fill="url(#heart)" stroke="#ff9b75" stroke-width="1"/>
     <path d="M89 88q-2-8 5-8l4 3m-6 10q5 2 4 7l-4 8" fill="none" stroke="#ffd197" stroke-width=".85"/>
     <path d="M66 111q12-7 24 0-4 11-20 13-6-3-4-13zM91 112q10 0 10 7-2 9-13 10l-3-6q7-1 6-11z" fill="#853449" stroke="#df736e" stroke-width=".7"/>
     <path d="M74 128q-6 0-6 8v10q0 6 8 8h18q9-2 9-8v-13q-1-6-8-6z" fill="#321c65" stroke="#bf8aff" stroke-width="2"/>
     <path d="M76 132q18-5 19 1t-17 5q-7 2-3 5t17-1q9 1 2 6t-16-2" fill="none" stroke="#a268f4" stroke-width="2"/>
+    <path d="M73 25q1-13 14-14t14 14l-1 10q-1 10-9 16h-8q-8-6-9-16z" fill="url(#face)"/>
+    <path d="M74 23q2-12 13-12t13 11q-6-5-13-5t-13 6z" fill="#16273b"/>
+    <path d="M76 33l4 6m18-6-4 6m-13 8 6 2 6-2" fill="none" stroke="#95aab9" stroke-width=".65"/>
     <path d="M75 28q5-3 10 0m4 0q5-3 10 0m-12 3-2 8h4m-8 6q6 2 12 0" fill="none" stroke="#add8ee" stroke-width=".8"/>
+    <g fill="none" stroke-linecap="round">
+      <path id="limb-highlights" d="M54 77q-6 6-9 21l-9 33-8 15m32-54-8 25-13 26m29 13q-4 19 2 38l4 12m-1 12q-1 21 2 43m-3 4-6 11m5-9-2 10" stroke="#6cdaff" stroke-width=".7" opacity=".64"/>
+      <use href="#limb-highlights" transform="translate(174 0) scale(-1 1)"/>
+      <path id="warm-fibers" d="M54 80q-4 7-7 21l-7 22m29 38q-3 19 3 34m4 26q-2 17 0 34" stroke="#ee9266" stroke-width=".5" opacity=".8"/>
+      <use href="#warm-fibers" transform="translate(174 0) scale(-1 1)"/>
+    </g>
   </g>
 </svg>
