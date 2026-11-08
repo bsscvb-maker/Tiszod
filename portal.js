@@ -293,13 +293,13 @@
 function init(){
 const side=document.querySelector('#sidebar,.th-sidebar');if(!side)return;
 const bssc=side.id==='sidebar',labels=[...side.querySelectorAll(bssc?'.nav-label':'.th-nav-label')],items=[...side.querySelectorAll(bssc?'button[data-module]':'a.th-nav-link')];if(!labels.length||!items.length)return;
-const key='sidebar-order-v1:'+(bssc?'bssc':'tiszod'),id=e=>bssc?e.dataset.module:e.getAttribute('href'),map=new Map(items.map(e=>[id(e),e]));
+const key=bssc?'sidebar-order-v1:bssc':'sidebar-order-v2:tiszod',id=e=>bssc?e.dataset.module:e.getAttribute('href'),map=new Map(items.map(e=>[id(e),e]));
 const groups=labels.map((label,index)=>({label,index,host:bssc?label.nextElementSibling:label.parentElement}));
 const defaults=items.map(el=>{let group=0;for(const g of groups)if(g.label.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING)group=g.index;return{id:id(el),group}});
 function normalize(rows){const seen=new Set();return [...(Array.isArray(rows)?rows:[]),...defaults].filter(r=>r&&map.has(r.id)&&!seen.has(r.id)&&seen.add(r.id)).map(r=>({id:r.id,group:Number.isInteger(r.group)&&groups[r.group]?r.group:0}))}
 function apply(){for(const g of groups){const entries=rows.filter(r=>r.group===g.index).map(r=>map.get(r.id));if(bssc)g.host.append(...entries);else{let anchor=g.label;for(const el of entries){anchor.after(el);anchor=el}}}}
-let rows=defaults,editing=false,dragged=null;try{rows=normalize(JSON.parse(localStorage.getItem(key)))}catch{}
-if(!bssc){
+let rows=defaults,editing=false,dragged=null,saved;try{saved=JSON.parse(localStorage.getItem(key));rows=normalize(saved)}catch{}
+if(!bssc&&!Array.isArray(saved)){
   const moduleGroup=groups.find(({label})=>label.textContent.trim()==='Modules');
   if(moduleGroup){
     const moduleName=row=>{const link=map.get(row.id).cloneNode(true);link.querySelectorAll('.th-nav-icon,.sidebar-drag-handle').forEach(icon=>icon.remove());return link.textContent.trim()};
