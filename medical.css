@@ -407,3 +407,28 @@ body[data-th-page="medical"] #medical-todd .medical-panel:has(.medical-command-d
  .medical-reference-medications{grid-column:auto}
 }
 @media(max-width:600px){.medical-reference-layout .medical-command-stage{grid-template-columns:1fr}.medical-reference-middle,.medical-reference-lower{grid-template-columns:1fr}}
+
+/* Reference design fidelity: 1409px iPad landscape screenshot */
+@media(min-width:1200px){
+ body[data-th-page="medical"] .medical{padding:0 12px 20px!important}
+ body[data-th-page="medical"] #medical-todd .medical-panel:has(.medical-command-dashboard){margin:0;padding:0;border:0;background:#061426;box-shadow:none}
+ .medical-command-dashboard{gap:13px}
+ .medical-command-dashboard .medical-command-title{display:none}
+ .medical-concept-topnav{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px;margin:0 0 18px}
+ .medical-concept-topnav :is(a,button){min-height:66px;font-size:12px;border-radius:10px;background:linear-gradient(#122b49,#071629);border:1px solid #174b77;box-shadow:inset 0 1px 5px #2d75a52b}
+ .medical-concept-topnav :first-child{background:linear-gradient(#006eab,#003c78);border-color:#16dfff;box-shadow:0 0 12px #04c9ff, inset 0 0 12px #0acfff70}
+ .medical-reference-layout{grid-template-columns:minmax(0,40fr) minmax(0,60fr);gap:12px}
+ .medical-reference-layout .medical-command-stage{grid-template-columns:minmax(0,28fr) minmax(0,72fr);gap:8px}
+ .medical-reference-right{gap:12px}
+ .medical-reference-overview .medical-command-metrics{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+ .medical-reference-overview .medical-command-metric{min-height:108px;padding:10px 4px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px}
+ .medical-reference-overview .medical-command-metric strong{font-size:clamp(15px,1.5vw,21px)}
+ .medical-reference-middle{grid-template-columns:minmax(0,1.55fr) minmax(0,.85fr)}
+ .medical-reference-lower{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}
+ .medical-command-dashboard .medical-concept-panels{grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,.85fr);gap:12px}
+ .medical-reference-medications{grid-column:auto}
+ .medical-reference-medications .medical-regimen{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .medical-reference-layout .medical-command-system{min-height:49px;font-size:12px}
+ .medical-reference-layout .medical-scanner-v2 .medical-scanner-stage{min-height:540px}
+ .medical-reference-layout .medical-concept-panel{border-color:#0fa9d4}
+}
