@@ -54,6 +54,40 @@
       .sort((a,b) => b.date.localeCompare(a.date))[0];
     return latest?.dose?.match(/^(\d+(?:\.\d+)? mL)(?: reported)?$/i)?.[1] || dose;
   }
+  const asPounds=reading=>reading?.unit==='lb'?reading.weight:reading?.unit==='kg'?reading.weight*2.2046226218:undefined;
+  const bmiFor=(pounds,height)=>pounds>0&&height>0?703*pounds/(height*height):undefined;
+  const rounded=value=>Math.round(value*10)/10;
+  const measurementTime=reading=>Number.isFinite(reading?.time)?reading.time:Date.parse(reading?.date);
+
+  function compositionReadings(profile) {
+    const history=Array.isArray(profile.bodyCompositionHistory)?profile.bodyCompositionHistory:[];
+    const scale=Array.isArray(profile.weighIns)?profile.weighIns.filter(row=>
+      ['bmi','bodyFat','muscle','water'].some(key=>Number.isFinite(row?.[key]))):[];
+    const readings=[...scale,...history,profile.bodyComposition].filter(row=>Number.isFinite(measurementTime(row)));
+    const byTime=new Map();
+    for(const row of readings){
+      const time=measurementTime(row);
+      byTime.set(time,{...byTime.get(time),...row});
+    }
+    return [...byTime.entries()].sort(([a],[b])=>b-a).map(([,row])=>row);
+  }
+
+  function comparison(label,current,prior,unit='',preferred=0) {
+    const item=make('div'), values=make('dd');
+    item.className='medical-measurement-comparison';
+    const format=value=>Number.isFinite(value)?rounded(value)+unit:'Not recorded';
+    values.append(make('span','Current: '+format(current)),make('span','Prior: '+format(prior)));
+    if(Number.isFinite(current)&&Number.isFinite(prior)){
+      const delta=rounded(rounded(current)-rounded(prior)),direction=Math.sign(delta);
+      const change=make('span',direction?(direction>0?'↑ Up ':'↓ Down ')+Math.abs(delta)+unit:'— No change');
+      change.className='medical-measurement-change';
+      if(direction&&preferred)change.dataset.trend=direction===preferred?'positive':'negative';
+      values.append(change);
+    }
+    item.append(make('dt',label),values);
+    return item;
+  }
+
   function renderProfile() {
     const target=$('medical-about-profile'), stamp=$('medical-profile-updated');
     const updated=Date.parse(profile.profileUpdatedAt);
@@ -68,28 +102,24 @@
     const figure=make('figure'),silhouette=make('img');
     silhouette.src='assets/medical/body-profile.svg';silhouette.alt='Generic human body reference';
     figure.append(silhouette,make('figcaption',profile.height||'Height unlisted'));
-    const grid=make('dl'),weight=api.weights().at(-1),height=heightInches(profile.height);
-    const pounds=weight?.unit==='lb'?weight.weight:weight?.unit==='kg'?weight.weight*2.2046226218:0;
-    const bmi=height>0&&pounds>0?(703*pounds/(height*height)).toFixed(1):'Needs height and weight with units';
-    for(const [label,value] of [
-      ['Height',profile.height],
-      ['Weight',weight&&Number(weight.weight.toFixed(1))+' '+(weight.unit||'(unit unlisted)')],
-      ['Age',profile.age],
-      ['BMI',bmi]
-    ]){
+    const grid=make('dl'),weights=api.weights(),height=heightInches(profile.height);
+    const currentWeight=asPounds(weights.at(-1)),priorWeight=asPounds(weights.at(-2));
+    for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
       const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
     }
+    grid.children[0].after(comparison('Weight',currentWeight,priorWeight,' lb',-1));
+    grid.append(comparison('BMI',bmiFor(currentWeight,height),bmiFor(priorWeight,height)));
     const measurements=make('div');measurements.className='medical-measurements';
     measurements.append(make('h3','Vitals'),grid);
-    const composition=profile.bodyComposition;
-    if(composition?.date){
+    const composition=compositionReadings(profile);
+    if(composition.length){
       const readings=make('dl');
-      for(const [label,value,unit] of [
-        ['Scale weight',composition.weight,' lb'],['Scale BMI',composition.bmi,''],
-        ['Body fat',composition.bodyFat,'%'],['Muscle',composition.muscle,'%'],['Water',composition.water,'%']
+      for(const [label,key,unit,preferred] of [
+        ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',0],
+        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0]
       ]){
-        if(!Number.isFinite(value))continue;
-        const item=make('div');item.append(make('dt',label),make('dd',value+unit));readings.append(item);
+        const values=composition.map(row=>key==='weight'&&row.unit?asPounds(row):row[key]).filter(Number.isFinite);
+        readings.append(comparison(label,values[0],values[1],unit,preferred));
       }
       measurements.append(make('h3','Body composition'),readings);
     }

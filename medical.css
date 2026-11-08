@@ -156,3 +156,9 @@
 #medical-admin-folders[open]>summary{margin-bottom:14px}
 #medical-admin-folders{margin-top:16px}
 body[data-th-page="medical"] .medical-themed-card > .legal-kind{display:none}
+
+#medical-about-profile .medical-measurement-comparison dd{display:grid;gap:4px}
+.medical-measurement-comparison dd>span:nth-child(2){font-size:.86rem;color:#b8cbd8}
+.medical-measurement-change{font-size:.86rem;color:#c6d7e3}
+.medical-measurement-change[data-trend="positive"]{color:#80e5a4}
+.medical-measurement-change[data-trend="negative"]{color:#ff9b9b}
