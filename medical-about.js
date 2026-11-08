@@ -149,7 +149,15 @@
       const grid=make('div');grid.className='medical-regimen';
       for(const entry of userList){
         const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
-        const card=make('section'), info=make('div');
+        const hasHistory=isCompoundedTirzepatide(name);
+        const card=hasHistory?action(null,openInjectionHistory):make('section');
+        const info=make(hasHistory?'span':'div');
+        if(hasHistory){
+          card.className='medical-injection-card';
+          card.setAttribute('aria-haspopup','dialog');
+          card.setAttribute('aria-label',name+' injection history');
+          info.className='medical-regimen-copy';
+        }
         const visuals=[
           [/citalopram/i,'citalopram','Tablet marked 0 and 6 separated by a score line'],
           [/wellbutrin\s+xl/i,'wellbutrin-xl','Tablet marked G 785'],
@@ -157,19 +165,15 @@
         ];
         const visual=visuals.find(([match])=>match.test(name));
         if(visual){
-          const picture=make('figure'),image=make('img');
+          const picture=make(hasHistory?'span':'figure'),image=make('img');
+          if(hasHistory)picture.className='medical-regimen-photo';
           image.src='assets/medical/'+visual[1]+(visual[1]==='tirzepatide-vial'?'-pink.svg':'-imprint.webp');image.alt=visual[2];
           picture.append(image);card.append(picture);
         }
-        if(isCompoundedTirzepatide(name)){
-          const title=action(name,openInjectionHistory);
-          title.className='medical-injection-link';
-          title.setAttribute('aria-haspopup','dialog');
-          info.append(title);
-        }else info.append(make('strong',name));
+        info.append(make('strong',name));
         const amount=loggedMedicationAmount(name,dose);
-        if(amount)info.append(make('p',amount));
-        if(schedule)info.append(make('p',schedule));
+        if(amount)info.append(make(hasHistory?'span':'p',amount));
+        if(schedule)info.append(make(hasHistory?'span':'p',schedule));
         card.append(info);
         grid.append(card);
       }
