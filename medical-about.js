@@ -353,7 +353,8 @@
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
     stage.append(grid,ring,silhouette,target,sweep,badge,readout);
-    const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);figure.append(header,controls,stage,detail);\n    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
+    const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);figure.append(header,controls,stage,detail);
+    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);if(state)state.paused=scannerPaused});
     updateMotion();updateLayer();
     return figure;
   }
