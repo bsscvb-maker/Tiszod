@@ -262,7 +262,9 @@
      if (current === request) draw({items:[],note:'Sign in to search these private folders.'});
      return;
     }
-    const entries = scope === 'career' ? window.thCareerSearchEntries : [...(window.thRecreationSearchEntries || []),...(window.thFamilyRecreationSearchEntries || [])];
+    const recreation = scope === 'hobbies' ? await window.thLoadRecreationSearchEntries?.() : undefined;
+    if (current !== request) return;
+    const entries = scope === 'career' ? window.thCareerSearchEntries : recreation?.entries || window.thRecreationSearchEntries;
     if (!entries?.length && scope !== 'career') {
      if (current === request) draw({items:[],note:'The folders are still loading or could not connect. Try again after they appear.'});
      return;
@@ -271,7 +273,10 @@
     if (scope === 'career') {
      const [folders,saved] = await Promise.all([drive,readCareerDocuments(matches).catch(() => null)]);
      outcome = {items:[...(saved || []),...folders.items],partial:folders.partial || !entries || !saved};
-    } else outcome = await drive;
+    } else {
+     outcome = await drive;
+     outcome.partial ||= recreation?.partial;
+    }
    }
    if (current === request) draw(outcome);
   } catch {

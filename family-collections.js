@@ -17,7 +17,7 @@
   'medical/Aiden': 'aiden-medical', 'medical/Alexis': 'alexis-medical',
   'medical/Tracy': 'tracy-medical', 'medical/Todd': 'todd-medical',
   'hobbies/Aiden': 'aiden-recreation', 'hobbies/Alexis': 'alexis-recreation',
-  'hobbies/Todd': 'command-photos/off-road-jaguar-chrome.jpg', 'hobbies/Tracy': 'assets/family/volunteering.webp', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
+  'hobbies/Todd': 'command-photos/off-road-jaguar-chrome.jpg', 'hobbies/Tracy': 'assets/hobbies/tracy-garden.svg', 'hobbies/Zach': 'assets/hobbies/zach-trail.svg', 'identification/Alexis': 'alexis-id', 'identification/Aiden': 'assets/family/identification.webp',
   'family/Aiden/01 School & IEP': 'classroom', 'family/Alexis/01 School': 'alexis-school',
   'family/Aiden/01 School & IEP/Early Childhood Special Education': 'early-childhood',
   'family/Aiden/01 School & IEP/Preschool Screening & Assessment': 'preschool',
@@ -260,11 +260,54 @@
   });
  }
 
- async function render() {
-  if (area === 'hobbies') {
-   window.thFamilyRecreationSearchEntries = undefined;
-   document.getElementById('hobby-portrait-status').textContent='';
-  }
+ function renderRecreationPeople(cards,status,clubsReady){
+  const members=['Todd','Aiden','Alexis','Zach','Tracy'];
+  let peopleFolders;
+  const loadPeople=()=>peopleFolders??=readPeopleFolders().catch(error=>{peopleFolders=undefined;throw error;});
+  const loaders=members.map(name=>{
+   let pending;
+   return ()=>pending??=(async()=>{
+    const readRecords=async()=>{
+     const original=(await loadPeople()).find(file=>file.folder&&file.name.trim().toLowerCase()===name.toLowerCase());
+     return recordsFor(name,original?await thDriveRecords.children(original):[]);
+    };
+    if(name!=='Todd')return (await readRecords()).filter(Boolean).map(record=>decorate(record,[area,name]));
+    const [records,clubs]=await Promise.allSettled([readRecords(),clubsReady]);
+    if(records.status==='rejected'||clubs.status==='rejected')pending=undefined;
+    const available=records.status==='fulfilled'?records.value:await recordsFor(name,[]);
+    return [...available.filter(Boolean).map(record=>decorate(record,[area,name])),
+     ...(clubs.status==='fulfilled'?window.thRecreationSearchEntries||[]:[])];
+   })().catch(error=>{pending=undefined;throw error;});
+  });
+  const entries=members.map((name,index)=>{
+   const card=personCard(name,undefined,loaders[index]);
+   card.classList.add('recreation-person');
+   card.dataset.person=name;
+   appendPortrait(card,name,new Map());
+   return card;
+  });
+  renderHideablePeople(cards,entries);
+  status.textContent='';
+  window.thLoadRecreationSearchEntries=async()=>{
+   const results=await Promise.allSettled(loaders.map(load=>load()));
+   return {entries:results.flatMap(result=>result.status==='fulfilled'?result.value:[]),
+    partial:results.some(result=>result.status==='rejected')};
+  };
+  const portraitStatus=document.getElementById('hobby-portrait-status');
+  portraitStatus.textContent='';
+  void loadPortraits(()=>{
+   if(cards.isConnected)portraitStatus.textContent='Profile photos could not load. Use Refresh to try again.';
+  }).then(portraits=>{
+   if(!cards.isConnected)return;
+   for(const card of entries){
+    if(!portraits.has(thPersonPortraits.nameKey(card.dataset.person)))continue;
+    card.querySelector('.recreation-portrait')?.remove();
+    appendPortrait(card,card.dataset.person,portraits);
+   }
+  });
+ }
+
+ async function render(clubsReady) {
   mount.hidden = false;
   mount.replaceChildren();
   const heading = document.createElement('h2');
@@ -276,11 +319,10 @@
   cards.className = 'legal-cards';
   mount.append(heading, status, cards);
   if(area==='medical')return renderMedicalPeople(cards,status);
+  if(area==='hobbies')return renderRecreationPeople(cards,status,clubsReady);
   try {
-   const portraitRead=area==='hobbies'?loadPortraits(()=>{document.getElementById('hobby-portrait-status').textContent='Profile photos could not load. Use Refresh to try again.';}):Promise.resolve(new Map());
-   const [personFolders,portraits]=await Promise.all([readPeopleFolders(),portraitRead]);
-   const members = ['education', 'identification'].includes(area) ? people.slice(0, 2)
-    : area === 'hobbies' ? ['Todd','Aiden','Alexis','Zach','Tracy'] : people;
+   const personFolders=await readPeopleFolders();
+   const members = ['education', 'identification'].includes(area) ? people.slice(0, 2) : people;
    const results = await Promise.allSettled(members.map(async name => {
     const original = personFolders.find(file => file.folder && file.name === name);
     const files = !original || (area === 'medical' && name === 'Todd') ? [] : await thDriveRecords.children(original);
@@ -291,22 +333,11 @@
      section.append(...records.map(record => thDriveRecords.card({...record, cardLabel: 'Browse school records'})));
      return section;
     }
-    if (area === 'hobbies') {
-     if(name==='Todd')records.push(...(window.thRecreationSearchEntries||[]));
-     const card=personCard(name,original,records);
-     card.classList.add('recreation-person');
-     card.dataset.person=name;
-     appendPortrait(card,name,portraits);
-     return {card,records};
-    }
     if (records.length) return {card:personCard(name, original, records), records};
     throw Error('Collection unavailable.');
    }));
    const available = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
-   if (area === 'hobbies') {
-    renderHideablePeople(cards,available.map(entry=>entry.card));
-    window.thFamilyRecreationSearchEntries=available.flatMap(entry=>entry.records);
-   } else cards.replaceChildren(...available.map(entry=>entry.card||entry));
+   cards.replaceChildren(...available.map(entry=>entry.card||entry));
    const unavailable = members.filter((_, i) => results[i].status === 'rejected');
    status.textContent = unavailable.length ? 'Could not load collections for ' + unavailable.join(', ') + '.' : '';
   } catch {
@@ -351,8 +382,9 @@
  window.thStart = async (...args) => {
   if (area === 'family') return render();
   if(area==='hobbies'){
-   try{await start(...args)}finally{await render()}
-   return;
+   const clubsReady=start(...args);
+   await render(clubsReady);
+   return clubsReady;
   }
   await Promise.all([start(...args), render()]);
   if (area === 'medical' && ['#weight-title', '#medical-about', '#medical-browse'].includes(location.hash)) {
