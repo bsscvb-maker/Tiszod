@@ -5,7 +5,7 @@
  let rows=[],filtered=[],page=1;const pageSize=100;
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const numeric=x=>x===''||x==null?null:Number(x),money=x=>x==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(x);
- function message(text,error=false){$('history-status').textContent=text;$('history-status').classList.toggle('history-error',error)}
+ function message(text,error=false){const status=$('history-status');status.textContent=text;status.hidden=!text;status.classList.toggle('history-error',error)}
  function reset(){for(const [id,value] of Object.entries({'history-source':config.defaultSource,'history-year':'','history-category':'','history-direction':'','history-review':'','history-start':'','history-end':'','history-search':'','history-sort':'date-desc'}))$(id).value=value;page=1;render()}
  function options(id,items,label){$(id).innerHTML=`<option value="">${label}</option>`+items.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
  window.thStart=async()=>{
@@ -14,7 +14,7 @@
    if(data[0]?.[0]!=='ID')throw new Error('The history register headers could not be read.');
    rows=data.slice(1).filter(r=>r[0]).map(r=>({id:r[0],date:r[1]||'',description:r[2]||'',category:r[3]||'',reference:r[4]||'',withdrawal:numeric(r[5]),deposit:numeric(r[6]),net:numeric(r[7]),balance:numeric(r[8]),sourceType:r[9]||'',file:r[10]||'',sourceRow:r[11],comments:r[12]||'',flag:r[13]||'',originalDate:r[14]||'',raw:r[15]||'',kind:r[16]||'Transaction'}));
    options('history-source',[...new Set(rows.map(r=>r.file))],'All sources (may overlap)');options('history-year',[...new Set(rows.filter(r=>r.date).map(r=>r.date.slice(0,4)))].sort().reverse(),'All years');options('history-category',[...new Set(rows.map(r=>r.category).filter(Boolean))].sort(),'All categories');
-   reset();message(`${rows.length.toLocaleString()} source rows loaded from your private workbook. History registers do not change your live Checking or Savings balances.`);$('th-connection').textContent='Private workbook connected';
+   reset();message('');$('th-connection').textContent='Private workbook connected';
   }catch(e){message(e.message,true);throw e}finally{$('history-refresh').disabled=false}
  };
  function amountQuery(text){
@@ -26,7 +26,7 @@
   const source=$('history-source').value,year=$('history-year').value,category=$('history-category').value,direction=$('history-direction').value,review=$('history-review').value,start=$('history-start').value,end=$('history-end').value,query=$('history-search').value.trim().toLowerCase();
   const exactAmount=amountQuery(query);
   const matchesQuery=r=>!query||(exactAmount!==null?[r.withdrawal,r.deposit].some(v=>v!==null&&Math.abs(Math.round(v*100))===exactAmount):[r.description,r.category,r.reference,r.comments,r.flag].join(' ').toLowerCase().includes(query));
-  const included=rows.filter(r=>!source||r.file===source),dates=included.filter(r=>r.date).map(r=>r.date).sort();$('history-coverage').textContent=dates.length?`Source coverage: ${dates[0]} to ${dates.at(-1)} · ${included.length.toLocaleString()} rows${included.some(r=>!r.date)?' · Includes rows with dates needing review':''}`:'No dated rows in this selection.';
+  const included=rows.filter(r=>!source||r.file===source);
   $('history-overlap').hidden=!(bank==='dollar'&&!source);
   filtered=included.filter(r=>(!year||r.date.startsWith(year))&&(!category||r.category===category)&&(!start||r.date&&r.date>=start)&&(!end||r.date&&r.date<=end)&&matchesQuery(r)&&(!direction||(r.kind!=='Opening balance'&&(direction==='in'?r.deposit>0:direction==='out'?r.withdrawal>0:r.withdrawal>0&&r.deposit>0)))&&(!review||(review==='flagged'?Boolean(r.flag):review==='date'?!r.date:review==='both'?r.withdrawal>0&&r.deposit>0:r.kind==='Opening balance')));
   const sort=$('history-sort').value;filtered.sort((a,b)=>{if(sort==='source')return a.file.localeCompare(b.file)||Number(a.sourceRow)-Number(b.sourceRow);if(sort==='description')return a.description.localeCompare(b.description)||a.date.localeCompare(b.date);if(sort==='amount-desc')return (b.net??0)-(a.net??0);if(!a.date||!b.date)return Boolean(b.date)-Boolean(a.date);return (sort==='date-asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date))||a.file.localeCompare(b.file)||Number(a.sourceRow)-Number(b.sourceRow)});

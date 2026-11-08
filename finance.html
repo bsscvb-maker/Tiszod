@@ -11,7 +11,7 @@
 @media(min-width:1000px){
  .finance-landing [data-finance-view="finance"]{grid-template-columns:repeat(5,minmax(0,1fr))}
  .finance-landing [data-finance-view="accounts"]{grid-template-columns:repeat(3,minmax(0,1fr))}
- .finance-landing [data-finance-view="banking"]{grid-template-columns:repeat(2,minmax(0,1fr));max-width:880px}
+ .finance-landing [data-finance-view="banking"]{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 </style></head><body data-th-page="finance">
 
@@ -37,6 +37,7 @@
  <nav class="portal-section-cards finance-collection-cards" aria-label="Banking collections" data-finance-view="banking" hidden>
   <a class="tile" href="checking.html"><img class="portal-section-cover" src="assets/career/folders/pc-payment-terminal.webp" alt=""><div class="portal-section-card-body"><strong>Checking</strong><span>Open your current checking dashboard.</span></div></a>
   <a class="tile" href="savings.html"><img class="portal-section-cover" src="assets/career/folders/iqvia-retirement.jpg" alt=""><div class="portal-section-card-body"><strong>Savings</strong><span>Open your current savings dashboard.</span></div></a>
+  <a class="tile" href="investments.html"><img class="portal-section-cover" src="assets/career/folders/iqvia-archive-benefits.jpg" alt=""><div class="portal-section-card-body"><strong>Investments</strong><span>Browse investment records and documents.</span></div></a>
  </nav>
  <nav class="portal-section-cards finance-collection-cards" aria-label="Bank accounts" data-finance-view="accounts" hidden>
   <a class="tile" href="dollar-bank-transactions.html"><img class="portal-section-cover" src="assets/career/folders/iqvia-csc-building.jpg" alt=""><div class="portal-section-card-body"><strong>Dollar Bank</strong><span>Browse Dollar Bank transaction history.</span></div></a>
@@ -47,7 +48,7 @@
 <script>
 (() => {
  const views = {
-  banking: ['Banking', 'Open your existing checking and savings dashboards.'],
+  banking: ['Banking', 'Open your checking, savings, and investment records.'],
   accounts: ['All Bank Accounts', 'Browse transactions by institution.']
  };
  const view = new URLSearchParams(location.search).get('view');
