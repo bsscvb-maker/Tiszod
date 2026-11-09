@@ -133,8 +133,9 @@ function scannerMaterial(THREE,options,edge,tint=0x35c6ff){
    '#include <emissivemap_fragment>',
    `#include <emissivemap_fragment>
    float grazing=1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0);
-   totalEmissiveRadiance+=scannerTint*scannerEdge*
-       (0.37*pow(grazing,2.1)+1.55*pow(grazing,8.0));`
+   vec3 scannerIce=mix(scannerTint,vec3(0.55,0.87,1.0),0.49);
+   totalEmissiveRadiance+=scannerEdge*(
+      scannerTint*0.44*pow(grazing,2.3)+scannerIce*1.40*pow(grazing,9.0));`
   );
  };
  return material;
@@ -157,11 +158,11 @@ function getAtlas(THREE){
   if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
    throw Error('Anatomy atlas layers are incomplete.');
   }
-  const atlasMuscle=scannerMaterial(THREE,{color:0x814a47,roughness:.41,metalness:.17},.91);
+  const atlasMuscle=scannerMaterial(THREE,{color:0x69424b,roughness:.38,metalness:.19},1.03);
   const atlasWarmFiber=scannerMaterial(THREE,{
    color:0xa76047,emissive:0x8c3515,emissiveIntensity:.19,roughness:.41,metalness:.15
-  },.72);
-  const atlasFascia=scannerMaterial(THREE,{color:0x5e809f,roughness:.40,metalness:.24},1.08);
+  },.91);
+  const atlasFascia=scannerMaterial(THREE,{color:0x4d7398,roughness:.38,metalness:.24},1.16);
   const atlasBone=scannerMaterial(THREE,{color:0x8caec7,roughness:.48,metalness:.15},.75);
   const atlasCutaway=scannerMaterial(THREE,{
    color:0x735872,roughness:.42,transparent:true,opacity:.30,depthWrite:false
@@ -255,7 +256,7 @@ window.thMedical3D={
    };
    const handMaterial=scannerMaterial(THREE,{
     vertexColors:true,roughness:.54,metalness:.09
-   },.82,0x69ceff);
+   },1.02,0x69ceff);
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
@@ -606,7 +607,11 @@ window.thMedical3D={
    renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',up);
    renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(5.3,Math.min(11,state.zoom+e.deltaY*.008))},{passive:false});
    state.reset=()=>{state.yaw=0;state.pitch=0;state.zoom=7.2};
-   state.setQuality=quality=>{state.quality=['low','auto','high'].includes(quality)?quality:'auto';renderer.setPixelRatio(pixelRatio());resize()};
+   state.setQuality=quality=>{
+    state.quality=['low','auto','high'].includes(quality)?quality:'auto';
+    stage.dataset.scannerQuality=state.quality;
+    renderer.setPixelRatio(pixelRatio());resize();
+   };
    state.rotate=(delta)=>{state.yaw+=delta};
    state.zoomBy=(delta)=>{state.zoom=Math.max(5.3,Math.min(11,state.zoom+delta))};
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
