@@ -44,7 +44,7 @@
   let records = [], weights = [], review = {}, key = '', limit = 30, visitFilter = '';
   let workbook, workbookWeights = [], manualWeights = [], browserWeights = [], folderSummaries = {};
 
-  async function list(query) {
+  async function list(query, orderBy = 'folder,name_natural') {
     const files = [];
     let pageToken;
     do {
@@ -52,7 +52,7 @@
       const params = new URLSearchParams({
         q: 'trashed = false and (' + query + ')', pageSize: '100',
         fields: 'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',
-        supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', orderBy: 'folder,name_natural'
+        supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', orderBy
       });
       if (pageToken) params.set('pageToken', pageToken);
       const response = await fetch('https://www.googleapis.com/drive/v3/files?' + params, {
@@ -412,7 +412,36 @@
         if(!response.ok)throw Error('Private source could not load.');
         return response.json();
       }
-      window.thMedicalAppleHealth?.connect(()=>readToddSource(appleHealthFilename));
+      window.thMedicalAppleHealth?.connect(async () => {
+        const roots = await list("mimeType = '" + folderMime + "' and name = 'Health Auto Export' and 'root' in parents");
+        if (roots.length > 1) throw Error('More than one Health Auto Export folder was found.');
+        const folders = roots.length ? (await children(roots[0].id))
+          .filter(file => file.folder && file.name === 'New Folder') : [];
+        if (folders.length > 1) throw Error('More than one export destination was found.');
+        if (!folders.length) return readToddSource(appleHealthFilename);
+
+        const files = await list("'" + escapeQuery(folders[0].id) + "' in parents and name contains 'HealthAutoExport-'",
+          'name desc,modifiedTime desc');
+        const daily = new Map();
+        for (const file of files) {
+          if (!file.folder && /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/.test(file.name) && !daily.has(file.name)) {
+            daily.set(file.name, file);
+          }
+          if (daily.size === 7) break;
+        }
+        if (!daily.size) return readToddSource(appleHealthFilename);
+
+        const exports = await Promise.all([...daily.values()].map(async file => {
+          const response = await thDriveFetch(file.id, {cache:'no-store'});
+          if (!response.ok) throw Error('Daily Apple Health export could not load.');
+          return response.json();
+        }));
+        const current = window.thMedicalAppleHealth.summarize(exports);
+        const previous = await readToddSource(appleHealthFilename);
+        const types = new Set(current.metrics.map(row => row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')));
+        return {...current, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
+          !types.has(row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')))]};
+      });
       await thMedicalAbout.start({
         key, list,
         compositionSource:()=>readToddSource(compositionFilename),

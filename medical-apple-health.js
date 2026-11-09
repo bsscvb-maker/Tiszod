@@ -36,6 +36,50 @@
       ? {dateStyle:'medium',timeZone:'UTC'}
       : {dateStyle:'medium',timeStyle:'short',timeZone:'America/New_York'}).format(parsed);
   };
+  const exportTypes = {
+    blood_oxygen: 'OxygenSaturation',
+    oxygen_saturation: 'OxygenSaturation',
+    heart_rate_variability: 'HeartRateVariabilitySDNN',
+    heart_rate_variability_sdnn: 'HeartRateVariabilitySDNN',
+    weight_body_mass: 'BodyMass',
+    walking_running_distance: 'DistanceWalkingRunning'
+  };
+  const metricType = name => exportTypes[name] || name.split('_').map(word => word[0]?.toUpperCase() + word.slice(1)).join('');
+  function summarize(exports) {
+    const latest = new Map();
+    for (const file of exports) {
+      if (!Array.isArray(file?.data?.metrics)) throw Error('Unrecognized Health Auto Export metrics file.');
+      for (const metric of file.data.metrics) {
+        if (typeof metric?.name !== 'string' || !Array.isArray(metric.data)) continue;
+        const type = metricType(metric.name);
+        for (const sample of metric.data) {
+          const date = sample?.date || sample?.start;
+          const time = Date.parse(String(date).replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2})(\d{2})/, '$1T$2$3:$4'));
+          if (!Number.isFinite(time) || time <= (latest.get(type)?.time ?? -Infinity)) continue;
+          const pressure = Number.isFinite(sample.systolic) && Number.isFinite(sample.diastolic);
+          const amount = sample.qty ?? sample.Avg ?? sample.totalSleep;
+          const value = pressure ? sample.systolic + '/' + sample.diastolic : sample.value ?? amount;
+          const details = [
+            ['Duration', sample.value != null ? sample.qty : undefined, metric.units],
+            ['Minimum', sample.Min, metric.units],
+            ['Maximum', sample.Max, metric.units],
+            ['Meal timing', sample.mealTime],
+            ['Food', sample.foodType]
+          ].filter(([, detail]) => detail != null).map(([label, value, unit]) => ({label, value, unit}));
+          if (value == null) {
+            for (const [label, count] of Object.entries(sample)) {
+              if (Number.isFinite(count)) details.push({label, value: count, unit: metric.units});
+            }
+            if (!details.length) continue;
+          }
+          latest.set(type, {type, date, time, value, details, source: sample.source,
+            unit: sample.value == null ? metric.units : '',
+            kind: type === 'SleepAnalysis' && sample.value != null ? 'Sleep segment' : 'Latest sample'});
+        }
+      }
+    }
+    return {metrics: [...latest.values()], exportCount: exports.length};
+  }
   const shortType = type => String(type || '').replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '');
   const words = text => String(text || '').replace(/^HK(?:CategoryValue|WorkoutActivityType)/, '')
     .replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2');
@@ -60,7 +104,7 @@
   function render() {
     const rows = Array.isArray(imported?.metrics) ? imported.metrics : [];
     status.textContent = error ? 'Could not load the private export. Reopen Apple Health to retry.'
-      : imported ? 'Private Apple Health export · ' + rows.length + ' metric and event types'
+      : imported ? 'Private Apple Health export · ' + rows.length + ' metric and event types' + (imported.exportCount ? ' · ' + imported.exportCount + ' recent Drive exports' : '')
       : privateRead ? 'Loading private Apple Health export…' : 'No private Apple Health export has been imported yet.';
     const summaries = favorites.flatMap(type => {
       const row = rows.find(entry => shortType(entry.type) === type);
@@ -104,6 +148,7 @@
   function route() {
     const active = location.hash === '#medical-apple-health';
     const leaving = !active && dashboard.hasAttribute('data-apple-health');
+    if (leaving) loaded = false;
     dashboard.toggleAttribute('data-apple-health', active);
     panel.hidden = !active;
     if (active) link.setAttribute('aria-current','page');
@@ -125,6 +170,7 @@
   }
   window.addEventListener('hashchange',route);
   window.thMedicalAppleHealth = {
+    summarize,
     connect(reader) {readPrivate = reader;loaded = false;route();},
     attachScanner(figure, home, vitals) {
       if (scanner && scanner.parentElement === scannerSlot) scanner.remove();
