@@ -677,3 +677,16 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   --system-top:8%;--system-height:80%;
 }
 .medical-scanner-v2[data-system="fat"] {--system-color:#ffc957}
+
+/* Keep open scanner controls from changing the desktop dashboard grid height. */
+@media(min-width:1101px){
+  .medical-command-stage>.medical-scanner:not(:fullscreen,.medical-3d-expanded) .medical-scanner-tools[open]{position:static;padding:0;background:none;border:0}
+  .medical-command-stage>.medical-scanner:not(:fullscreen,.medical-3d-expanded) .medical-scanner-tools[open]>.medical-scanner-options{
+    position:absolute;z-index:6;inset:auto 0 25px;max-height:75%;overflow:auto;margin:0;padding:8px;
+    background:#0b2237;border:1px solid #286987;border-radius:10px;
+  }
+}
+.medical-scanner-options>*+*{margin-top:7px}
+#medical-current-medications .medical-regimen{grid-template-columns:repeat(auto-fit,minmax(min(100%,112px),1fr))}
+#medical-current-medications .medical-regimen-copy{width:100%;min-width:0}
+#medical-current-medications .medical-regimen-copy :is(strong,p,span){white-space:normal;overflow-wrap:anywhere}

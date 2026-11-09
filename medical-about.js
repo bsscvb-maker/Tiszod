@@ -388,22 +388,6 @@
     )), ...composition];
   }
 
-  function comparison(label,current,prior,unit='',preferred=0) {
-    const item=make('div'), values=make('dd');
-    item.className='medical-measurement-comparison';
-    const format=value=>Number.isFinite(value)?rounded(value)+unit:'Not recorded';
-    values.append(make('span','Current: '+format(current)),make('span','Prior: '+format(prior)));
-    if(Number.isFinite(current)&&Number.isFinite(prior)){
-      const delta=rounded(rounded(current)-rounded(prior)),direction=Math.sign(delta);
-      const change=make('span',direction?(direction>0?'↑ Up ':'↓ Down ')+Math.abs(delta)+unit:'— No change');
-      change.className='medical-measurement-change';
-      if(direction&&preferred)change.dataset.trend=direction===preferred?'positive':'negative';
-      values.append(change);
-    }
-    item.append(make('dt',label),values);
-    return item;
-  }
-
   let scannerPaused=false,scannerLayer='anatomy',scannerSystem='';
   function bodyScanner(){
     const figure=make('figure'),header=make('div'),stage=make('div');
@@ -463,7 +447,9 @@
     const atlasLink=make('a','Écorché');atlasLink.href='https://github.com/Charleeh/ecorche';
     const license=make('a','CC BY-SA 4.0');license.href='https://creativecommons.org/licenses/by-sa/4.0/';
     credits.append(atlasLink,document.createTextNode(' · BodyParts3D (DBCLS) and Z-Anatomy (Gauthier Kervyn) · '),license);
-    tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail,credits);
+    const options=make('div');options.className='medical-scanner-options';
+    options.append(header,controls,moveControls,directions,detail,credits);
+    tools.append(make('summary','Scanner controls'),options);
     figure.append(stage,tools);
     if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);state?.setSystem?.(figure.dataset.system);if(state)state.paused=scannerPaused;if(!state?.rotate)directions.textContent='3D is unavailable on this device. Use Skin, Anatomy or X-ray to change the illustration.'});
     figure.addEventListener('medical-system',event=>threeState?.setSystem?.(event.detail));
@@ -492,7 +478,7 @@
       stamp.textContent='Profile as of '+label;
     }
     const scanner=bodyScanner();
-    const grid=make('dl'),height=heightInches(profile.height);
+    const height=heightInches(profile.height);
     const metricsFor=(key,rows=composition)=>rows.filter(row=>Number.isFinite(row[key])).slice(0,2);
     const weightRows=weighIns.filter(row=>Number.isFinite(asPounds(row))).slice(-2).reverse();
     const weights=weightRows.map(asPounds);
@@ -503,29 +489,6 @@
       bodyFat:metricsFor('bodyFat').map(row=>row.bodyFat),muscle:metricsFor('muscle').map(row=>row.muscle),
       water:metricsFor('water').map(row=>row.water),boneMass:metricsFor('boneMass').map(row=>row.boneMass)
     };
-    for(const [label,value] of [['Height',profile.height],['Age',profile.age]]){
-      const item=make('div');item.append(make('dt',label),make('dd',value||'Needs confirmation'));grid.append(item);
-    }
-    const measurements=make('div');measurements.className='medical-measurements';
-    measurements.append(make('h3','Vitals'),grid);
-    if(composition.length||weights.some(Number.isFinite)){
-      const readings=make('dl');
-      for(const [label,key,unit,preferred] of [
-        ['Scale weight','weight',' lb',-1],['Scale BMI','bmi','',-1],
-        ['Body fat','bodyFat','%',-1],['Muscle','muscle','%',1],['Water','water','%',0],['Bone mass','boneMass','%',0]
-      ]){
-        const [current,prior]=pairs[key];
-        readings.append(comparison(label,current,prior,unit,preferred));
-      }
-      const dates=make('p');dates.className='medical-measurement-dates';
-      for(const [index,label] of ['Current','Prior'].entries()){
-        const row=composition[index];
-        if(row)dates.append(make('span',label+': '+(row.date?.length===10?row.date:formatTime.format(measurementTime(row)))));
-      }
-      const updated=Date.parse(compositionSource?.updatedAt);
-      if(Number.isFinite(updated))dates.append(make('span','Updated: '+formatTime.format(updated)));
-      measurements.append(make('h3','Body composition'),dates,readings);
-    }
     // Interactive mission-control overview, using only existing recorded measurements.
     const dashboard=make('section');dashboard.className='medical-command-dashboard';
     const metrics=make('div');metrics.className='medical-command-metrics';
@@ -777,10 +740,7 @@
     right.append(overviewCard,middle,lower);
     hero.append(stage,right);
     dashboard.append(hero,panels);
-    const details=make('details');details.className='medical-command-details';
-    const summary=make('summary','Detailed measurements and comparisons');
-    details.append(summary,measurements);
-    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Current Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard,details);
+    const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Current Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
