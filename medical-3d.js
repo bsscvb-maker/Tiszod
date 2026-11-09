@@ -223,7 +223,7 @@ window.thMedical3D={
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
    const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
    const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
-   const footMaterial=scannerMaterial(THREE,{color:0x557fa7,emissive:0x103658,emissiveIntensity:.36,roughness:.45},1.18);
+   const footMaterial=scannerMaterial(THREE,{color:0x668ba7,emissive:0x0a2034,emissiveIntensity:.22,roughness:.45},.86);
    const torsoAnatomy=scannerMaterial(THREE,{
     color:0x284670,roughness:.45,transparent:true,opacity:.42,depthWrite:false
    },.8);
@@ -237,7 +237,7 @@ window.thMedical3D={
    let atlas,atlasSkeleton,atlasDeep,atlasMuscles,sculptedHead;
    const atlasFaceMeshes=[],atlasJointMeshes=[],atlasHandMeshes=[];
    let handShell,footShell;
-   const wristCuts=[],ankleCuts=[];
+   const wristCuts=[],ankleCuts=[],footFits=[];
    const jointGlow=scannerMaterial(THREE,{
     color:0x327fba,emissive:0x0b4d8d,emissiveIntensity:.35,
     transparent:true,opacity:.58,depthWrite:false,roughness:.44
@@ -486,7 +486,13 @@ window.thMedical3D={
     const detailed=Boolean(atlas)&&mode!=='skin';
     surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
     feet.visible=!footShell&&(mode!=='scan'||!detailed);
-    if(footShell){footShell.visible=mode!=='scan'||!detailed;footShell.children.forEach(mesh=>mesh.material=mode==='skin'?skin:mode==='scan'?scan:footMaterial);}
+    if(footShell){
+     footShell.visible=mode!=='scan'||!detailed;
+     for(const {mesh,original,fitted} of footFits){
+      mesh.geometry=detailed&&mode==='anatomy'?fitted:original;
+      mesh.material=mode==='skin'?skin:mode==='scan'?scan:footMaterial;
+     }
+    }
     const selected=state.system;
     const whole=selected==='hydration'||selected==='fat';
     organs.visible=mode!=='skin'&&!whole&&selected!=='muscle'&&selected!=='bone';
@@ -572,7 +578,7 @@ window.thMedical3D={
      node.geometry.computeBoundingBox();
      const transform=new THREE.Matrix4().multiplyMatrices(inverseBody,node.matrixWorld);
      const bounds=node.geometry.boundingBox.clone().applyMatrix4(transform);
-     if(bounds.min.y<-1.97)ankleCuts.push(clipBelow(node,transform,-1.97));
+     if(bounds.min.y<-1.99)ankleCuts.push(clipBelow(node,transform,-1.99));
     });
     atlasMuscles.traverse(node=>{
      if(!node.isMesh)return;
@@ -624,6 +630,18 @@ window.thMedical3D={
      }
      geometry.dispose();
      remapMeshes(THREE,footShell);
+     for(const mesh of footShell.children){
+      const original=mesh.geometry,fitted=original.clone();
+      const position=fitted.getAttribute('position');
+      for(let i=0;i<position.count;i++){
+       // Blend the cuff into the atlas ankle while retaining the foot's outline.
+       const cuff=smoothRange(-2.11,-1.88,position.getY(i));
+       position.setX(i,position.getX(i)-.024-.055*cuff);
+       position.setZ(i,position.getZ(i)-.036-.101*cuff);
+      }
+      fitted.computeVertexNormals();fitted.computeBoundingBox();fitted.computeBoundingSphere();
+      footFits.push({mesh,original,fitted});
+     }
      body.add(footShell);
      state.setMode(state.mode);
     }).catch(error=>{if(stage.isConnected)console.warn('Foot mesh unavailable; using fallback.',error);});
@@ -680,7 +698,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();[...wristCuts,...ankleCuts].forEach(cut=>geometries.add(cut.clipped));scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();[...wristCuts,...ankleCuts].forEach(cut=>geometries.add(cut.clipped));footFits.forEach(({original,fitted})=>{geometries.add(original);geometries.add(fitted)});scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     const elapsed=Math.min((t-lastFrame)/1000,.1);
