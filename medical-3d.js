@@ -149,6 +149,43 @@ function scannerMaterial(THREE,options,edge,tint=0x35c6ff){
  };
  return material;
 }
+function muscleMaterial(THREE,options,edge){
+ const material=scannerMaterial(THREE,options,edge);
+ const lighting=material.onBeforeCompile;
+ material.onBeforeCompile=shader=>{
+  lighting(shader);
+  shader.vertexShader='attribute vec3 scannerFiberCoords;\nvarying vec3 scannerFiber;\n'+shader.vertexShader.replace(
+   '#include <begin_vertex>','#include <begin_vertex>\nscannerFiber=scannerFiberCoords;'
+  );
+  shader.fragmentShader='varying vec3 scannerFiber;\n'+shader.fragmentShader.replace(
+   '#include <color_fragment>',
+   `#include <color_fragment>
+   float drift=0.6*sin(scannerFiber.z*11.0+scannerFiber.y*14.0);
+   vec2 grain=scannerFiber.xy*vec2(148.0,121.0)+vec2(drift,-drift);
+   vec2 detail=1.0-smoothstep(vec2(0.5),vec2(2.8),fwidth(grain));
+   float fibers=dot(sin(grain)*detail,vec2(0.5));
+   float bundles=sin(scannerFiber.x*35.0+scannerFiber.y*43.0+0.6*sin(scannerFiber.z*9.0));
+   diffuseColor.rgb*=0.94+0.19*fibers+0.10*bundles;`
+  );
+ };
+ return material;
+}
+function setMuscleFiberCoords(THREE,node){
+ const geometry=node.geometry,positions=geometry.attributes.position;
+ const scale=node.getWorldScale(new THREE.Vector3());
+ geometry.computeBoundingBox();
+ const size=geometry.boundingBox.getSize(new THREE.Vector3()).multiply(scale);
+ // Run the fibers along the longest dimension of each individual muscle.
+ const [length,width,depth]=[0,1,2].sort((a,b)=>size.getComponent(b)-size.getComponent(a));
+ const point=new THREE.Vector3(),coords=new Float32Array(positions.count*3);
+ for(let i=0;i<positions.count;i++){
+  point.fromBufferAttribute(positions,i).multiply(scale);
+  coords[i*3]=point.getComponent(width);
+  coords[i*3+1]=point.getComponent(depth);
+  coords[i*3+2]=point.getComponent(length);
+ }
+ geometry.setAttribute('scannerFiberCoords',new THREE.BufferAttribute(coords,3));
+}
 function getAtlas(THREE){
  return atlasPromise??=(async()=>{
   const [{GLTFLoader},{MeshoptDecoder},response]=await Promise.all([
@@ -167,14 +204,14 @@ function getAtlas(THREE){
   if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
    throw Error('Anatomy atlas layers are incomplete.');
   }
-  const atlasMuscle=scannerMaterial(THREE,{color:0x523b50,roughness:.38,metalness:.19},1.03);
-  const atlasWarmFiber=scannerMaterial(THREE,{
-   color:0x965a4a,emissive:0xa13d18,emissiveIntensity:.23,roughness:.41,metalness:.15
+  const atlasMuscle=muscleMaterial(THREE,{color:0x88443e,roughness:.63,metalness:.03},.91);
+  const atlasWarmFiber=muscleMaterial(THREE,{
+   color:0xae5d4e,emissive:0x923e2c,emissiveIntensity:.12,roughness:.59,metalness:.03
   },.91);
   const atlasFascia=scannerMaterial(THREE,{color:0x4a86ad,roughness:.34,metalness:.24},1.16);
   const atlasBone=scannerMaterial(THREE,{color:0x8caec7,roughness:.48,metalness:.15},.75);
-  const atlasCutaway=scannerMaterial(THREE,{
-   color:0x735872,roughness:.42,transparent:true,opacity:.30,depthWrite:false
+  const atlasCutaway=muscleMaterial(THREE,{
+   color:0xa65850,roughness:.62,transparent:true,opacity:.30,depthWrite:false
   },.65);
   scene.traverse(node=>{
    if(!node.isMesh)return;
@@ -190,6 +227,9 @@ function getAtlas(THREE){
   const scale=4.05/size.y,center=box.getCenter(new THREE.Vector3());
   scene.scale.setScalar(scale);scene.position.set(-center.x*scale,-2.11-box.min.y*scale,-center.z*scale);
   remapMeshes(THREE,scene);
+  scene.traverse(node=>{
+   if(node.isMesh&&[atlasMuscle,atlasWarmFiber,atlasCutaway].includes(node.material))setMuscleFiberCoords(THREE,node);
+  });
   return scene;
  })().catch(error=>{atlasPromise=undefined;throw error;});
 }
@@ -269,8 +309,11 @@ window.thMedical3D={
      diffuseColor.rgb+=vec3(0.025,0.051,0.085)*faceSides*front;
      float hairline=1.80+0.092*front-0.035*faceSides+0.006*sin(scannerFace.x*92.0);
      float scalp=smoothstep(hairline-0.009,hairline+0.007,scannerFace.y);
-     float strand=0.5+0.5*sin(scannerFace.x*610.0+scannerFace.z*94.0+sin(scannerFace.y*61.0)*1.8);
-     vec3 croppedHair=mix(vec3(0.019,0.028,0.045),vec3(0.061,0.086,0.115),strand);
+     float sweep=scannerFace.x+0.26*scannerFace.z+0.44*(scannerFace.y-1.81)*(scannerFace.y-1.81);
+     float locks=0.5+0.5*sin(sweep*133.0+sin(scannerFace.z*31.0));
+     float strandPhase=sweep*460.0+1.6*sin(scannerFace.y*21.0+scannerFace.z*16.0);
+     float strand=0.5+0.5*sin(strandPhase)*(1.0-smoothstep(0.8,3.0,fwidth(strandPhase)));
+     vec3 croppedHair=mix(vec3(0.051,0.020,0.008),vec3(0.29,0.125,0.047),0.54*locks+0.46*strand);
      diffuseColor.rgb=mix(diffuseColor.rgb,croppedHair,scalp);
      float mouth=exp(-pow(abs(scannerFace.y-1.628)/0.008,2.0)-pow(abs(scannerFace.x)/0.052,4.0));
      diffuseColor.rgb*=1.0-0.25*mouth*front;
