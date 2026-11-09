@@ -771,7 +771,9 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);
 }
-.medical-apple-overview h3{margin:0 0 8px;color:var(--apple-accent);font-size:1rem}
+.medical-apple-overview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.medical-apple-overview-heading .medical-apple-more{margin-top:0;flex:none}
+.medical-apple-overview h3{margin:0;color:var(--apple-accent);font-size:1rem}
 .medical-apple-overview>p{margin-top:8px;color:#a9c9df;font-size:.78rem}
 .medical-apple-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:6px}
 .medical-apple-summary-grid .medical-apple-reading{padding:7px 9px;border:0;border-radius:7px;background:color-mix(in srgb,var(--apple-tint),#101f30 45%)}

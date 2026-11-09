@@ -146,7 +146,10 @@
       const section = make('section');
       section.className = 'medical-apple-overview';
       section.dataset.category = categoryStyles[index];
-      section.append(make('h3', groups[index][0]));
+      const heading = make('div');
+      heading.className = 'medical-apple-overview-heading';
+      heading.append(make('h3', groups[index][0]));
+      section.append(heading);
       const grid = make('div');
       grid.className = 'medical-apple-summary-grid';
       const entries = highlights[index].flatMap(type => {
@@ -169,13 +172,12 @@
       section.append(grid);
       const records = categories[index].entries;
       if (records.length) {
-        const visibleTypes = new Set(visible.map(entry => shortType(entry.type)));
-        const extra = records.filter(entry => !visibleTypes.has(shortType(entry.type))).length;
-        const button = make('button', extra ? 'See ' + extra + ' more readings' : 'See reading details');
+        const button = make('button', 'Details');
+        button.setAttribute('aria-label', groups[index][0] + ' details');
         button.type = 'button';
         button.className = 'medical-apple-more';
         button.addEventListener('click', () => openRecords(index, records));
-        section.append(button);
+        heading.append(button);
       }
       if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
         section.append(make('p','TisZod readings shown where available'));
