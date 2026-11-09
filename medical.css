@@ -746,3 +746,6 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   #medical-dashboard>.medical-concept-topnav :is(a,button){min-height:48px;font-size:11px}
   #medical-dashboard>.medical-concept-topnav svg{width:18px;height:18px}
 }
+@media(min-width:1101px){
+  .medical-command-dashboard .medical-chart-layout svg{height:155px}
+}

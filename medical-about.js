@@ -584,33 +584,39 @@
       const defs=svg('defs'), gradient=svg('linearGradient',{id:'medical-weight-area',x2:'0',y2:'1'});
       gradient.append(svg('stop',{'stop-color':'#b658ff','stop-opacity':'.74'}),
         svg('stop',{offset:'100%','stop-color':'#6b4acb','stop-opacity':'.04'}));
-      defs.append(gradient);spark.append(defs);
-      for(let index=0;index<=6;index++){
-        const x=34+index*40;
+      defs.append(gradient);
+      function drawPlot(width){
+        const plotLeft=34,plotRight=width-26,plotWidth=plotRight-plotLeft;
+        spark.setAttribute('viewBox','0 0 '+width+' 181');
+        spark.replaceChildren(defs);
+        const divisions=width<300?3:6;
+        for(let index=0;index<=divisions;index++){
+          const x=plotLeft+index*plotWidth/divisions;
 
-        const date=svg('text',{x,y:178,'text-anchor':'middle'});
-        date.textContent=dateFormat.format(first.time+index*(last.time-first.time)/6);
-        spark.append(svg('path',{d:`M${x} 12V162`,class:'medical-chart-grid'}),date);
+          const date=svg('text',{x,y:178,'text-anchor':'middle'});
+          date.textContent=dateFormat.format(first.time+index*(last.time-first.time)/divisions);
+          spark.append(svg('path',{d:`M${x} 12V162`,class:'medical-chart-grid'}),date);
+        }
+        for(let tick=high;tick>=low;tick-=step){
+          const y=162-(tick-low)*150/(high-low);
+          const label=svg('text',{x:2,y:y+4});label.textContent=tick;
+          spark.append(svg('path',{d:`M${plotLeft} ${y}H${plotRight}`,class:'medical-chart-grid'}),label);
+        }
+        const points=series.map(({weight,time},index)=>{
+          const progress=last.time===first.time?index/(series.length-1):(time-first.time)/(last.time-first.time);
+          return [plotLeft+progress*plotWidth,162-(weight-low)*150/(high-low)];
+        });
+        const path=points.map(pair=>pair.join(',')).join(' ');
+        spark.append(svg('polygon',{points:plotLeft+',162 '+path+' '+plotRight+',162',fill:'url(#medical-weight-area)'}),
+          svg('polyline',{points:path,fill:'none',stroke:'#d68aff','stroke-width':'2'}));
+        points.forEach(([cx,cy],index)=>{
+          if(points.length<=24||index===points.length-1)spark.append(svg('circle',{cx,cy,r:index===points.length-1?4:2,fill:'#f0c4ff'}));
+        });
+        const [lastX,lastY]=points.at(-1), labelX=lastX-59,labelY=Math.max(1,lastY-29);
+        const tip=svg('text',{x:labelX+28,y:labelY+14,'text-anchor':'middle',class:'medical-chart-label'});
+        tip.textContent=last.weight.toFixed(1)+' lb';
+        spark.append(svg('rect',{x:labelX,y:labelY,width:57,height:21,rx:5,fill:'#06451f',stroke:'#56cf67'}),tip);
       }
-      for(let tick=high;tick>=low;tick-=step){
-        const y=162-(tick-low)*150/(high-low);
-        const label=svg('text',{x:2,y:y+4});label.textContent=tick;
-        spark.append(svg('path',{d:`M34 ${y}H274`,class:'medical-chart-grid'}),label);
-      }
-      const points=series.map(({weight,time},index)=>{
-        const progress=last.time===first.time?index/(series.length-1):(time-first.time)/(last.time-first.time);
-        return [34+progress*240,162-(weight-low)*150/(high-low)];
-      });
-      const path=points.map(pair=>pair.join(',')).join(' ');
-      spark.append(svg('polygon',{points:'34,162 '+path+' 274,162',fill:'url(#medical-weight-area)'}),
-        svg('polyline',{points:path,fill:'none',stroke:'#d68aff','stroke-width':'2'}));
-      points.forEach(([cx,cy],index)=>{
-        if(points.length<=24||index===points.length-1)spark.append(svg('circle',{cx,cy,r:index===points.length-1?4:2,fill:'#f0c4ff'}));
-      });
-      const [lastX,lastY]=points.at(-1), labelX=lastX-59,labelY=Math.max(1,lastY-29);
-      const tip=svg('text',{x:labelX+28,y:labelY+14,'text-anchor':'middle',class:'medical-chart-label'});
-      tip.textContent=last.weight.toFixed(1)+' lb';
-      spark.append(svg('rect',{x:labelX,y:labelY,width:57,height:21,rx:5,fill:'#06451f',stroke:'#56cf67'}),tip);
       const summary=make('div');summary.className='medical-chart-summary';
       const signed=value=>(value>0?'+':'')+value.toFixed(1);
       const peak=series.reduce((max,row)=>row.weight>max.weight?row:max);
@@ -621,6 +627,14 @@
         make('small',dateFormat.format(last.time)));
       const chart=make('div');chart.className='medical-chart-layout';chart.append(spark,summary);
       const since=make('small','Since '+fullDate.format(first.time));since.className='medical-panel-date';journey.append(since,chart);
+      drawPlot(300);
+      const desktop=matchMedia('(min-width:1101px)');
+      const chartResize=new ResizeObserver(([entry])=>{
+        if(!spark.isConnected){chartResize.disconnect();return;}
+        const {width,height}=entry.contentRect;
+        if(width>0&&height>0)drawPlot(desktop.matches?Math.max(160,Math.round(181*width/height)):300);
+      });
+      chartResize.observe(spark);
     }else journey.append(make('p','More weigh-ins are needed for a trend.'));
     stage.id='medical-body-scan';
     stage.append(systems,scanner);
