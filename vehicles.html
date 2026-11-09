@@ -1000,7 +1000,7 @@ function renderAsset(tab='details'){
  document.getElementById('mustangFuelTab').hidden=!canFuel;
  document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
- const historyUrl='fuel-history.html?v=20261029-desktop2&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
+ const historyUrl='fuel-history.html?v=20261109-mpg-display&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
  const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&canFuel&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
  if(tab==='fuel'&&!canFuel)tab='details';
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
