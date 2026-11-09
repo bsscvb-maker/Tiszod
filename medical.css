@@ -754,9 +754,10 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-health{scroll-margin-top:var(--medical-anchor-offset,150px)}
 .medical-apple-health[hidden]{display:none}
 .medical-apple-health h2,.medical-apple-health p{margin:0}
+.medical-apple-health header:has([role="status"][hidden]){display:none}
 .medical-apple-health header p{margin-top:6px;color:#a9c9df}
 .medical-apple-layout{
-  display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,1fr) minmax(0,1.1fr);
+  display:grid;grid-template-columns:minmax(0,1.35fr) minmax(170px,.7fr) minmax(0,1.35fr);
   gap:14px;align-items:start;margin:14px 0;
 }
 .medical-apple-layout > div{min-width:0;display:grid;gap:10px}
@@ -777,7 +778,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;color:var(--apple-accent);font-size:.8rem}
 .medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
-.medical-apple-scanner .medical-scanner-stage{height:clamp(200px,27vh,320px)}
+.medical-apple-scanner .medical-scanner-stage{height:clamp(130px,17vh,205px)}
 .medical-apple-reading,.medical-apple-groups details{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);color:#e8f7ff;
@@ -787,6 +788,20 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-reading strong{display:block;font-size:1.18rem;overflow-wrap:anywhere}
 .medical-apple-reading dl{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin:8px 0 0;font-size:.8rem}
 .medical-apple-reading dd{margin:0;text-align:right}
+.medical-apple-more,.medical-apple-dialog button{
+  margin-top:8px;padding:6px 10px;border:1px solid var(--apple-accent,#80e9f7);
+  border-radius:7px;background:var(--apple-tint,#102b3a);color:#eef9ff;font:inherit;cursor:pointer;
+}
+.medical-apple-dialog{
+  width:min(920px,calc(100% - 28px));max-height:85dvh;overflow:auto;
+  padding:18px;border:1px solid var(--apple-accent,#80e9f7);border-radius:14px;
+  background:#0b1928;color:#eef9ff;
+}
+.medical-apple-dialog::backdrop{background:#020711b8}
+.medical-apple-dialog form{float:right;margin:0 0 8px 12px}
+.medical-apple-dialog button{margin-top:0}
+.medical-apple-dialog h3{margin:4px 0 8px;color:var(--apple-accent,#80e9f7)}
+.medical-apple-dialog .medical-apple-reading-grid{clear:both}
 .medical-apple-groups{display:grid;gap:9px;margin-bottom:20px}
 .medical-apple-groups details[data-category]{border-color:color-mix(in srgb,var(--apple-accent),#0c1725 68%);background:linear-gradient(100deg,var(--apple-tint),#091624 65%)}
 .medical-apple-groups summary{cursor:pointer;font-weight:700;color:var(--apple-accent,#c5f2ff)}
@@ -799,7 +814,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   #medical-dashboard>.medical-concept-topnav{grid-template-columns:repeat(4,minmax(0,1fr))}
   .medical-apple-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .medical-apple-center{grid-column:1/-1;grid-row:1}
-  .medical-apple-scanner .medical-scanner-stage{height:260px}
+  .medical-apple-scanner .medical-scanner-stage{height:175px}
 }
 @media(max-width:460px){
   .medical-apple-layout{grid-template-columns:minmax(0,1fr)}

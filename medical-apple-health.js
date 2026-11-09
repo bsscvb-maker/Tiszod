@@ -3,6 +3,7 @@
   const panel = document.getElementById('medical-apple-health');
   const scannerSlot = panel.querySelector('.medical-apple-scanner');
   const status = panel.querySelector('[role="status"]');
+  const dialog = panel.querySelector('.medical-apple-dialog');
   const link = dashboard.querySelector('a[href="#medical-apple-health"]');
   const groups = [
     ['Heart & Breathing', /Heart|Oxygen|Respiratory|VO2|BloodPressure|ECG|Electrocardiogram|Atrial/i],
@@ -115,10 +116,25 @@
     }
     return card;
   }
+  const byLabel = (a,b) => String(a.label || a.type).localeCompare(String(b.label || b.type));
+  function openRecords(index, entries) {
+    dialog.dataset.category = categoryStyles[index];
+    dialog.querySelector('h3').textContent = groups[index][0] + ' readings';
+    const intro = dialog.querySelector('.medical-apple-detail-intro');
+    intro.hidden = index !== 3;
+    intro.textContent = index === 3
+      ? 'Steps, distance, and exercise minutes describe activity. Walking speed, step length, and stair measurements describe how you move.'
+      : '';
+    dialog.querySelector('.medical-apple-reading-grid').replaceChildren(
+      ...entries.slice().sort(byLabel).map(entry => tile(entry))
+    );
+    dialog.showModal();
+  }
   function render() {
     const rows = Array.isArray(imported?.metrics) ? imported.metrics : [];
+    status.hidden = Boolean(imported) && !error;
     status.textContent = error ? 'Could not load the private export. Reopen Apple Health to retry.'
-      : imported ? 'Private Apple Health export · ' + rows.length + ' metric and event types' + (imported.exportCount ? ' · ' + imported.exportCount + ' recent Drive exports' : '')
+      : imported ? ''
       : privateRead ? 'Loading private Apple Health export…' : 'No private Apple Health export has been imported yet.';
     const categories = groups.map(([name]) => ({name,entries:[]}));
     for (const row of rows) {
@@ -151,7 +167,16 @@
       grid.append(...visible.map(entry => tile(entry,true)));
       if (!entries.length) grid.append(make('p','No readings available.'));
       section.append(grid);
-      if (entries.length > visible.length) section.append(make('p', (entries.length - visible.length) + ' more in detailed records below'));
+      const records = categories[index].entries;
+      if (records.length) {
+        const visibleTypes = new Set(visible.map(entry => shortType(entry.type)));
+        const extra = records.filter(entry => !visibleTypes.has(shortType(entry.type))).length;
+        const button = make('button', extra ? 'See ' + extra + ' more readings' : 'See reading details');
+        button.type = 'button';
+        button.className = 'medical-apple-more';
+        button.addEventListener('click', () => openRecords(index, records));
+        section.append(button);
+      }
       if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
         section.append(make('p','TisZod readings shown where available'));
       }
@@ -161,15 +186,15 @@
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(4));
     panel.querySelector('.medical-apple-sleep').replaceChildren(overview(2));
     const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
-    const collections = categories.map(({name,entries},index) => {
+    const collections = categories.slice(5).map(({name,entries}) => {
       const detail = make('details');
       detail.dataset.group = name;
-      detail.dataset.category = categoryStyles[index];
+      detail.dataset.category = categoryStyles[5];
       detail.open = openGroups.has(name);
       detail.append(make('summary', name + ' (' + entries.length + ')'));
       const grid = make('div');
       grid.className = 'medical-apple-reading-grid';
-      grid.append(...entries.sort((a,b) => String(a.label || a.type).localeCompare(String(b.label || b.type))).map(entry => tile(entry)));
+      grid.append(...entries.sort(byLabel).map(entry => tile(entry)));
       if (!entries.length) grid.append(make('p', 'No imported records in this group.'));
       detail.append(grid);
       return detail;
@@ -193,6 +218,7 @@
     if (leaving) loaded = false;
     dashboard.toggleAttribute('data-apple-health', active);
     panel.hidden = !active;
+    if (!active && dialog.open) dialog.close();
     if (active) link.setAttribute('aria-current','page');
     else link.removeAttribute('aria-current');
     if (scanner?.isConnected && scannerHome?.isConnected) {
