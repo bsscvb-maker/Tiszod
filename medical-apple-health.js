@@ -15,7 +15,7 @@
   ];
   const categoryStyles = ['heart','body','sleep','activity','nutrition','workouts'];
   const highlights = [
-    ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','VO2Max'],
+    ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','VO2Max','Electrocardiogram','WalkingHeartRateAverage'],
     ['Height','BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'],
     ['SleepAnalysis','AppleSleepingWristTemperature','AppleSleepDurationGoal'],
     ['StepCount','DistanceWalkingRunning','ActiveEnergyBurned','AppleExerciseTime','FlightsClimbed','WalkingSpeed','WalkingStepLength','WalkingSteadiness','AppleWalkingSteadiness'],
@@ -183,30 +183,43 @@
       .filter(({time}) => time >= +cutoff && time <= Date.now())
       .sort((a,b) => b.time - a.time).map(({row}) => row);
     const sessions = recent.filter(row => !workoutMetric(row));
+    const workoutReadings = recent.filter(row => workoutMetric(row) && hasReading(row));
+    const visibleWorkouts = sessions.slice(0,4);
+    const visibleReadings = workoutReadings.slice(0,6);
     const workoutPanel = make('section');
     workoutPanel.className = 'medical-apple-overview';
     workoutPanel.dataset.category = 'workouts';
-    workoutPanel.append(overviewHeading('Recent Workouts',recent,recent.length - Math.min(sessions.length,4),recent.length
+    workoutPanel.append(overviewHeading('Recent Workouts',recent,recent.length - visibleWorkouts.length - visibleReadings.length,recent.length
       ? () => openRecords(5,recent,'Recent Workouts', (a,b) => parseDate(b.date) - parseDate(a.date))
       : null));
     const workouts = make('div');
     workouts.className = 'medical-apple-workout-list';
-    for (const row of sessions.slice(0,4)) {
+    for (const row of visibleWorkouts) {
       const item = make('article');
       const duration = row.details?.find(detail => /^duration$/i.test(detail.label));
       const description = duration ? [duration.value,duration.unit].filter(Boolean).join(' ')
         : [row.value,row.unit].filter(value => value != null && value !== '').join(' ');
       item.append(make('strong',row.label || words(shortType(row.type))),make('time',displayDate(row.date,true)));
-      if (description) item.append(make('span',description));
+      if (description) {
+        const value = description.replace(/^(-?\d+\.\d+)(?=\s|$)/, number => Number(number).toLocaleString('en-US',{maximumFractionDigits:2}));
+        item.append(make('span',value));
+      }
       workouts.append(item);
     }
-    if (sessions.length) {
-      workoutPanel.append(workouts);
-      if (sessions.length < 4 && recent.length > sessions.length) {
-        workoutPanel.append(make('p', 'Workout measurements are included in Details.'));
+    if (visibleWorkouts.length) workoutPanel.append(workouts);
+    if (visibleReadings.length) {
+      workoutPanel.append(make('h4','Workout Measurements'));
+      const readings = make('div');
+      readings.className = 'medical-apple-summary-grid';
+      for (const row of visibleReadings) {
+        const card = tile(row,true);
+        card.append(make('time',displayDate(row.date,true)));
+        readings.append(card);
       }
+      workoutPanel.append(readings);
     }
-    else workoutPanel.append(make('p', recent.length ? 'Recent workout measurements are available in Details.' : imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
+    if (!visibleWorkouts.length && !visibleReadings.length) workoutPanel.append(make('p',
+      imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
     panel.querySelector('.medical-apple-workouts').replaceChildren(workoutPanel);
     const categories = groups.map(([name]) => ({name,entries:[]}));
     for (const row of rows) {
@@ -222,13 +235,15 @@
       const grid = make('div');
       grid.className = 'medical-apple-summary-grid';
       const entries = (highlights[index] || []).flatMap(type => {
-        const matches = categories[index].entries.filter(entry => shortType(entry.type) === type);
+        const matches = categories[index].entries.filter(entry => shortType(entry.type) === type ||
+          (type === 'Electrocardiogram' && /electrocardiogram|\bECG\b/i.test(entry.label || entry.type)));
         const row = scaleReadings.find(entry => entry.type === type)
           || matches.find(entry => entry.kind === 'Daily total')
           || matches[0] || savedVitals.find(entry => entry.type === type);
         return row && hasReading(row) ? [row] : [];
       });
       const shown = new Set(entries.map(entry => shortType(entry.type)));
+      if (shown.has('OxygenSaturation')) shown.add('BloodOxygenSaturation');
       for (const entry of categories[index].entries) {
         const type = shortType(entry.type);
         if (index !== 5 && shown.has(type)) continue;

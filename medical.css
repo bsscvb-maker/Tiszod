@@ -786,7 +786,10 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;color:var(--apple-accent);font-size:.8rem}
 .medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
-.medical-apple-scanner .medical-scanner-stage{height:clamp(160px,24vh,240px)}
+.medical-apple-scanner.medical-command-stage > .medical-scanner:not(:fullscreen,.medical-3d-expanded) .medical-scanner-stage{
+  flex:none;height:clamp(210px,29vh,300px);min-height:210px;
+}
+.medical-apple-workouts .medical-apple-overview > h4{margin:12px 0 6px;color:var(--apple-accent);font-size:.85rem}
 .medical-apple-reading{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);color:#e8f7ff;
