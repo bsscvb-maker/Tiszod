@@ -254,7 +254,15 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
  filter:drop-shadow(0 0 1px #d2f7ffed) drop-shadow(0 0 4px #40cfffaf) drop-shadow(0 0 9px #0089f475)
 }
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas)>img{display:none}
-.medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{display:none}
+.medical-scanner-sweep.medical-scanner-sweep-vertical{
+  inset:4% auto 4% 4%;width:2px;height:auto;
+  background:linear-gradient(180deg,transparent,#8ee7ff 17%,#efffff 50%,#8ee7ff 83%,transparent);
+  animation-name:medical-scanner-cross-sweep;animation-duration:3.8s;
+}
+@keyframes medical-scanner-cross-sweep{to{left:96%}}
+@media(hover:none),(pointer:coarse){
+  .medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-sweep{display:none}
+}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.42;pointer-events:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-readout,.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-online{z-index:5;pointer-events:none}
 

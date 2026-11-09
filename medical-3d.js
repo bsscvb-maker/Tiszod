@@ -95,13 +95,13 @@ function getHandGeometry(THREE){
    const tip=1-smoothRange(-.43,-.27,y);
    const wrist=1-smoothRange(-.09,.05,y);
    // Leave an open thumb gap and turn the palm slightly toward the thighs.
-   const handX=(x-.617)*(1-.21*palm)-.013*thumb-.048*tip;
-   const handZ=(z-.042)*(1-.22*palm)+.041*tip;
+   const handX=(x-.617)*(1-.30*palm)-.013*thumb-.048*tip;
+   const handZ=(z-.042)*(1-.37*palm)+.041*tip;
    const turn=-.20*palm;
    const cuff=smoothRange(-.12,.06,y);
    const posedX=handX*Math.cos(turn)+handZ*Math.sin(turn);
    positions[i]=.617+posedX*(1-.48*cuff);
-   positions[i+1]=y-.030*thumb+.012*tip;
+   positions[i+1]=y-.035*thumb-.025*tip;
    const posedZ=handZ*Math.cos(turn)-handX*Math.sin(turn);
    positions[i+2]=.042+posedZ*(1-.37*cuff);
    const palmCenter=(1-smoothRange(.018,.105,Math.abs(x-.632)))*
@@ -232,7 +232,7 @@ window.thMedical3D={
    const iris=new THREE.MeshStandardMaterial({color:0x192d44,roughness:.34});
    const pale=new THREE.MeshStandardMaterial({color:0xbcc9d6,roughness:.55});
    const surface=new THREE.Group(), muscles=new THREE.Group(), face=new THREE.Group(), skeleton=new THREE.Group();
-   const organs=new THREE.Group(), skinMeshes=[];
+   const organs=new THREE.Group(), feet=new THREE.Group(), skinMeshes=[];
    let atlas,atlasSkeleton,atlasDeep,atlasMuscles,sculptedHead;
    const atlasFaceMeshes=[],atlasJointMeshes=[],atlasHandMeshes=[];
    let handShell;
@@ -265,13 +265,20 @@ window.thMedical3D={
      float faceLight=0.77+0.30*faceSides;
      diffuseColor.rgb*=mix(1.0,faceLight,front)*
        (1.0-front*(0.55*eyeSocket+0.28*underNose+0.44*jawShadow));
-     diffuseColor.rgb+=vec3(0.025,0.051,0.085)*faceSides*front;`
+     diffuseColor.rgb+=vec3(0.025,0.051,0.085)*faceSides*front;
+     float hairline=1.80+0.092*front-0.035*faceSides+0.006*sin(scannerFace.x*92.0);
+     float scalp=smoothstep(hairline-0.009,hairline+0.007,scannerFace.y);
+     float strand=0.5+0.5*sin(scannerFace.x*610.0+scannerFace.z*94.0+sin(scannerFace.y*61.0)*1.8);
+     vec3 croppedHair=mix(vec3(0.019,0.028,0.045),vec3(0.061,0.086,0.115),strand);
+     diffuseColor.rgb=mix(diffuseColor.rgb,croppedHair,scalp);
+     float mouth=exp(-pow(abs(scannerFace.y-1.628)/0.008,2.0)-pow(abs(scannerFace.x)/0.052,4.0));
+     diffuseColor.rgb*=1.0-0.25*mouth*front;`
     );
    };
    const handMaterial=scannerMaterial(THREE,{
     vertexColors:true,roughness:.54,metalness:.09
-   },1.12,0x87dbff);
-   body.add(surface,muscles,face,skeleton,organs);
+   },.79,0x87dbff);
+   body.add(surface,muscles,face,skeleton,organs,feet);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
     const mesh=new THREE.Mesh(sphere,material);
@@ -336,8 +343,12 @@ window.thMedical3D={
      [-.43,.164,-.002,.175,.174],[-.23,.151,-.004,.179,.185],[-.10,.141,-.018,.137,.163]
     ]);
     skinMeshes.push(loft(surface,skin,arm),loft(surface,skin,leg));
-    skinMeshes.push(ell(surface,skin,s*.244,-2.055,.075,.086,.06,.177,s*.02));
-    skinMeshes.push(ell(surface,skin,s*.248,-2.074,.171,.09,.039,.096));
+    skinMeshes.push(ell(feet,skin,s*.244,-2.045,.061,.080,.071,.157,s*.02));
+    skinMeshes.push(ell(feet,skin,s*.247,-2.069,.161,.087,.046,.109));
+    for(let toe=0;toe<5;toe++){
+     const width=.024-toe*.0025;
+     skinMeshes.push(ell(feet,skin,s*(.190+toe*.031),-2.079,.254-toe*.014,width,.027-toe*.002,.048-toe*.004));
+    }
     for(let i=0;i<4;i++){
      const x=.65+i*.028,length=[.13,.155,.143,.116][i];
      skinMeshes.push(tube(surface,skin,[[s*x,-.168,.045],[s*(x+.006),-.218,.044],[s*(x+.006),-.168-length,.061]],.014-i*.0011));
@@ -462,7 +473,7 @@ window.thMedical3D={
     const marker=new THREE.Mesh(new THREE.TorusGeometry(radius,.009,8,64),wholeBodyMaterial);
     marker.rotation.x=Math.PI/2;marker.position.y=y;wholeBody.add(marker);
    }
-   for(const layer of [surface,muscles,face,skeleton,organs])remapMeshes(THREE,layer,{copy:true});
+   for(const layer of [surface,muscles,face,skeleton,organs,feet])remapMeshes(THREE,layer,{copy:true});
    sphere.dispose();
    const organCenters=Object.fromEntries(Object.entries(systems).map(([name,group])=>
     [name,new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3())]));
@@ -471,6 +482,7 @@ window.thMedical3D={
     state.mode=mode;
     const detailed=Boolean(atlas)&&mode!=='skin';
     surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
+    feet.visible=mode!=='scan'||!detailed;
     const selected=state.system;
     const whole=selected==='hydration'||selected==='fat';
     organs.visible=mode!=='skin'&&!whole&&selected!=='muscle'&&selected!=='bone';
@@ -493,7 +505,7 @@ window.thMedical3D={
      const showJoints=mode==='anatomy'&&!['muscle','brain'].includes(selected);
      atlasSkeleton.traverse(mesh=>{
       if(!mesh.isMesh)return;
-      mesh.visible=mode==='scan'||(showJoints&&mesh.userData.scannerJoint===true);
+      mesh.visible=mode==='scan'||(showJoints&&mesh.userData.scannerJoint===true&&!mesh.userData.scannerFoot);
      });
      for(const {mesh,material} of atlasJointMeshes)mesh.material=mode==='scan'?material:jointGlow;
     }
@@ -529,6 +541,7 @@ window.thMedical3D={
      const name=mesh.name.toLowerCase();
      if(!/patella|metatarsal|toe|calcaneus|talus/.test(name))return;
      mesh.userData.scannerJoint=true;
+     mesh.userData.scannerFoot=!/patella/.test(name);
      atlasJointMeshes.push({mesh,material:mesh.material});
     });
     atlas.updateMatrixWorld(true);
@@ -607,7 +620,9 @@ window.thMedical3D={
     renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
    };
    const observer=new ResizeObserver(resize);observer.observe(stage);resize();
-   const pointers=new Map();let priorDistance=null;
+   const pointers=new Map();let priorDistance=null,idleUntil=0;
+   const desktopMotion=matchMedia('(hover: hover) and (pointer: fine)');
+   const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
    const down=e=>{renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY])};
    const move=e=>{
     if(!pointers.has(e.pointerId))return;
@@ -616,17 +631,17 @@ window.thMedical3D={
     if(pointers.size===1){state.yaw+=(e.clientX-old[0])*.008;state.pitch=Math.max(-.75,Math.min(.75,state.pitch+(e.clientY-old[1])*.006))}
     else if(pointers.size===2){const p=[...pointers.values()],distance=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);if(priorDistance)state.zoom=Math.max(5.3,Math.min(11,state.zoom-(distance-priorDistance)*.025));priorDistance=distance}
    };
-   const up=e=>{pointers.delete(e.pointerId);priorDistance=null};
+   const up=e=>{pointers.delete(e.pointerId);priorDistance=null;idleUntil=performance.now()+4000;};
    renderer.domElement.addEventListener('pointerdown',down);renderer.domElement.addEventListener('pointermove',move);
    renderer.domElement.addEventListener('pointerup',up);renderer.domElement.addEventListener('pointercancel',up);
-   renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(5.3,Math.min(11,state.zoom+e.deltaY*.008))},{passive:false});
+   renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();idleUntil=performance.now()+4000;state.zoom=Math.max(5.3,Math.min(11,state.zoom+e.deltaY*.008))},{passive:false});
    state.reset=()=>{state.yaw=0;state.pitch=0;state.zoom=7.2};
    state.setQuality=quality=>{
     state.quality=['low','auto','high'].includes(quality)?quality:'auto';
     stage.dataset.scannerQuality=state.quality;
     renderer.setPixelRatio(pixelRatio());resize();
    };
-   state.rotate=(delta)=>{state.yaw+=delta};
+   state.rotate=(delta)=>{state.yaw+=delta;idleUntil=performance.now()+4000;};
    state.zoomBy=(delta)=>{state.zoom=Math.max(5.3,Math.min(11,state.zoom+delta))};
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
@@ -634,8 +649,17 @@ window.thMedical3D={
     if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();wristCuts.forEach(cut=>cut.clipped.dispose());scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
+    const elapsed=Math.min((t-lastFrame)/1000,.1);
     lastFrame=t;
-    scanBeam.visible=state.mode==='scan';body.rotation.y=state.yaw;body.rotation.x=state.pitch;if(!state.paused){clock=t*.001;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
+    if(!state.paused&&!reducedMotion.matches){
+     clock+=elapsed;
+     if(desktopMotion.matches&&!pointers.size&&t>=idleUntil)state.yaw=(state.yaw+elapsed*.28)%(Math.PI*2);
+     body.scale.y=1+Math.sin(clock*1.5)*.0025;
+     orbit.rotation.y=clock*.1;
+     scanBeam.position.y=Math.sin(clock*.7)*2;
+    }
+    scanBeam.visible=state.mode==='scan';
+    body.rotation.y=state.yaw;body.rotation.x=state.pitch;
     camera.position.set(0,state.mode==='anatomy'?-.28:.25,frameDistance+state.zoom-7.2);camera.lookAt(frameCenter);renderer.render(scene,camera);
    }
    requestAnimationFrame(render);
