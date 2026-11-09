@@ -370,6 +370,12 @@ body[data-th-page="medical"] .medical {
   display:flex;justify-content:space-between;gap:5px;padding:5px 7px;background:#091e30;
   border:1px solid #234a64;border-radius:8px;font-size:12px;
 }
+.medical-reading-comparison{width:100%;border-collapse:collapse;font-size:clamp(.68rem,.8vw,.82rem)}
+.medical-reading-comparison :is(th,td){padding:4px 5px;text-align:right;border-bottom:1px solid #172f45;white-space:nowrap}
+.medical-reading-comparison th:first-child{text-align:left}
+.medical-reading-comparison thead{color:#a9c5d9}
+.medical-reading-comparison tbody tr:last-child>*{border-bottom:0}
+.medical-reading-comparison tbody td:last-child{font-weight:700}
 .medical-progress-row {
   display:flex;justify-content:space-between;gap:8px;padding:4px 6px;border-bottom:1px solid #172f45;font-size:13px;
 }

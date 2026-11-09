@@ -595,8 +595,10 @@
     showSystem(scannerSystem);
     const journey=make('section');journey.className='medical-command-journey medical-concept-panel';
     journey.append(make('h3','Weight Journey'));
-    const series=weighIns.map(row=>({weight:asPounds(row),time:measurementTime(row)}))
+    const journeyStart=Date.parse(compositionSource?.journeyStart);
+    const history=weighIns.map(row=>({weight:asPounds(row),time:measurementTime(row)}))
       .filter(row=>Number.isFinite(row.weight)&&Number.isFinite(row.time)).sort((a,b)=>a.time-b.time);
+    const series=history.some(row=>row.time===journeyStart)?history.filter(row=>row.time>=journeyStart):history;
     if(series.length>1){
       const first=series[0],last=series.at(-1),change=last.weight-first.weight;
       const minimum=Math.min(...series.map(row=>row.weight));
@@ -678,16 +680,21 @@
     }
     compositionPanel.append(donut,compositionLegend);
     const progressPanel=make('section');progressPanel.className='medical-concept-panel';
-    progressPanel.append(make('h3','Progress vs. Prior'));
-    for(const [symbol,label,value,unit,prior] of metricData){
-      const item=make('div');item.className='medical-progress-row';
-      const delta=Number.isFinite(value)&&Number.isFinite(prior)?rounded(rounded(value)-rounded(prior)):null;
-      const arrow=delta===null||rounded(delta)===0?'—':delta>0?'↑':'↓';
-      const direction=make('i',arrow);direction.setAttribute('aria-hidden','true');
-      const description=make('span',label);description.prepend(direction);
-      item.append(description,make('strong',delta===null?'—':rounded(delta)===0?'No change':(delta>0?'+':'')+delta.toFixed(1)+unit));
-      progressPanel.append(item);
+    progressPanel.append(make('h3','Prior vs. Current'));
+    const readingsTable=make('table');readingsTable.className='medical-reading-comparison';
+    readingsTable.setAttribute('aria-label','Prior and current readings');
+    const headings=make('tr'),head=make('thead'),rows=make('tbody');
+    for(const label of ['Metric','Prior','Current']){
+      const cell=make('th',label);cell.scope='col';headings.append(cell);
     }
+    head.append(headings);
+    const readingText=(value,unit)=>Number.isFinite(value)?value.toFixed(1)+unit:'—';
+    for(const [,label,value,unit,prior] of metricData){
+      const item=make('tr'),heading=make('th',label);heading.scope='row';
+      item.append(heading,make('td',readingText(prior,unit)),make('td',readingText(value,unit)));
+      rows.append(item);
+    }
+    readingsTable.append(head,rows);progressPanel.append(readingsTable);
     const panels=make('div');panels.className='medical-concept-panels';
     const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
     vitalsPanel.append(panelHeading('Vitals (Latest)','⌁'));
