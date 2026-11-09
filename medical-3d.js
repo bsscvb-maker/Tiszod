@@ -49,7 +49,7 @@ function fitFrontReference(vertex){
  vertex.x-=Math.sign(vertex.x)*.062*fingers;
  vertex.z+=.087*fingers;
  // The reference is looking slightly upward. Pivot above the neck joint.
- const chinLift=.29*smoothRange(1.39,1.57,y);
+ const chinLift=.355*smoothRange(1.39,1.57,y);
  const headY=vertex.y-1.48,headZ=vertex.z-.015;
  vertex.y=1.48+headY*Math.cos(chinLift)+headZ*Math.sin(chinLift);
  vertex.z=.015+headZ*Math.cos(chinLift)-headY*Math.sin(chinLift);
@@ -86,7 +86,7 @@ function getHandGeometry(THREE){
   if(!response.ok)throw Error('Scanner hand surface could not be downloaded.');
   const {positions,indices}=await response.json();
   const colors=[];
-  const forearm=new THREE.Color(0x795459),hand=new THREE.Color(0x285275);
+  const forearm=new THREE.Color(0x755159),hand=new THREE.Color(0x285775);
   const shade=new THREE.Color();
   for(let i=0;i<positions.length;i+=3){
    const [x,y,z]=[positions[i],positions[i+1],positions[i+2]];
@@ -94,10 +94,19 @@ function getHandGeometry(THREE){
    const thumb=(1-smoothRange(.49,.59,x))*smoothRange(-.34,-.25,y)*palm;
    const tip=1-smoothRange(-.43,-.27,y);
    const wrist=1-smoothRange(-.09,.05,y);
-   positions[i]=.617+(x-.617)*(1-.29*palm)+.048*thumb-.025*tip;
-   positions[i+1]=y+.021*thumb+.018*tip;
-   positions[i+2]=.042+(z-.042)*(1-.22*palm)+.021*tip;
-   shade.copy(forearm).lerp(hand,wrist);
+   // Leave an open thumb gap and turn the palm slightly toward the thighs.
+   const handX=(x-.617)*(1-.21*palm)-.013*thumb-.048*tip;
+   const handZ=(z-.042)*(1-.22*palm)+.041*tip;
+   const turn=-.20*palm;
+   const cuff=smoothRange(-.12,.06,y);
+   const posedX=handX*Math.cos(turn)+handZ*Math.sin(turn);
+   positions[i]=.617+posedX*(1-.48*cuff);
+   positions[i+1]=y-.030*thumb+.012*tip;
+   const posedZ=handZ*Math.cos(turn)-handX*Math.sin(turn);
+   positions[i+2]=.042+posedZ*(1-.37*cuff);
+   const palmCenter=(1-smoothRange(.018,.105,Math.abs(x-.632)))*
+    smoothRange(-.32,-.23,y)*(1-smoothRange(-.10,.02,y));
+   shade.copy(forearm).lerp(hand,wrist).multiplyScalar(1-.23*palmCenter);
    colors.push(shade.r,shade.g,shade.b);
   }
   const geometry=new THREE.BufferGeometry();
@@ -233,8 +242,8 @@ window.thMedical3D={
     transparent:true,opacity:.58,depthWrite:false,roughness:.44
    },1.24,0x71e9ff);
    const headMaterial=scannerMaterial(THREE,{
-    color:0xa4b6cb,vertexColors:true,roughness:.69,metalness:.06
-   },.59,0x72c7ff);
+    color:0x9fadc2,vertexColors:true,roughness:.60,metalness:.07
+   },.77,0xa1dcff);
    const headLighting=headMaterial.onBeforeCompile;
    headMaterial.onBeforeCompile=shader=>{
     headLighting(shader);
@@ -245,18 +254,23 @@ window.thMedical3D={
      '#include <color_fragment>',
      `#include <color_fragment>
      float front=smoothstep(0.04,0.18,scannerFace.z);
-     float eyeY=(scannerFace.y-1.76)/0.029;
-     float eyeX=(abs(scannerFace.x)-0.071)/0.048;
-     float eyeBand=exp(-eyeY*eyeY);
-     float eyeSide=exp(-eyeX*eyeX);
-     float jawBand=1.0-smoothstep(1.49,1.58,scannerFace.y);
-     float faceLight=mix(0.58,1.12,smoothstep(-0.12,0.095,scannerFace.x));
-     diffuseColor.rgb*=mix(1.0,faceLight,front)*(1.0-front*(0.40*eyeBand*eyeSide+0.29*jawBand));`
+     float eyeY=(scannerFace.y-1.775)/0.033;
+     float eyeX=(abs(scannerFace.x)-0.066)/0.052;
+     float eyeSocket=exp(-eyeY*eyeY-eyeX*eyeX);
+     float noseY=(scannerFace.y-1.681)/0.021;
+     float noseX=scannerFace.x/0.039;
+     float underNose=exp(-noseY*noseY-noseX*noseX);
+     float jawShadow=1.0-smoothstep(1.52,1.60,scannerFace.y);
+     float faceSides=smoothstep(0.055,0.135,abs(scannerFace.x));
+     float faceLight=0.77+0.30*faceSides;
+     diffuseColor.rgb*=mix(1.0,faceLight,front)*
+       (1.0-front*(0.55*eyeSocket+0.28*underNose+0.44*jawShadow));
+     diffuseColor.rgb+=vec3(0.025,0.051,0.085)*faceSides*front;`
     );
    };
    const handMaterial=scannerMaterial(THREE,{
     vertexColors:true,roughness:.54,metalness:.09
-   },1.02,0x69ceff);
+   },1.12,0x87dbff);
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
