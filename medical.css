@@ -718,11 +718,11 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
     column-gap:14px;
   }
   .medical-reference-layout,.medical-concept-panels{
-    grid-column:1/-1;grid-template-columns:subgrid;
+    grid-column:1/-1;grid-template-columns:subgrid;column-gap:normal;
   }
-  .medical-reference-right{grid-column:2/-1;grid-template-columns:subgrid}
+  .medical-reference-right{grid-column:2/-1;grid-template-columns:subgrid;column-gap:normal}
   .medical-reference-right>:is(.medical-reference-overview,.medical-reference-middle,.medical-reference-lower){grid-column:1/-1}
-  .medical-reference-middle,.medical-reference-lower{grid-template-columns:subgrid;margin-left:0}
+  .medical-reference-middle,.medical-reference-lower{grid-template-columns:subgrid;column-gap:normal;margin-left:0}
   .medical-command-stage{align-items:stretch}
   .medical-command-stage>.medical-scanner:not(:fullscreen,.medical-3d-expanded){
     display:flex;flex-direction:column;min-height:0;
