@@ -251,6 +251,7 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-three-canvas{position:absolute;inset:0;z-index:3;display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .medical-three-canvas:active{cursor:grabbing}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas)>img{display:none}
+.medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{display:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.42;pointer-events:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-readout,.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-online{z-index:5;pointer-events:none}
 
