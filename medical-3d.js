@@ -86,7 +86,7 @@ function getHandGeometry(THREE){
   if(!response.ok)throw Error('Scanner hand surface could not be downloaded.');
   const {positions,indices}=await response.json();
   const colors=[];
-  const forearm=new THREE.Color(0x755159),hand=new THREE.Color(0x285775);
+  const forearm=new THREE.Color(0x88443e),hand=new THREE.Color(0x997363);
   const shade=new THREE.Color();
   for(let i=0;i<positions.length;i+=3){
    const [x,y,z]=[positions[i],positions[i+1],positions[i+2]];
@@ -263,7 +263,7 @@ window.thMedical3D={
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
    const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
    const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
-   const footMaterial=new THREE.MeshStandardMaterial({color:0x4d7398,roughness:.46,metalness:.20});
+   const footMaterial=scannerMaterial(THREE,{vertexColors:true,roughness:.72},.46);
    const torsoAnatomy=scannerMaterial(THREE,{
     color:0x284670,roughness:.45,transparent:true,opacity:.42,depthWrite:false
    },.8);
@@ -323,7 +323,7 @@ window.thMedical3D={
    };
    const handMaterial=scannerMaterial(THREE,{
     vertexColors:true,roughness:.54,metalness:.09
-   },.79,0x87dbff);
+   },.46,0x87dbff);
    body.add(surface,muscles,face,skeleton,organs,feet,fingers);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
@@ -669,19 +669,26 @@ window.thMedical3D={
      geometry.setIndex(indices);
      footShell=new THREE.Group();
      for(const side of [-1,1]){
-      const foot=new THREE.Mesh(geometry.clone(),fascia);foot.scale.x=side;footShell.add(foot);
+      const foot=new THREE.Mesh(geometry.clone(),footMaterial);foot.scale.x=side;footShell.add(foot);
      }
      geometry.dispose();
      remapMeshes(THREE,footShell);
+     const ankleTone=new THREE.Color(0x88443e),footTone=skin.color;
+     const shade=new THREE.Color();
      for(const mesh of footShell.children){
       const original=mesh.geometry,fitted=original.clone();
       const position=fitted.getAttribute('position');
+      const colors=new Float32Array(position.count*3);
       for(let i=0;i<position.count;i++){
        // Blend the cuff into the atlas ankle while retaining the foot's outline.
        const cuff=smoothRange(-2.11,-1.88,position.getY(i));
        position.setX(i,position.getX(i)-.024-.055*cuff);
        position.setZ(i,position.getZ(i)-.036-.101*cuff);
+       shade.copy(footTone).lerp(ankleTone,cuff).toArray(colors,i*3);
       }
+      const color=new THREE.BufferAttribute(colors,3);
+      fitted.setAttribute('color',color);
+      original.setAttribute('color',color);
       fitted.computeVertexNormals();fitted.computeBoundingBox();fitted.computeBoundingSphere();
       footFits.push({mesh,original,fitted});
      }
