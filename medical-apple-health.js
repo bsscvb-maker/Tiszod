@@ -12,14 +12,20 @@
     ['Nutrition & Hydration', /Dietary|Nutrition|WaterIntake/i],
     ['Workouts & Other Records', /./]
   ];
-  const favorites = ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','SleepAnalysis','StepCount','DietaryWater'];
+  const highlights = [
+    ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','VO2Max'],
+    ['Height','BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'],
+    ['SleepAnalysis','AppleSleepingWristTemperature','AppleSleepDurationGoal'],
+    ['StepCount','DistanceWalkingRunning','ActiveEnergyBurned','AppleExerciseTime','FlightsClimbed'],
+    ['DietaryWater','DietaryEnergyConsumed','DietaryProtein','DietaryCarbohydrates','DietaryFatTotal','DietaryFiber']
+  ];
   const knownLabels = {
     HeartRate:'Heart Rate', RestingHeartRate:'Resting Heart Rate', OxygenSaturation:'Blood Oxygen',
     HeartRateVariabilitySDNN:'Heart Rate Variability (SDNN)', DietaryWater:'Water Intake',
     AppleSleepingWristTemperature:'Sleeping Wrist Temperature', BodyTemperature:'Body Temperature',
     BodyWaterPercentage:'Body-Water Percentage', BodyMass:'Weight', BodyMassIndex:'BMI'
   };
-  let readPrivate, privateRead, scanner, scannerHome, savedVitals = [];
+  let readPrivate, privateRead, scanner, scannerHome, savedVitals = [], scaleReadings = [];
   let imported = null, error = false;
   const make = (tag, text) => {
     const node = document.createElement(tag);
@@ -87,10 +93,17 @@
     const card = make('article');
     card.className = 'medical-apple-reading';
     const type = shortType(entry.type);
-    const value = words(entry.value);
-    const amount = value ? value + (entry.unit ? (entry.unit === '%' ? '%' : ' ' + entry.unit) : '') : 'Recorded event';
-    card.append(make('h4', entry.label || knownLabels[type] || words(type)),
-      make('strong', amount), make('time',displayDate(entry.date)),
+    const value = words(entry.value).replace(/^Sleep Analysis /,'');
+    const unit = /^(Resting)?HeartRate$/.test(type) && entry.unit === 'count/min' ? 'bpm' : entry.unit;
+    const number = Number(value);
+    const display = compact && value && Number.isFinite(number)
+      ? number.toLocaleString('en-US',{maximumFractionDigits:2}) : value;
+    const amount = display ? display + (unit && unit !== 'count' ? (unit === '%' ? '%' : ' ' + unit) : '') : 'Recorded event';
+    const label = knownLabels[type] || entry.label || words(type);
+    const context = entry.kind === 'Daily total' ? ' · Daily total'
+      : type === 'StepCount' ? ' · Latest sample' : '';
+    card.append(make('h4', label + (compact ? context : '')), make('strong', amount));
+    if (!compact) card.append(make('time',displayDate(entry.date)),
       make('small', [entry.kind, entry.source].filter(Boolean).join(' · ')));
     if (!compact && Array.isArray(entry.details) && entry.details.length) {
       const list = make('dl');
@@ -106,18 +119,35 @@
     status.textContent = error ? 'Could not load the private export. Reopen Apple Health to retry.'
       : imported ? 'Private Apple Health export · ' + rows.length + ' metric and event types' + (imported.exportCount ? ' · ' + imported.exportCount + ' recent Drive exports' : '')
       : privateRead ? 'Loading private Apple Health export…' : 'No private Apple Health export has been imported yet.';
-    const summaries = favorites.flatMap(type => {
-      const row = rows.find(entry => shortType(entry.type) === type);
-      return row ? [row] : savedVitals.filter(entry => entry.type === type);
-    });
-    const midpoint=Math.ceil(summaries.length/2);
-    panel.querySelector('.medical-apple-left').replaceChildren(...summaries.slice(0,midpoint).map(entry => tile(entry,true)));
-    panel.querySelector('.medical-apple-right').replaceChildren(...summaries.slice(midpoint).map(entry => tile(entry,true)));
+    function overview(index) {
+      const section = make('section');
+      section.className = 'medical-apple-overview';
+      section.append(make('h3', groups[index][0]));
+      const grid = make('div');
+      grid.className = 'medical-apple-summary-grid';
+      const entries = highlights[index].flatMap(type => {
+        const matches = rows.filter(entry => shortType(entry.type) === type);
+        const row = scaleReadings.find(entry => entry.type === type)
+          || matches.find(entry => entry.kind === 'Daily total')
+          || matches[0] || savedVitals.find(entry => entry.type === type);
+        return row ? [row] : [];
+      });
+      grid.append(...entries.map(entry => tile(entry,true)));
+      if (!entries.length) grid.append(make('p','No readings available.'));
+      section.append(grid);
+      if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
+        section.append(make('p','TisZod readings shown where available'));
+      }
+      return section;
+    }
+    panel.querySelector('.medical-apple-left').replaceChildren(overview(0));
+    panel.querySelector('.medical-apple-right').replaceChildren(overview(1));
+    panel.querySelector('.medical-apple-overviews').replaceChildren(...[2,3,4].map(overview));
     const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
     const categories = groups.map(([name]) => ({name,entries:[]}));
     for (const row of rows) {
       const type = shortType(row.type);
-      const index = row.kind.startsWith('Workout') ? 5 : row.kind === 'Daily total' ? 3 : groups.findIndex(([,pattern]) => pattern.test(type));
+      const index = row.kind?.startsWith('Workout') ? 5 : groups.findIndex(([,pattern]) => pattern.test(type));
       categories[Math.max(0,index)].entries.push(row);
     }
     const collections = categories.map(({name,entries}) => {
@@ -172,11 +202,12 @@
   window.thMedicalAppleHealth = {
     summarize,
     connect(reader) {readPrivate = reader;loaded = false;route();},
-    attachScanner(figure, home, vitals) {
+    attachScanner(figure, home, vitals, composition = []) {
       if (scanner && scanner.parentElement === scannerSlot) scanner.remove();
       scanner = figure;
       scannerHome = home;
       savedVitals = vitals;
+      scaleReadings = composition;
       route();
       if (!panel.hidden) render();
     }

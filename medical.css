@@ -759,9 +759,19 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   display:grid;grid-template-columns:minmax(0,1fr) minmax(235px,1.55fr) minmax(0,1fr);
   gap:14px;align-items:start;margin:14px 0;
 }
-.medical-apple-left,.medical-apple-right{display:grid;gap:10px}
+.medical-apple-overviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin-bottom:14px}
+.medical-apple-overview{
+  min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
+  background:linear-gradient(145deg,#0b263b,#06121f);
+}
+.medical-apple-overview h3{margin:0 0 8px;color:#c5f2ff;font-size:1rem}
+.medical-apple-overview>p{margin-top:8px;color:#a9c9df;font-size:.78rem}
+.medical-apple-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:6px}
+.medical-apple-summary-grid .medical-apple-reading{padding:7px 9px;border-radius:7px;background:#0b2030}
+.medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;font-size:.8rem}
+.medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
-.medical-apple-scanner .medical-scanner-stage{height:clamp(360px,55vh,620px)}
+.medical-apple-scanner .medical-scanner-stage{height:clamp(240px,32vh,380px)}
 .medical-apple-reading,.medical-apple-groups details{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);color:#e8f7ff;
@@ -782,5 +792,8 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   #medical-dashboard>.medical-concept-topnav{grid-template-columns:repeat(4,minmax(0,1fr))}
   .medical-apple-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .medical-apple-scanner{grid-column:1/-1;grid-row:1}
-  .medical-apple-scanner .medical-scanner-stage{height:390px}
+  .medical-apple-scanner .medical-scanner-stage{height:260px}
+}
+@media(max-width:460px){
+  .medical-apple-layout{grid-template-columns:minmax(0,1fr)}
 }

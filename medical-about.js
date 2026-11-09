@@ -766,7 +766,15 @@
         type:appleVitalTypes[index], value:privateVitals[key], unit,date:privateVitals[key+'Date'],
         kind:'Individual sample',source:'Saved TisZod vitals'
       }]:[]
-    ));
+    ), [
+      ...(Number.isFinite(height) && height > 0 ? [{
+        type:'Height',value:Math.floor(height/12)+' ft '+height%12+' in',source:'TisZod'
+      }] : []),
+      ...metricData.flatMap(([,label,value,unit],index) => Number.isFinite(value) ? [{
+        type:['BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'][index],
+        label,value,unit:unit.trim(),source:'TisZod'
+      }] : [])
+    ]);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
