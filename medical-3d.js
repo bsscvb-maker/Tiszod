@@ -49,7 +49,7 @@ function fitFrontReference(vertex){
  vertex.x-=Math.sign(vertex.x)*.062*fingers;
  vertex.z+=.087*fingers;
  // The reference is looking slightly upward. Pivot above the neck joint.
- const chinLift=.23*smoothRange(1.39,1.57,y);
+ const chinLift=.29*smoothRange(1.39,1.57,y);
  const headY=vertex.y-1.48,headZ=vertex.z-.015;
  vertex.y=1.48+headY*Math.cos(chinLift)+headZ*Math.sin(chinLift);
  vertex.z=.015+headZ*Math.cos(chinLift)-headY*Math.sin(chinLift);
@@ -85,8 +85,24 @@ function getHandGeometry(THREE){
   const response=await fetch('assets/medical/scanner-hand-shell.json');
   if(!response.ok)throw Error('Scanner hand surface could not be downloaded.');
   const {positions,indices}=await response.json();
+  const colors=[];
+  const forearm=new THREE.Color(0x795459),hand=new THREE.Color(0x285275);
+  const shade=new THREE.Color();
+  for(let i=0;i<positions.length;i+=3){
+   const [x,y,z]=[positions[i],positions[i+1],positions[i+2]];
+   const palm=1-smoothRange(-.26,-.055,y);
+   const thumb=(1-smoothRange(.49,.59,x))*smoothRange(-.34,-.25,y)*palm;
+   const tip=1-smoothRange(-.43,-.27,y);
+   const wrist=1-smoothRange(-.09,.05,y);
+   positions[i]=.617+(x-.617)*(1-.29*palm)+.048*thumb-.025*tip;
+   positions[i+1]=y+.021*thumb+.018*tip;
+   positions[i+2]=.042+(z-.042)*(1-.22*palm)+.021*tip;
+   shade.copy(forearm).lerp(hand,wrist);
+   colors.push(shade.r,shade.g,shade.b);
+  }
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
   geometry.setIndex(indices);
   return geometry;
  })().catch(error=>{handGeometryPromise=undefined;throw error;});
@@ -218,9 +234,28 @@ window.thMedical3D={
    const headMaterial=scannerMaterial(THREE,{
     color:0xa4b6cb,vertexColors:true,roughness:.69,metalness:.06
    },.59,0x72c7ff);
+   const headLighting=headMaterial.onBeforeCompile;
+   headMaterial.onBeforeCompile=shader=>{
+    headLighting(shader);
+    shader.vertexShader='varying vec3 scannerFace;\n'+shader.vertexShader.replace(
+     '#include <begin_vertex>','#include <begin_vertex>\nscannerFace=position;'
+    );
+    shader.fragmentShader='varying vec3 scannerFace;\n'+shader.fragmentShader.replace(
+     '#include <color_fragment>',
+     `#include <color_fragment>
+     float front=smoothstep(0.04,0.18,scannerFace.z);
+     float eyeY=(scannerFace.y-1.76)/0.029;
+     float eyeX=(abs(scannerFace.x)-0.071)/0.048;
+     float eyeBand=exp(-eyeY*eyeY);
+     float eyeSide=exp(-eyeX*eyeX);
+     float jawBand=1.0-smoothstep(1.49,1.58,scannerFace.y);
+     float faceLight=mix(0.58,1.12,smoothstep(-0.12,0.095,scannerFace.x));
+     diffuseColor.rgb*=mix(1.0,faceLight,front)*(1.0-front*(0.40*eyeBand*eyeSide+0.29*jawBand));`
+    );
+   };
    const handMaterial=scannerMaterial(THREE,{
-    color:0x315b7c,roughness:.49,metalness:.12
-   },1.12,0x75ddff);
+    vertexColors:true,roughness:.54,metalness:.09
+   },.82,0x69ceff);
    body.add(surface,muscles,face,skeleton,organs);
    const sphere=new THREE.SphereGeometry(1,28,20);
    function ell(group,material,x,y,z,sx,sy,sz,rotation=0){
