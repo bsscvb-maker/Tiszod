@@ -12,6 +12,7 @@
     ['Nutrition & Hydration', /Dietary|Nutrition|WaterIntake/i],
     ['Workouts & Other Records', /./]
   ];
+  const categoryStyles = ['heart','body','sleep','activity','nutrition','workouts'];
   const highlights = [
     ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','VO2Max'],
     ['Height','BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'],
@@ -128,6 +129,7 @@
     function overview(index) {
       const section = make('section');
       section.className = 'medical-apple-overview';
+      section.dataset.category = categoryStyles[index];
       section.append(make('h3', groups[index][0]));
       const grid = make('div');
       grid.className = 'medical-apple-summary-grid';
@@ -155,14 +157,14 @@
       }
       return section;
     }
-    panel.querySelector('.medical-apple-left').replaceChildren(overview(0));
-    panel.querySelector('.medical-apple-right').replaceChildren(overview(1));
+    panel.querySelector('.medical-apple-left').replaceChildren(overview(0),overview(3));
+    panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(4));
     panel.querySelector('.medical-apple-sleep').replaceChildren(overview(2));
-    panel.querySelector('.medical-apple-overviews').replaceChildren(...[3,4].map(overview));
     const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
-    const collections = categories.map(({name,entries}) => {
+    const collections = categories.map(({name,entries},index) => {
       const detail = make('details');
       detail.dataset.group = name;
+      detail.dataset.category = categoryStyles[index];
       detail.open = openGroups.has(name);
       detail.append(make('summary', name + ' (' + entries.length + ')'));
       const grid = make('div');

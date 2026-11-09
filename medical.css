@@ -759,17 +759,22 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,1fr) minmax(0,1.1fr);
   gap:14px;align-items:start;margin:14px 0;
 }
-.medical-apple-center{min-width:0;display:grid;gap:8px}
-.medical-apple-overviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin-bottom:14px}
+.medical-apple-layout > div{min-width:0;display:grid;gap:10px}
+.medical-apple-health [data-category="heart"]{--apple-accent:#ffa1bb;--apple-tint:#321b2d}
+.medical-apple-health [data-category="body"]{--apple-accent:#80e9f7;--apple-tint:#102b3a}
+.medical-apple-health [data-category="sleep"]{--apple-accent:#ccb7ff;--apple-tint:#27203f}
+.medical-apple-health [data-category="activity"]{--apple-accent:#9befbd;--apple-tint:#153529}
+.medical-apple-health [data-category="nutrition"]{--apple-accent:#ffda8a;--apple-tint:#36291c}
+.medical-apple-health [data-category="workouts"]{--apple-accent:#ffbb9e;--apple-tint:#36241e}
 .medical-apple-overview{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);
 }
-.medical-apple-overview h3{margin:0 0 8px;color:#c5f2ff;font-size:1rem}
+.medical-apple-overview h3{margin:0 0 8px;color:var(--apple-accent);font-size:1rem}
 .medical-apple-overview>p{margin-top:8px;color:#a9c9df;font-size:.78rem}
 .medical-apple-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:6px}
-.medical-apple-summary-grid .medical-apple-reading{padding:7px 9px;border-radius:7px;background:#0b2030}
-.medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;font-size:.8rem}
+.medical-apple-summary-grid .medical-apple-reading{padding:7px 9px;border:0;border-radius:7px;background:color-mix(in srgb,var(--apple-tint),#101f30 45%)}
+.medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;color:var(--apple-accent);font-size:.8rem}
 .medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
 .medical-apple-scanner .medical-scanner-stage{height:clamp(200px,27vh,320px)}
@@ -783,7 +788,8 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-reading dl{display:grid;grid-template-columns:1fr auto;gap:4px 8px;margin:8px 0 0;font-size:.8rem}
 .medical-apple-reading dd{margin:0;text-align:right}
 .medical-apple-groups{display:grid;gap:9px;margin-bottom:20px}
-.medical-apple-groups summary{cursor:pointer;font-weight:700;color:#c5f2ff}
+.medical-apple-groups details[data-category]{border-color:color-mix(in srgb,var(--apple-accent),#0c1725 68%);background:linear-gradient(100deg,var(--apple-tint),#091624 65%)}
+.medical-apple-groups summary{cursor:pointer;font-weight:700;color:var(--apple-accent,#c5f2ff)}
 .medical-apple-reading-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px;margin-top:12px}
 #medical-dashboard .medical-concept-topnav [aria-current="page"]{background:#105378;border-color:#66e9ff}
 @media(max-width:1100px){
