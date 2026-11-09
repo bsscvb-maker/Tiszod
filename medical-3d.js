@@ -217,13 +217,13 @@ window.thMedical3D={
     const rim=new THREE.DirectionalLight(0x2bbfff,3.2);
     rim.position.set(side*4,1,-2);scene.add(rim);
    }
-   const bounce=new THREE.PointLight(0x43dbff,19,5);
+   const bounce=new THREE.PointLight(0x43dbff,8,5);
    bounce.position.set(0,-2.2,1.2);scene.add(bounce);
    const skin=new THREE.MeshStandardMaterial({color:0x997363,roughness:.72});
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
    const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
    const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
-   const footMaterial=scannerMaterial(THREE,{color:0x668ba7,emissive:0x0a2034,emissiveIntensity:.22,roughness:.45},.86);
+   const footMaterial=new THREE.MeshStandardMaterial({color:0x4d7398,roughness:.46,metalness:.20});
    const torsoAnatomy=scannerMaterial(THREE,{
     color:0x284670,roughness:.45,transparent:true,opacity:.42,depthWrite:false
    },.8);
