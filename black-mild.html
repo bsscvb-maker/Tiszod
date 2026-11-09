@@ -82,6 +82,7 @@ window.addEventListener('storage',event=>{if(event.key!==rewardsStateKey)return;
 renderBalance();
 
 const legacyCodes = codes.slice();
+let privatePhotoUrls = [];
 function showRewardCodes(privateCodes = []) {
  const entries = new Map(legacyCodes.map(item => [cleanCode(item.code).toUpperCase(), item]));
  for (const item of privateCodes) {
@@ -92,16 +93,31 @@ function showRewardCodes(privateCodes = []) {
  renderCodes();
 }
 window.thStart = async function () {
- const values = await thValues("'Portal Aroma Rewards'!A2:D1000", 'UNFORMATTED_VALUE');
+ const values = await thValues("'Portal Aroma Rewards'!A2:E1000", 'UNFORMATTED_VALUE');
  if (!thAuthorized()) return;
- const privateCodes = values.flatMap(([added, code, source, status]) =>
+ const privateCodes = values.flatMap(([added, code, source, status, photoId]) =>
   /^\d{4}-\d{2}-\d{2}$/.test(added) && /^[A-Z0-9]{3}(?:-[A-Z0-9]{3}){3}$/.test(code)
-   ? [{added, code, source: source === 'Photo' ? 'Photo' : 'Manual', status: status === 'Submitted' ? 'Submitted' : 'Unredeemed'}]
+   ? [{added, code, source: source === 'Photo' ? 'Photo' : 'Manual', status: status === 'Submitted' ? 'Submitted' : 'Unredeemed', photoId}]
    : []
  );
  showRewardCodes(privateCodes);
+ await Promise.all(privateCodes.map(async item => {
+  if (!/^[A-Za-z0-9_-]{10,}$/.test(item.photoId || '')) return;
+  try {
+   const url = await thPhotoObjectUrl(item.photoId);
+   if (!thAuthorized()) { URL.revokeObjectURL(url); return; }
+   privatePhotoUrls.push(url);
+   item.photo = url;
+  } catch {
+   // Keep the code usable when the photo is temporarily unavailable.
+  }
+ }));
+ if (thAuthorized()) showRewardCodes(privateCodes);
 };
 addEventListener('storage', event => {
- if (event.key === TH_SESSION_KEY && !event.newValue) showRewardCodes();
+ if (event.key !== TH_SESSION_KEY || event.newValue) return;
+ privatePhotoUrls.forEach(url => URL.revokeObjectURL(url));
+ privatePhotoUrls = [];
+ showRewardCodes();
 });
 </script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
