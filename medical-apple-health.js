@@ -119,6 +119,12 @@
     status.textContent = error ? 'Could not load the private export. Reopen Apple Health to retry.'
       : imported ? 'Private Apple Health export · ' + rows.length + ' metric and event types' + (imported.exportCount ? ' · ' + imported.exportCount + ' recent Drive exports' : '')
       : privateRead ? 'Loading private Apple Health export…' : 'No private Apple Health export has been imported yet.';
+    const categories = groups.map(([name]) => ({name,entries:[]}));
+    for (const row of rows) {
+      const type = shortType(row.type);
+      const index = row.kind?.startsWith('Workout') ? 5 : groups.findIndex(([,pattern]) => pattern.test(type));
+      categories[index < 0 ? 5 : index].entries.push(row);
+    }
     function overview(index) {
       const section = make('section');
       section.className = 'medical-apple-overview';
@@ -132,9 +138,18 @@
           || matches[0] || savedVitals.find(entry => entry.type === type);
         return row ? [row] : [];
       });
-      grid.append(...entries.map(entry => tile(entry,true)));
+      const shown = new Set(entries.map(entry => shortType(entry.type)));
+      for (const entry of categories[index].entries) {
+        const type = shortType(entry.type);
+        if (shown.has(type) || entry.value == null || entry.value === '') continue;
+        entries.push(entry);
+        shown.add(type);
+      }
+      const visible = entries.slice(0, index === 2 ? 6 : 12);
+      grid.append(...visible.map(entry => tile(entry,true)));
       if (!entries.length) grid.append(make('p','No readings available.'));
       section.append(grid);
+      if (entries.length > visible.length) section.append(make('p', (entries.length - visible.length) + ' more in detailed records below'));
       if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
         section.append(make('p','TisZod readings shown where available'));
       }
@@ -142,14 +157,9 @@
     }
     panel.querySelector('.medical-apple-left').replaceChildren(overview(0));
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1));
-    panel.querySelector('.medical-apple-overviews').replaceChildren(...[2,3,4].map(overview));
+    panel.querySelector('.medical-apple-sleep').replaceChildren(overview(2));
+    panel.querySelector('.medical-apple-overviews').replaceChildren(...[3,4].map(overview));
     const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
-    const categories = groups.map(([name]) => ({name,entries:[]}));
-    for (const row of rows) {
-      const type = shortType(row.type);
-      const index = row.kind?.startsWith('Workout') ? 5 : groups.findIndex(([,pattern]) => pattern.test(type));
-      categories[Math.max(0,index)].entries.push(row);
-    }
     const collections = categories.map(({name,entries}) => {
       const detail = make('details');
       detail.dataset.group = name;
