@@ -251,7 +251,7 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-three-canvas{position:absolute;inset:0;z-index:3;display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .medical-three-canvas:active{cursor:grabbing}
 .medical-scanner-v2[data-layer="anatomy"] .medical-scanner-stage:not([data-scanner-quality="low"])>.medical-three-canvas{
- filter:drop-shadow(0 0 1px #a8efffd9) drop-shadow(0 0 3px #32c9ff9e) drop-shadow(0 0 7px #0089f45e)
+ filter:drop-shadow(0 0 1px #d2f7ffed) drop-shadow(0 0 4px #40cfffaf) drop-shadow(0 0 9px #0089f475)
 }
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas)>img{display:none}
 .medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{display:none}
@@ -552,7 +552,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 }
 .medical-command-stage .medical-scanner-stage::before {
   top:4%;height:9%;z-index:1;border:1px solid #4cdbff;border-radius:50%;opacity:.67;
-  box-shadow:0 0 14px #19cfff,inset 0 0 14px #13aaf0;
+  box-shadow:0 0 14px #19cfff,inset 0 0 14px #13aaf0,0 9px 0 -1px #56dfff63;
 }
 .medical-command-stage .medical-scanner-stage::after {
   bottom:2%;height:10%;border:1px solid #72efff;border-radius:50%;
@@ -663,22 +663,3 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   --system-top:8%;--system-height:80%;
 }
 .medical-scanner-v2[data-system="fat"] {--system-color:#ffc957}
-.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage {
-  background:#05101c;
-}
-.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage::before,
-.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage::after,
-.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage > :not(img) {
-  visibility:hidden;
-}
-.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage > img {
-  display:block;
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  transform:none;
-  animation:none;
-  filter:none;
-}

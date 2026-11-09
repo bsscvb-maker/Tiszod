@@ -142,9 +142,9 @@ function scannerMaterial(THREE,options,edge,tint=0x35c6ff){
    '#include <emissivemap_fragment>',
    `#include <emissivemap_fragment>
    float grazing=1.0-clamp(dot(normal,normalize(vViewPosition)),0.0,1.0);
-   vec3 scannerIce=mix(scannerTint,vec3(0.55,0.87,1.0),0.49);
+   vec3 scannerIce=mix(scannerTint,vec3(0.72,0.92,1.0),0.60);
    totalEmissiveRadiance+=scannerEdge*(
-      scannerTint*0.44*pow(grazing,2.3)+scannerIce*1.40*pow(grazing,9.0));`
+      scannerTint*0.64*pow(grazing,2.2)+scannerIce*1.85*pow(grazing,7.5));`
   );
  };
  return material;
@@ -167,11 +167,11 @@ function getAtlas(THREE){
   if(['skeleton','superficialmuscles','deepmuscles'].some(label=>!layerNames.has(label))){
    throw Error('Anatomy atlas layers are incomplete.');
   }
-  const atlasMuscle=scannerMaterial(THREE,{color:0x69424b,roughness:.38,metalness:.19},1.03);
+  const atlasMuscle=scannerMaterial(THREE,{color:0x523b50,roughness:.38,metalness:.19},1.03);
   const atlasWarmFiber=scannerMaterial(THREE,{
-   color:0xa76047,emissive:0x8c3515,emissiveIntensity:.19,roughness:.41,metalness:.15
+   color:0x965a4a,emissive:0xa13d18,emissiveIntensity:.23,roughness:.41,metalness:.15
   },.91);
-  const atlasFascia=scannerMaterial(THREE,{color:0x4d7398,roughness:.38,metalness:.24},1.16);
+  const atlasFascia=scannerMaterial(THREE,{color:0x4a86ad,roughness:.34,metalness:.24},1.16);
   const atlasBone=scannerMaterial(THREE,{color:0x8caec7,roughness:.48,metalness:.15},.75);
   const atlasCutaway=scannerMaterial(THREE,{
    color:0x735872,roughness:.42,transparent:true,opacity:.30,depthWrite:false
@@ -217,7 +217,7 @@ window.thMedical3D={
     const rim=new THREE.DirectionalLight(0x2bbfff,3.2);
     rim.position.set(side*4,1,-2);scene.add(rim);
    }
-   const bounce=new THREE.PointLight(0x2bdfff,12,5);
+   const bounce=new THREE.PointLight(0x43dbff,19,5);
    bounce.position.set(0,-2.2,1.2);scene.add(bounce);
    const skin=new THREE.MeshStandardMaterial({color:0x997363,roughness:.72});
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
@@ -636,7 +636,7 @@ window.thMedical3D={
     if(t-lastFrame<1000/30&&!pointers.size)return;
     lastFrame=t;
     scanBeam.visible=state.mode==='scan';body.rotation.y=state.yaw;body.rotation.x=state.pitch;if(!state.paused){clock=t*.001;body.scale.y=1+Math.sin(clock*1.5)*.0025;orbit.rotation.y=clock*.1;scanBeam.position.y=Math.sin(clock*.7)*2;}
-    camera.position.set(0,.25,frameDistance+state.zoom-7.2);camera.lookAt(frameCenter);renderer.render(scene,camera);
+    camera.position.set(0,state.mode==='anatomy'?-.28:.25,frameDistance+state.zoom-7.2);camera.lookAt(frameCenter);renderer.render(scene,camera);
    }
    requestAnimationFrame(render);
   }catch(err){stage.dataset.threeError='true';console.warn('3D scanner unavailable; 2D fallback retained.',err)}

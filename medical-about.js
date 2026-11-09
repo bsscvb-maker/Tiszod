@@ -404,7 +404,7 @@
     return item;
   }
 
-  let scannerPaused=false,scannerLayer='reference',scannerSystem='';
+  let scannerPaused=false,scannerLayer='anatomy',scannerSystem='';
   function bodyScanner(){
     const figure=make('figure'),header=make('div'),stage=make('div');
     figure.className='medical-scanner medical-scanner-v2';
@@ -420,26 +420,24 @@
     grid.className='medical-scanner-grid';target.className='medical-scanner-target';
     for(const layer of [ring,sweep,grid,target])layer.setAttribute('aria-hidden','true');
     let threeState=null;const controls=make('div');controls.className='medical-scanner-controls';
-    const modes=[['reference','Reference'],['skin','Skin'],['anatomy','Anatomy'],['scan','X-ray']];
+    const modes=[['skin','Skin'],['anatomy','Anatomy'],['scan','X-ray']];
     const buttons=modes.map(([mode,label])=>{
       const button=action(label,()=>{scannerLayer=mode;updateLayer()});
       button.className='medical-scanner-mode';button.dataset.mode=mode;controls.append(button);return button;
     });
     const detail=make('div','Select a view to explore the body model. This is an illustration, not a diagnostic scan.','medical-scanner-detail');
     function updateMotion(){
-      figure.toggleAttribute('data-paused',scannerPaused);if(threeState)threeState.paused=scannerPaused||scannerLayer==='reference';
+      figure.toggleAttribute('data-paused',scannerPaused);if(threeState)threeState.paused=scannerPaused;
       pause.textContent=scannerPaused?'Resume motion':'Pause motion';
       pause.setAttribute('aria-pressed',String(scannerPaused));
     }
     function updateLayer(){
-      figure.dataset.layer=scannerLayer;
-      if(scannerLayer!=='reference')threeState?.setMode?.(scannerLayer);
-      updateMotion();
-      const assets={reference:'body-scanner-reference.png',skin:'body-scanner-skin.svg?v=2',anatomy:'body-scanner-anatomy.svg?v=1',scan:'body-scanner.svg?v=anatomy'};
+      figure.dataset.layer=scannerLayer;if(threeState?.setMode)threeState.setMode(scannerLayer);
+      const assets={skin:'body-scanner-skin.svg?v=2',anatomy:'body-scanner-anatomy.svg?v=1',scan:'body-scanner.svg?v=anatomy'};
       silhouette.src='assets/medical/'+assets[scannerLayer];
-      silhouette.alt=scannerLayer==='reference'?'Full-body anatomical illustration with a blue holographic outline':scannerLayer==='skin'?'Illustrated light-skinned adult male body':'Illustrated anatomical body diagram';
+      silhouette.alt=scannerLayer==='skin'?'Illustrated light-skinned adult male body':'Illustrated anatomical body diagram';
       buttons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===scannerLayer)));
-      detail.textContent=scannerLayer==='reference'?'Reference artwork · select another view for 3D controls':scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
+      detail.textContent=scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
     stage.append(grid,ring,silhouette,target,sweep);
@@ -466,9 +464,9 @@
     credits.append(atlasLink,document.createTextNode(' · BodyParts3D (DBCLS) and Z-Anatomy (Gauthier Kervyn) · '),license);
     tools.append(make('summary','Scanner controls'),header,controls,moveControls,directions,detail,credits);
     figure.append(stage,tools);
-    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;updateLayer();state?.setSystem?.(figure.dataset.system);if(!state?.rotate)directions.textContent='3D is unavailable on this device. Use Skin, Anatomy or X-ray to change the illustration.'});
+    if(window.thMedical3D)void window.thMedical3D.mount(stage,figure).then(state=>{threeState=state;state?.setMode?.(scannerLayer);state?.setSystem?.(figure.dataset.system);if(state)state.paused=scannerPaused;if(!state?.rotate)directions.textContent='3D is unavailable on this device. Use Skin, Anatomy or X-ray to change the illustration.'});
     figure.addEventListener('medical-system',event=>threeState?.setSystem?.(event.detail));
-    updateLayer();
+    updateMotion();updateLayer();
     return figure;
   }
 
