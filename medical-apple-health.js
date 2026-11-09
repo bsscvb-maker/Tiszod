@@ -91,14 +91,24 @@
     return {metrics: [...latest.values()], exportCount: exports.length};
   }
   const shortType = type => String(type || '').replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '');
-  const words = text => String(text || '').replace(/^HK(?:CategoryValue|WorkoutActivityType)/, '')
+  const words = text => String(text ?? '').replace(/^HK(?:CategoryValue|WorkoutActivityType)/, '')
     .replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2');
+  function hasValue(value) {
+    return typeof value === 'number' ? Number.isFinite(value)
+      : typeof value === 'string' && !/^(?:not applicable|not recorded|not available|recorded event|unknown|n\/?a|[-—])?$/i.test(words(value).trim());
+  }
+  const metricDetail = entry => entry.details?.find(detail => hasValue(detail.value) &&
+    (Number.isFinite(detail.value) || (detail.unit && Number.isFinite(Number(detail.value)))));
+  const hasReading = entry => hasValue(entry.value) || Boolean(metricDetail(entry));
+  const workoutMetric = entry => /stat|metric|summary/i.test(entry.kind || '') ||
+    /[·:].*\((?:sum|average|min|max|count)\)/i.test(entry.label || '');
   function tile(entry, compact = false) {
     const card = make('article');
     card.className = 'medical-apple-reading';
     const type = shortType(entry.type);
-    const value = words(entry.value).replace(/^Sleep Analysis /,'');
-    const unit = /^(Resting)?HeartRate$/.test(type) && entry.unit === 'count/min' ? 'bpm' : entry.unit;
+    const detail = compact && !hasValue(entry.value) ? metricDetail(entry) : null;
+    const value = words(detail?.value ?? entry.value).replace(/^Sleep Analysis /,'');
+    const unit = /^(Resting)?HeartRate$/.test(type) && entry.unit === 'count/min' ? 'bpm' : (detail?.unit ?? entry.unit);
     const number = Number(value);
     const display = compact && value && Number.isFinite(number)
       ? number.toLocaleString('en-US',{maximumFractionDigits:2}) : value;
@@ -106,7 +116,7 @@
     const label = knownLabels[type] || entry.label || words(type);
     const context = entry.kind === 'Daily total' ? ' · Daily total'
       : type === 'StepCount' ? ' · Latest sample' : '';
-    card.append(make('h4', label + (compact ? context : '')), make('strong', amount));
+    card.append(make('h4', label + (compact ? context : '')), make('strong', detail ? detail.label + ' · ' + amount : amount));
     if (!compact) card.append(make('time',displayDate(entry.date)),
       make('small', [entry.kind, entry.source].filter(Boolean).join(' · ')));
     if (!compact && Array.isArray(entry.details) && entry.details.length) {
@@ -158,6 +168,7 @@
     const recent = workoutRows.map(row => ({row, time: +parseDate(row.date)}))
       .filter(({time}) => time >= +cutoff && time <= Date.now())
       .sort((a,b) => b.time - a.time).map(({row}) => row);
+    const sessions = recent.filter(row => !workoutMetric(row));
     const workoutPanel = make('section');
     workoutPanel.className = 'medical-apple-overview';
     workoutPanel.dataset.category = 'workouts';
@@ -166,7 +177,7 @@
       : null, 'workout records'));
     const workouts = make('div');
     workouts.className = 'medical-apple-workout-list';
-    for (const row of recent.slice(0,4)) {
+    for (const row of sessions.slice(0,4)) {
       const item = make('article');
       const duration = row.details?.find(detail => /^duration$/i.test(detail.label));
       const description = duration ? [duration.value,duration.unit].filter(Boolean).join(' ')
@@ -175,13 +186,13 @@
       if (description) item.append(make('span',description));
       workouts.append(item);
     }
-    if (recent.length) workoutPanel.append(workouts);
-    else workoutPanel.append(make('p', imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
+    if (sessions.length) workoutPanel.append(workouts);
+    else workoutPanel.append(make('p', recent.length ? 'Recent workout measurements are available in Details.' : imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
     panel.querySelector('.medical-apple-workouts').replaceChildren(workoutPanel);
     const categories = groups.map(([name]) => ({name,entries:[]}));
     for (const row of rows) {
       const type = shortType(row.type);
-      if (/^Workout/i.test(row.kind || '')) continue;
+      if (/^Workout/i.test(row.kind || '') || !hasReading(row)) continue;
       const index = groups.findIndex(([,pattern]) => pattern.test(type));
       categories[index < 0 ? 5 : index].entries.push(row);
     }
@@ -192,16 +203,16 @@
       const grid = make('div');
       grid.className = 'medical-apple-summary-grid';
       const entries = (highlights[index] || []).flatMap(type => {
-        const matches = rows.filter(entry => shortType(entry.type) === type);
+        const matches = categories[index].entries.filter(entry => shortType(entry.type) === type);
         const row = scaleReadings.find(entry => entry.type === type)
           || matches.find(entry => entry.kind === 'Daily total')
           || matches[0] || savedVitals.find(entry => entry.type === type);
-        return row ? [row] : [];
+        return row && hasReading(row) ? [row] : [];
       });
       const shown = new Set(entries.map(entry => shortType(entry.type)));
       for (const entry of categories[index].entries) {
         const type = shortType(entry.type);
-        if (index !== 5 && (shown.has(type) || entry.value == null || entry.value === '')) continue;
+        if (index !== 5 && shown.has(type)) continue;
         entries.push(entry);
         shown.add(type);
       }
@@ -219,9 +230,9 @@
       }
       return section;
     }
-    panel.querySelector('.medical-apple-left').replaceChildren(overview(0),overview(3));
+    const other = categories[5].entries.length ? [overview(5)] : [];
+    panel.querySelector('.medical-apple-left').replaceChildren(overview(0),overview(3),...other);
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(2),overview(4));
-    panel.querySelector('.medical-apple-other').replaceChildren(overview(5));
   }
   let loaded = false;
   function route() {
