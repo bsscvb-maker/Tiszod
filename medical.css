@@ -227,8 +227,8 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 @keyframes medical-scanner-sweep{to{top:95%}}
 @media(max-width:600px){.medical-scanner-stage{min-height:300px}}
 @media(prefers-reduced-motion:reduce){
- .medical-scanner :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none}
- .medical-scanner .medical-scanner-pause{display:none}
+ .medical-scanner:not([data-desktop-motion]) :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none}
+ .medical-scanner:not([data-desktop-motion]) .medical-scanner-pause{display:none}
 }
 
 /* TisZod Medical scanner v2: responsive high-tech visual interface */
@@ -246,7 +246,7 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 .medical-scanner-readout{position:absolute;bottom:10px;left:10px;right:10px;color:#81e8ff;font:700 10px ui-monospace,monospace;letter-spacing:.06em;text-align:center;z-index:4;background:#061727bb;padding:5px}
 .medical-scanner-detail{font-size:.73rem;color:#9cbacb;line-height:1.4}
 .medical-scanner-v2[data-paused] :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation-play-state:paused}
-@media(prefers-reduced-motion:reduce){.medical-scanner-v2 :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none!important}}
+@media(prefers-reduced-motion:reduce){.medical-scanner-v2:not([data-desktop-motion]) :is(img,.medical-scanner-ring,.medical-scanner-target,.medical-scanner-sweep){animation:none!important}}
 
 .medical-three-canvas{position:absolute;inset:0;z-index:3;display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .medical-three-canvas:active{cursor:grabbing}
@@ -705,11 +705,11 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-command-stage .medical-scanner[data-paused] .medical-scanner-stage::before,
 .medical-command-stage .medical-scanner[data-paused] .medical-scanner-stage::after{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){
-  .medical-scanner-orbs i,
-  .medical-command-stage .medical-scanner-stage::before,
-  .medical-command-stage .medical-scanner-stage::after{animation:none}
-  .medical-scanner-orbs i:nth-child(2){offset-distance:33%}
-  .medical-scanner-orbs i:nth-child(3){offset-distance:66%}
+  .medical-scanner:not([data-desktop-motion]) .medical-scanner-orbs i,
+  .medical-command-stage .medical-scanner:not([data-desktop-motion]) .medical-scanner-stage::before,
+  .medical-command-stage .medical-scanner:not([data-desktop-motion]) .medical-scanner-stage::after{animation:none}
+  .medical-scanner:not([data-desktop-motion]) .medical-scanner-orbs i:nth-child(2){offset-distance:33%}
+  .medical-scanner:not([data-desktop-motion]) .medical-scanner-orbs i:nth-child(3){offset-distance:66%}
 }
 /* The dashboard rows share the same three desktop column tracks. */
 @media(min-width:1101px){

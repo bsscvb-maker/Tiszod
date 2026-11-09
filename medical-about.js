@@ -392,6 +392,8 @@
   function bodyScanner(){
     const figure=make('figure'),header=make('div'),stage=make('div');
     figure.className='medical-scanner medical-scanner-v2';
+    const desktopMotion=matchMedia('(any-hover: hover), (any-pointer: fine)').matches||!navigator.maxTouchPoints;
+    figure.toggleAttribute('data-desktop-motion',desktopMotion);
     figure.setAttribute('aria-label','Interactive body scanner — visual illustration, not a medical scan');
     header.className='medical-scanner-header';
     stage.className='medical-scanner-stage';

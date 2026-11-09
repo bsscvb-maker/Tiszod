@@ -644,7 +644,7 @@ window.thMedical3D={
    };
    const observer=new ResizeObserver(resize);observer.observe(stage);resize();
    const pointers=new Map();let priorDistance=null,idleUntil=0;
-   const desktopMotion=matchMedia('(hover: hover) and (pointer: fine)');
+   const desktopMotion=figure.hasAttribute('data-desktop-motion');
    const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
    const down=e=>{renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY])};
    const move=e=>{
@@ -674,9 +674,9 @@ window.thMedical3D={
     if(t-lastFrame<1000/30&&!pointers.size)return;
     const elapsed=Math.min((t-lastFrame)/1000,.1);
     lastFrame=t;
-    if(!state.paused&&!reducedMotion.matches){
+    if(!state.paused&&(desktopMotion||!reducedMotion.matches)){
      clock+=elapsed;
-     if(desktopMotion.matches&&!pointers.size&&t>=idleUntil)state.yaw=(state.yaw+elapsed*.28)%(Math.PI*2);
+     if(desktopMotion&&!pointers.size&&t>=idleUntil)state.yaw=(state.yaw+elapsed*.28)%(Math.PI*2);
      body.scale.y=1+Math.sin(clock*1.5)*.0025;
      orbit.rotation.y=clock*.1;
      scanBeam.position.y=Math.sin(clock*.7)*2;
