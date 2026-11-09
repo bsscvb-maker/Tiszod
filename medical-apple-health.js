@@ -119,18 +119,32 @@
     return card;
   }
   const byLabel = (a,b) => String(a.label || a.type).localeCompare(String(b.label || b.type));
-  function openRecords(index, entries) {
+  function openRecords(index, entries, title = groups[index][0] + ' readings', order = byLabel) {
     dialog.dataset.category = categoryStyles[index];
-    dialog.querySelector('h3').textContent = groups[index][0] + ' readings';
+    dialog.querySelector('h3').textContent = title;
     const intro = dialog.querySelector('.medical-apple-detail-intro');
     intro.hidden = index !== 3;
     intro.textContent = index === 3
       ? 'Steps, distance, and exercise minutes describe activity. Walking speed, step length, and stair measurements describe how you move.'
       : '';
     dialog.querySelector('.medical-apple-reading-grid').replaceChildren(
-      ...entries.slice().sort(byLabel).map(entry => tile(entry))
+      ...entries.slice().sort(order).map(entry => tile(entry))
     );
     dialog.showModal();
+  }
+  function overviewHeading(title, count, action, countLabel = 'additional readings') {
+    const heading = make('div');
+    heading.className = 'medical-apple-overview-heading';
+    heading.append(make('h3',title));
+    if (action) {
+      const button = make('button','Details - ' + count);
+      button.type = 'button';
+      button.className = 'medical-apple-more';
+      button.setAttribute('aria-label', title + ' details, ' + count + ' ' + countLabel);
+      button.addEventListener('click',action);
+      heading.append(button);
+    }
+    return heading;
   }
   function render() {
     const rows = Array.isArray(imported?.metrics) ? imported.metrics : [];
@@ -143,14 +157,16 @@
     cutoff.setDate(cutoff.getDate() - 365);
     const recent = workoutRows.map(row => ({row, time: +parseDate(row.date)}))
       .filter(({time}) => time >= +cutoff && time <= Date.now())
-      .sort((a,b) => b.time - a.time).slice(0,4);
+      .sort((a,b) => b.time - a.time).map(({row}) => row);
     const workoutPanel = make('section');
     workoutPanel.className = 'medical-apple-overview';
     workoutPanel.dataset.category = 'workouts';
-    workoutPanel.append(make('h3','Recent Workouts'));
+    workoutPanel.append(overviewHeading('Recent Workouts',recent.length,recent.length
+      ? () => openRecords(5,recent,'Recent Workouts', (a,b) => parseDate(b.date) - parseDate(a.date))
+      : null, 'workout records'));
     const workouts = make('div');
     workouts.className = 'medical-apple-workout-list';
-    for (const {row} of recent) {
+    for (const row of recent.slice(0,4)) {
       const item = make('article');
       const duration = row.details?.find(detail => /^duration$/i.test(detail.label));
       const description = duration ? [duration.value,duration.unit].filter(Boolean).join(' ')
@@ -173,13 +189,9 @@
       const section = make('section');
       section.className = 'medical-apple-overview';
       section.dataset.category = categoryStyles[index];
-      const heading = make('div');
-      heading.className = 'medical-apple-overview-heading';
-      heading.append(make('h3', groups[index][0]));
-      section.append(heading);
       const grid = make('div');
       grid.className = 'medical-apple-summary-grid';
-      const entries = highlights[index].flatMap(type => {
+      const entries = (highlights[index] || []).flatMap(type => {
         const matches = rows.filter(entry => shortType(entry.type) === type);
         const row = scaleReadings.find(entry => entry.type === type)
           || matches.find(entry => entry.kind === 'Daily total')
@@ -189,23 +201,19 @@
       const shown = new Set(entries.map(entry => shortType(entry.type)));
       for (const entry of categories[index].entries) {
         const type = shortType(entry.type);
-        if (shown.has(type) || entry.value == null || entry.value === '') continue;
+        if (index !== 5 && (shown.has(type) || entry.value == null || entry.value === '')) continue;
         entries.push(entry);
         shown.add(type);
       }
-      const visible = entries.slice(0, index === 2 ? 6 : 12);
+      const visible = index === 5 ? entries : entries.slice(0, index === 2 ? 6 : 12);
       grid.append(...visible.map(entry => tile(entry,true)));
       if (!entries.length) grid.append(make('p','No readings available.'));
-      section.append(grid);
       const records = categories[index].entries;
-      if (records.length) {
-        const button = make('button', 'Details');
-        button.setAttribute('aria-label', groups[index][0] + ' details');
-        button.type = 'button';
-        button.className = 'medical-apple-more';
-        button.addEventListener('click', () => openRecords(index, records));
-        heading.append(button);
-      }
+      const visibleTypes = new Set(visible.map(entry => shortType(entry.type)));
+      const extra = records.filter(entry => !visibleTypes.has(shortType(entry.type))).length;
+      section.append(overviewHeading(groups[index][0],index === 5 ? records.length : extra,records.length
+        ? () => openRecords(index, records)
+        : null, index === 5 ? 'records' : 'additional readings'), grid);
       if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
         section.append(make('p','TisZod readings shown where available'));
       }
@@ -213,21 +221,7 @@
     }
     panel.querySelector('.medical-apple-left').replaceChildren(overview(0),overview(3));
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(2),overview(4));
-    const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
-    const collections = categories.slice(5).map(({name,entries}) => {
-      const detail = make('details');
-      detail.dataset.group = name;
-      detail.dataset.category = categoryStyles[5];
-      detail.open = openGroups.has(name);
-      detail.append(make('summary', name + ' (' + entries.length + ')'));
-      const grid = make('div');
-      grid.className = 'medical-apple-reading-grid';
-      grid.append(...entries.sort(byLabel).map(entry => tile(entry)));
-      if (!entries.length) grid.append(make('p', 'No imported records in this group.'));
-      detail.append(grid);
-      return detail;
-    });
-    panel.querySelector('.medical-apple-groups').replaceChildren(...collections);
+    panel.querySelector('.medical-apple-other').replaceChildren(overview(5));
   }
   let loaded = false;
   function route() {
