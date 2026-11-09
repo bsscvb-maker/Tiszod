@@ -38,6 +38,7 @@
   const a=entries.filter(e=>!e.deleted).slice().sort((a,b)=>a.odo-b.odo||a.date.localeCompare(b.date));let previous=null,baseline=null,volume=0,unknown=false;
   return a.map(e=>{const miles=previous?e.odo-previous.odo:null;volume+=e.gallons;if(e.full==='unknown')unknown=true;let mpg=null,flag=!!e.flag;
    if(e.full==='yes'){if(baseline&&!unknown&&e.odo>baseline.odo){mpg=(e.odo-baseline.odo)/volume;if(mpg>80)flag=true;}baseline=e;volume=0;unknown=false;}
+   if(mpg===null&&miles!==null&&miles>0&&e.gallons>0){mpg=miles/e.gallons;}
    previous=e;return {...e,miles,mpg,flag};});
  }
  const uuid=()=>typeof crypto.randomUUID==='function'?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
