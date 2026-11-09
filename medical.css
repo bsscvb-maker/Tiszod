@@ -711,3 +711,24 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   .medical-scanner-orbs i:nth-child(2){offset-distance:33%}
   .medical-scanner-orbs i:nth-child(3){offset-distance:66%}
 }
+/* The dashboard rows share the same three desktop column tracks. */
+@media(min-width:1101px){
+  .medical-command-dashboard{
+    display:grid;grid-template-columns:minmax(0,416fr) minmax(0,480fr) minmax(0,262fr);
+    column-gap:14px;
+  }
+  .medical-reference-layout,.medical-concept-panels{
+    grid-column:1/-1;grid-template-columns:subgrid;
+  }
+  .medical-reference-right{grid-column:2/-1;grid-template-columns:subgrid}
+  .medical-reference-right>:is(.medical-reference-overview,.medical-reference-middle,.medical-reference-lower){grid-column:1/-1}
+  .medical-reference-middle,.medical-reference-lower{grid-template-columns:subgrid;margin-left:0}
+  .medical-command-stage{align-items:stretch}
+  .medical-command-stage>.medical-scanner:not(:fullscreen,.medical-3d-expanded){
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .medical-command-stage>.medical-scanner:not(:fullscreen,.medical-3d-expanded) .medical-scanner-stage{
+    flex:1 1 0;height:auto;min-height:380px;
+  }
+  .medical-concept-panels>.medical-concept-panel{min-height:0}
+}
