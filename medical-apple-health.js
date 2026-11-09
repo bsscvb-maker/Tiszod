@@ -11,7 +11,7 @@
     ['Sleep', /Sleep|WristTemperature/i],
     ['Activity & Mobility', /Step|Distance|ActiveEnergy|BasalEnergy|Exercise|Stand|Move|Walking|Running|Stair|Cycling|Swimming|Mobility|Flights|Wheelchair|PhysicalEffort/i],
     ['Nutrition & Hydration', /Dietary|Nutrition|WaterIntake/i],
-    ['Workouts & Other Records', /./]
+    ['Other Apple Health Records', /./]
   ];
   const categoryStyles = ['heart','body','sleep','activity','nutrition','workouts'];
   const highlights = [
@@ -34,15 +34,17 @@
     if (text != null) node.textContent = text;
     return node;
   };
-  const displayDate = date => {
+  const parseDate = date => new Date(String(date ?? '').replace(
+    /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2})(\d{2})$/, '$1T$2$3:$4'
+  ));
+  const displayDate = (date, compact = false) => {
     if (!date) return 'Date unavailable';
-    const iso = String(date).replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2})(\d{2})$/, '$1T$2$3:$4');
-    const parsed = new Date(iso);
+    const parsed = parseDate(date);
     if (!Number.isFinite(parsed.getTime())) return String(date);
-    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
     return new Intl.DateTimeFormat('en-US', dateOnly
       ? {dateStyle:'medium',timeZone:'UTC'}
-      : {dateStyle:'medium',timeStyle:'short',timeZone:'America/New_York'}).format(parsed);
+      : {dateStyle:'medium',...(compact ? {} : {timeStyle:'short'}),timeZone:'America/New_York'}).format(parsed);
   };
   const exportTypes = {
     blood_oxygen: 'OxygenSaturation',
@@ -136,10 +138,35 @@
     status.textContent = error ? 'Could not load the private export. Reopen Apple Health to retry.'
       : imported ? ''
       : privateRead ? 'Loading private Apple Health export…' : 'No private Apple Health export has been imported yet.';
+    const workoutRows = rows.filter(row => /^Workout/i.test(row.kind || ''));
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 365);
+    const recent = workoutRows.map(row => ({row, time: +parseDate(row.date)}))
+      .filter(({time}) => time >= +cutoff && time <= Date.now())
+      .sort((a,b) => b.time - a.time).slice(0,4);
+    const workoutPanel = make('section');
+    workoutPanel.className = 'medical-apple-overview';
+    workoutPanel.dataset.category = 'workouts';
+    workoutPanel.append(make('h3','Recent Workouts'));
+    const workouts = make('div');
+    workouts.className = 'medical-apple-workout-list';
+    for (const {row} of recent) {
+      const item = make('article');
+      const duration = row.details?.find(detail => /^duration$/i.test(detail.label));
+      const description = duration ? [duration.value,duration.unit].filter(Boolean).join(' ')
+        : [row.value,row.unit].filter(value => value != null && value !== '').join(' ');
+      item.append(make('strong',row.label || words(shortType(row.type))),make('time',displayDate(row.date,true)));
+      if (description) item.append(make('span',description));
+      workouts.append(item);
+    }
+    if (recent.length) workoutPanel.append(workouts);
+    else workoutPanel.append(make('p', imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
+    panel.querySelector('.medical-apple-workouts').replaceChildren(workoutPanel);
     const categories = groups.map(([name]) => ({name,entries:[]}));
     for (const row of rows) {
       const type = shortType(row.type);
-      const index = row.kind?.startsWith('Workout') ? 5 : groups.findIndex(([,pattern]) => pattern.test(type));
+      if (/^Workout/i.test(row.kind || '')) continue;
+      const index = groups.findIndex(([,pattern]) => pattern.test(type));
       categories[index < 0 ? 5 : index].entries.push(row);
     }
     function overview(index) {
@@ -185,8 +212,7 @@
       return section;
     }
     panel.querySelector('.medical-apple-left').replaceChildren(overview(0),overview(3));
-    panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(4));
-    panel.querySelector('.medical-apple-sleep').replaceChildren(overview(2));
+    panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(2),overview(4));
     const openGroups = new Set([...panel.querySelectorAll('.medical-apple-groups details[open]')].map(node => node.dataset.group));
     const collections = categories.slice(5).map(({name,entries}) => {
       const detail = make('details');
@@ -201,16 +227,6 @@
       detail.append(grid);
       return detail;
     });
-    if (savedVitals.length) {
-      const saved = make('details');
-      saved.dataset.group = 'tiszod';
-      saved.open = openGroups.has('tiszod');
-      const grid = make('div');
-      grid.className = 'medical-apple-reading-grid';
-      grid.append(...savedVitals.map(entry => tile(entry)));
-      saved.append(make('summary','Saved TisZod vitals'),grid);
-      collections.push(saved);
-    }
     panel.querySelector('.medical-apple-groups').replaceChildren(...collections);
   }
   let loaded = false;

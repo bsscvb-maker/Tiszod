@@ -774,13 +774,18 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-overview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .medical-apple-overview-heading .medical-apple-more{margin-top:0;flex:none}
 .medical-apple-overview h3{margin:0;color:var(--apple-accent);font-size:1rem}
+.medical-apple-overview[data-category="sleep"] .medical-apple-summary-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,105px),1fr))}
+.medical-apple-workout-list{display:grid;gap:5px;margin-top:8px}
+.medical-apple-workout-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;padding:7px 9px;border-radius:7px;background:color-mix(in srgb,var(--apple-tint),#101f30 45%)}
+.medical-apple-workout-list strong{overflow-wrap:anywhere}
+.medical-apple-workout-list :is(time,span){font-size:.78rem;color:#c4dbea}
 .medical-apple-overview>p{margin-top:8px;color:#a9c9df;font-size:.78rem}
 .medical-apple-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:6px}
 .medical-apple-summary-grid .medical-apple-reading{padding:7px 9px;border:0;border-radius:7px;background:color-mix(in srgb,var(--apple-tint),#101f30 45%)}
 .medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;color:var(--apple-accent);font-size:.8rem}
 .medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
-.medical-apple-scanner .medical-scanner-stage{height:clamp(130px,17vh,205px)}
+.medical-apple-scanner .medical-scanner-stage{height:clamp(115px,15vh,180px)}
 .medical-apple-reading,.medical-apple-groups details{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);color:#e8f7ff;
@@ -816,7 +821,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   #medical-dashboard>.medical-concept-topnav{grid-template-columns:repeat(4,minmax(0,1fr))}
   .medical-apple-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .medical-apple-center{grid-column:1/-1;grid-row:1}
-  .medical-apple-scanner .medical-scanner-stage{height:175px}
+  .medical-apple-scanner .medical-scanner-stage{height:150px}
 }
 @media(max-width:460px){
   .medical-apple-layout{grid-template-columns:minmax(0,1fr)}
