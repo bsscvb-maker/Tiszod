@@ -663,3 +663,22 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   --system-top:8%;--system-height:80%;
 }
 .medical-scanner-v2[data-system="fat"] {--system-color:#ffc957}
+.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage {
+  background:#05101c;
+}
+.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage::before,
+.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage::after,
+.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage > :not(img) {
+  visibility:hidden;
+}
+.medical-command-stage .medical-scanner-v2[data-layer="reference"] .medical-scanner-stage > img {
+  display:block;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  transform:none;
+  animation:none;
+  filter:none;
+}
