@@ -80,4 +80,28 @@ balanceInput.addEventListener('change',()=>saveBalance(balanceInput.value));
 balanceInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();balanceInput.blur();}});
 window.addEventListener('storage',event=>{if(event.key!==rewardsStateKey)return;const value=readRewardsState();if(!value)return;savedStatuses=value.statuses;currentBalance=value.balance;renderCodes();renderBalance();balanceMessage.textContent='';balanceMessage.hidden=true;});
 renderBalance();
-</script></body></html>
+
+const legacyCodes = codes.slice();
+function showRewardCodes(privateCodes = []) {
+ const entries = new Map(legacyCodes.map(item => [cleanCode(item.code).toUpperCase(), item]));
+ for (const item of privateCodes) {
+  const key = cleanCode(item.code).toUpperCase();
+  if (!entries.has(key)) entries.set(key, item);
+ }
+ codes.splice(0, codes.length, ...[...entries.values()].sort((a, b) => b.added.localeCompare(a.added)));
+ renderCodes();
+}
+window.thStart = async function () {
+ const values = await thValues("'Portal Aroma Rewards'!A2:D1000", 'UNFORMATTED_VALUE');
+ if (!thAuthorized()) return;
+ const privateCodes = values.flatMap(([added, code, source, status]) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(added) && /^[A-Z0-9]{3}(?:-[A-Z0-9]{3}){3}$/.test(code)
+   ? [{added, code, source: source === 'Photo' ? 'Photo' : 'Manual', status: status === 'Submitted' ? 'Submitted' : 'Unredeemed'}]
+   : []
+ );
+ showRewardCodes(privateCodes);
+};
+addEventListener('storage', event => {
+ if (event.key === TH_SESSION_KEY && !event.newValue) showRewardCodes();
+});
+</script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
