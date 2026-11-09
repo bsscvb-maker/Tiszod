@@ -250,6 +250,9 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
 
 .medical-three-canvas{position:absolute;inset:0;z-index:3;display:block;width:100%;height:100%;cursor:grab;touch-action:none}
 .medical-three-canvas:active{cursor:grabbing}
+.medical-scanner-v2[data-layer="anatomy"] .medical-scanner-stage:not([data-scanner-quality="low"])>.medical-three-canvas{
+ filter:drop-shadow(0 0 1px #a8efffd9) drop-shadow(0 0 3px #32c9ff9e) drop-shadow(0 0 7px #0089f45e)
+}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas)>img{display:none}
 .medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{display:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.42;pointer-events:none}
@@ -548,7 +551,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   content:'';position:absolute;pointer-events:none;left:7%;right:7%;
 }
 .medical-command-stage .medical-scanner-stage::before {
-  top:3%;height:9%;border:1px solid #4cdbff;border-radius:50%;opacity:.75;
+  top:4%;height:9%;z-index:1;border:1px solid #4cdbff;border-radius:50%;opacity:.67;
   box-shadow:0 0 14px #19cfff,inset 0 0 14px #13aaf0;
 }
 .medical-command-stage .medical-scanner-stage::after {
