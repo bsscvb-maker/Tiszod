@@ -237,7 +237,7 @@ window.thMedical3D={
    let atlas,atlasSkeleton,atlasDeep,atlasMuscles,sculptedHead;
    const atlasFaceMeshes=[],atlasJointMeshes=[],atlasHandMeshes=[];
    let handShell,footShell;
-   const wristCuts=[];
+   const wristCuts=[],ankleCuts=[];
    const jointGlow=scannerMaterial(THREE,{
     color:0x327fba,emissive:0x0b4d8d,emissiveIntensity:.35,
     transparent:true,opacity:.58,depthWrite:false,roughness:.44
@@ -502,6 +502,7 @@ window.thMedical3D={
     if(handShell){handShell.visible=showHands;handShell.children.forEach(mesh=>mesh.material=mode==='skin'?skin:handMaterial);}
     for(const mesh of atlasHandMeshes)mesh.visible=!showHands;
     for(const cut of wristCuts)cut.mesh.geometry=showHands?cut.clipped:cut.original;
+    for(const cut of ankleCuts)cut.mesh.geometry=footShell&&mode==='anatomy'?cut.clipped:cut.original;
     proceduralHead.visible=!showHead;
     face.visible=!detailed&&mode!=='scan'&&!showHead;
     for(const mesh of atlasFaceMeshes)mesh.visible=!showHead;
@@ -552,6 +553,27 @@ window.thMedical3D={
     });
     atlas.updateMatrixWorld(true);
     const inverseBody=body.matrixWorld.clone().invert();
+    function clipBelow(node,transform,cutoff){
+     const original=node.geometry,positions=original.getAttribute('position');
+     const point=new THREE.Vector3(),above=new Uint8Array(positions.count);
+     for(let i=0;i<positions.count;i++){
+      above[i]=point.fromBufferAttribute(positions,i).applyMatrix4(transform).y>=cutoff;
+     }
+     const source=original.index.array,faces=[];
+     for(let i=0;i<source.length;i+=3){
+      const [a,b,c]=[source[i],source[i+1],source[i+2]];
+      if(above[a]&&above[b]&&above[c])faces.push(a,b,c);
+     }
+     const clipped=original.clone();clipped.setIndex(faces);
+     return {mesh:node,original,clipped};
+    }
+    for(const layer of [atlasMuscles,atlasDeep])layer.traverse(node=>{
+     if(!node.isMesh||!node.geometry.index)return;
+     node.geometry.computeBoundingBox();
+     const transform=new THREE.Matrix4().multiplyMatrices(inverseBody,node.matrixWorld);
+     const bounds=node.geometry.boundingBox.clone().applyMatrix4(transform);
+     if(bounds.min.y<-1.97)ankleCuts.push(clipBelow(node,transform,-1.97));
+    });
     atlasMuscles.traverse(node=>{
      if(!node.isMesh)return;
      node.geometry.computeBoundingBox();
@@ -562,20 +584,7 @@ window.thMedical3D={
      if(bounds.max.y<-.09){
       atlasHandMeshes.push(node);
      }else if(bounds.min.y<-.13&&node.geometry.index){
-      // Keep forearm tendons visible above the wrist and inside the hand surface below it.
-      const original=node.geometry,positions=original.getAttribute('position');
-      const point=new THREE.Vector3(),above=new Uint8Array(positions.count);
-      for(let i=0;i<positions.count;i++){
-       above[i]=point.fromBufferAttribute(positions,i).applyMatrix4(transform).y>=-.13;
-      }
-      const source=original.index.array,faces=[];
-      for(let i=0;i<source.length;i+=3){
-       const [a,b,c]=[source[i],source[i+1],source[i+2]];
-       if(above[a]&&above[b]&&above[c])faces.push(a,b,c);
-      }
-      const clipped=original.clone();
-      clipped.setIndex(faces);
-      wristCuts.push({mesh:node,original,clipped});
+      wristCuts.push(clipBelow(node,transform,-.13));
      }
     });
     stage.dataset.model='reference-fitted-atlas';state.setMode(state.mode);
@@ -631,7 +640,9 @@ window.thMedical3D={
     const halo=new THREE.Mesh(new THREE.TorusGeometry(radius,width*2.8,8,96),ringGlow);
     halo.rotation.copy(ring.rotation);halo.position.copy(ring.position);orbit.add(halo);
    }
-   const grid=new THREE.GridHelper(5,18,0x127fba,0x124467);grid.position.y=-2.2;scene.add(grid);
+   const floor=new THREE.Mesh(new THREE.CircleGeometry(2.5,64),new THREE.MeshBasicMaterial({color:0x424851}));
+   floor.rotation.x=-Math.PI/2;floor.position.y=-2.205;scene.add(floor);
+   const grid=new THREE.GridHelper(5,18,0x888e97,0x555b64);grid.position.y=-2.2;scene.add(grid);
    const scanBeam=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.025),new THREE.MeshBasicMaterial({color:0x86f9ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
    scanBeam.position.z=.58;scanBeam.visible=false;scene.add(scanBeam);
    const frameCenter=new THREE.Vector3(0,-.22,0);
@@ -669,7 +680,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();wristCuts.forEach(cut=>cut.clipped.dispose());scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();[...wristCuts,...ankleCuts].forEach(cut=>geometries.add(cut.clipped));scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     const elapsed=Math.min((t-lastFrame)/1000,.1);

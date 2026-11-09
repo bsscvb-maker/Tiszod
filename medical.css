@@ -732,3 +732,17 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   }
   .medical-concept-panels>.medical-concept-panel{min-height:0}
 }
+
+#medical-dashboard>.medical-concept-topnav{
+  position:sticky;top:var(--medical-shortcuts-top,0px);z-index:30;
+  background:#051120;
+}
+#medical-dashboard :is(#medical-about,#medical-latest-vitals,#medical-body-scan,
+  #weight-title,#medical-current-medications,#medical-browse,#timeline-title,#medical-upcoming){
+  scroll-margin-top:var(--medical-anchor-offset,150px);
+}
+@media(max-width:700px){
+  #medical-dashboard>.medical-concept-topnav{grid-template-columns:repeat(5,minmax(0,1fr))}
+  #medical-dashboard>.medical-concept-topnav :is(a,button){min-height:48px;font-size:11px}
+  #medical-dashboard>.medical-concept-topnav svg{width:18px;height:18px}
+}

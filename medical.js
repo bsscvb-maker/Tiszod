@@ -1,4 +1,17 @@
 (() => {
+  const shortcutBar=document.querySelector('.medical-concept-topnav');
+  const portalBar=document.querySelector('.th-app-topbar');
+  if(shortcutBar&&portalBar){
+    const updateShortcutOffset=()=>{
+      const portalHeight=getComputedStyle(portalBar).position==='sticky'?portalBar.offsetHeight:0;
+      const dashboard=shortcutBar.parentElement;
+      dashboard.style.setProperty('--medical-shortcuts-top',portalHeight+'px');
+      dashboard.style.setProperty('--medical-anchor-offset',(portalHeight+shortcutBar.offsetHeight+12)+'px');
+    };
+    const shortcutObserver=new ResizeObserver(updateShortcutOffset);
+    shortcutObserver.observe(portalBar);shortcutObserver.observe(shortcutBar);
+    updateShortcutOffset();
+  }
   const categories = ['Prescriptions', 'Providers & Visits', 'Labs & Screening', 'Dental', 'Insurance', 'Billing & Receipts', 'Immunizations', 'Body Composition'];
   const folderLabels = {'Billing & Receipts':'Billing','Labs & Screening':'Test Result','Providers & Visits':'Providers'};
   const isAdministrative = name => /^(?:\d{2}[ ._-]+)?(?:admin(?:istrative)? access|quarantine)\b/i.test(name);
