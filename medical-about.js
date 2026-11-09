@@ -759,6 +759,14 @@
     hero.append(stage,right);
     dashboard.append(hero,panels);
     const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Current Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard);
+    const appleVitalTypes=['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'];
+    const privateVitals=mergeVitals(savedProfile);
+    window.thMedicalAppleHealth?.attachScanner(scanner,stage,vitalCards.flatMap(([key,, ,unit],index)=>
+      privateVitals[key]&&privateVitals[key+'Date']?[{
+        type:appleVitalTypes[index], value:privateVitals[key], unit,date:privateVitals[key+'Date'],
+        kind:'Individual sample',source:'Saved TisZod vitals'
+      }]:[]
+    ));
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';

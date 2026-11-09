@@ -705,7 +705,7 @@ window.thMedical3D={
     lastFrame=t;
     if(!state.paused&&(desktopMotion||!reducedMotion.matches)){
      clock+=elapsed;
-     if(desktopMotion&&!pointers.size&&t>=idleUntil)state.yaw=(state.yaw+elapsed*.28)%(Math.PI*2);
+     if((desktopMotion||figure.hasAttribute('data-apple-health-scanner'))&&!pointers.size&&t>=idleUntil)state.yaw=(state.yaw+elapsed*.28)%(Math.PI*2);
      body.scale.y=1+Math.sin(clock*1.5)*.0025;
      orbit.rotation.y=clock*.1;
      scanBeam.position.y=Math.sin(clock*.7)*2;

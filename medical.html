@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TisZod · Medical</title><meta name="theme-color" content="#0b1019">
-<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><meta name="robots" content="noindex,nofollow"><link rel="preload" as="image" href="assets/medical/hero.webp"><link rel="stylesheet" href="medical.css?v=20261109-wide-journey"><link rel="stylesheet" href="family-collections.css?v=20261108-photo-search"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="module-search.css?v=1"><style>
+<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><meta name="robots" content="noindex,nofollow"><link rel="preload" as="image" href="assets/medical/hero.webp"><link rel="stylesheet" href="medical.css?v=20261109-apple-health"><link rel="stylesheet" href="family-collections.css?v=20261108-photo-search"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="module-search.css?v=1"><style>
 .medical-injection-history-action{margin-block:12px}
 #medical-injection-history{width:min(1440px,calc(100% - 32px))}
 .medical-injection-table{overflow-x:auto;overscroll-behavior-x:contain}
@@ -37,6 +37,7 @@
  <a href="#medical-dashboard" class="medical-nav-overview"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v11h5v-7h4v7h5V10"/></svg><span>Overview</span></a>
  <a href="#medical-latest-vitals"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13zM2 12h5l2-3 3 6 2-3h8"/></svg><span>Vitals</span></a>
  <a href="#medical-body-scan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-7 6 4-4h6l4 4m-8-3-3 11m5-11 3 11"/></svg><span>Body Scan</span></a>
+ <a href="#medical-apple-health"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21S2 15 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 7-10 13-10 13zM3 12h5l2-4 3 8 2-4h6"/></svg><span>Apple Health</span></a>
  <a href="#weight-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V5m0 16h18M6 16l5-6 4 3 5-8m-5 0h5v5"/></svg><span>Trends</span></a>
  <a href="#medical-current-medications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19a5 5 0 0 1 0-7l7-7a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7 0zm3-10 7 7"/></svg><span>Medications</span></a>
  <button type="button" id="medical-concept-injections" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 3 4 4M19 5l-3 3m-4-2 6 6m-5-5-8 8 4 4 8-8m-9 7-5 5m7-12 2 2"/></svg><span>Injections</span></button>
@@ -45,6 +46,15 @@
  <a href="#medical-browse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6zm-3 10 2 2 4-4"/></svg><span>Insurance</span></a>
  <a href="#medical-browse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h9l5 5v15H5zm9 0v6h5M8 12h8m-8 4h8"/></svg><span>Documents</span></a>
 </nav>
+  <section class="medical-apple-health" id="medical-apple-health" aria-labelledby="medical-apple-title" hidden>
+   <header class="medical-concept-panel"><h2 id="medical-apple-title">Apple Health</h2><p role="status">Connecting to private records…</p></header>
+   <div class="medical-apple-layout">
+    <div class="medical-apple-left" aria-label="Key readings"></div>
+    <div class="medical-command-stage medical-apple-scanner" aria-label="Interactive body scan"></div>
+    <div class="medical-apple-right" aria-label="More key readings"></div>
+   </div>
+   <div class="medical-apple-groups" aria-label="Apple Health record groups"></div>
+  </section>
 
   <section class="medical-panel" id="medical-about" aria-labelledby="medical-about-title">
    <div class="medical-heading"><div><time id="medical-profile-updated" class="medical-profile-updated" hidden></time><h2 id="medical-about-title">About Me</h2></div><button type="button" id="medical-about-edit">Edit profile</button></div>
@@ -80,4 +90,4 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script>document.getElementById('medical-concept-injections')?.addEventListener('click',()=>document.getElementById('medical-injection-open')?.click());</script><script src="medical-card-cover.js?v=20261108-photo-search"></script><script src="drive-record-viewer.js?v=20261108-fast-medical"></script><script src="medical-weight.js?v=2"></script><script src="medical-weight-chart.js?v=3"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script><script src="medical-3d.js?v=20261109-foot-tone"></script><script src="medical-about.js?v=20261109-wide-journey"></script><script src="medical-folder-dash.js?v=20261108-reactions"></script><script src="medical.js?v=20261109-pinned-shortcuts"></script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-fast-medical"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
+<script>document.getElementById('medical-concept-injections')?.addEventListener('click',()=>document.getElementById('medical-injection-open')?.click());</script><script src="medical-card-cover.js?v=20261108-photo-search"></script><script src="drive-record-viewer.js?v=20261108-fast-medical"></script><script src="medical-weight.js?v=2"></script><script src="medical-weight-chart.js?v=3"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script><script src="medical-3d.js?v=20261109-apple-health"></script><script src="medical-apple-health.js?v=1"></script><script src="medical-about.js?v=20261109-apple-health"></script><script src="medical-folder-dash.js?v=20261108-reactions"></script><script src="medical.js?v=20261109-apple-health"></script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-fast-medical"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261108-navigation-audit"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>

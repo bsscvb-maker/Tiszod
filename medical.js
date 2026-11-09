@@ -72,7 +72,8 @@
   const children = id => list("'" + escapeQuery(id) + "' in parents");
   const compositionFilename='TisZod About Me - Body Composition.json';
   const medicationFilename='TisZod About Me - Medication.json';
-  const exclude = file => [compositionFilename,medicationFilename].includes(file.name)|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
+  const appleHealthFilename='TisZod Apple Health - Latest Metrics.json';
+  const exclude = file => [compositionFilename,medicationFilename,appleHealthFilename].includes(file.name)|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
   function dateFromName(name) {
     const match = name.match(/\b((?:19|20)\d\d)[.\/-](0[1-9]|1[0-2])(?:[.\/-](0[1-9]|[12]\d|3[01]))?(?![.\/-]\d)/);
     if (match) {
@@ -280,7 +281,7 @@
     }
   }
   function revealTodd(hash=location.hash){
-    const inTodd=['#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title','#medical-dashboard','#medical-latest-vitals','#medical-body-scan','#medical-current-medications','#medical-upcoming'].includes(hash);
+    const inTodd=['#medical-apple-health','#medical-todd','#medical-about','#medical-browse','#timeline-title','#weight-title','#medical-dashboard','#medical-latest-vitals','#medical-body-scan','#medical-current-medications','#medical-upcoming'].includes(hash);
     $('medical-todd').hidden=!inTodd;
     if(hash==='#timeline-title')$('medical-timeline-panel').hidden=false;
   }
@@ -411,6 +412,7 @@
         if(!response.ok)throw Error('Private source could not load.');
         return response.json();
       }
+      window.thMedicalAppleHealth?.connect(()=>readToddSource(appleHealthFilename));
       await thMedicalAbout.start({
         key, list,
         compositionSource:()=>readToddSource(compositionFilename),
