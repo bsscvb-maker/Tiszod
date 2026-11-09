@@ -223,6 +223,7 @@ window.thMedical3D={
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
    const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
    const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
+   const footMaterial=scannerMaterial(THREE,{color:0x557fa7,emissive:0x103658,emissiveIntensity:.36,roughness:.45},1.18);
    const torsoAnatomy=scannerMaterial(THREE,{
     color:0x284670,roughness:.45,transparent:true,opacity:.42,depthWrite:false
    },.8);
@@ -485,7 +486,7 @@ window.thMedical3D={
     const detailed=Boolean(atlas)&&mode!=='skin';
     surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
     feet.visible=!footShell&&(mode!=='scan'||!detailed);
-    if(footShell){footShell.visible=mode!=='scan'||!detailed;footShell.children.forEach(mesh=>mesh.material=mode==='skin'?skin:mode==='scan'?scan:fascia);}
+    if(footShell){footShell.visible=mode!=='scan'||!detailed;footShell.children.forEach(mesh=>mesh.material=mode==='skin'?skin:mode==='scan'?scan:footMaterial);}
     const selected=state.system;
     const whole=selected==='hydration'||selected==='fat';
     organs.visible=mode!=='skin'&&!whole&&selected!=='muscle'&&selected!=='bone';
@@ -633,12 +634,12 @@ window.thMedical3D={
    const grid=new THREE.GridHelper(5,18,0x127fba,0x124467);grid.position.y=-2.2;scene.add(grid);
    const scanBeam=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.025),new THREE.MeshBasicMaterial({color:0x86f9ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
    scanBeam.position.z=.58;scanBeam.visible=false;scene.add(scanBeam);
-   const frameCenter=new THREE.Vector3(0,-.10,0);
+   const frameCenter=new THREE.Vector3(0,-.22,0);
    let frameDistance=7.2;
    const resize=()=>{
     if(!stage.isConnected)return;
     const width=Math.max(stage.clientWidth,1),height=Math.max(stage.clientHeight,1);
-    frameDistance=Math.max(6.95,2.75/(width/height));
+    frameDistance=Math.max(7.35,2.75/(width/height));
     renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
    };
    const observer=new ResizeObserver(resize);observer.observe(stage);resize();
@@ -668,7 +669,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();wristCuts.forEach(cut=>cut.clipped.dispose());scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();wristCuts.forEach(cut=>cut.clipped.dispose());scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     const elapsed=Math.min((t-lastFrame)/1000,.1);

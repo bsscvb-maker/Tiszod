@@ -260,10 +260,7 @@ body[data-th-page="medical"] .medical-regimen section>div>strong,.medical-inject
   animation-name:medical-scanner-cross-sweep;animation-duration:3.8s;
 }
 @keyframes medical-scanner-cross-sweep{to{left:96%}}
-@media(hover:none),(pointer:coarse){
-  .medical-scanner-v2:not([data-layer="scan"]) .medical-scanner-sweep{display:none}
-}
-.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.42;pointer-events:none}
+.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-sweep{z-index:4;opacity:.72;pointer-events:none}
 .medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-readout,.medical-scanner-v2 .medical-scanner-stage:has(.medical-three-canvas) .medical-scanner-online{z-index:5;pointer-events:none}
 
 /* Cross-device 3D viewing: Windows laptops, iPad, and iPhone */
@@ -557,7 +554,8 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-command-system small {white-space:nowrap;font-size:9px}
 .medical-command-stage .medical-scanner-v2 .medical-scanner-stage {
   isolation:isolate;
-  background:radial-gradient(ellipse at 50% 75%,#007eb050 0%,#002c4f60 33%,transparent 72%),
+  background:radial-gradient(ellipse 46% 43% at 50% 49%,#000 96%,transparent 100%),
+    radial-gradient(ellipse at 50% 75%,#007eb050 0%,#002c4f60 33%,transparent 72%),
     radial-gradient(ellipse at 52% 38%,#063d61 0%,#07182a 50%,transparent 75%);
 }
 .medical-command-stage .medical-scanner-stage::before,
@@ -690,3 +688,26 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 #medical-current-medications .medical-regimen{grid-template-columns:repeat(auto-fit,minmax(min(100%,112px),1fr))}
 #medical-current-medications .medical-regimen-copy{width:100%;min-width:0}
 #medical-current-medications .medical-regimen-copy :is(strong,p,span){white-space:normal;overflow-wrap:anywhere}
+.medical-scanner-orbs{position:absolute;inset:11% 4%;z-index:4;pointer-events:none}
+.medical-scanner-orbs i{
+  position:absolute;top:0;left:0;width:6px;height:6px;border-radius:50%;
+  offset-path:ellipse(49% 48% at 50% 50%);
+  background:#e2fbff;box-shadow:0 0 5px 2px #4adfff,0 0 14px 3px #168bff;
+  animation:medical-orb-travel 6s linear infinite;
+}
+.medical-scanner-orbs i:nth-child(2){animation-delay:-2s}
+.medical-scanner-orbs i:nth-child(3){animation-delay:-4s}
+@keyframes medical-orb-travel{to{offset-distance:100%}}
+.medical-command-stage .medical-scanner-stage::before,
+.medical-command-stage .medical-scanner-stage::after{animation:medical-ring-brightness 2.2s ease-in-out infinite alternate}
+@keyframes medical-ring-brightness{from{opacity:.46}to{opacity:1}}
+.medical-scanner[data-paused] .medical-scanner-orbs i,
+.medical-command-stage .medical-scanner[data-paused] .medical-scanner-stage::before,
+.medical-command-stage .medical-scanner[data-paused] .medical-scanner-stage::after{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){
+  .medical-scanner-orbs i,
+  .medical-command-stage .medical-scanner-stage::before,
+  .medical-command-stage .medical-scanner-stage::after{animation:none}
+  .medical-scanner-orbs i:nth-child(2){offset-distance:33%}
+  .medical-scanner-orbs i:nth-child(3){offset-distance:66%}
+}

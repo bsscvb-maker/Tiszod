@@ -400,10 +400,12 @@
     const silhouette=make('img');
     silhouette.alt='Illustrated adult male body with natural skin tone';
     const ring=make('span'),sweep=make('span'),crossSweep=make('span'),grid=make('span'),target=make('span');
+    const orbit=make('span');orbit.className='medical-scanner-orbs';
+    for(let i=0;i<3;i++)orbit.append(make('i'));
     crossSweep.className='medical-scanner-sweep medical-scanner-sweep-vertical';
     ring.className='medical-scanner-ring';sweep.className='medical-scanner-sweep';
     grid.className='medical-scanner-grid';target.className='medical-scanner-target';
-    for(const layer of [ring,sweep,crossSweep,grid,target])layer.setAttribute('aria-hidden','true');
+    for(const layer of [ring,sweep,crossSweep,grid,target,orbit])layer.setAttribute('aria-hidden','true');
     let threeState=null;const controls=make('div');controls.className='medical-scanner-controls';
     const modes=[['skin','Skin'],['anatomy','Anatomy'],['scan','X-ray']];
     const buttons=modes.map(([mode,label])=>{
@@ -425,7 +427,7 @@
       detail.textContent=scannerLayer==='skin'?'Natural skin view · animated body visualization':scannerLayer==='anatomy'?'Anatomy view · stylized internal structure':'X-ray view · illustrative visualization only';
     }
     header.append(make('span','BODY SCANNER / TISZOD','medical-scanner-title'),pause);
-    stage.append(grid,ring,silhouette,target,sweep,crossSweep);
+    stage.append(grid,ring,silhouette,target,orbit,sweep,crossSweep);
     const reset=action('Reset view',()=>threeState?.reset?.());reset.className='medical-scanner-mode';controls.append(reset);
     const full=action('⛶ Full screen',()=>threeState?.toggleFullscreen?.());full.className='medical-scanner-mode';controls.append(full);
     const quality=make('select');quality.className='medical-scanner-quality';quality.setAttribute('aria-label','3D graphics quality');
