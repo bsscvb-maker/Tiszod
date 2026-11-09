@@ -6,19 +6,19 @@
   const dialog = panel.querySelector('.medical-apple-dialog');
   const link = dashboard.querySelector('a[href="#medical-apple-health"]');
   const groups = [
-    ['Heart & Breathing', /Heart|Oxygen|Respiratory|VO2|BloodPressure|ECG|Electrocardiogram|Atrial/i],
+    ['Heart & Lungs', /Heart|Oxygen|Respiratory|VO2|BloodPressure|ECG|Electrocardiogram|Atrial/i],
     ['Body Composition', /BodyMass|BodyFat|Height|LeanBody|BodyWater|BoneMass|Waist|BodyTemperature/i],
     ['Sleep', /Sleep|WristTemperature/i],
-    ['Activity & Mobility', /Step|Distance|ActiveEnergy|BasalEnergy|Exercise|Stand|Move|Walking|Running|Stair|Cycling|Swimming|Mobility|Flights|Wheelchair|PhysicalEffort/i],
+    ['Daily Movement', /Step|Distance|ActiveEnergy|BasalEnergy|Exercise|Stand|Move|Walking|Running|Stair|Cycling|Swimming|Mobility|Flights|Wheelchair|PhysicalEffort/i],
     ['Nutrition & Hydration', /Dietary|Nutrition|WaterIntake/i],
-    ['Other Apple Health Records', /./]
+    ['Wellness & Environment', /./]
   ];
   const categoryStyles = ['heart','body','sleep','activity','nutrition','workouts'];
   const highlights = [
     ['HeartRate','RestingHeartRate','OxygenSaturation','HeartRateVariabilitySDNN','RespiratoryRate','VO2Max'],
     ['Height','BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'],
     ['SleepAnalysis','AppleSleepingWristTemperature','AppleSleepDurationGoal'],
-    ['StepCount','DistanceWalkingRunning','ActiveEnergyBurned','AppleExerciseTime','FlightsClimbed'],
+    ['StepCount','DistanceWalkingRunning','ActiveEnergyBurned','AppleExerciseTime','FlightsClimbed','WalkingSpeed','WalkingStepLength','WalkingSteadiness','AppleWalkingSteadiness'],
     ['DietaryWater','DietaryEnergyConsumed','DietaryProtein','DietaryCarbohydrates','DietaryFatTotal','DietaryFiber']
   ];
   const knownLabels = {
@@ -99,7 +99,14 @@
   }
   const metricDetail = entry => entry.details?.find(detail => hasValue(detail.value) &&
     (Number.isFinite(detail.value) || (detail.unit && Number.isFinite(Number(detail.value)))));
-  const hasReading = entry => hasValue(entry.value) || Boolean(metricDetail(entry));
+  const hasReading = entry => {
+    const label = [entry.type,entry.label].filter(Boolean).map(words).join(' ');
+    if (/audio.*(?:exposure event|limit|notification)/i.test(label)) return false;
+    if (/\b(?:food|route|event)\b/i.test(label)) {
+      return Boolean(metricDetail(entry)) || (hasValue(entry.value) && Number.isFinite(Number(entry.value)));
+    }
+    return hasValue(entry.value) || Boolean(metricDetail(entry));
+  };
   const workoutMetric = entry => /stat|metric|summary/i.test(entry.kind || '') ||
     /[·:].*\((?:sum|average|min|max|count)\)/i.test(entry.label || '');
   function tile(entry, compact = false) {
@@ -142,15 +149,22 @@
     );
     dialog.showModal();
   }
-  function overviewHeading(title, count, action, countLabel = 'additional readings') {
+  function overviewHeading(title, entries, additional, action) {
     const heading = make('div');
     heading.className = 'medical-apple-overview-heading';
     heading.append(make('h3',title));
+    const latest = entries.reduce((last,entry) => Math.max(last,+parseDate(entry.date) || -Infinity),-Infinity);
+    if (Number.isFinite(latest)) {
+      const timestamp = make('time','Latest '+displayDate(new Date(latest).toISOString()));
+      timestamp.dateTime = new Date(latest).toISOString();
+      timestamp.title = 'Latest recorded reading';
+      heading.append(timestamp);
+    }
     if (action) {
-      const button = make('button','Details - ' + count);
+      const button = make('button','Details - ' + additional + ' of ' + entries.length);
       button.type = 'button';
       button.className = 'medical-apple-more';
-      button.setAttribute('aria-label', title + ' details, ' + count + ' ' + countLabel);
+      button.setAttribute('aria-label', title + ' details, ' + additional + ' additional of ' + entries.length + ' records');
       button.addEventListener('click',action);
       heading.append(button);
     }
@@ -172,9 +186,9 @@
     const workoutPanel = make('section');
     workoutPanel.className = 'medical-apple-overview';
     workoutPanel.dataset.category = 'workouts';
-    workoutPanel.append(overviewHeading('Recent Workouts',recent.length,recent.length
+    workoutPanel.append(overviewHeading('Recent Workouts',recent,recent.length - Math.min(sessions.length,4),recent.length
       ? () => openRecords(5,recent,'Recent Workouts', (a,b) => parseDate(b.date) - parseDate(a.date))
-      : null, 'workout records'));
+      : null));
     const workouts = make('div');
     workouts.className = 'medical-apple-workout-list';
     for (const row of sessions.slice(0,4)) {
@@ -186,7 +200,12 @@
       if (description) item.append(make('span',description));
       workouts.append(item);
     }
-    if (sessions.length) workoutPanel.append(workouts);
+    if (sessions.length) {
+      workoutPanel.append(workouts);
+      if (sessions.length < 4 && recent.length > sessions.length) {
+        workoutPanel.append(make('p', 'Workout measurements are included in Details.'));
+      }
+    }
     else workoutPanel.append(make('p', recent.length ? 'Recent workout measurements are available in Details.' : imported ? 'No workout records in the past 365 days.' : 'Workout records will appear here when available.'));
     panel.querySelector('.medical-apple-workouts').replaceChildren(workoutPanel);
     const categories = groups.map(([name]) => ({name,entries:[]}));
@@ -216,18 +235,15 @@
         entries.push(entry);
         shown.add(type);
       }
-      const visible = index === 5 ? entries : entries.slice(0, index === 2 ? 6 : 12);
+      const visible = index === 5 ? entries : entries.slice(0, index === 2 ? 6 : 8);
       grid.append(...visible.map(entry => tile(entry,true)));
       if (!entries.length) grid.append(make('p','No readings available.'));
       const records = categories[index].entries;
       const visibleTypes = new Set(visible.map(entry => shortType(entry.type)));
-      const extra = records.filter(entry => !visibleTypes.has(shortType(entry.type))).length;
-      section.append(overviewHeading(groups[index][0],index === 5 ? records.length : extra,records.length
-        ? () => openRecords(index, records)
-        : null, index === 5 ? 'records' : 'additional readings'), grid);
-      if (index === 1 && entries.some(entry => entry.source === 'TisZod')) {
-        section.append(make('p','TisZod readings shown where available'));
-      }
+      const extra = records.filter(entry => !visibleTypes.has(shortType(entry.type)));
+      section.append(overviewHeading(groups[index][0],records,extra.length,records.length
+        ? () => openRecords(index, extra.length ? extra : records)
+        : null), grid);
       return section;
     }
     const other = categories[5].entries.length ? [overview(5)] : [];
@@ -264,7 +280,7 @@
     summarize,
     connect(reader) {readPrivate = reader;loaded = false;route();},
     attachScanner(figure, home, vitals, composition = []) {
-      if (scanner && scanner.parentElement === scannerSlot) scanner.remove();
+      if (scanner && scanner !== figure && scanner.parentElement === scannerSlot) scanner.remove();
       scanner = figure;
       scannerHome = home;
       savedVitals = vitals;

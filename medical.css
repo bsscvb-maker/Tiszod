@@ -771,8 +771,9 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);
 }
-.medical-apple-overview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.medical-apple-overview-heading .medical-apple-more{margin-top:0;flex:none}
+.medical-apple-overview-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;margin-bottom:8px}
+.medical-apple-overview-heading time{font-size:.74rem;color:#a9c9df}
+.medical-apple-overview-heading .medical-apple-more{margin:0 0 0 auto;flex:none;font-size:.8rem}
 .medical-apple-overview h3{margin:0;color:var(--apple-accent);font-size:1rem}
 .medical-apple-overview[data-category="sleep"] .medical-apple-summary-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,105px),1fr))}
 .medical-apple-workout-list{display:grid;gap:5px;margin-top:8px}
@@ -785,7 +786,7 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 .medical-apple-summary-grid .medical-apple-reading h4{margin-bottom:2px;color:var(--apple-accent);font-size:.8rem}
 .medical-apple-summary-grid .medical-apple-reading strong{font-size:1rem}
 .medical-apple-scanner.medical-command-stage{display:block}
-.medical-apple-scanner.medical-command-stage>.medical-scanner[data-apple-health-scanner]:not(:fullscreen,.medical-3d-expanded) .medical-scanner-stage{height:clamp(160px,24vh,240px);min-height:0}
+.medical-apple-scanner .medical-scanner-stage{height:clamp(160px,24vh,240px)}
 .medical-apple-reading{
   min-width:0;padding:12px;border:1px solid #257793;border-radius:12px;
   background:linear-gradient(145deg,#0b263b,#06121f);color:#e8f7ff;
