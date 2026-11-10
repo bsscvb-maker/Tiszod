@@ -466,26 +466,58 @@
         return response.json();
       }
       window.thMedicalAppleHealth?.connect(async () => {
-        const websiteFolders = await list("mimeType = '" + folderMime + "' and name = 'TisZod Website'");
-        const exportQuery = "mimeType = '" + folderMime + "' and name = 'Health Auto Export'";
-        const websiteParents = websiteFolders.map(folder => "'" + escapeQuery(folder.id) + "' in parents");
-        let roots = websiteParents.length ? await list(exportQuery + ' and (' + websiteParents.join(' or ') + ')') : [];
-        if (!roots.length) roots = await list(exportQuery + " and 'root' in parents");
-        if (!roots.length) roots = await list(exportQuery);
-        if (roots.length > 1) throw Error('More than one Health Auto Export folder was found.');
-        const folders = roots.length ? (await children(roots[0].id))
-          .filter(file => file.folder && file.name === 'New Folder') : [];
-        if (folders.length > 1) throw Error('More than one export destination was found.');
+        const sourceKey = 'tiszod-apple-health-drive-source';
+        const page = new URL(location.href);
+        const folderId = page.searchParams.get('healthExportFolder');
+        const fileId = page.searchParams.get('healthExportFile');
+        const validId = id => typeof id === 'string' && /^[\w-]{10,}$/.test(id);
+        if (validId(folderId) && validId(fileId)) {
+          localStorage.setItem(sourceKey, JSON.stringify({folderId,fileId}));
+          page.searchParams.delete('healthExportFolder');
+          page.searchParams.delete('healthExportFile');
+          history.replaceState(history.state,'',page);
+        }
+        const linked = JSON.parse(localStorage.getItem(sourceKey) || 'null');
         const dailyName = /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/;
         const order = 'name desc,modifiedTime desc';
-        let files = folders.length ? (await list("'" + escapeQuery(folders[0].id) + "' in parents", order))
-          .filter(file => !file.folder && dailyName.test(file.name)) : [];
-        if (!files.length) {
-          // Drive can return exports by name even when it omits them from folder listings.
-          const matches = await list("name contains 'HealthAutoExport' or name contains 'Health Auto Export' or name = '" + escapeQuery(appleHealthFilename) + "'", order);
-          files = matches.filter(file => !file.folder && dailyName.test(file.name) && file.parents?.length === 1);
-          const parents = new Set(files.map(file => file.parents[0]));
-          if (parents.size > 1) throw Error('More than one daily Apple Health export folder was found.');
+        const loadDailyFiles = async id => (await list("'" + escapeQuery(id) + "' in parents", order))
+          .filter(file => !file.folder && dailyName.test(file.name));
+        let files = [];
+        let linkedFileOnly = false;
+        if (validId(linked?.folderId) && validId(linked?.fileId)) {
+          files = await loadDailyFiles(linked.folderId);
+          if (!files.length) {
+            const fields = new URLSearchParams({fields:'id,name,parents,modifiedTime,trashed'});
+            const response = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(linked.fileId) + '?' + fields, {
+              headers:{Authorization:'Bearer ' + thToken},cache:'no-store'
+            });
+            if (!response.ok) throw Error('The linked Apple Health export could not be opened.');
+            const file = await response.json();
+            if (file.trashed || !dailyName.test(file.name) || !file.parents?.includes(linked.folderId)) {
+              throw Error('The linked Apple Health export is no longer in its folder.');
+            }
+            files = [file];
+            linkedFileOnly = true;
+          }
+        } else {
+          const websiteFolders = await list("mimeType = '" + folderMime + "' and name = 'TisZod Website'");
+          const exportQuery = "mimeType = '" + folderMime + "' and name = 'Health Auto Export'";
+          const websiteParents = websiteFolders.map(folder => "'" + escapeQuery(folder.id) + "' in parents");
+          let roots = websiteParents.length ? await list(exportQuery + ' and (' + websiteParents.join(' or ') + ')') : [];
+          if (!roots.length) roots = await list(exportQuery + " and 'root' in parents");
+          if (!roots.length) roots = await list(exportQuery);
+          if (roots.length > 1) throw Error('More than one Health Auto Export folder was found.');
+          const folders = roots.length ? (await children(roots[0].id))
+            .filter(file => file.folder && file.name === 'New Folder') : [];
+          if (folders.length > 1) throw Error('More than one export destination was found.');
+          if (folders.length) files = await loadDailyFiles(folders[0].id);
+          if (!files.length) {
+            // Drive can return exports by name even when it omits them from folder listings.
+            const matches = await list("name contains 'HealthAutoExport' or name contains 'Health Auto Export' or name = '" + escapeQuery(appleHealthFilename) + "'", order);
+            files = matches.filter(file => !file.folder && dailyName.test(file.name) && file.parents?.length === 1);
+            const parents = new Set(files.map(file => file.parents[0]));
+            if (parents.size > 1) throw Error('More than one daily Apple Health export folder was found.');
+          }
         }
         const daily = new Map();
         for (const file of files) {
@@ -505,7 +537,7 @@
         const previous = await readToddSource(appleHealthFilename);
         const types = new Set(current.metrics.map(row => row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')));
         const exportModifiedTime = [...daily.values()].map(file => file.modifiedTime).filter(Boolean).sort().pop();
-        return {...current, exportModifiedTime, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
+        return {...current, exportModifiedTime, linkedFileOnly, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
           !types.has(row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')))]};
       });
       await thMedicalAbout.start({

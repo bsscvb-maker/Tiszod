@@ -280,6 +280,7 @@
     const stamp = lastSync ? 'Last sync: ' + displayDate(lastSync) + ' ET' : 'Last sync: unavailable';
     const exportTime = imported?.exportModifiedTime;
     syncStatus.textContent = privateRead ? 'Checking Drive…' : error ? stamp + ' · Sync failed'
+      : imported?.linkedFileOnly ? stamp + ' · Linked file only'
       : imported && !exportTime ? 'Showing saved snapshot · Daily export unavailable' : stamp;
     syncStatus.title = exportTime ? 'Latest daily export in Drive: ' + displayDate(exportTime) + ' ET' : '';
   }
