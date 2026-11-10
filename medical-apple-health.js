@@ -274,14 +274,16 @@
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(2),overview(4));
   }
   let loaded = false;
-  let lastSync, lastAutoDay, lastAutoCheck = 0;
+  let lastChecked, lastAutoDay, lastAutoCheck = 0;
   function updateSyncControls() {
     syncButton.disabled = !readPrivate || Boolean(privateRead);
-    const stamp = lastSync ? 'Last sync: ' + displayDate(lastSync) + ' ET' : 'Last sync: unavailable';
     const exportTime = imported?.exportModifiedTime;
+    const stamp = lastChecked
+      ? (exportTime && !error ? 'Last sync: ' : 'Last checked: ') + displayDate(lastChecked) + ' ET'
+      : 'Last checked: unavailable';
     syncStatus.textContent = privateRead ? 'Checking Drive…' : error ? stamp + ' · Sync failed'
       : imported?.linkedFileOnly ? stamp + ' · Linked file only'
-      : imported && !exportTime ? 'Showing saved snapshot · Daily export unavailable' : stamp;
+      : imported && !exportTime ? stamp + ' · Saved snapshot' : stamp;
     syncStatus.title = exportTime ? 'Latest daily export in Drive: ' + displayDate(exportTime) + ' ET' : '';
   }
   function sync() {
@@ -289,11 +291,9 @@
     error = false;
     privateRead = Promise.resolve().then(readPrivate).then(result => {
       loaded = true;
-      if (result) {
-        imported = result;
-        lastSync = new Date().toISOString();
-      }
+      imported = result;
     }).catch(() => {error = true;}).finally(() => {
+      lastChecked = new Date().toISOString();
       privateRead = null;
       updateSyncControls();
       if (!panel.hidden) render();
