@@ -25,7 +25,6 @@ jobs:
         env:
           RECALL_SHEETS_ACCOUNT: ${{ secrets.RECALL_SHEETS_ACCOUNT }}
           RECALL_SHEET_ID: ${{ secrets.RECALL_SHEET_ID }}
-          RECALL_API_KEY: ${{ secrets.RECALL_API_KEY }}
           RECALL_EMAIL_FROM: ${{ secrets.RECALL_EMAIL_FROM }}
           RECALL_EMAIL_TO: ${{ secrets.RECALL_EMAIL_TO }}
           RECALL_EMAIL_APP_PASSWORD: ${{ secrets.RECALL_EMAIL_APP_PASSWORD }}

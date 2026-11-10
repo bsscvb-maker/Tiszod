@@ -484,7 +484,119 @@
       workList.append(card);
     }
   }
+  async function checkRecallCampaigns(rows, output, trigger) {
+    trigger.disabled = true;
+    output.replaceChildren(node('p','Checking NHTSA campaign data…'));
+    const requests = new Map();
+    async function check(row) {
+      const {year,make,model} = row.item;
+      if (!/^\d{4}$/.test(String(year || '').trim()) || !make || !model ||
+          ['Watercraft','Equipment'].includes(row.collection) || /bicycle|golf cart/i.test(row.item.category || '')) {
+        return {row,message:'Manufacturer or specialty lookup needed'};
+      }
+      const query = new URLSearchParams({make,model,modelYear:year});
+      const key = query.toString().toLowerCase();
+      if (!requests.has(key)) requests.set(key,(async () => {
+        const response = await fetch('https://api.nhtsa.gov/recalls/recallsByVehicle?' + query,
+          {cache:'no-store',signal:AbortSignal.timeout(12000)});
+        if (!response.ok) throw Error('Campaign lookup unavailable');
+        const result = await response.json();
+        if (!Array.isArray(result.results)) throw Error('Campaign lookup unavailable');
+        return result.results;
+      })());
+      try {
+        const campaigns = await requests.get(key);
+        return {row,campaigns,message:campaigns.length ? campaigns.length + ' campaign matches' : 'No matching campaigns returned'};
+      } catch { return {row,message:'Campaign lookup unavailable'}; }
+    }
+    try {
+      const results = [];
+      for (let offset = 0; offset < rows.length; offset += 5)
+        results.push(...await Promise.all(rows.slice(offset,offset+5).map(check)));
+      const sorted = results.sort((a,b) => Number(Boolean(b.campaigns?.length)) - Number(Boolean(a.campaigns?.length)));
+      output.replaceChildren(node('p','NHTSA campaign matches by year, make, and model. Use the official VIN link to verify whether a repair is still open.'));
+      for (const {row,campaigns,message} of sorted) {
+        const result = node('details');
+        result.append(node('summary',row.cells[0] + ' · ' + message),linkTo('Official lookup',row.lookup,true));
+        for (const campaign of campaigns || []) {
+          result.append(node('p',[campaign.NHTSACampaignNumber,campaign.Component,campaign.Summary,campaign.Remedy].filter(Boolean).join(' · ')));
+        }
+        output.append(result);
+      }
+    } finally {trigger.disabled = false;}
+  }
+  const recallSelectionTab = 'TisZod Recall Selection';
+  async function recallSelection(write) {
+    const metadata = await thSheets('?fields=sheets(properties(title))');
+    const exists = metadata.sheets.some(sheet => sheet.properties.title === recallSelectionTab);
+    if (!exists && !write) return new Set();
+    if (!exists) {
+      const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + TH_SHEET_ID + ':batchUpdate', {
+        method:'POST',headers:{Authorization:'Bearer ' + thToken,'Content-Type':'application/json'},
+        body:JSON.stringify({requests:[{addSheet:{properties:{title:recallSelectionTab,gridProperties:{rowCount:1,columnCount:1}}}}]})
+      });
+      if (!response.ok) throw Error('Could not create the private recall selection.');
+    }
+    if (write) {
+      await thWriteCell(recallSelectionTab,'A1',JSON.stringify([...write]));
+      return write;
+    }
+    const cells = await thValues("'" + recallSelectionTab + "'!A1");
+    const values = JSON.parse(cells[0]?.[0] || '[]');
+    if (!Array.isArray(values)) throw Error('Invalid recall selection.');
+    return new Set(values);
+  }
+  function renderRecallPicker(rows) {
+    const picker = node('details');
+    picker.append(node('summary','Choose vehicles for recall checks'));
+    const feedback = node('p','Loading your private selection…');
+    feedback.setAttribute('role','status');
+    picker.append(feedback);
+    const results = node('div');
+    const choices = [...new Map(rows.filter(row => vinFor(row.item)).map(row => [vinFor(row.item),row])).values()];
+    const controls = choices.map(row => {
+      const label = node('label');
+      const checkbox = node('input');
+      checkbox.type = 'checkbox';
+      checkbox.disabled = true;
+      const vin = vinFor(row.item);
+      label.append(checkbox,document.createTextNode(' ' + row.cells[0] + ' · ' + row.state + ' · ' + vin));
+      const line = node('div');
+      line.append(label);
+      picker.append(line);
+      return {checkbox,vin};
+    });
+    const save = action('Save selection',async () => {
+      save.disabled = check.disabled = true;
+      try {
+        const next = await recallSelection();
+        for (const {checkbox,vin} of controls) {
+          if (checkbox.checked) next.add(vin); else next.delete(vin);
+        }
+        await recallSelection(next);
+        feedback.textContent = next.size + ' vehicles selected.';
+      } catch {feedback.textContent = 'Could not save your private selection. Try again.';}
+      finally {save.disabled = check.disabled = false;}
+    });
+    const check = action('Check Recalls',async () => {
+      try {
+        const selected = await recallSelection();
+        const chosen = choices.filter(row => selected.has(vinFor(row.item)));
+        if (!chosen.length) {feedback.textContent = 'Choose and save vehicles before checking recalls.';picker.open = true;return;}
+        await checkRecallCampaigns(chosen,results,check);
+      } catch {feedback.textContent = 'Could not load your private selection. Try again.';}
+    });
+    picker.append(save);
+    save.disabled = check.disabled = true;
+    recallTools.append(check,picker,results);
+    void recallSelection().then(values => {
+      for (const {checkbox,vin} of controls) {checkbox.checked = values.has(vin);checkbox.disabled = false;}
+      feedback.textContent = values.size + ' vehicles selected. Save changes before checking.';
+      save.disabled = check.disabled = false;
+    }).catch(() => {feedback.textContent = 'Could not load your private selection. Reopen the report to retry.';});
+  }
   function renderRecallTools(rows) {
+    renderRecallPicker(rows);
     const vins = [...new Set(rows.filter(row => row.eligible).map(row => row.cells[2]))];
     recallTools.append(linkTo('Open NHTSA Recall Check', recallSite, true));
     if (vins.length) recallTools.append(action('Copy eligible VINs (' + vins.length + ')', async () => {
@@ -541,12 +653,12 @@
     }
   }
 
-  function show(report, rows) {
+  function show(report, rows, allRows = rows) {
     const grouped = report === reports.attention || report === reports.deferred;
     preview.classList.toggle('report-grouped', grouped);
     renderSummary(report, rows);
     if (grouped) renderGrouped(report, rows);
-    if (report === reports.recalls) renderRecallTools(rows);
+    if (report === reports.recalls) renderRecallTools(allRows);
     const head = table.createTHead().insertRow();
     for (const heading of report.headers) {
       const cell = document.createElement('th');
@@ -653,7 +765,8 @@
     run.disabled = true;
     status.textContent = 'Loading ' + report.name.toLowerCase() + '…';
     try {
-      const rows = (await report.read({type, window:filters.window.value, now:today(), from, to})).filter(row =>
+      const allRows = await report.read({type, window:filters.window.value, now:today(), from, to});
+      const rows = allRows.filter(row =>
         (!group || row.collection === group) &&
         (!state || (/^(active|managed)$/i.test(String(row.state).trim()) === (state === 'current'))) &&
         (planning || !from || (row.date && row.date >= from)) &&
@@ -669,7 +782,7 @@
       status.textContent = rows.length ? rows.length + (rows.length === 1 ? ' record' : ' records') + ' found.' : 'No records match these filters.';
       if (!rows.length && report === reports.attention)
         status.textContent = 'No matching due tasks were found. Check Missing records for gaps in schedules or readings.';
-      if (rows.length || report === reports.recalls || report === reports.attention) show(report, rows);
+      if (rows.length || report === reports.recalls || report === reports.attention) show(report, rows, allRows);
     } catch (error) {
       if (current !== generation) return;
       if (error.status === 401) {

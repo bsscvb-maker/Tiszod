@@ -1,6 +1,6 @@
 """Send a private VIN-level recall report using the Garage workbook."""
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.message import EmailMessage
 from html import escape
 import json
@@ -12,7 +12,7 @@ import ssl
 import subprocess
 import tempfile
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
@@ -56,8 +56,8 @@ def sheet_token(account):
 
 def inventory(ranges):
     vehicles = {}
-    for table, columns in zip(ranges, [(11, 1, 2, 3, 4, 7), (4, None, 1, 2, 3, 0)], strict=True):
-        vin_col, name_col, year, make, model, category = columns
+    for table, columns in zip(ranges, [(11, 1, 2, 3, 4, 7, 8), (4, None, 1, 2, 3, 0, 6)], strict=True):
+        vin_col, name_col, year, make, model, category, status = columns
         for row in table["values"][1:]:
             cells = [str(value).strip() for value in row] + [""] * 12
             vin = cells[vin_col].upper()
@@ -65,42 +65,53 @@ def inventory(ranges):
                 name = (cells[name_col] if name_col is not None else "") or " ".join(
                     cells[index] for index in (year, make, model) if cells[index]
                 )
-                vehicles.setdefault(vin, (name or "Unnamed vehicle", cells[category]))
+                fields = (name, cells[category], cells[year], cells[make], cells[model], cells[status])
+                previous = vehicles.get(vin, ("",) * len(fields))
+                vehicles[vin] = tuple(old or new for old, new in zip(previous, fields, strict=True))
     return vehicles
 
 
-def lookup(vin, api_key):
-    if not re.fullmatch(r"[A-HJ-NPR-Z0-9]{17}", vin):
-        return "Manufacturer lookup needed (nonstandard VIN)", []
-    for attempt in range(2):
+def lookup(year, make, model, category):
+    if (not re.fullmatch(r"[0-9]{4}", year) or not make or not model
+            or re.search(r"boat|watercraft|equipment|bicycle|golf cart", category, re.I)):
+        return "Manufacturer or specialty lookup needed", []
+    query = urlencode({"make": make, "model": model, "modelYear": year})
+    try:
+        result = request_json("https://api.nhtsa.gov/recalls/recallsByVehicle?" + query)
+        campaigns = result.get("results")
+        if not isinstance(campaigns, list) or not all(isinstance(item, dict) for item in campaigns):
+            return "Campaign lookup unavailable", []
+    except (TimeoutError, URLError, ValueError):
+        return "Campaign lookup unavailable", []
+    cutoff = datetime.now(ZoneInfo("America/New_York")).date() - timedelta(days=30)
+    recent = []
+    for item in campaigns:
         try:
-            result = request_json("https://api.auto.dev/openrecalls/" + quote(vin, safe=""), api_key)
-            campaigns = result.get("data")
-            count = result.get("openRecalls")
-            if (not isinstance(campaigns, list) or type(count) is not int
-                    or count != len(campaigns) or not all(isinstance(item, dict) for item in campaigns)):
-                return "Lookup unavailable (incomplete response)", []
-            return (f"{count} open" if count else "No open recalls reported"), campaigns
-        except HTTPError as error:
-            if error.code == 404:
-                return "Manufacturer lookup needed (VIN unavailable)", []
-            if error.code not in (429, 500, 502, 503, 504):
-                return f"Lookup unavailable (HTTP {error.code})", []
-        except (TimeoutError, URLError, ValueError):
-            pass
-        if not attempt:
-            time.sleep(2)
-    return "Lookup unavailable (provider error)", []
+            recorded = datetime.strptime(item["ReportReceivedDate"], "%d/%m/%Y").date()
+        except (KeyError, ValueError, TypeError):
+            try:
+                recorded = datetime.strptime(item["ReportReceivedDate"], "%m/%d/%Y").date()
+            except (KeyError, ValueError, TypeError):
+                return "Campaign dates unavailable; verify with NHTSA", []
+        if recorded >= cutoff:
+            recent.append(item)
+    if not campaigns:
+        return "No matching campaigns returned; verify by VIN", []
+    return (f"{len(recent)} recent campaign matches" if recent else "No matching campaigns in the last 30 days"), recent
 
 
-def report(vehicles, api_key, date):
+def report(vehicles, date):
     text = [f"TisZod Garage daily recall check | {date} Eastern"]
-    rows = []
-    open_vehicles = unavailable = 0
-    for vin, (name, category) in sorted(vehicles.items(), key=lambda pair: pair[1][0].casefold()):
-        status, campaigns = lookup(vin, api_key)
-        open_vehicles += bool(campaigns)
-        unavailable += not campaigns and status != "No open recalls reported"
+    rows, fun_rows, fun_text = [], [], []
+    matched = unavailable = 0
+    checked = {}
+    for vin, (name, category, year, make, model, ownership) in sorted(vehicles.items(), key=lambda pair: pair[1][0].casefold()):
+        key = (year, make.upper(), model.upper(), category)
+        if key not in checked:
+            checked[key] = lookup(year, make, model, category)
+        status, campaigns = checked[key]
+        matched += bool(campaigns)
+        unavailable += "unavailable" in status.lower() or "needed" in status.lower() or "verify by vin" in status.lower()
         official = "https://www.nhtsa.gov/recalls"
         if re.fullmatch(r"[A-HJ-NPR-Z0-9]{17}", vin):
             official += "?vin=" + vin
@@ -108,42 +119,43 @@ def report(vehicles, api_key, date):
             official = "https://uscgboating.org/content/recalls.php"
         elif re.search(r"off.road|equipment|atv|golf cart", category, re.I):
             official = "https://www.cpsc.gov/Recalls"
-        title = f"{name} ({category})" if category else name
-        text.append(f"{title} | {vin} | {status} | {official}")
+        title = " · ".join(part for part in (name or "Unnamed vehicle", category, ownership) if part)
+        fun = (ownership.casefold() not in {"active","managed"} or not re.fullmatch(r"[A-HJ-NPR-Z0-9]{17}", vin)
+               or re.search(r"boat|watercraft|off.road|equipment|bicycle|golf cart|atv", category, re.I))
+        target_text, target_rows = (fun_text, fun_rows) if fun else (text, rows)
+        target_text.append(f"{title} | {vin} | {status} | {official}")
         details = []
         for item in campaigns:
             parts = [
-                "NHTSA campaign " + str(item.get("nhtsaCampaignNumber") or "unlisted"),
-                "Manufacturer campaign " + str(item["mfrCampaignNumber"]) if item.get("mfrCampaignNumber") else "",
-                "Do not drive" if item.get("parkIt") is True else "",
-                "Park outside" if item.get("parkOutSide") is True else "",
-                item.get("component"), item.get("summary"), item.get("consequence"), item.get("remedy"),
+                "NHTSA campaign " + str(item.get("NHTSACampaignNumber") or "unlisted"),
+                item.get("Component"), item.get("Summary"), item.get("Consequence"), item.get("Remedy"),
             ]
             summary = " | ".join(str(part) for part in parts if part)
-            text.append("  " + summary)
+            target_text.append("  " + summary)
             details.append("<p>" + escape(summary) + "</p>")
-        rows.append(
+        target_rows.append(
             f'<tr><td style="padding:8px;border-bottom:1px solid #a5bacd">'
             f'<strong>{escape(title)}</strong><br>{escape(vin)}</td>'
             f'<td style="padding:8px;border-bottom:1px solid #a5bacd"><strong>{escape(status)}</strong>'
             f'{"".join(details)}<br><a href="{official}">Official lookup</a></td></tr>'
         )
-    totals = f"{len(vehicles)} VINs · {open_vehicles} with open recalls · {unavailable} need verification"
-    note = "Source: Auto.dev VIN-specific open recall lookup. For unavailable results, check the official source or contact the manufacturer."
+    totals = f"{len(vehicles)} VINs · {matched} with recent campaign matches · {unavailable} need verification"
+    note = "Source: NHTSA year, make and model campaigns reported in the last 30 days. A campaign match does not verify an open repair for your VIN. Use the official links for VIN verification."
+    fun_html = '<h2>Just for FUN</h2><table style="border-collapse:collapse">' + "".join(fun_rows) + '</table>' if fun_rows else ''
     html = (
         '<div style="font-family:Arial,sans-serif;color:#142b3b">'
         '<div style="background:#0d2035;color:#fff;padding:18px">'
         '<img alt="TisZod logo" width="64" src="cid:tiszod-crest">'
         f'<h1 style="margin:8px 0">TisZod Garage · Daily Recall Report</h1>{escape(date)} Eastern</div>'
         f'<p><strong>{escape(totals)}</strong></p><table style="border-collapse:collapse">{"".join(rows)}</table>'
-        f'<p>{escape(note)}</p></div>'
+        f'{fun_html}<p>{escape(note)}</p></div>'
     )
-    return "\n".join([text[0], totals, *text[1:], note]), html
+    return "\n".join([text[0], totals, *text[1:], *(["", "Just for FUN", *fun_text] if fun_text else []), note]), html
 
 
 def main():
     config = {key: os.environ[key] for key in (
-        "RECALL_SHEETS_ACCOUNT", "RECALL_SHEET_ID", "RECALL_API_KEY",
+        "RECALL_SHEETS_ACCOUNT", "RECALL_SHEET_ID",
         "RECALL_EMAIL_FROM", "RECALL_EMAIL_TO", "RECALL_EMAIL_APP_PASSWORD",
     )}
     if not all(value.strip() for value in config.values()):
@@ -152,15 +164,18 @@ def main():
     query = urlencode([
         ("ranges", "'Portal Asset Profiles'!A1:L"),
         ("ranges", "'Vehicle Registry'!A1:G"),
+        ("ranges", "'TisZod Recall Selection'!A1"),
         ("valueRenderOption", "FORMATTED_VALUE"),
     ])
     sheet = quote(config["RECALL_SHEET_ID"], safe="")
     data = request_json(f"https://sheets.googleapis.com/v4/spreadsheets/{sheet}/values:batchGet?{query}", token)
-    vehicles = inventory(data["valueRanges"])
+    ranges = data["valueRanges"]
+    selected = set(json.loads(ranges[2].get("values", [["[]"]])[0][0]))
+    vehicles = {vin: item for vin, item in inventory(ranges[:2]).items() if vin in selected}
     if not vehicles:
-        raise ValueError("Garage inventory returned no VINs")
+        raise ValueError("No Garage vehicles are selected for recalls")
     date = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %I:%M %p")
-    text, html = report(vehicles, config["RECALL_API_KEY"], date)
+    text, html = report(vehicles, date)
     message = EmailMessage()
     message["Subject"] = f"TisZod Garage · Daily Recall Report · {date[:10]}"
     message["From"] = config["RECALL_EMAIL_FROM"]
