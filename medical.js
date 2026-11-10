@@ -42,6 +42,7 @@
   const folderMime = 'application/vnd.google-apps.folder';
   const escapeQuery = s => s.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
   let records = [], weights = [], review = {}, key = '', limit = 30, visitFilter = '';
+  let reviewStore;
   let workbook, workbookWeights = [], manualWeights = [], browserWeights = [], folderSummaries = {};
 
   async function list(query, orderBy = 'folder,name_natural') {
@@ -73,7 +74,8 @@
   const compositionFilename='TisZod About Me - Body Composition.json';
   const medicationFilename='TisZod About Me - Medication.json';
   const appleHealthFilename='TisZod Apple Health - Latest Metrics.json';
-  const exclude = file => [compositionFilename,medicationFilename,appleHealthFilename].includes(file.name)|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
+  const reviewFilename='TisZod Medical Review.json';
+  const exclude = file => [reviewFilename,compositionFilename,medicationFilename,appleHealthFilename].includes(file.name)|| /^archive - review|^recovered exports - needs review|^verified duplicates|^temporary office files|^~\$/i.test(file.name);
   function dateFromName(name) {
     const match = name.match(/\b((?:19|20)\d\d)[.\/-](0[1-9]|1[0-2])(?:[.\/-](0[1-9]|[12]\d|3[01]))?(?![.\/-]\d)/);
     if (match) {
@@ -126,6 +128,49 @@
     if (record.category === 'Providers & Visits') return ['Visit confirmed','Needs review'];
     return ['Needs review'];
   }
+  function createReviewStore(rootId, localKey) {
+    const saved = new Map(), pending = new Map();
+    const query = "'" + escapeQuery(rootId) + "' in parents and appProperties has { key='tiszodRecord' and value='medicalReview' }";
+    const ready = (async () => {
+      const files = await list(query,'modifiedTime desc');
+      for (let offset=0;offset<files.length;offset+=6) {
+        const batch = await Promise.all(files.slice(offset,offset+6).map(async file => {
+          const response = await thDriveFetch(file.id,{cache:'no-store'});
+          if(!response.ok)throw Error('Private reviews could not load.');
+          return {...await response.json(),driveId:file.id};
+        }));
+        for (const row of batch) {
+          if (typeof row.recordId === 'string' && !saved.has(row.recordId)) saved.set(row.recordId,row);
+        }
+      }
+      return Object.fromEntries(saved);
+    })();
+    async function save(recordId, fields) {
+      await ready;
+      if (!pending.has(recordId)) pending.set(recordId,{});
+      const row = await thMedicalAbout.saveReview({...fields,recordId},pending.get(recordId),saved.get(recordId)?.driveId,rootId);
+      saved.set(recordId,row);
+      pending.delete(recordId);
+      return row;
+    }
+    async function migrate(local) {
+      const remote = await ready;
+      review = {...local,...remote};
+      const remaining = {...local};
+      for (const [id,fields] of Object.entries(local)) {
+        if (!saved.has(id)) {
+          try {review[id] = await save(id,fields);} catch {continue;}
+        }
+        delete remaining[id];
+      }
+      try {
+        if (Object.keys(remaining).length) localStorage.setItem(localKey,JSON.stringify(remaining));
+        else localStorage.removeItem(localKey);
+      } catch {}
+      return Object.keys(remaining).length === 0;
+    }
+    return {save,migrate};
+  }
   function reviewForm(record) {
     const saved = detail(record), form = node('form',null,'medical-review-form');
     const select = node('select');
@@ -144,7 +189,7 @@
     if (record.kind === 'Medication record') form.append(field('Strength',dose),field('Schedule',schedule));
     if (statuses(record).includes('Paid')) form.append(field('Confirmed balance ($)',amount));
     form.append(submit,error);
-    form.onsubmit = event => {
+    form.onsubmit = async event => {
       event.preventDefault();
       if (['Current','Past','Prescription written','Fill documented','Visit confirmed'].includes(select.value) &&
           (!label.value.trim() || (['Prescription written','Fill documented','Visit confirmed'].includes(select.value) && !date.value))) {
@@ -155,10 +200,16 @@
         error.textContent='Enter the scheduled appointment date.';
         return;
       }
-      const next = {...review,[record.id]:{status:select.value,label:label.value.trim(),date:date.value,amount:amount.value,dose:dose.value.trim(),schedule:schedule.value.trim()}};
-      try {localStorage.setItem(key,JSON.stringify(next));}
-      catch {error.textContent = 'This browser could not save the review.';return;}
-      review = next; renderResults(); thMedicalAbout.refresh();
+      const fields = {status:select.value,label:label.value.trim(),date:date.value,amount:amount.value,dose:dose.value.trim(),schedule:schedule.value.trim()};
+      submit.disabled = true;
+      error.textContent = 'Saving to your private account…';
+      try {
+        review[record.id] = await reviewStore.save(record.id,fields);
+        renderResults(); thMedicalAbout.refresh();
+        error.textContent = 'Review saved to your private account.';
+      } catch {
+        error.textContent = 'Could not save the review to your private account. Try again.';
+      } finally {submit.disabled = false;}
     };
     return form;
   }
@@ -342,6 +393,8 @@
       const root = roots[0];
       key = 'tiszod-medical-review-v1:' + root.id;
       try {review = JSON.parse(localStorage.getItem(key) || '{}') || {};} catch {review = {};}
+      reviewStore = createReviewStore(root.id,key);
+      const reviewSync = reviewStore.migrate(review).catch(() => false);
       const files = (await children(root.id)).filter(file => !exclude(file));
       const toddFolder=files.find(file=>file.folder&&file.name==='Todd');
       const folders = files.filter(file => file.folder);
@@ -470,6 +523,7 @@
       $('medical-status').textContent = 'Loading document collections and timeline…';
       $('medical-count').textContent = 'Indexing records…';
       const indexed = await Promise.allSettled(folders.filter(folder=>!isAdministrative(folder.name)).map(folder => walk(folder,[folder.name],new Set())));
+      const reviewsSynced = await reviewSync;
       const hiddenBilling=new Set(folderSummaries.hiddenBillingIds||[]);
       records = indexed.flatMap(r => r.status === 'fulfilled' ? r.value : []).filter(record=>!hiddenBilling.has(record.id));
       records.push(...rootFiles.map(file => ({...file,path:['Body Composition'],category:'Body Composition',kind:'Document',date:dateFromName(file.name)})));
@@ -495,7 +549,11 @@
       cards.push({name:'Medical Timeline',directReader:true,readerUrl:'#timeline-title',cardLabel:'Open timeline',medicalCoverImage:'assets/medical/timeline.webp'});
       revealTodd(query&&!location.hash?'#timeline-title':location.hash);
       renderCollections(cards);
-      $('medical-status').textContent = indexed.some(r=>r.status==='rejected') ? 'Some folders could not be indexed. Their folder cards remain available.' : records.length+' Drive records indexed · Reviews are saved in this browser.';
+      const indexMessage = indexed.some(r=>r.status==='rejected')
+        ? 'Some folders could not be indexed. Their folder cards remain available.'
+        : records.length+' Drive records indexed.';
+      $('medical-status').textContent = indexMessage + (reviewsSynced ? ''
+        : ' Some reviews could not sync. Reopen Medical to retry.');
       for (const id of ['medical-search','medical-category','medical-year','medical-review']) $(id)[id==='medical-search'?'oninput':'onchange'] = () => {visitFilter='';resetResults();};
       $('medical-more').onclick = () => {limit+=30;renderResults();};
       indexReady=true;

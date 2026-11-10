@@ -181,7 +181,7 @@
     return writeMedicalRecord(row,pending,driveId,'TisZod Injection Entry.json','medicalInjection');
   }
 
-  async function writeMedicalRecord(row,pending,driveId,name,recordType){
+  async function writeMedicalRecord(row,pending,driveId,name,recordType,parentId){
     if(!thAuthorized())throw Error('Sign in again to save the record.');
     const headers={Authorization:'Bearer '+thToken};
     const upload='https://www.googleapis.com/upload/drive/v3/files';
@@ -199,6 +199,7 @@
       driveId=pending.id;
       const boundary='tiszod-'+crypto.randomUUID();
       const metadata={id:driveId,name,mimeType:'application/json',appProperties:{tiszodRecord:recordType}};
+      if(parentId)metadata.parents=[parentId];
       const body=new Blob([
         '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n',
         '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(row)+'\r\n--'+boundary+'--\r\n'
@@ -938,6 +939,9 @@
   }
   window.thMedicalAbout = {
     careTeam,openInjectionHistory,
+    saveReview(row,pending,driveId,parentId) {
+      return writeMedicalRecord(row,pending,driveId,'TisZod Medical Review.json','medicalReview',parentId);
+    },
     start(options) {
       addMedicalSidebar();
       api = options; profile = {}; savedProfile = {}; syncedVitals = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
