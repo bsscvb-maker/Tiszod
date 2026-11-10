@@ -6,7 +6,7 @@ function getThree(){return modulePromise??=import(THREE_URL)}
 const ATLAS_URL='https://cdn.jsdelivr.net/gh/Charleeh/ecorche@320805e06aee51e2e6f6b22533eb2a59d43f2d4d/model/ecorche.meshopt.glb';
 const ADDONS='https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/';
 let atlasPromise;
-let headGeometryPromise,handGeometryPromise;
+let headGeometryPromise,handGeometryPromise,skinGeometryPromise;
 
 // Front-view proportions traced from the reference, in model units.
 const FRONT_HEIGHT=[
@@ -132,6 +132,25 @@ function getHeadGeometry(THREE){
  })().catch(error=>{headGeometryPromise=undefined;throw error;});
 }
 
+// Posed MakeHuman surface. The bundled asset records the upstream source and license.
+function getSkinGeometry(THREE){
+ return skinGeometryPromise??=(async()=>{
+  const response=await fetch('assets/medical/scanner-skin-mesh.json',{signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw Error('Continuous skin mesh could not be downloaded.');
+  const {positions,indices,armVertices,eyeStart}=await response.json();
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  const regions=new Float32Array(positions.length/3);
+  for(const vertex of armVertices)regions[vertex]=1;
+  regions.fill(2,eyeStart);
+  geometry.setAttribute('skinRegion',new THREE.BufferAttribute(regions,1));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
+  return geometry;
+ })().catch(error=>{skinGeometryPromise=undefined;throw error;});
+}
+
 // Cyan light follows the silhouette as the model rotates.
 function scannerMaterial(THREE,options,edge,tint=0x35c6ff){
  const material=new THREE.MeshStandardMaterial(options);
@@ -251,15 +270,40 @@ window.thMedical3D={
    renderer.domElement.style.touchAction='none';
    stage.append(renderer.domElement);
    const body=new THREE.Group();scene.add(body);
-   scene.add(new THREE.HemisphereLight(0xaedaff,0x263248,1.25));
+   const ambient=new THREE.HemisphereLight(0xaedaff,0x263248,1.25);
+   scene.add(ambient);
+   const rims=[];
    const key=new THREE.DirectionalLight(0xeaf6ff,2.55);key.position.set(1,5,4);scene.add(key);
    for(const side of [-1,1]){
     const rim=new THREE.DirectionalLight(0x2bbfff,3.2);
-    rim.position.set(side*4,1,-2);scene.add(rim);
+    rim.position.set(side*4,1,-2);scene.add(rim);rims.push(rim);
    }
    const bounce=new THREE.PointLight(0x43dbff,8,5);
    bounce.position.set(0,-2.2,1.2);scene.add(bounce);
    const skin=new THREE.MeshStandardMaterial({color:0x997363,roughness:.72});
+   const skinSurface=new THREE.MeshStandardMaterial({color:0xc29680,roughness:.67});
+   skinSurface.onBeforeCompile=shader=>{
+    shader.vertexShader='attribute float skinRegion;\nvarying float skinPart;\nvarying vec3 skinPosition;\n'+shader.vertexShader.replace(
+     '#include <begin_vertex>','#include <begin_vertex>\nskinPosition=position;\nskinPart=skinRegion;'
+    );
+    shader.fragmentShader='varying float skinPart;\nvarying vec3 skinPosition;\n'+shader.fragmentShader.replace(
+     '#include <color_fragment>',`#include <color_fragment>
+     float front=smoothstep(0.02,0.27,skinPosition.z);
+     float hairline=1.69+0.15*front;
+     float hair=smoothstep(hairline-0.015,hairline+0.015,skinPosition.y);
+     diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.082,0.048,0.038),hair);
+     float hips=1.0-step(0.5,skinPart);
+     float shorts=hips*smoothstep(-0.57,-0.56,skinPosition.y)*
+      (1.0-smoothstep(0.12,0.13,skinPosition.y));
+     float waistband=smoothstep(0.04,0.05,skinPosition.y);
+     diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(0.030,0.051,0.071),
+      vec3(0.058,0.085,0.110),waistband),shorts);
+     float iris=1.0-smoothstep(0.010,0.016,length(vec2(abs(skinPosition.x)-0.068,skinPosition.y-1.704)));
+     diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(0.48,0.40,0.33),
+      vec3(0.043,0.028,0.021),iris),step(1.5,skinPart));`
+    );
+   };
+   let skinAvatar,skinLoading=false;
    const fascia=scannerMaterial(THREE,{color:0x355778,roughness:.46,metalness:.20},1.04);
    const fiber=scannerMaterial(THREE,{color:0x995043,roughness:.48,metalness:.17},.85);
    const tendon=scannerMaterial(THREE,{color:0x608ac2,roughness:.43,metalness:.24},.90);
@@ -525,12 +569,38 @@ window.thMedical3D={
     [name,new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3())]));
    stage.dataset.model='anatomy-v2';
    state.setMode=mode=>{
+    const previousMode=state.mode;
     state.mode=mode;
-    const detailed=Boolean(atlas)&&mode!=='skin';
-    surface.visible=!detailed;muscles.visible=!detailed&&mode==='anatomy';
-    feet.visible=!footShell&&(mode!=='scan'||!detailed);
+    const isSkin=mode==='skin';
+    if(isSkin&&previousMode!=='skin'&&!skinAvatar&&!skinLoading){
+     skinLoading=true;
+     void getSkinGeometry(THREE).then(template=>{
+      if(state.disposed||!stage.isConnected)return;
+      skinAvatar=new THREE.Mesh(template.clone(),skinSurface);
+      body.add(skinAvatar);
+      stage.dataset.continuousSkin='true';
+      state.setMode(state.mode);
+     }).catch(error=>{
+      if(stage.isConnected)console.warn('Continuous skin mesh unavailable; using fallback.',error);
+     }).finally(()=>{skinLoading=false;});
+    }
+    const continuous=isSkin&&Boolean(skinAvatar);
+    if(skinAvatar)skinAvatar.visible=continuous;
+    ambient.color.setHex(isSkin?0xfff1e5:0xaedaff);
+    ambient.groundColor.setHex(isSkin?0x5b514e:0x263248);
+    ambient.intensity=isSkin?1.55:1.25;
+    key.color.setHex(isSkin?0xffe6d4:0xeaf6ff);
+    key.intensity=isSkin?2.25:2.55;
+    for(const rim of rims){
+     rim.color.setHex(isSkin?0x8ac6e4:0x2bbfff);
+     rim.intensity=isSkin?1.45:3.2;
+    }
+    bounce.intensity=isSkin?1.4:8;
+    const detailed=Boolean(atlas)&&!isSkin;
+    surface.visible=!detailed&&!continuous;muscles.visible=!detailed&&mode==='anatomy';
+    feet.visible=!continuous&&!footShell&&(mode!=='scan'||!detailed);
     if(footShell){
-     footShell.visible=mode!=='scan'||!detailed;
+     footShell.visible=!continuous&&(mode!=='scan'||!detailed);
      for(const {mesh,original,fitted} of footFits){
       mesh.geometry=detailed&&mode==='anatomy'?fitted:original;
       mesh.material=mode==='skin'?skin:mode==='scan'?scan:footMaterial;
@@ -543,17 +613,17 @@ window.thMedical3D={
     wholeBody.visible=whole&&mode!=='skin';
     wholeBodyMaterial.color.setHex(selected==='fat'?0xffc957:0x55dbff);
     thyroid.visible=selected==='metabolism';
-    const showHead=Boolean(sculptedHead)&&(mode==='skin'||(mode==='anatomy'&&selected!=='brain'));
+    const showHead=!continuous&&Boolean(sculptedHead)&&(mode==='skin'||(mode==='anatomy'&&selected!=='brain'));
     if(sculptedHead)sculptedHead.visible=showHead;
     headMaterial.color.setHex(mode==='skin'?0xb29180:0x9fadc2);
-    const showHands=Boolean(handShell)&&(mode==='skin'||(detailed&&mode==='anatomy'&&selected!=='muscle'));
-    fingers.visible=!detailed&&!showHands;
+    const showHands=!continuous&&Boolean(handShell)&&(mode==='skin'||(detailed&&mode==='anatomy'&&selected!=='muscle'));
+    fingers.visible=!continuous&&!detailed&&!showHands;
     if(handShell){handShell.visible=showHands;handShell.children.forEach(mesh=>mesh.material=mode==='skin'?skin:handMaterial);}
     for(const mesh of atlasHandMeshes)mesh.visible=!showHands;
     for(const cut of wristCuts)cut.mesh.geometry=showHands?cut.clipped:cut.original;
     for(const cut of ankleCuts)cut.mesh.geometry=footShell&&mode==='anatomy'?cut.clipped:cut.original;
     proceduralHead.visible=!showHead;
-    face.visible=!detailed&&mode!=='scan'&&!showHead;
+    face.visible=!continuous&&!detailed&&mode!=='scan'&&!showHead;
     for(const mesh of atlasFaceMeshes)mesh.visible=!showHead;
     if(atlas){
      atlas.visible=detailed;
@@ -748,7 +818,7 @@ window.thMedical3D={
    state.toggleFullscreen=async()=>{const target=figure;if(document.fullscreenElement===target){await document.exitFullscreen()}else if(target.requestFullscreen){await target.requestFullscreen()}else{figure.classList.toggle('medical-3d-expanded')}resize()};
    let clock=0,lastFrame=-Infinity;
    function render(t){
-    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();[...wristCuts,...ankleCuts].forEach(cut=>geometries.add(cut.clipped));footFits.forEach(({original,fitted})=>{geometries.add(original);geometries.add(fitted)});scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
+    if(state.disposed||!stage.isConnected){observer.disconnect();const geometries=new Set(),materials=new Set();atlas?.removeFromParent();[...wristCuts,...ankleCuts].forEach(cut=>geometries.add(cut.clipped));footFits.forEach(({original,fitted})=>{geometries.add(original);geometries.add(fitted)});scene.traverse(object=>{if(object.geometry)geometries.add(object.geometry);if(object.material)materials.add(object.material)});[skin,skinSurface,fascia,torsoAnatomy,scan,fiber,tendon,hair,shadow,iris,pale,headMaterial,jointGlow,handMaterial,footMaterial].forEach(material=>materials.add(material));geometries.forEach(geometry=>geometry.dispose());materials.forEach(material=>material.dispose());renderer.dispose();renderer.domElement.remove();state.disposed=true;return}
     requestAnimationFrame(render);
     if(t-lastFrame<1000/30&&!pointers.size)return;
     const elapsed=Math.min((t-lastFrame)/1000,.1);
