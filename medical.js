@@ -478,13 +478,15 @@
           history.replaceState(history.state,'',page);
         }
         const linked = JSON.parse(localStorage.getItem(sourceKey) || 'null');
+        const previous = await readToddSource(appleHealthFilename);
         const dailyName = /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/;
         const order = 'name desc,modifiedTime desc';
         const loadDailyFiles = async id => (await list("'" + escapeQuery(id) + "' in parents", order))
           .filter(file => !file.folder && dailyName.test(file.name));
-        let files = [];
+        const configuredFolder = previous?.dailyExportFolderId;
+        let files = validId(configuredFolder) ? await loadDailyFiles(configuredFolder) : [];
         let linkedFileOnly = false;
-        if (validId(linked?.folderId) && validId(linked?.fileId)) {
+        if (!files.length && validId(linked?.folderId) && validId(linked?.fileId)) {
           files = await loadDailyFiles(linked.folderId);
           if (!files.length) {
             const fields = new URLSearchParams({fields:'id,name,parents,modifiedTime,trashed'});
@@ -499,7 +501,7 @@
             files = [file];
             linkedFileOnly = true;
           }
-        } else {
+        } else if (!files.length && !validId(configuredFolder)) {
           const websiteFolders = await list("mimeType = '" + folderMime + "' and name = 'TisZod Website'");
           const exportQuery = "mimeType = '" + folderMime + "' and name = 'Health Auto Export'";
           const websiteParents = websiteFolders.map(folder => "'" + escapeQuery(folder.id) + "' in parents");
@@ -526,7 +528,7 @@
           }
           if (daily.size === 7) break;
         }
-        if (!daily.size) return readToddSource(appleHealthFilename);
+        if (!daily.size) return previous;
 
         const exports = await Promise.all([...daily.values()].map(async file => {
           const response = await thDriveFetch(file.id, {cache:'no-store'});
@@ -534,7 +536,6 @@
           return response.json();
         }));
         const current = window.thMedicalAppleHealth.summarize(exports);
-        const previous = await readToddSource(appleHealthFilename);
         const types = new Set(current.metrics.map(row => row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')));
         const exportModifiedTime = [...daily.values()].map(file => file.modifiedTime).filter(Boolean).sort().pop();
         return {...current, exportModifiedTime, linkedFileOnly, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
