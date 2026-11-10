@@ -52,7 +52,7 @@
       if (!thAuthorized()) throw Object.assign(new Error('Sign in again to access Medical.'),{status:401});
       const params = new URLSearchParams({
         q: 'trashed = false and (' + query + ')', pageSize: '100',
-        fields: 'nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',
+        fields: 'nextPageToken,files(id,name,mimeType,parents,modifiedTime,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',
         supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', orderBy
       });
       if (pageToken) params.set('pageToken', pageToken);
@@ -476,13 +476,20 @@
         const folders = roots.length ? (await children(roots[0].id))
           .filter(file => file.folder && file.name === 'New Folder') : [];
         if (folders.length > 1) throw Error('More than one export destination was found.');
-        if (!folders.length) return readToddSource(appleHealthFilename);
-
-        const files = await list("'" + escapeQuery(folders[0].id) + "' in parents and name contains 'HealthAutoExport-'",
-          'name desc,modifiedTime desc');
+        const dailyName = /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/;
+        const order = 'name desc,modifiedTime desc';
+        let files = folders.length ? (await list("'" + escapeQuery(folders[0].id) + "' in parents", order))
+          .filter(file => !file.folder && dailyName.test(file.name)) : [];
+        if (!files.length) {
+          // Drive can return exports by name even when it omits them from folder listings.
+          const matches = await list("name contains 'HealthAutoExport' or name contains 'Health Auto Export' or name = '" + escapeQuery(appleHealthFilename) + "'", order);
+          files = matches.filter(file => !file.folder && dailyName.test(file.name) && file.parents?.length === 1);
+          const parents = new Set(files.map(file => file.parents[0]));
+          if (parents.size > 1) throw Error('More than one daily Apple Health export folder was found.');
+        }
         const daily = new Map();
         for (const file of files) {
-          if (!file.folder && /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/.test(file.name) && !daily.has(file.name)) {
+          if (!daily.has(file.name)) {
             daily.set(file.name, file);
           }
           if (daily.size === 7) break;
