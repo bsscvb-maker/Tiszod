@@ -753,6 +753,12 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 #medical-dashboard[data-apple-health]>:not(.medical-concept-topnav,.medical-apple-health){display:none}
 .medical-apple-health{container-type:inline-size;scroll-margin-top:var(--medical-anchor-offset,150px)}
 .medical-apple-health[hidden]{display:none}
+.medical-apple-sync{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-left:auto;color:#b9d9ee;font-size:12px}
+.medical-apple-sync[hidden]{display:none}
+.medical-apple-sync button{padding:7px 12px;border:1px solid #477392;border-radius:8px;background:#113854;color:#ecf8ff;white-space:nowrap;cursor:pointer}
+.medical-apple-sync button:disabled{opacity:.6;cursor:default}
+.medical-apple-sync button:focus-visible{outline:2px solid #8cc9ff;outline-offset:2px}
+@media(max-width:700px){.medical-apple-sync{justify-content:space-between;margin:0 0 12px}}
 .medical-apple-health h2,.medical-apple-health p{margin:0}
 .medical-apple-health header:has([role="status"][hidden]){display:none}
 .medical-apple-health header p{margin-top:6px;color:#a9c9df}

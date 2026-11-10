@@ -5,6 +5,14 @@
   const status = panel.querySelector('[role="status"]');
   const dialog = panel.querySelector('.medical-apple-dialog');
   const link = dashboard.querySelector('a[href="#medical-apple-health"]');
+  const syncControls = document.getElementById('medical-apple-sync');
+  const syncStatus = syncControls.querySelector('[role="status"]');
+  const syncButton = syncControls.querySelector('button');
+  const connection = document.getElementById('th-connection');
+  const mobile = matchMedia('(max-width: 700px)');
+  const easternClock = new Intl.DateTimeFormat('sv-SE', {
+    timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'
+  });
   const groups = [
     ['Heart & Lungs', /Heart|Oxygen|Respiratory|VO2|BloodPressure|ECG|Electrocardiogram|Atrial/i],
     ['Body Composition', /BodyMass|BodyFat|Height|LeanBody|BodyWater|BoneMass|Waist|BodyTemperature/i],
@@ -266,12 +274,54 @@
     panel.querySelector('.medical-apple-right').replaceChildren(overview(1),overview(2),overview(4));
   }
   let loaded = false;
+  let lastSync, lastAutoDay, lastAutoCheck = 0;
+  function updateSyncControls() {
+    syncButton.disabled = !readPrivate || Boolean(privateRead);
+    const stamp = lastSync ? 'Last sync: ' + displayDate(lastSync) + ' ET' : 'Last sync: unavailable';
+    const exportTime = imported?.exportModifiedTime;
+    syncStatus.textContent = privateRead ? 'Checking Drive…' : error ? stamp + ' · Sync failed' : stamp;
+    syncStatus.title = exportTime ? 'Latest daily export in Drive: ' + displayDate(exportTime) + ' ET' : '';
+  }
+  function sync() {
+    if (!readPrivate || privateRead) return;
+    error = false;
+    privateRead = Promise.resolve().then(readPrivate).then(result => {
+      loaded = true;
+      if (result) {
+        imported = result;
+        lastSync = new Date().toISOString();
+      }
+    }).catch(() => {error = true;}).finally(() => {
+      privateRead = null;
+      updateSyncControls();
+      if (!panel.hidden) render();
+    });
+    updateSyncControls();
+    if (!panel.hidden) render();
+  }
+  function checkScheduledSync() {
+    if (panel.hidden || document.hidden || !readPrivate || privateRead) return;
+    const now = Date.now();
+    const [day, time] = easternClock.format(now).split(' ');
+    if (time < '08:31' || now - lastAutoCheck < 5 * 60 * 1000) return;
+    const exportTime = Date.parse(imported?.exportModifiedTime);
+    const fresh = !error && Number.isFinite(exportTime) && easternClock.format(exportTime) >= day + ' 08:30';
+    if (lastAutoDay === day && (fresh || time >= '09:31')) return;
+    lastAutoDay = day;
+    lastAutoCheck = now;
+    sync();
+  }
+  function placeSyncControls() {
+    if (mobile.matches) panel.prepend(syncControls);
+    else (connection.closest('.th-account') || connection).before(syncControls);
+  }
   function route() {
     const active = location.hash === '#medical-apple-health';
     const leaving = !active && dashboard.hasAttribute('data-apple-health');
     if (leaving) loaded = false;
     dashboard.toggleAttribute('data-apple-health', active);
     panel.hidden = !active;
+    syncControls.hidden = !active;
     if (!active && dialog.open) dialog.close();
     if (active) link.setAttribute('aria-current','page');
     else link.removeAttribute('aria-current');
@@ -281,15 +331,16 @@
       else if (!active && scanner.parentElement !== scannerHome) scannerHome.append(scanner);
     }
     if (leaving && location.hash) requestAnimationFrame(()=>document.getElementById(location.hash.slice(1))?.scrollIntoView());
-    if (active && readPrivate && !loaded && !privateRead) {
-      error = false;
-      privateRead = Promise.resolve().then(readPrivate).then(result => {
-        imported = result;
-        loaded = true;
-      }).catch(() => {error = true;}).finally(() => {privateRead = null;render();});
-      render();
+    if (active && !loaded) {
+      checkScheduledSync();
+      sync();
     }
   }
+  syncButton.addEventListener('click',sync);
+  mobile.addEventListener('change',placeSyncControls);
+  document.addEventListener('DOMContentLoaded',placeSyncControls,{once:true});
+  document.addEventListener('visibilitychange',checkScheduledSync);
+  window.setInterval(checkScheduledSync,15000);
   window.addEventListener('hashchange',route);
   window.thMedicalAppleHealth = {
     summarize,
@@ -304,5 +355,6 @@
       if (!panel.hidden) render();
     }
   };
+  placeSyncControls();
   route();
 })();

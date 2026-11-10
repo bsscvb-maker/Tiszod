@@ -52,7 +52,7 @@
       if (!thAuthorized()) throw Object.assign(new Error('Sign in again to access Medical.'),{status:401});
       const params = new URLSearchParams({
         q: 'trashed = false and (' + query + ')', pageSize: '100',
-        fields: 'nextPageToken,files(id,name,mimeType,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',
+        fields: 'nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,thumbnailLink,resourceKey,capabilities(canDownload))',
         supportsAllDrives: 'true', includeItemsFromAllDrives: 'true', orderBy
       });
       if (pageToken) params.set('pageToken', pageToken);
@@ -492,7 +492,8 @@
         const current = window.thMedicalAppleHealth.summarize(exports);
         const previous = await readToddSource(appleHealthFilename);
         const types = new Set(current.metrics.map(row => row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')));
-        return {...current, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
+        const exportModifiedTime = [...daily.values()].map(file => file.modifiedTime).filter(Boolean).sort().pop();
+        return {...current, exportModifiedTime, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
           !types.has(row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')))]};
       });
       await thMedicalAbout.start({
