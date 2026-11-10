@@ -1,0 +1,31 @@
+name: TisZod daily recall report
+on:
+  schedule:
+    - cron: '0 3 * * *'
+      timezone: America/New_York
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: tiszod-recall-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: vars.RECALL_REPORT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check VINs and email the private report
+        run: python3 .github/recall-report.py
+        env:
+          RECALL_SHEETS_ACCOUNT: ${{ secrets.RECALL_SHEETS_ACCOUNT }}
+          RECALL_SHEET_ID: ${{ secrets.RECALL_SHEET_ID }}
+          RECALL_API_KEY: ${{ secrets.RECALL_API_KEY }}
+          RECALL_EMAIL_FROM: ${{ secrets.RECALL_EMAIL_FROM }}
+          RECALL_EMAIL_TO: ${{ secrets.RECALL_EMAIL_TO }}
+          RECALL_EMAIL_APP_PASSWORD: ${{ secrets.RECALL_EMAIL_APP_PASSWORD }}
