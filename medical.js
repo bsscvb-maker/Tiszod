@@ -466,11 +466,12 @@
         return response.json();
       }
       window.thMedicalAppleHealth?.connect(async () => {
-        const websiteFolders = await list("mimeType = '" + folderMime + "' and name = 'TisZod Website' and 'root' in parents");
+        const websiteFolders = await list("mimeType = '" + folderMime + "' and name = 'TisZod Website'");
         const exportQuery = "mimeType = '" + folderMime + "' and name = 'Health Auto Export'";
         const websiteParents = websiteFolders.map(folder => "'" + escapeQuery(folder.id) + "' in parents");
         let roots = websiteParents.length ? await list(exportQuery + ' and (' + websiteParents.join(' or ') + ')') : [];
         if (!roots.length) roots = await list(exportQuery + " and 'root' in parents");
+        if (!roots.length) roots = await list(exportQuery);
         if (roots.length > 1) throw Error('More than one Health Auto Export folder was found.');
         const folders = roots.length ? (await children(roots[0].id))
           .filter(file => file.folder && file.name === 'New Folder') : [];
