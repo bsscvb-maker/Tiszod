@@ -170,3 +170,45 @@
  @keyframes tz-welcome-in{from{opacity:.5;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
  @keyframes tz-card-in{from{opacity:.3;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 }
+
+/* Universal premium iPhone treatment for every module and nested subpage. */
+@media(max-width:700px) and (pointer:coarse){
+ body[data-th-page] :is(.th-page-content,.dashboard,.admin-main,.finance-wrap,.medical,.pets-main,.portal-section,main:not(.th-app-main)){max-width:100%;min-width:0}
+ body[data-th-page] :is(.card,.panel,.tile,.info-card,.record-card,.vehicle-card,.account-card,.finance-card,.document-card,.legal-file,.folder-card,.investment-card,.credit-card,.history-card,.module-card,.bk-card,.th-module-card){
+  border-radius:19px!important;border-color:rgba(145,194,255,.25)!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.045)!important;
+ }
+ body[data-th-page] :is(.page-hero,.section-hero,.portal-section-hero,.medical-hero,.finance-head,.admin-hero,.garage-heading,.profile-hero,.fleet-hero,.identity-hero,.tax-heading,.credit-heading,.education-heading,.investment-heading,.bk-heading,.history-heading){
+  background:radial-gradient(circle at 95% 0%,rgba(86,172,255,.22),transparent 65%),linear-gradient(135deg,#203b60,#101d30)!important;
+  border-radius:21px!important;border:1px solid rgba(145,194,255,.3)!important;
+  box-shadow:0 13px 29px rgba(0,0,0,.24)!important;
+  padding:19px!important;
+ }
+ body[data-th-page] :is(.page-hero,.section-hero,.portal-section-hero,.medical-hero,.finance-head,.admin-hero,.garage-heading,.profile-hero,.fleet-hero) h1{font-size:clamp(27px,8vw,37px)!important;line-height:1.13!important;letter-spacing:-.045em!important}
+ body[data-th-page] :is(.card-grid,.cards-grid,.tiles,.portal-section-cards,.module-grid,.th-module-grid,.asset-grid,.vehicle-grid,.garage-grid,.records-grid,.document-grid,.folder-grid,.account-grid,.investment-grid,.credit-grid,.education-grid,.identity-grid,.tax-grid,.history-grid,.bk-grid,.fleet-grid,.pet-grid,.admin-grid,.content-grid){
+  grid-template-columns:minmax(0,1fr)!important;gap:12px!important;
+ }
+ body[data-th-page] :is(.tabs,.tab-bar,.tab-list,.filter-tabs,.finance-tabs,.asset-tabs,.vehicle-tabs,.pet-tabs,.medical-folder-tabs,.bk-tabs,.history-nav,.finance-bank-nav){
+  max-width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;gap:8px!important;
+ }
+ body[data-th-page] :is(.tabs,.tab-bar,.tab-list,.filter-tabs,.finance-tabs,.asset-tabs,.vehicle-tabs,.pet-tabs,.medical-folder-tabs,.bk-tabs,.history-nav,.finance-bank-nav)::-webkit-scrollbar{display:none}
+ body[data-th-page] :is(.tabs,.tab-bar,.tab-list,.filter-tabs,.finance-tabs,.asset-tabs,.vehicle-tabs,.pet-tabs,.bk-tabs)>*{flex-shrink:0}
+ body[data-th-page] :is(.toolbar,.filter-bar,.filters,.form-actions,.header-actions,.card-actions,.action-row,.search-controls,.vehicle-workspace-actions,.document-actions,.report-buttons){
+  flex-wrap:wrap!important;gap:9px!important;max-width:100%!important;
+ }
+ body[data-th-page] :is(.table-wrap,.table-scroll,.history-table-wrap,.bk-table-wrap,.report-table,.transactions-table,.data-table,.credit-table-wrap){
+  max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;border-radius:14px!important;
+ }
+ body[data-th-page] :is(input:not([type=checkbox]):not([type=radio]),select,textarea){min-width:0;max-width:100%;font-size:16px!important;border-radius:11px}
+ body[data-th-page] :is(button,.button,.btn,.action){border-radius:12px;touch-action:manipulation}
+ body[data-th-page] :is(dialog,.modal,.dialog,.drawer,.overlay-panel){max-width:calc(100vw - 20px)!important;max-height:calc(100dvh - 30px)!important;overflow:auto}
+ body[data-th-page] :is(.form-grid,.field-grid,.fields-grid,.edit-grid,.details-grid,.profile-grid,.two-column,.two-col,.split-layout,.content-columns){grid-template-columns:minmax(0,1fr)!important}
+ body[data-th-page] :is(.split-layout,.two-column,.two-col){flex-direction:column!important}
+ body[data-th-page] :is(img,video,canvas,svg){max-width:100%}
+ body[data-th-page] :is(.hero,.page-hero,.portal-section-hero,.tile,.card){min-width:0}
+ body[data-th-page] :is(.legal-file,.document-card,.folder-card,.record-card,.vehicle-card,.account-card,.history-card,.tile){overflow-wrap:anywhere}
+ body[data-th-page] :is(.breadcrumbs,.breadcrumb,.back-link){font-size:13px}
+ body[data-th-page] :is(.status,.pill,.chip,.tag){max-width:100%;overflow-wrap:anywhere}
+ body[data-th-page] .th-page-content{padding-bottom:calc(35px + env(safe-area-inset-bottom))!important}
+}
