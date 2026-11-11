@@ -640,3 +640,94 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sortModules);
  else sortModules();
 })();
+
+
+/* TisZod iPhone experience v1: isolated from iPad and desktop. */
+(()=>{
+ function boot(){
+  if(!document.body.matches('[data-th-page]')||document.querySelector('.tz-phone-dock'))return;
+  const phone=matchMedia('(max-width:700px) and (pointer:coarse)');
+  const paths=[
+   ['Home','./','⌂'],['Garage','garage.html','▰'],['Health','medical.html','♡'],['Records','personal-records.html','▣'],['More','#tz-phone-more','☷']
+  ];
+  const dock=document.createElement('nav');dock.className='tz-phone-dock';dock.setAttribute('aria-label','iPhone quick navigation');
+  const current=location.pathname.split('/').pop()||'index.html';
+  const groupFor=p=>p==='index.html'?'Home':/garage|vehicle|watercraft|equipment/.test(p)?'Garage':/health|medical/.test(p)?'Health':/personal-record|family|identification|education/.test(p)?'Records':'More';
+  const group=groupFor(current);
+  for(const [label,href,glyph] of paths){
+   const a=document.createElement('a');a.href=href;a.className='tz-phone-tab'+(group===label?' is-active':'');
+   if(group===label)a.setAttribute('aria-current','page');
+   const mark=document.createElement('span');mark.className='tz-phone-tab-icon';mark.setAttribute('aria-hidden','true');mark.textContent=glyph;
+   const name=document.createElement('span');name.textContent=label;a.append(mark,name);
+   if(label==='More')a.addEventListener('click',e=>{e.preventDefault();document.querySelector('.th-mobile-menu')?.click()});
+   dock.append(a);
+  }
+  document.body.append(dock);
+  const bar=document.querySelector('.th-mobile-bar');
+  if(bar){
+   const brand=document.createElement('span');brand.className='tz-phone-brand';brand.textContent='TisZod';
+   bar.prepend(brand);
+   const menu=bar.querySelector('.th-mobile-menu');if(menu){menu.textContent='☰';menu.setAttribute('aria-label','Open all modules')}
+   const title=bar.querySelector('.th-mobile-title');if(title)title.textContent=group==='Home'?'Overview':group;
+  }
+  if(current==='index.html'){
+   const main=document.querySelector('main.dashboard');
+   if(main){
+    const launch=document.createElement('section');launch.className='tz-phone-launch';
+    launch.innerHTML='<div class="tz-phone-welcome"><span>YOUR PERSONAL WORKSPACE</span><h1>Good to see you.</h1><p>Everything important, right at your fingertips.</p></div><div class="tz-phone-launch-grid"></div>';
+    const grid=launch.querySelector('.tz-phone-launch-grid');
+    for(const [name,url,glyph,desc] of [['Garage','garage.html','▰','Vehicles & maintenance'],['Health','medical.html','♡','Your health overview'],['Finance','finance.html','$','Accounts & activity'],['Records','personal-records.html','▣','Family & documents'],['Pets','pets.html','♧','Care & insurance'],['Tasks','plan-tracker.html','✓','Plans & reminders']]){
+     const a=document.createElement('a');a.href=url;a.className='tz-phone-launch-card';
+     const icon=document.createElement('span');icon.className='tz-phone-launch-icon';icon.textContent=glyph;
+     const title=document.createElement('strong');title.textContent=name;
+     const subtitle=document.createElement('small');subtitle.textContent=desc;
+     a.append(icon,title,subtitle);grid.append(a);
+    }
+    main.prepend(launch);
+   }
+  }
+  document.body.classList.add('tz-phone-ready');
+  const style=document.createElement('style');style.id='tz-phone-style';style.textContent=String.raw\`
+  .tz-phone-dock,.tz-phone-launch,.tz-phone-brand{display:none}
+  @media(max-width:700px) and (pointer:coarse){
+   html,body{max-width:100%;overflow-x:clip}
+   body[data-th-page]{--tz-phone-bg:#090f1a;--tz-phone-card:#152235;--tz-phone-accent:#77aaff;background:var(--tz-phone-bg);padding-bottom:calc(84px + env(safe-area-inset-bottom))!important}
+   body[data-th-page] .th-mobile-bar{grid-template-columns:auto minmax(0,1fr) auto auto!important;gap:9px!important;min-height:64px!important;padding:9px 14px!important;padding-top:calc(9px + env(safe-area-inset-top))!important;border-bottom:1px solid #263b59!important;background:#0c1625ee!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+   .tz-phone-brand{display:block;font-weight:900;letter-spacing:-.05em;color:#8db7ff;font-size:19px}
+   .th-mobile-title{font-size:14px!important;color:#c4d6f0!important}
+   .th-mobile-menu{font-size:21px!important;border-radius:13px!important;min-width:46px!important}
+   .tz-phone-dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;bottom:0;left:0;right:0;z-index:95;padding:9px 6px calc(9px + env(safe-area-inset-bottom));background:#0d1727f5;border-top:1px solid #334766;box-shadow:0 -12px 40px #0008;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+   .tz-phone-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:55px;text-decoration:none!important;color:#a8bad4!important;font:600 10px system-ui!important;border-radius:13px}
+   .tz-phone-tab-icon{font-size:24px;line-height:1;display:grid;place-items:center;width:45px;height:31px}
+   .tz-phone-tab.is-active{color:#e7f1ff!important}
+   .tz-phone-tab.is-active .tz-phone-tab-icon{background:#244b81;color:#a9cdff;border-radius:11px}
+   .tz-phone-tab:focus-visible,.tz-phone-launch-card:focus-visible{outline:3px solid #8db7ff;outline-offset:2px}
+   body[data-th-page] :is(.dashboard,.th-page-content,.finance-wrap,.admin-main){padding-left:14px!important;padding-right:14px!important;padding-bottom:30px!important}
+   body[data-th-page] :is(.panel,.stat,.admin-card,.tile,.th-module-card){border-radius:18px!important;box-shadow:0 7px 24px #0002}
+   body[data-th-page] :is(.dash-heading,.admin-hero,.finance-head){border-radius:18px!important;padding:18px!important}
+   body[data-th-page] :is(.stats,.dash-grid,.th-module-grid,.portal-section-cards){grid-template-columns:minmax(0,1fr)!important}
+   body[data-th-page] .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+   body[data-th-page] .stat{padding:15px!important;min-width:0}
+   body[data-th-page] :is(.panel,.workspace,.stat,.tile){min-width:0;overflow-wrap:anywhere}
+   body[data-th-page] :is(.th-module-card,.workspace,.tile,a.stat){touch-action:manipulation}
+   body[data-th-page] :is(.table-wrap,.history-table-wrap,.bk-table-wrap){overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+   body[data-th-page] :is(input,textarea,select){font-size:16px!important}
+   body[data-th-page] :is(button,a.th-nav-link){min-height:44px}
+   body[data-th-page] .th-sidebar{padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
+   .tz-phone-launch{display:block;margin-bottom:20px}
+   .tz-phone-welcome{padding:23px 20px;border:1px solid #2c4b73;border-radius:22px;background:linear-gradient(130deg,#1d385c,#101c2e 75%);margin-bottom:13px}
+   .tz-phone-welcome span{font-size:10px;letter-spacing:.15em;font-weight:800;color:#95bcf5}
+   .tz-phone-welcome h1{font-size:29px;letter-spacing:-.045em;line-height:1.1;margin:9px 0;color:#f0f6ff}
+   .tz-phone-welcome p{font-size:13px;color:#c0d0e5;margin:0}
+   .tz-phone-launch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+   .tz-phone-launch-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:16px 14px;min-height:112px;border:1px solid #2a405f;border-radius:18px;background:linear-gradient(150deg,#1b2d46,#111b2b);text-decoration:none!important;box-sizing:border-box;color:#eef5ff!important}
+   .tz-phone-launch-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#294b78;color:#b5d6ff;font-size:22px}
+   .tz-phone-launch-card strong{font-size:15px;line-height:1.15}
+   .tz-phone-launch-card small{font-size:11px;color:#9eb2ce;line-height:1.3}
+   body[data-th-page="home"] .dash-heading{display:none!important}
+  }
+  @media(min-width:701px), (pointer:fine){.tz-phone-dock,.tz-phone-launch,.tz-phone-brand{display:none!important}}
+  \`;document.head.append(style);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
