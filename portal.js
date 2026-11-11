@@ -734,3 +734,24 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
+
+/* Actual iPhone subpage command center, not just generic CSS. */
+(()=>{
+function init(){
+ if(!document.body.matches('[data-th-page]')||document.querySelector('.tz-phone-subpage'))return;
+ const page=document.body.getAttribute('data-th-page');if(page==='home')return;
+ const main=document.querySelector('.th-page-content')||document.querySelector('.th-app-main > main')||document.querySelector('.th-app-main');if(!main)return;
+ const labels={garage:'My Garage',fleet:'My Vehicles',medical:'Health Center',finance:'My Finances',accounts:'Accounts','bank-history':'Transaction History',credit:'Credit Center',investments:'Investments',taxes:'Taxes',legal:'Legal Records',bk:'Bankruptcy Records',identification:'Identification',family:'Family',education:'Education',pets:'My Pets',career:'Career',admin:'Portal Settings'};
+ const title=labels[page]||document.title.replace(/^TisZod\\s*[·|:-]\\s*/i,'')||'My Workspace';
+ const hero=document.createElement('section');hero.className='tz-phone-subpage';
+ const eyebrow=document.createElement('div');eyebrow.className='tz-phone-subpage-eyebrow';eyebrow.textContent='TISZOD / PERSONAL COMMAND CENTER';
+ const heading=document.createElement('h1');heading.textContent=title;
+ const sub=document.createElement('p');sub.textContent='Your '+title.toLowerCase()+' workspace, beautifully organized.';
+ const actions=document.createElement('div');actions.className='tz-phone-subpage-actions';
+ const back=document.createElement('button');back.type='button';back.textContent='‹ Back';back.onclick=()=>{if(history.length>1)history.back();else location.href='index.html'};
+ const home=document.createElement('a');home.href='index.html';home.textContent='⌂ Home';
+ const all=document.createElement('button');all.type='button';all.textContent='☷ All modules';all.onclick=()=>document.querySelector('.th-mobile-menu')?.click();
+ actions.append(back,home,all);hero.append(eyebrow,heading,sub,actions);main.prepend(hero);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
