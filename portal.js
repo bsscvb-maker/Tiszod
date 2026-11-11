@@ -687,7 +687,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
    }
   }
   document.body.classList.add('tz-phone-ready');
-  const style=document.createElement('style');style.id='tz-phone-style';style.textContent=String.raw\`
+  const style=document.createElement('style');style.id='tz-phone-style';style.textContent=`
   .tz-phone-dock,.tz-phone-launch,.tz-phone-brand{display:none}
   @media(max-width:700px) and (pointer:coarse){
    html,body{max-width:100%;overflow-x:clip}
@@ -727,7 +727,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
    body[data-th-page="home"] .dash-heading{display:none!important}
   }
   @media(min-width:701px), (pointer:fine){.tz-phone-dock,.tz-phone-launch,.tz-phone-brand{display:none!important}}
-  \`;document.head.append(style);
+  `;document.head.append(style);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
