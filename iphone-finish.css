@@ -1,0 +1,57 @@
+
+/* TisZod dedicated iPhone finishing layer. Never applies to iPad/desktop. */
+@media (max-width:700px) and (pointer:coarse){
+ body[data-th-page] { -webkit-text-size-adjust:100%; }
+ body[data-th-page] :is(.th-app-main,.th-page-content,main,.portal-section,.medical,.pets-main,.finance-wrap,.garage-collections){min-width:0;max-width:100%;box-sizing:border-box}
+ body[data-th-page] :is(h1,h2,h3,p,strong,small,label){overflow-wrap:break-word}
+ body[data-th-page] :is(.portal-section-hero,.medical-hero,.garage-heading){padding:20px 16px!important;border-radius:20px!important;margin-bottom:15px!important}
+ body[data-th-page] :is(.portal-section-hero h1,.medical-hero h1,.garage-heading h1){font-size:clamp(27px,8vw,36px)!important;line-height:1.12!important}
+ body[data-th-page] :is(.portal-section-cards,.tiles,.garage-collections,.secondary,.family-collections){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:13px!important}
+ body[data-th-page] :is(.portal-section-cards .tile,.garage-collections .tile,.secondary .tile){min-width:0!important;min-height:190px!important;border-radius:19px!important}
+ body[data-th-page] :is(.tile-content,.portal-section-card-body){padding:17px!important}
+ body[data-th-page] .tile-content h2{font-size:22px!important}
+ body[data-th-page] .module-search-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+ body[data-th-page] .module-search-row input{flex:1 1 100%!important;min-width:0!important}
+ body[data-th-page] :is(.report-controls,.report-buttons,.report-quick,.report-recall-tools,.report-export){display:flex!important;flex-wrap:wrap!important;gap:9px!important}
+ body[data-th-page] :is(.report-controls,.report-range,.report-summary,.report-preview){max-width:100%!important;min-width:0!important}
+ body[data-th-page] :is(.report-table,.table-scroll,.report-work-list){max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+ body[data-th-page] .hero{min-height:280px!important;border-radius:20px!important}
+ body[data-th-page] .hero-content{padding:20px!important}
+ body[data-th-page] .hero h2{font-size:clamp(25px,7vw,34px)!important}
+ body[data-th-page="medical"] .medical{padding:14px!important}
+ body[data-th-page="medical"] .medical-hero{min-height:0!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px!important}
+ body[data-th-page="medical"] .medical-hero-art{max-height:170px!important;overflow:hidden!important}
+ body[data-th-page="medical"] :is(.medical-apple-layout,.medical-apple-reading-grid,.medical-apple-left,.medical-apple-center,.medical-apple-right){max-width:100%!important;min-width:0!important}
+ body[data-th-page="medical"] .medical-apple-layout{display:flex!important;flex-direction:column!important;gap:12px!important}
+ body[data-th-page="medical"] :is(.medical-kpis,.medical-apple-reading-grid){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ body[data-th-page="medical"] :is(.medical-panel,.medical-concept-panel){padding:14px!important;border-radius:17px!important}
+ body[data-th-page="medical"] :is(.medical-concept-topnav,.medical-folder-tabs,.medical-filters){display:flex!important;flex-wrap:wrap!important;gap:8px!important;max-width:100%!important}
+ body[data-th-page="medical"] :is(.medical-concept-topnav button,.medical-folder-tabs button){flex:1 1 auto!important}
+ body[data-th-page="medical"] :is(.medical-command-stage,.medical-apple-scanner){max-width:100%!important;min-width:0!important}
+ body[data-th-page="medical"] :is(.medical-apple-dialog,.medical-injection-dialog){width:calc(100vw - 20px)!important;max-width:calc(100vw - 20px)!important;max-height:calc(100dvh - 36px)!important;overflow:auto!important}
+ body[data-th-page="pets"] .pet-tabs{display:flex!important;gap:10px!important;overflow-x:auto!important;scroll-snap-type:x proximity;padding:5px 2px 12px!important}
+ body[data-th-page="pets"] .pet-tabs>*{flex-shrink:0!important;scroll-snap-align:start}
+ body[data-th-page="pets"] :is(.content-grid,.field-grid,.quick-facts,.medication-fields){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ body[data-th-page="pets"] :is(.profile-head,.section-head){display:flex!important;flex-wrap:wrap!important;gap:12px!important}
+ body[data-th-page="pets"] :is(.pet-panel,.info-card,.medication-card){min-width:0!important;max-width:100%!important;padding:15px!important;border-radius:18px!important}
+ body[data-th-page="finance"] :is(.finance-collection-cards,.finance-cards){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ body[data-th-page="finance"] :is(.finance-actions,.finance-tabs,.panel-head){display:flex!important;flex-wrap:wrap!important;gap:9px!important}
+ body[data-th-page="finance"] :is(.finance-panel,.finance-wrap){padding:14px!important;min-width:0!important}
+ body[data-th-page="finance"] .table-scroll{max-width:100%!important;overflow-x:auto!important}
+ body[data-th-page="finance"] :is(.form-grid,.finance-form-grid){display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+ body[data-th-page="finance"] #editor{width:calc(100vw - 20px)!important;max-height:calc(100dvh - 32px)!important;padding:16px!important}
+ body[data-th-page] :is(.th-module-grid,.portal-section-cards) img{max-width:100%}
+ body[data-th-page] :is(.th-module-card,.portal-section-cards .tile){transition:transform .12s ease}
+ body[data-th-page] :is(.th-module-card,.portal-section-cards .tile):active{transform:scale(.985)}
+ body[data-th-page] :is(.th-mobile-bar,.tz-phone-dock){-webkit-tap-highlight-color:transparent}
+ body[data-th-page] :is(.module-search-results,.th-search-results){max-height:55dvh!important;overflow-y:auto!important}
+ body[data-th-page] :is(.legal-view,.pet-reminder-dialog,.report-defer-dialog){max-width:calc(100vw - 20px)!important;max-height:calc(100dvh - 32px)!important;overflow:auto!important}
+}
+@media (max-width:380px) and (pointer:coarse){
+ body[data-th-page] .tz-phone-tab{font-size:9px!important}
+ body[data-th-page] .tz-phone-tab-icon{width:37px}
+ body[data-th-page="medical"] .medical-kpis{grid-template-columns:minmax(0,1fr)!important}
+}
+@media (prefers-reduced-motion:reduce){
+ .tz-phone-launch-card,.tz-phone-tab{transition:none!important}
+}
