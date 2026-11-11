@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
  const $=id=>document.getElementById(id),bank=document.body.dataset.bankHistory;
- const config=bank==='way2go'?{title:'Way2Go',sheet:'Portal Way2Go History',limit:1000,defaultSource:'W2Go - July.pdf'}:bank==='dollar'?{title:'Dollar Bank',sheet:'Portal Dollar Bank History',limit:8500,defaultSource:'dollar 2021-2025.xlsx'}:{title:'Capital One 360',sheet:'Portal Capital One History',limit:500,defaultSource:'Capital One.csv'};
+ const config=bank==='way2go'?{title:'Way2Go',sheet:'Portal Way2Go History',limit:1000,defaultSource:'W2Go - July.pdf'}:bank==='dollar'?{title:'Dollar Bank',sheet:'Portal Dollar Bank History',limit:8500,defaultSource:'dollar 2021-2025.xlsx'}:{title:'Capital One 360',sheet:'Portal Capital One History',limit:500,defaultSource:''};
  let initialQuery=new URLSearchParams(location.search).get('q')?.slice(0,120)||'';
  let rows=[],filtered=[],page=1;const pageSize=100;
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -16,6 +16,7 @@
    rows=data.slice(1).filter(r=>r[0]).map(r=>({id:r[0],date:r[1]||'',description:r[2]||'',category:r[3]||'',reference:r[4]||'',withdrawal:numeric(r[5]),deposit:numeric(r[6]),net:numeric(r[7]),balance:numeric(r[8]),sourceType:r[9]||'',file:r[10]||'',sourceRow:r[11],comments:r[12]||'',flag:r[13]||'',originalDate:r[14]||'',raw:r[15]||'',kind:r[16]||'Transaction'}));
    options('history-source',[...new Set(rows.map(r=>r.file))],'All sources (may overlap)');options('history-year',[...new Set(rows.filter(r=>r.date).map(r=>r.date.slice(0,4)))].sort().reverse(),'All years');options('history-category',[...new Set(rows.map(r=>r.category).filter(Boolean))].sort(),'All categories');
    reset();
+   if(bank==='capital'&&$('capital-snapshot')){try{const snapshot=await thValues("'Portal Capital One Snapshot'!A1:E8",'UNFORMATTED_VALUE');const map=Object.fromEntries(snapshot.slice(1).map(r=>[r[0],r]));const pending=snapshot.slice(5).map(r=>`<li>${esc(r[0])}: ${money(Number(r[1]))} <small>(pending)</small></li>`).join('');$('capital-snapshot').innerHTML=`<strong>Checking ••••5926 — November 11, 2026 at 4:48 AM ET</strong><div style="display:flex;gap:24px;flex-wrap:wrap;margin:12px 0"><span>Available <b>${money(Number(map['Available balance']?.[1]))}</b></span><span>Current <b>${money(Number(map['Current balance']?.[1]))}</b></span><span>Pending <b>${money(Number(map['Pending total']?.[1]))}</b></span></div><ul>${pending}</ul><small>Bank screenshot snapshot, not a live bank connection. Pending withdrawals are already reflected in the available balance and are excluded from posted transaction totals.</small>`;}catch(e){$('capital-snapshot').textContent='Balance snapshot unavailable; transaction history remains accessible.'}}
    if(initialQuery){$('history-source').value='';$('history-search').value=initialQuery;initialQuery='';render();}
    message('');$('th-connection').textContent='Private workbook connected';
   }catch(e){message(e.message,true);throw e}finally{$('history-refresh').disabled=false}
