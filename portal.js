@@ -643,7 +643,7 @@ document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')for(const [
 
 
 /* Load the iPhone-only finishing styles on every portal module. */
-(()=>{const link=document.createElement('link');link.rel='stylesheet';link.href='iphone-finish.css?v=20261111-wow2';document.head.append(link)})();
+(()=>{const link=document.createElement('link');link.rel='stylesheet';link.href='iphone-finish.css?v=20261111-all-pages4';document.head.append(link)})();
 
 /* TisZod iPhone experience v1: isolated from iPad and desktop. */
 (()=>{
