@@ -55,6 +55,18 @@
   const vitalKeys = vitalCards.flatMap(([key])=>[key,key+'Date']);
   const vitalTag = "appProperties has { key='tiszodRecord' and value='medicalVitals' }";
   let syncedVitals = {};
+  let driveComposition = [];
+  const compositionRecord = 'medicalBodyComposition';
+  const compositionFields = [['weight','Weight (lb)'],['bmi','BMI'],['bodyFat','Body fat (%)'],['muscle','Muscle (%)'],['water','Body water (%)']];
+  async function loadDriveComposition() {
+    const files = await api.list("'me' in owners and appProperties has { key='tiszodRecord' and value='"+compositionRecord+"' }");
+    const rows = await Promise.all(files.map(async file => {
+      const response = await thDriveFetch(file.id,{cache:'no-store'});
+      if (!response.ok) throw Error('Private weigh-ins could not be loaded.');
+      return {...await response.json(),driveId:file.id};
+    }));
+    return rows.sort((a,b)=>String(a.savedAt).localeCompare(String(b.savedAt)));
+  }
   function mergeVitals(base){
     const merged={...base};
     for(const [key] of vitalCards){
@@ -365,7 +377,7 @@
       measurements.every(metric=>row[metric]==null||row[metric]===entry[metric]);
     const legacy=[...scale,...history,profile.bodyComposition].filter(row=>Number.isFinite(measurementTime(row))&&
       !confirmed.some(entry=>sameReading(row,entry)));
-    const readings=[...legacy,...confirmed];
+    const readings=[...legacy,...confirmed,...driveComposition];
     const byTime=new Map();
     for(const row of readings){
       const time=measurementTime(row);
@@ -866,6 +878,55 @@
       finally{buttons.forEach(button=>button.disabled=false);}
     });
     form.append(submit,sync,action('Cancel',renderProfile),message);
+    const composition = make('fieldset');
+    composition.append(make('legend','Add a Weight Gurus reading'));
+    const date = make('input');
+    date.type = 'date';
+    const dateLabel = make('label','Weigh-in date');
+    dateLabel.append(date);
+    composition.append(dateLabel);
+    const measurements = compositionFields.map(([key,label]) => {
+      const input = make('input');
+      input.type = 'number';
+      input.step = '0.1';
+      input.min = '0';
+      const field = make('label',label);
+      field.append(input);
+      composition.append(field);
+      return [key,input];
+    });
+    const status = make('p');
+    status.setAttribute('role','status');
+    const pendingComposition = {};
+    const saveComposition = action('Save body composition to Google Drive',async () => {
+      const row = {date:date.value,unit:'lb',source:'Weight Gurus'};
+      for (const [key,input] of measurements) row[key] = Number(input.value);
+      if (!row.date || !measurements.every(([key])=>row[key]>0) ||
+          [row.bodyFat,row.muscle,row.water].some(value=>value>100)) {
+        status.textContent = 'Enter the date and all five readings.';
+        return;
+      }
+      const signature = JSON.stringify(row);
+      if (pendingComposition.signature !== signature) {
+        pendingComposition.signature = signature;
+        pendingComposition.id = undefined;
+        pendingComposition.savedAt = new Date().toISOString();
+      }
+      const buttons = Array.from(form.querySelectorAll('button'));
+      buttons.forEach(button=>button.disabled=true);
+      status.textContent = 'Saving body composition to Google Drive…';
+      try {
+        const existing = (await loadDriveComposition()).findLast(entry=>entry.date===row.date);
+        const saved = await writeMedicalRecord({...row,savedAt:pendingComposition.savedAt},
+          pendingComposition,existing?.driveId,'TisZod Body Composition '+row.date+'.json',compositionRecord);
+        driveComposition = [...driveComposition.filter(entry=>entry.date!==row.date),saved];
+        api.onWeighIns?.(chartWeighIns(savedProfile));
+        status.textContent = 'Body composition saved and verified in Google Drive.';
+      } catch (error) { status.textContent = error.message; }
+      finally { buttons.forEach(button=>button.disabled=false); }
+    });
+    composition.append(saveComposition,status);
+    form.append(composition);
     form.onsubmit = event => {
       event.preventDefault();
       const next = Object.fromEntries(Object.entries(inputs).map(([key,input]) => [key,input.value.trim()]));
@@ -882,6 +943,7 @@
     const medication=api.medicationSource().catch(()=>undefined);
     const doseLog=readAddedDoses().catch(()=>null);
     const vitals=loadVitals().catch(()=>null);
+    const driveReadings=loadDriveComposition().catch(()=>null);
     const source=api.compositionSource?.().catch(()=>{loadMessage+=' Body composition source could not be loaded.';return null;});
     try {
       const files = await api.list("'me' in owners and name = '"+profileFilename+"'");
@@ -902,6 +964,9 @@
     }
     catch {profile = savedProfile;}
     const privateVitals=await vitals;
+    const savedComposition=await driveReadings;
+    if (savedComposition) driveComposition=savedComposition;
+    else loadMessage+=' Private weigh-ins could not be loaded.';
     if(privateVitals){syncedVitals=privateVitals;profile=mergeVitals(profile);}
     else loadMessage+=' Private vitals could not be loaded.';
     api.onWeighIns?.(chartWeighIns(savedProfile));
@@ -944,7 +1009,7 @@
     },
     start(options) {
       addMedicalSidebar();
-      api = options; profile = {}; savedProfile = {}; syncedVitals = {}; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
+      api = options; profile = {}; savedProfile = {}; syncedVitals = {}; driveComposition=[]; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       addedDoses=[]; doseLogReady=false;
       const historyButton=$('medical-injection-open');
       if(historyButton)historyButton.onclick=openInjectionHistory;
