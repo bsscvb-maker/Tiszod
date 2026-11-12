@@ -693,22 +693,32 @@
     const vitalsPanel=make('section');vitalsPanel.className='medical-concept-panel';
     vitalsPanel.append(panelHeading('Vitals (Latest)','⌁'));
     const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
-    for(const [key,label,symbol,unit] of vitalCards){
-      const value=String(profile[key]??'').trim();
-      const item=make('div');
-      item.append(dashboardIcon(symbol),make('span',label),make('strong',value||'—'),
-        make('small',value?unit:'Not recorded'));
-      const recorded=profile[key+'Date'];
-      const timestamp=/^\d{4}-\d{2}-\d{2}$/.test(recorded||'') ? Date.parse(recorded) : NaN;
-      if(value&&Number.isFinite(timestamp)){
-        const stamp=make('time',vitalDateLabel.format(timestamp));
-        stamp.dateTime=recorded;
-        const dateLine=make('small');
-        dateLine.append(stamp);
-        item.append(dateLine);
-      }
-      vitalGrid.append(item);
+    const appleVitalTypes=['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'];
+    function renderLatestVitals(appleReadings=new Map()){
+      const items=vitalCards.map(([key,label,symbol,unit],index)=>{
+        const savedDate=profile[key+'Date'];
+        const savedTime=Date.parse(savedDate);
+        const apple=appleReadings.get(appleVitalTypes[index]);
+        const useApple=apple&&(!profile[key]||!Number.isFinite(savedTime)||apple.time>savedTime);
+        const value=useApple?apple.value.toLocaleString('en-US',{maximumFractionDigits:2}):String(profile[key]??'').trim();
+        const recorded=useApple?apple.date:savedDate;
+        const timestamp=Date.parse(recorded);
+        const item=make('div');
+        item.append(dashboardIcon(symbol),make('span',label),make('strong',value||'—'),
+          make('small',value?unit:'Not recorded'));
+        if(value&&Number.isFinite(timestamp)){
+          const stamp=make('time',(useApple?formatTime:vitalDateLabel).format(timestamp));
+          stamp.dateTime=recorded;
+          const dateLine=make('small');
+          dateLine.append(stamp);
+          item.append(dateLine);
+        }
+        if(useApple)item.append(make('small','Apple Health'));
+        return item;
+      });
+      vitalGrid.replaceChildren(...items);
     }
+    renderLatestVitals();
     vitalsPanel.id='medical-latest-vitals';
     vitalsPanel.append(vitalGrid);
     const nextPanel=make('section');nextPanel.className='medical-concept-panel';nextPanel.id='medical-upcoming';
@@ -772,7 +782,6 @@
     hero.append(stage,right);
     dashboard.append(hero,panels);
     const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Current Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard);
-    const appleVitalTypes=['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'];
     const privateVitals=mergeVitals(savedProfile);
     window.thMedicalAppleHealth?.attachScanner(scanner,stage,vitalCards.flatMap(([key,, ,unit],index)=>
       privateVitals[key]&&privateVitals[key+'Date']?[{
@@ -787,7 +796,7 @@
         type:['BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'][index],
         label,value,unit:unit.trim(),source:'TisZod'
       }] : [])
-    ]);
+    ],renderLatestVitals);
     const userList=String(profile.currentList||'').split('\n').map(line=>line.trim()).filter(Boolean);
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';

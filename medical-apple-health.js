@@ -36,7 +36,7 @@
     BodyWaterPercentage:'Body-Water Percentage', BodyMass:'Weight', BodyMassIndex:'BMI'
   };
   let readPrivate, privateRead, scanner, scannerHome, savedVitals = [], scaleReadings = [];
-  let imported = null, error = false;
+  let imported = null, error = false, showLatestVitals;
   const make = (tag, text) => {
     const node = document.createElement(tag);
     if (text != null) node.textContent = text;
@@ -99,6 +99,24 @@
     return {metrics: [...latest.values()], exportCount: exports.length};
   }
   const shortType = type => String(type || '').replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '');
+  function latestVitals(metrics) {
+    const latest = new Map();
+    for (const entry of metrics || []) {
+      const rawType = shortType(entry.type);
+      const type = rawType === 'BloodOxygenSaturation' ? 'OxygenSaturation' : rawType;
+      if (!['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'].includes(type)) continue;
+      const time = parseDate(entry.date).getTime();
+      let value = Number(entry.value);
+      if (!Number.isFinite(time) || !Number.isFinite(value) || value <= 0 ||
+          time <= (latest.get(type)?.time ?? -Infinity)) continue;
+      if (type === 'OxygenSaturation') {
+        if (value <= 1) value *= 100;
+        if (value > 100) continue;
+      }
+      latest.set(type, {value, time, date:new Date(time).toISOString()});
+    }
+    return latest;
+  }
   const words = text => String(text ?? '').replace(/^HK(?:CategoryValue|WorkoutActivityType)/, '')
     .replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2');
   function hasValue(value) {
@@ -292,6 +310,7 @@
     privateRead = Promise.resolve().then(readPrivate).then(result => {
       loaded = true;
       imported = result;
+      showLatestVitals?.(latestVitals(imported?.metrics));
     }).catch(() => {error = true;}).finally(() => {
       lastChecked = new Date().toISOString();
       privateRead = null;
@@ -302,7 +321,7 @@
     if (!panel.hidden) render();
   }
   function checkScheduledSync() {
-    if (panel.hidden || document.hidden || !readPrivate || privateRead) return;
+    if (document.hidden || !readPrivate || privateRead) return;
     const now = Date.now();
     const [day, time] = easternClock.format(now).split(' ');
     if (time < '08:31' || now - lastAutoCheck < 5 * 60 * 1000) return;
@@ -346,13 +365,15 @@
   window.addEventListener('hashchange',route);
   window.thMedicalAppleHealth = {
     summarize,
-    connect(reader) {readPrivate = reader;loaded = false;route();},
-    attachScanner(figure, home, vitals, composition = []) {
+    connect(reader) {readPrivate = reader;loaded = false;route();sync();},
+    attachScanner(figure, home, vitals, composition = [], updateVitals) {
       if (scanner && scanner !== figure && scanner.parentElement === scannerSlot) scanner.remove();
       scanner = figure;
       scannerHome = home;
       savedVitals = vitals;
       scaleReadings = composition;
+      showLatestVitals = updateVitals;
+      showLatestVitals?.(latestVitals(imported?.metrics));
       route();
       if (!panel.hidden) render();
     }
