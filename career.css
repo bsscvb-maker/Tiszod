@@ -271,3 +271,8 @@ body[data-th-page="career"] {
   text-align: left;
   font-size: .85rem;
 }
+
+[data-th-page="career"] .legal-thumbnail img[src$="/iqvia.svg"] {
+  padding: 0;
+  object-fit: cover;
+}
