@@ -255,3 +255,19 @@ body[data-th-page="career"] {
 [data-th-page="career"] #legal-view-actions:empty {
   display: none;
 }
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/life-protect.svg"]) {
+  background: #80004d;
+}
+[data-th-page="career"] .legal-thumbnail img[src$="/life-protect.svg"] {
+  padding: 0;
+  object-fit: contain;
+}
+[data-th-page="career"] .career-employment-dates {
+  display: block;
+  padding: .65rem .85rem;
+  color: var(--career-ink);
+  background: var(--career-panel);
+  text-align: left;
+  font-size: .85rem;
+}
