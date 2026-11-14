@@ -162,7 +162,11 @@ async function loadCareerFolder(){
  status.textContent='Loading your Career folders…';
  host.replaceChildren(status);
  try{
-  const roots=await thDriveRecords.findFolders('TisZod');
+  const [roots,dateRows]=await Promise.all([
+   thDriveRecords.findFolders('TisZod'),
+   thValues("'Portal Employment Dates'!A1:B100").catch(()=>[])
+  ]);
+  window.thCareerEmploymentDates=new Map(dateRows.slice(1));
   const folders=(await Promise.all(roots.map(root=>thDriveRecords.children(root)))).flat().filter(file=>file.folder);
   const current=folders.filter(file=>file.name==='Career');
   const matches=current.length?current:folders.filter(file=>file.name==='Career & Employment');
