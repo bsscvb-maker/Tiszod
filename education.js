@@ -36,7 +36,7 @@ if(careerMode){
  $('education-category').closest('label').hidden=true;
  $('education-form').elements.person.closest('label').hidden=true;
 }
-const employerOrder = new Map(["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "HireGenics", "Advance", "AbbVie", "Amazon"].map((name, index) => [name, index]));
+const employerOrder = new Map(["Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
 const careerCovers = new Map([
  ['Employers/Food Lion', 'assets/career/employers/full-tile/food-lion.png'],
  ['Employers/Sadler Foods', 'assets/career/employers/full-tile/sadler-foods-warehouse.png'],
@@ -125,6 +125,7 @@ const careerCovers = new Map([
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/Yearbook', 'assets/career/folders/iqvia-archive-yearbook.jpg'],
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/zzz-Archive', 'assets/career/folders/iqvia-boxed-archive.jpg'],
  ['Employers', 'assets/career/employers-cover.webp'],
+ ['Employers/Life Protect 24/7', 'assets/career/employers/life-protect.svg'],
  ['Employers/Amazon', 'assets/career/employers/amazon.svg'],
  ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
  ['Employers/Advance', 'assets/career/employers/advance.svg'],
