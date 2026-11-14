@@ -38,6 +38,8 @@ if(careerMode){
 }
 const employerOrder = new Map(["Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
 const careerCovers = new Map([
+ ['Employers/Southern Volkswagen', 'assets/career/employers/full-tile/southern-volkswagen.webp'],
+ ['Employers/Moms in Motion', 'assets/career/employers/full-tile/moms-in-motion.webp'],
  ['Employers/Food Lion', 'assets/career/employers/full-tile/food-lion.png'],
  ['Employers/Sadler Foods', 'assets/career/employers/full-tile/sadler-foods-warehouse.png'],
  ['Employers/Checkered Flag Volkswagen', 'assets/career/employers/full-tile/checkered-flag-volkswagen.jpg'],
