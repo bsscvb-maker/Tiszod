@@ -333,6 +333,12 @@ function legalFileCard(record,back){
   if(careerFolder)labelTitle.textContent=record.displayName??record.name;
   label.append(labelTitle);
   button.append(art,label);
+  if(card.classList.contains('career-employer-tile')){
+   const dates=document.createElement('span');
+   dates.className='career-employment-dates';
+   dates.textContent=window.thCareerEmploymentDates?.get(record.name)||'Dates unverified';
+   button.append(dates);
+  }
   if(!record.directReader){
    const navigationId=record.id||(tracksFolders&&record.virtualFiles?JSON.stringify(record.coverPath||[record.name]):'');
    if(tracksFolders&&navigationId){
