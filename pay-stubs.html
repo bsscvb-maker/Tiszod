@@ -10,8 +10,19 @@
 <div class="th-app-main"><header class="th-app-topbar"><div><strong>Finance</strong><small>Document library</small></div><span class="th-connection" id="th-connection">Connecting…</span></header>
 <main class="th-page-content"><div class="finance-wrap finance-documents"><header class="fd-heading"><div><h1>Pay Stubs</h1><p>Save each PDF in its employer folder as Pay Date YYYY-MM-DD.pdf, then refresh this page.</p></div><a class="fd-source" href="https://drive.google.com/drive/folders/1lbiirIAvOS6K8e7IV9o8fPIauUNuUG4t" target="_blank" rel="noopener noreferrer">Manage pay stubs in Drive ↗</a></header>
 <div class="fd-tools"><label>Year<select id="pay-year"></select></label><label>Employer<select id="pay-employer"></select></label></div>
+<div class="fd-tools">
+<label>From<input type="date" id="pay-from"></label>
+<label>Through<input type="date" id="pay-through"></label>
+<button type="button" id="pay-download" disabled>Download matching PDFs (.zip)</button>
+</div><p id="pay-transfer" role="status"></p>
 <p id="pay-status" role="status">Loading pay stubs…</p><ol id="pay-list"></ol></div></main></div></div>
 <link rel="stylesheet" href="finance-documents.css?v=20261108-photo-folders">
+<style>
+#pay-list {list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+#pay-list li {padding:1rem;background:#142033;border-radius:.65rem;display:grid;justify-items:start;gap:.55rem}
+#pay-list canvas {width:100%;max-width:180px;height:auto;background:white}
+</style>
+<script src="vendor/jszip.min.js"></script>
 <script>
 (() => {
   const byId = id => document.getElementById(id);
@@ -20,6 +31,94 @@
   const list = byId('pay-list');
   const status = byId('pay-status');
   let stubs = [];
+  let busy = false;
+  let pdfModule;
+  const previews = new Map();
+  const from = byId('pay-from');
+  const through = byId('pay-through');
+  const bulk = byId('pay-download');
+  const transfer = byId('pay-transfer');
+  const invalidRange = () => from.value && through.value && from.value > through.value;
+  const matching = () => invalidRange() ? [] : stubs.filter(stub =>
+    (!year.value || stub.date.startsWith(year.value)) &&
+    (!employer.value || stub.employer === employer.value) &&
+    (!from.value || stub.date >= from.value) && (!through.value || stub.date <= through.value));
+  async function getPdf(stub) {
+    const response = await fetch('https://www.googleapis.com/drive/v3/files/' +
+      encodeURIComponent(stub.id) + '?alt=media&supportsAllDrives=true', {
+      headers: {Authorization: 'Bearer ' + thToken}
+    });
+    if (!response.ok) throw new Error('Could not retrieve the PDF for ' + stub.date + '.');
+    return response.blob();
+  }
+  function save(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+  async function preview(stub) {
+    pdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
+    const pdfjs = await pdfModule;
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdfjs/pdf.worker.compat.mjs', location.href).href;
+    const data = new Uint8Array(await (await getPdf(stub)).arrayBuffer());
+    const pdf = await pdfjs.getDocument({data, wasmUrl: new URL('./vendor/pdfjs/wasm/', location.href).href}).promise;
+    try {
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({scale: 240 / page.getViewport({scale:1}).width});
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+      return canvas;
+    } finally {
+      await pdf.destroy();
+    }
+  }
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const target = entry.target;
+      observer.unobserve(target);
+      const stub = stubs.find(item => item.id === target.dataset.id);
+      if (!stub) continue;
+      if (!previews.has(stub.id)) previews.set(stub.id, preview(stub).catch(error => {
+        previews.delete(stub.id);
+        throw error;
+      }));
+      previews.get(stub.id).then(source => {
+        const canvas = source.cloneNode();
+        canvas.getContext('2d').drawImage(source, 0, 0);
+        target.replaceChildren(canvas);
+      }).catch(() => {target.textContent = 'Preview unavailable';});
+    }
+  }, {rootMargin:'150px'});
+  bulk.onclick = async () => {
+    const selected = matching();
+    if (busy || !selected.length) return;
+    busy = true;
+    bulk.disabled = true;
+    try {
+      const zip = new JSZip();
+      for (const [index, stub] of selected.entries()) {
+        transfer.textContent = 'Preparing PDF ' + (index + 1) + ' of ' + selected.length + '…';
+        const folder = stub.employer.replace(/[^a-z0-9 ._-]/gi, '_');
+        zip.file(folder + '/' + (index + 1) + ' - ' + stub.name.replace(/[\\/]/g, '_'),
+          await (await getPdf(stub)).arrayBuffer());
+      }
+      save(await zip.generateAsync({type:'blob'}), 'TisZod-pay-stubs.zip');
+      transfer.textContent = selected.length + ' PDFs packaged for download.';
+    } catch (error) {
+      transfer.textContent = error.message;
+    } finally {
+      busy = false;
+      bulk.disabled = !matching().length;
+    }
+  };
   async function listChildren(id) {
     const files = [];
     let token = '';
@@ -38,8 +137,9 @@
     return files;
   }
   function render() {
-    const shown = stubs.filter(stub => (!year.value || stub.date.startsWith(year.value)) &&
-      (!employer.value || stub.employer === employer.value));
+    const shown = matching();
+    observer.disconnect();
+    bulk.disabled = busy || !shown.length;
     list.replaceChildren(...shown.map(stub => {
       const item = document.createElement('li');
       const link = document.createElement('a');
@@ -47,13 +147,36 @@
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.textContent = stub.date + ' · ' + stub.employer + ' · View PDF';
-      item.append(link);
+      const thumbnail = document.createElement('div');
+      thumbnail.dataset.id = stub.id;
+      thumbnail.style.minHeight = '7rem';
+      thumbnail.setAttribute('role','img');
+      thumbnail.setAttribute('aria-label','First page preview for ' + stub.date);
+      thumbnail.textContent = 'Loading preview…';
+      observer.observe(thumbnail);
+      const download = document.createElement('button');
+      download.type = 'button';
+      download.textContent = 'Download PDF';
+      download.onclick = async () => {
+        download.disabled = true;
+        transfer.textContent = '';
+        try {
+          save(await getPdf(stub), stub.name);
+        } catch (error) {
+          transfer.textContent = error.message;
+        } finally {
+          download.disabled = false;
+        }
+      };
+      item.append(thumbnail, link, download);
       return item;
     }));
-    status.textContent = shown.length === 1 ? '1 pay stub' : shown.length + ' pay stubs';
+    status.textContent = invalidRange() ? 'Choose an end date on or after the start date.' : shown.length === 1 ? '1 pay stub' : shown.length + ' pay stubs';
   }
   year.addEventListener('change', render);
   employer.addEventListener('change', render);
+  from.addEventListener('change', render);
+  through.addEventListener('change', render);
   window.thStart = async () => {
     try {
       const folders = (await listChildren('1lbiirIAvOS6K8e7IV9o8fPIauUNuUG4t')).filter(file => file.mimeType === 'application/vnd.google-apps.folder');
@@ -61,7 +184,7 @@
         const files = await listChildren(folder.id);
         return files.flatMap(file => {
           const date = file.name.match(/^Pay Date (\d{4}-\d{2}-\d{2})(?:\s.*)?\.pdf$/i)?.[1];
-          return date && file.mimeType === 'application/pdf' ? [{id: file.id, date, employer: folder.name}] : [];
+          return date && file.mimeType === 'application/pdf' ? [{id: file.id, name: file.name, date, employer: folder.name}] : [];
         });
       }));
       stubs = groups.flat().sort((a, b) => b.date.localeCompare(a.date) || a.employer.localeCompare(b.employer));
