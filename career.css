@@ -276,3 +276,11 @@ body[data-th-page="career"] {
   padding: 0;
   object-fit: cover;
 }
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/moms-in-motion.webp"]) {
+  background: #fff;
+}
+
+[data-th-page="career"] .legal-thumbnail img[src$="/moms-in-motion.webp"] {
+  object-fit: contain;
+}
