@@ -845,3 +845,9 @@ body[data-th-page="medical"] .th-sidebar .medical-sidebar-tools .th-nav-icon {
 @media(max-width:460px){
   .medical-apple-layout{grid-template-columns:minmax(0,1fr)}
 }
+
+.medical-medication-controls{display:flex;flex-wrap:wrap;gap:.4rem;margin-block:.4rem}
+.medical-medication-controls button{border:1px solid #396179;border-radius:.45rem;background:#102536;color:#d9efff;padding:.35rem .65rem;cursor:pointer}
+.medical-medication-controls button[aria-pressed="true"]{border-color:#4bc7e8;background:#153d50}
+dialog:has(#medical-medication-editor-title){width:min(28rem,calc(100% - 2rem));background:#0b1e2d;color:#e4f3ff;border:1px solid #396179;border-radius:.75rem}
+dialog:has(#medical-medication-editor-title)::backdrop{background:#040b14b3}
