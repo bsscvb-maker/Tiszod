@@ -77,6 +77,7 @@
  </div></section>
 </main></div></div>
 <dialog class="legal-view medical-injection-dialog" id="medical-injection-history" aria-labelledby="medical-injection-title"><div class="medical-heading"><h2 id="medical-injection-title">Tirzepatide</h2><form method="dialog"><button>Close</button></form></div><button type="button" id="medical-dose-add">+ Add injection</button>
+<p id="medical-injection-regimen"></p><button type="button" id="medical-injection-edit-medication" hidden>Edit medication</button>
 <p id="medical-dose-status" role="status" aria-live="polite"></p>
 <div id="medical-injection-rows"></div></dialog>
 <dialog class="legal-view" id="medical-dose-dialog" aria-labelledby="medical-dose-form-title">
@@ -85,7 +86,7 @@
 <form id="medical-injection-entry">
   <label>Date (Eastern)<input name="date" type="date" required></label>
   <label>Time (Eastern)<input name="time" type="time" step="1" required></label>
-  <label>Product<select name="product"><option>Compounded tirzepatide + B12</option><option>Zepbound</option></select></label>
+  <label>Product<select name="product"><option>Compounded tirzepatide + B12</option><option>Compounded tirzepatide + Levocarnitine</option><option>Zepbound</option></select></label>
   <label>Dose (mg)<input name="mg" type="number" min="0.001" step="any" inputmode="decimal"></label>
   <label>Syringe units (optional)<input name="units" type="number" min="0.01" step="any" inputmode="decimal"></label>
   <label>Notes (optional)<textarea name="notes" rows="3" maxlength="500"></textarea></label>
@@ -98,4 +99,4 @@
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
 </dialog>
-<script>document.getElementById('medical-concept-injections')?.addEventListener('click',()=>document.getElementById('medical-injection-open')?.click());</script><script src="medical-card-cover.js?v=20261108-photo-search"></script><script src="drive-record-viewer.js?v=20261108-fast-medical"></script><script src="medical-weight.js?v=2"></script><script src="medical-weight-chart.js?v=3"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script><script src="medical-3d.js?v=20261110-continuous-skin"></script><script src="medical-apple-health.js?v=20261112-overview-vitals"></script><script src="medical-about.js?v=20261115-medication-editor"></script><script src="medical-folder-dash.js?v=20261108-reactions"></script><script src="medical.js?v=20261110-private-health-source"></script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-fast-medical"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
+<script>document.getElementById('medical-concept-injections')?.addEventListener('click',()=>document.getElementById('medical-injection-open')?.click());</script><script src="medical-card-cover.js?v=20261108-photo-search"></script><script src="drive-record-viewer.js?v=20261108-fast-medical"></script><script src="medical-weight.js?v=2"></script><script src="medical-weight-chart.js?v=3"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script><script src="medical-3d.js?v=20261110-continuous-skin"></script><script src="medical-apple-health.js?v=20261112-overview-vitals"></script><script src="medical-about.js?v=20261115-medication-history"></script><script src="medical-folder-dash.js?v=20261108-reactions"></script><script src="medical.js?v=20261110-private-health-source"></script><script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-fast-medical"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261104-read-retry-1"></script></body></html>
