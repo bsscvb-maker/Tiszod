@@ -362,17 +362,6 @@ function legalFileCard(record,back){
    image.dataset.photo='';
    image.src=medicalCover;
    art.replaceChildren(image);
-   if (careerFolder && record.coverPath?.length === 2 && record.coverPath[0] === 'Employers') {
-    if (['Farm Fresh', 'Western Auto'].includes(record.name)) card.classList.add('career-logo-card');
-    if (['Superior Marble and Stone', 'Hall Mazda', 'Haley Toyota of Richmond', 'Charles Barker Toyota', 'Checkered Flag Volkswagen'].includes(record.name)) {
-     card.classList.add('career-photo-name');
-     if (record.name !== 'Haley Toyota of Richmond') card.classList.add('career-photo-crop');
-     const photoTitle = document.createElement('span');
-     photoTitle.className = 'career-photo-title';
-     photoTitle.textContent = record.name === 'Haley Toyota of Richmond' ? 'Haley Toyota' : record.name;
-     art.append(photoTitle);
-    }
-   }
   }else if(record.folder||record.directReader||(!medicalStriders&&(record.medicalArt||record.medicalCoverImage))){
    const folderPhoto=medicalStriders?null:record.coverFor?.(record.coverPath)??record.legalFolderPhotoFor?.(record.name);
    const fallback=()=>uniqueCover(
@@ -388,6 +377,17 @@ function legalFileCard(record,back){
    image.onerror=()=>{image.onerror=null;image.src=fallback();};
    image.src=medicalStriders?fallback():recreationImage||folderPhoto||record.medicalCoverImage||medicalImage||fallback();
    art.replaceChildren(image);
+   if (careerFolder && record.coverPath?.length === 2 && record.coverPath[0] === 'Employers') {
+    if (['Farm Fresh', 'Western Auto'].includes(record.name)) card.classList.add('career-logo-card');
+    if (['Superior Marble and Stone', 'Hall Mazda', 'Haley Toyota of Richmond', 'Charles Barker Toyota', 'Checkered Flag Volkswagen'].includes(record.name)) {
+     card.classList.add('career-photo-name');
+     if (record.name !== 'Haley Toyota of Richmond') card.classList.add('career-photo-crop');
+     const photoTitle = document.createElement('span');
+     photoTitle.className = 'career-photo-title';
+     photoTitle.textContent = record.name === 'Haley Toyota of Richmond' ? 'Haley Toyota' : record.name;
+     art.append(photoTitle);
+    }
+   }
    if(careerFolder&&!folderPhoto){
     legalCoverJobs.set(button,async()=>{
      if(!button.isConnected)return;
