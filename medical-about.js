@@ -664,7 +664,7 @@
     ].map(([symbol,label,unit,key])=>[symbol,label,pairs[key][0],unit,pairs[key][1],key]);
     const goals={
       weight:{min:180,max:189,target:185,unit:' lb'},
-      bmi:{min:23.7,max:24.9,unit:''},
+      bmi:{min:23.7,max:24.9,redAt:30,unit:''},
       bodyFat:{min:18,max:22,unit:' pts'}
     };
     function goalStatus(key,value,prior){
@@ -684,7 +684,8 @@
       const label=key==='weight'&&above
         ? (current-goal.target).toFixed(1)+' lb to goal'
         : gap+goal.unit+(above?' above':' below');
-      const color=key==='weight'&&above&&rounded(current-goal.target)>10?'#ff8b8b':'#ffd27a';
+      const red=key==='weight' ? above&&rounded(current-goal.target)>10 : current>=goal.redAt;
+      const color=red?'#ff8b8b':'#ffd27a';
       return [label,color,detail+'. '+gap+goal.unit+(above?' above':' below')+' range.'];
     }
     for(const [symbol,label,value,unit,prior,key] of metricData){
