@@ -267,7 +267,7 @@ body[data-th-page="career"] {
   display: block;
   padding: .65rem .85rem;
   color: var(--career-ink);
-  background: var(--career-panel);
+  background: transparent;
   text-align: left;
   font-size: .85rem;
 }
