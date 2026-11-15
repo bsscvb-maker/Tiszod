@@ -282,6 +282,7 @@ body[data-th-page="career"] {
 }
 
 [data-th-page="career"] .legal-thumbnail img[src$="/moms-in-motion.webp"] {
+  padding: clamp(10px, 1.3vw, 18px);
   object-fit: contain;
 }
 
