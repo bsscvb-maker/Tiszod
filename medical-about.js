@@ -143,6 +143,18 @@
     return inches?Number(inches[1]):0;
   }
   const isCompoundedTirzepatide=name=>/^compounded tirzepatide\b/i.test(name);
+  const saturdayInjection=(name,schedule='')=>isCompoundedTirzepatide(name)&&(
+    /\bsaturdays?\b/i.test(schedule)||(/levocarnitine/i.test(name)&&/^(?:once )?weekly$/i.test(schedule))
+  );
+  function nextCheckDates(today,injectionLogged,weightLogged){
+    const date=new Date(today);
+    const daysToSaturday=(6-date.getUTCDay()+7)%7;
+    const offsetDate=days=>new Date(date.getTime()+days*86400000).toISOString().slice(0,10);
+    return {
+      injection:offsetDate(daysToSaturday||(injectionLogged?7:0)),
+      weight:offsetDate(weightLogged?1:0)
+    };
+  }
   const injectionProduct = name => /zepbound/i.test(name) ? 'Zepbound'
     : /levocarnitine/i.test(name) ? 'Compounded tirzepatide + Levocarnitine'
     : 'Compounded tirzepatide + B12';
@@ -912,26 +924,28 @@
     const today=[parts.year,parts.month,parts.day].join('-');
     const upcoming=dates=>dates.filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date||'')&&date>=today&&Number.isFinite(Date.parse(date))).sort()[0];
     const nextDate=new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
-    const saturdayRegimen=String(profile.currentList||'').split('\n').some(entry=>{
+    const saturdayRegimen=medicationLines(profile.currentList).some(entry=>{
       const [name,,schedule]=entry.split('|').map(value=>value.trim());
-      return isCompoundedTirzepatide(name)&&/^Saturday nights?$/i.test(schedule||'');
+      return saturdayInjection(name,schedule);
     });
-    const saturday=new Date(today);
-    const daysUntilSaturday=(6-saturday.getUTCDay()+7)%7;
-    const cutoffPassed=Number(parts.hour)*60+Number(parts.minute)>20*60+45;
-    saturday.setUTCDate(saturday.getUTCDate()+(daysUntilSaturday===0&&cutoffPassed?7:daysUntilSaturday));
-    const saturdayDate=saturdayRegimen?saturday.toISOString().slice(0,10):undefined;
-    const scheduledInjection=upcoming([profile.nextInjectionDate,medicationSource?.nextInjectionDate]
-      .filter(date=>!(saturdayRegimen&&cutoffPassed&&daysUntilSaturday===0&&date===today)));
-    const injectionDate=scheduledInjection||saturdayDate;
+    const injectionLogged=injections.some(row=>row.date===today&&isCompoundedTirzepatide(row.product)&&canEditDose(row));
+    const weightLogged=weightRows.some(row=>{
+      if(/^\d{4}-\d{2}-\d{2}$/.test(row.date||''))return row.date===today;
+      const time=measurementTime(row);
+      if(!Number.isFinite(time))return false;
+      const fields=Object.fromEntries(eastern.formatToParts(time).map(({type,value})=>[type,value]));
+      return [fields.year,fields.month,fields.day].join('-')===today;
+    });
+    const nextChecks=nextCheckDates(today,injectionLogged,weightLogged);
+    const injectionDate=saturdayRegimen?nextChecks.injection:upcoming([profile.nextInjectionDate,medicationSource?.nextInjectionDate]);
     for(const [label,symbol,date] of [
       ['Next Injection','syringe',injectionDate],
-      ['Next Weight Check','⚖',upcoming([profile.nextWeightDate])],
+      ['Next Weight Check','⚖',nextChecks.weight],
       ['Next Appointment','calendar',upcoming([profile.nextAppointmentDate,...(api.upcomingAppointments?.()||[])])]
     ]){
       const injection=label==='Next Injection';
       const item=injection?action(null,openInjectionHistory):make('div');
-      const copy=make('span');copy.append(make('b',label),make('span',date?nextDate.format(Date.parse(date))+(injection&&date===saturdayDate?' at 8:45 PM ET':''):injection?'See injection history':'Not scheduled'));
+      const copy=make('span');copy.append(make('b',label),make('span',date?nextDate.format(Date.parse(date)):injection?'See injection history':'Not scheduled'));
       item.className='medical-progress-row';item.append(dashboardIcon(symbol),copy);nextPanel.append(item);
     }
     const keyPanel=make('section');keyPanel.className='medical-concept-panel medical-key-panel';
@@ -995,8 +1009,9 @@
     if(userList.length){
       const grid=make('div');grid.className='medical-regimen';
       for(const [index,entry] of userList.entries()){
-        const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
+        const [name,dose,savedSchedule]=entry.split('|').map(value=>value.trim());
         const activeList = medicationTab;
+        const schedule=activeList==='currentList'&&saturdayInjection(name,savedSchedule)?'Every Saturday':savedSchedule;
         const edit = () => editMedication(entry,index,activeList);
         const amount = activeList==='currentList' ? loggedMedicationAmount(name,dose) : dose;
         const hasHistory = isCompoundedTirzepatide(name) || /zepbound/i.test(name);
