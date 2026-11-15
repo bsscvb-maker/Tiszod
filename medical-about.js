@@ -684,7 +684,8 @@
       const label=key==='weight'&&above
         ? (current-goal.target).toFixed(1)+' lb to goal'
         : gap+goal.unit+(above?' above':' below');
-      return [label,'#ffd27a',detail+'. '+gap+goal.unit+(above?' above':' below')+' range.'];
+      const color=key==='weight'&&above&&rounded(current-goal.target)>10?'#ff8b8b':'#ffd27a';
+      return [label,color,detail+'. '+gap+goal.unit+(above?' above':' below')+' range.'];
     }
     for(const [symbol,label,value,unit,prior,key] of metricData){
       const card=make('div');card.className='medical-command-metric';
