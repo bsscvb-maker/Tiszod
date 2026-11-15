@@ -36,8 +36,10 @@ if(careerMode){
  $('education-category').closest('label').hidden=true;
  $('education-form').elements.person.closest('label').hidden=true;
 }
-const employerOrder = new Map(["Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Haley Toyota of Richmond", "Kimnach Ford", "Southern Volkswagen", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "Moms in Motion", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
+const employerOrder = new Map(["Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Farm Fresh", "Western Auto", "Haley Toyota of Richmond", "Kimnach Ford", "Southern Volkswagen", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "Moms in Motion", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
 const careerCovers = new Map([
+ ['Employers/Farm Fresh', 'https://static.wixstatic.com/media/b7f17b_05212b8af1ca421e96590d2fa81a83b0~mv2.png'],
+ ['Employers/Western Auto', 'https://upload.wikimedia.org/wikipedia/commons/0/01/Western_Auto_-_1986.svg'],
  ['Employers/Southern Volkswagen', 'assets/career/employers/full-tile/southern-volkswagen.webp'],
  ['Employers/Moms in Motion', 'assets/career/employers/full-tile/moms-in-motion.webp'],
  ['Employers/Food Lion', 'assets/career/employers/full-tile/food-lion.png'],
