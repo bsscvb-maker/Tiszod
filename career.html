@@ -59,6 +59,11 @@ body[data-th-page="career"] #legal-view .career-employer-tile .legal-thumbnail-a
 body[data-th-page="career"] #legal-view .career-employer-tile .legal-thumbnail-art:has(img[src*="b7f17b_05212"]) {
   background: #000;
 }
+body[data-th-page="career"] #legal-view[open] { display: flex; flex-direction: column; overflow: hidden; }
+body[data-th-page="career"] #legal-view > :not(#legal-view-body) { flex: 0 0 auto; }
+body[data-th-page="career"] #legal-view-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+body[data-th-page="career"] #legal-view .legal-thumbnail-art:has(img:is([src$="/parker-career.webp"],[src$="/hall-career.webp"])) .career-photo-title { display: none; }
+body[data-th-page="career"] #legal-view .career-photo-crop .legal-thumbnail-art img:is([src$="/parker-career.webp"],[src$="/hall-career.webp"]) { height: 100%; object-position: center; }
 </style>
 </head><body data-th-page="career">
 
@@ -72,4 +77,4 @@ body[data-th-page="career"] #legal-view .career-employer-tile .legal-thumbnail-a
  <h2 id="legal-view-title"></h2>
  <div class="legal-actions" id="legal-view-actions"></div>
  <div id="legal-view-body"></div>
-</dialog><script src="drive-record-viewer.js?v=20261115-career-art-2"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="book-reader.js?v=20261029-shared-drive-1"></script><script src="file-browser.js?v=1"></script><script src="library-books.js?v=20261106-manual-filing"></script><script src="education.js?v=20261115-employer-cards"></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261029-shared-drive-1"></script><script src="module-search.js?v=1"></script></body></html>
+</dialog><script src="drive-record-viewer.js?v=20261115-career-art-2"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="book-reader.js?v=20261029-shared-drive-1"></script><script src="file-browser.js?v=1"></script><script src="library-books.js?v=20261106-manual-filing"></script><script src="education.js?v=20261115-career-art-header"></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261029-shared-drive-1"></script><script src="module-search.js?v=1"></script></body></html>
