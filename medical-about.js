@@ -143,6 +143,10 @@
     return inches?Number(inches[1]):0;
   }
   const isCompoundedTirzepatide=name=>/^compounded tirzepatide\b/i.test(name);
+  const injectionProduct = name => /zepbound/i.test(name) ? 'Zepbound'
+    : /levocarnitine/i.test(name) ? 'Compounded tirzepatide + Levocarnitine'
+    : 'Compounded tirzepatide + B12';
+  let selectedInjectionProduct = '';
   let injections=[];
   let addedDoses=[];
   let doseLogReady=false;
@@ -237,8 +241,14 @@
     }
     rows.replaceChildren(thMedicalFolders.injectionHistory(injections,row=>editDose(row)));
   }
-  function openInjectionHistory(){
+  function openInjectionHistory(medication){
     const dialog=$('medical-injection-history');
+    selectedInjectionProduct = medication?.name ? injectionProduct(medication.name) : '';
+    $('medical-injection-title').textContent = medication?.name || 'Tirzepatide';
+    $('medical-injection-regimen').textContent = [medication?.dose, medication?.schedule].filter(Boolean).join(' · ');
+    const edit = $('medical-injection-edit-medication');
+    edit.hidden = !medication?.edit;
+    edit.onclick = medication?.edit ? () => { dialog.close(); medication.edit(); } : null;
     renderInjectionHistory();
     if(!dialog.open)dialog.showModal();
   }
@@ -278,11 +288,12 @@
       if(row){
         fields.date.value=row.date;
         fields.time.value=doseTime(row);
-        fields.product.value=/zepbound/i.test(row.product)?'Zepbound':'Compounded tirzepatide + B12';
+        fields.product.value=injectionProduct(row.product);
         fields.mg.value=row.mg??String(row.dose).match(/([\d.]+)\s*mg\b/i)?.[1]??'';
         fields.units.value=row.units??String(row.dose).match(/([\d.]+)\s*(?:syringe\s*)?units?\b/i)?.[1]??'';
         fields.notes.value=row.notes||'';
       }
+      if(!row && selectedInjectionProduct) fields.product.value = selectedInjectionProduct;
       if(!isEdit)setEasternNow();
       submit.textContent=isEdit?'Save changes':'Save injection';
       $('medical-dose-form-title').textContent=isEdit?'Edit injection':'Add injection';
@@ -292,7 +303,7 @@
     }
     editDose=row=>openForm(row,true);
     copyDose=row=>openForm(row,false);
-    $('medical-dose-add').onclick=()=>copyDose(injections.filter(canEditDose).sort((a,b)=>
+    $('medical-dose-add').onclick=()=>copyDose(injections.filter(row=>canEditDose(row)&&(!selectedInjectionProduct||injectionProduct(row.product)===selectedInjectionProduct)).sort((a,b)=>
       b.date.localeCompare(a.date)||doseTime(b).localeCompare(doseTime(a)))[0]);
     form.querySelector('[data-dose-cancel]').onclick=closeForm;
     dialog.addEventListener('cancel',event=>{if(submit.disabled)event.preventDefault();});
@@ -887,10 +898,16 @@
       const grid=make('div');grid.className='medical-regimen';
       for(const [index,entry] of userList.entries()){
         const [name,dose,schedule]=entry.split('|').map(value=>value.trim());
-        const card=action(null,()=>editMedication(entry,index,medicationTab));
+        const activeList = medicationTab;
+        const edit = () => editMedication(entry,index,activeList);
+        const amount = activeList==='currentList' ? loggedMedicationAmount(name,dose) : dose;
+        const hasHistory = isCompoundedTirzepatide(name) || /zepbound/i.test(name);
+        const card=action(null,hasHistory
+          ? ()=>openInjectionHistory({name,dose:amount,schedule,edit})
+          : edit);
         card.className='medical-injection-card';
         card.setAttribute('aria-haspopup','dialog');
-        card.setAttribute('aria-label','Edit '+name);
+        card.setAttribute('aria-label',hasHistory ? name+' injection history' : 'Edit '+name);
         const info=make('span');info.className='medical-regimen-copy';
         const visuals=[
           [/citalopram/i,'citalopram','Tablet marked 0 and 6 separated by a score line'],
@@ -909,7 +926,6 @@
           picture.append(image);card.append(picture);
         }
         info.append(make('strong',name));
-        const amount=medicationTab==='currentList' ? loggedMedicationAmount(name,dose) : dose;
         if(amount){
           const compact=amount.replace(/syringe units/gi,'units').replace(/,?\s*patient-reported(?=\))/gi,'');
           const dosage=make('span',compact);
