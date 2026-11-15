@@ -684,7 +684,7 @@
       if(key==='muscle'){
         const delta=Number.isFinite(prior)?rounded(rounded(value)-rounded(prior)):null;
         const label=delta===null?'Track strength':delta===0?'Steady vs. prior':Math.abs(delta).toFixed(1)+' pts '+(delta>0?'up':'down');
-        return [label,'#b9cad9','Long-term goal: maintain or improve strength. Scale muscle readings are estimates.'];
+        return [label,'#7dd3fc','Long-term goal: maintain or improve strength. Scale muscle readings are estimates.'];
       }
       const goal=goals[key];
       if(!goal)return null;
@@ -703,7 +703,8 @@
     for(const [symbol,label,value,unit,prior,key] of metricData){
       const card=make('div');card.className='medical-command-metric';
       card.append(dashboardIcon(symbol),make('span',label));
-      card.append(make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'));
+      const readingValue=make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—');
+      card.append(readingValue);
       const source=key==='weight'?weightRows[0]:metricsFor(key)[0];
       if(source)card.title='Recorded '+(source.date||formatTime.format(measurementTime(source)));
       if(key==='bmi'&&!bmiPair.length&&Number.isFinite(value))card.title='Estimated from recorded weight and profile height';
@@ -711,6 +712,7 @@
       const status=goalStatus(key,value,prior);
       if(status){
         const [label,color,detail]=status;
+        readingValue.style.color=color;
         change.textContent=label;
         change.style.cssText='color:'+color+';white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis';
         change.title=detail;
