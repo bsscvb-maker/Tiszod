@@ -290,7 +290,8 @@ body[data-th-page="career"] {
   background: #fff;
 }
 [data-th-page="career"] .career-logo-card .legal-thumbnail-art img {
-  padding: 1.25rem;
+  box-sizing: border-box;
+  padding: clamp(10px, 1.3vw, 18px);
   object-fit: contain;
 }
 [data-th-page="career"] .career-photo-name .legal-thumbnail-art {
@@ -313,5 +314,23 @@ body[data-th-page="career"] {
 }
 [data-th-page="career"] .career-photo-crop .legal-thumbnail-art img {
   height: 137%;
+  object-position: center top;
+}
+
+[data-th-page="career"] .career-photo-name .legal-thumbnail-art {
+  display: block;
+}
+[data-th-page="career"] .career-photo-name .legal-thumbnail-art .career-photo-title {
+  display: block;
+  font-size: clamp(1.15rem, 2.3vw, 1.65rem);
+  line-height: 1.1;
+}
+[data-th-page="career"] .career-photo-crop .legal-thumbnail-art img[data-photo] {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 137%;
+  max-height: none;
+  object-fit: cover;
   object-position: center top;
 }
