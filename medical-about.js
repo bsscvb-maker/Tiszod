@@ -485,6 +485,72 @@
     return figure;
   }
 
+  const editFilename = 'TisZod Medical Profile Edits.json';
+  const editTag = "appProperties has { key='tiszodRecord' and value='medicalProfileEdits' }";
+  let profileEdits = {};
+  let profileEditId;
+  let profileEditsReady = false;
+  let profileWritePending = false;
+  let profileWrite = {};
+
+  async function readProfileEdits() {
+    const files = await api.list("'me' in owners and " + editTag);
+    if (files.length > 1) throw Error('Multiple private profile edit files were found.');
+    if (!files.length) return {};
+    const response = await thDriveFetch(files[0].id,{cache:'no-store'});
+    if (!response.ok) throw Error('Could not read the private profile edits.');
+    return {...await response.json(),driveId:files[0].id};
+  }
+
+  async function saveProfileEdits(changes) {
+    if (!profileEditsReady || profileWritePending) throw Error('Wait for the private profile to finish syncing.');
+    profileWritePending = true;
+    try {
+      const {driveId,...latest} = await readProfileEdits();
+      if (JSON.stringify(latest) !== JSON.stringify(profileEdits)) {
+        throw Error('The private profile changed on another device. Refresh this page and try again.');
+      }
+      const row = {...latest,...changes};
+      const saved = await writeMedicalRecord(row,profileWrite,driveId || profileEditId,editFilename,'medicalProfileEdits');
+      const {driveId:verifiedId,...verified} = saved;
+      profileEditId = verifiedId;
+      profileEdits = verified;
+      profileWrite = {};
+      profile = mergeVitals({...savedProfile,...profileEdits});
+    } finally {
+      profileWritePending = false;
+    }
+  }
+
+  async function loadProfileEdits() {
+    const {driveId,...edits} = await readProfileEdits();
+    profileEdits = edits;
+    profileEditId = driveId;
+    profileEditsReady = true;
+    profile = {...savedProfile,...edits};
+    const key = api.key + ':about';
+    const legacy = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!Object.keys(legacy).length) return;
+    const changes = {};
+    const legacyMedicationTime = Date.parse(legacy.medicationListUpdatedAt || legacy.profileUpdatedAt);
+    const driveMedicationTime = Date.parse(profile.medicationListUpdatedAt || profile.profileUpdatedAt) || 0;
+    if (legacyMedicationTime >= driveMedicationTime) {
+      for (const name of ['currentList','pastList']) {
+        if (typeof legacy[name] === 'string') changes[name] = legacy[name];
+      }
+      changes.medicationListUpdatedAt = new Date().toISOString();
+    }
+    const legacyProfileTime = Date.parse(legacy.profileUpdatedAt);
+    if (legacyProfileTime >= (Date.parse(profile.profileUpdatedAt) || 0)) {
+      for (const [name] of fields) {
+        if (typeof legacy[name] === 'string') changes[name] = legacy[name];
+      }
+      changes.profileUpdatedAt = legacy.profileUpdatedAt;
+    }
+    if (Object.keys(changes).length) await saveProfileEdits(changes);
+    localStorage.removeItem(key);
+  }
+
   let medicationTab = 'currentList';
   const medicationLines = value => String(value || '').split('\n').map(line => line.trim()).filter(Boolean);
 
@@ -508,15 +574,15 @@
     });
     const status = make('p');
     status.setAttribute('role', 'status');
-    const persist = destination => {
+    const persist = async destination => {
       const fields = inputs.map(input => input.value.trim());
       if (!fields[0] || fields.some(value => value.includes('|'))) {
         status.textContent = 'Enter a medication name and remove any vertical bars.';
         return;
       }
+      if (profileWritePending) return;
+      status.textContent = 'Saving to private Drive…';
       try {
-        const key = api.key + ':about';
-        const local = JSON.parse(localStorage.getItem(key) || '{}');
         const lists = {
           currentList: medicationLines(profile.currentList),
           pastList: medicationLines(profile.pastList)
@@ -529,10 +595,9 @@
           pastList: lists.pastList.join('\n'),
           medicationListUpdatedAt: new Date().toISOString()
         };
-        localStorage.setItem(key, JSON.stringify({...local, ...changes}));
-        profile = {...profile, ...changes};
-      } catch {
-        status.textContent = 'This browser could not save the medication.';
+        await saveProfileEdits(changes);
+      } catch (error) {
+        status.textContent = error.message;
         return;
       }
       medicationTab = destination;
@@ -541,7 +606,7 @@
       document.querySelector('#medical-current-medications [aria-pressed="true"]')?.focus();
     };
     form.onsubmit = event => { event.preventDefault(); persist(activeList); };
-    form.append(make('button', 'Save in this browser'));
+    form.append(make('button', 'Save across devices'));
     if (entry) {
       const isCurrent = activeList === 'currentList';
       form.append(action(isCurrent ? 'Move to Past' : 'Restore to Current',
@@ -963,7 +1028,7 @@
     const current = make('textarea'); current.rows = 3; current.value = profile.currentList || '';
     const currentField = make('label','Current medications: name | dose | schedule (one per line)');
     currentField.append(current); form.append(currentField);
-    const submit = make('button','Save in this browser'), message = make('p');
+    const submit = make('button','Save across devices'), message = make('p');
     message.setAttribute('role','status');
     const pending={};
     const sync=action('Save vitals across devices',async()=>{
@@ -1040,16 +1105,18 @@
     });
     composition.append(saveComposition,status);
     form.append(composition);
-    form.onsubmit = event => {
+    form.onsubmit = async event => {
       event.preventDefault();
+      if (profileWritePending) return;
       const next = Object.fromEntries(Object.entries(inputs).map(([key,input]) => [key,input.value.trim()]));
       next.currentList = current.value.trim();
       next.pastList = profile.pastList || '';
       next.medicationListUpdatedAt = new Date().toISOString();
       next.profileUpdatedAt=new Date().toISOString();
-      try {localStorage.setItem(api.key+':about',JSON.stringify(next));}
-      catch {message.textContent = 'This browser could not save the profile.';return;}
-      profile = mergeVitals({...savedProfile,...next}); renderProfile();
+      message.textContent = 'Saving to private Drive…';
+      try {await saveProfileEdits(next);}
+      catch (error) {message.textContent = error.message;return;}
+      renderProfile();
     };
     target.replaceChildren(form);
     inputs.height.focus();
@@ -1066,18 +1133,15 @@
         const result = await thDriveFetch(files[0].id,{cache:'no-store'});
         if (!result.ok) throw Error('Could not read profile');
         savedProfile = await result.json();
-      } else if (files.length > 1) loadMessage = 'More than one private profile was found. Browser edits are still available.';
-      else loadMessage = 'No private Drive profile was found for this account. You can enter details here.';
-    } catch {loadMessage = 'The private Drive profile could not be loaded. Browser edits are still available.';}
+      } else if (files.length > 1) loadMessage = 'More than one private profile was found. ';
+      else loadMessage = 'No private Drive profile was found for this account. ';
+    } catch {loadMessage = 'The private Drive profile could not be loaded. ';}
     [compositionSource,medicationSource]=await Promise.all([source,medication]);
     syncInjections();
     if($('medical-injection-history').open)renderInjectionHistory();
-    try {
-      const local=JSON.parse(localStorage.getItem(api.key+':about')||'{}');
-      if(savedProfile.currentList && !(Date.parse(local.medicationListUpdatedAt || local.profileUpdatedAt) >= (Date.parse(savedProfile.medicationListUpdatedAt || savedProfile.profileUpdatedAt) || 0))) delete local.currentList;
-      profile={...savedProfile,...local};
-    }
-    catch {profile = savedProfile;}
+    profile = savedProfile;
+    try {await loadProfileEdits();}
+    catch {loadMessage += ' Private profile edits could not be synced.';}
     const privateVitals=await vitals;
     const savedComposition=await driveReadings;
     if (savedComposition) driveComposition=savedComposition;
@@ -1125,6 +1189,7 @@
     start(options) {
       addMedicalSidebar();
       medicationTab = 'currentList';
+      profileEdits = {}; profileEditId = undefined; profileEditsReady = false; profileWritePending = false; profileWrite = {};
       api = options; profile = {}; savedProfile = {}; syncedVitals = {}; driveComposition=[]; compositionSource=null; medicationSource=null; injections=[]; loadMessage = '';
       addedDoses=[]; doseLogReady=false;
       const historyButton=$('medical-injection-open');
