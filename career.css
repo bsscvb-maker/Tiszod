@@ -284,3 +284,33 @@ body[data-th-page="career"] {
 [data-th-page="career"] .legal-thumbnail img[src$="/moms-in-motion.webp"] {
   object-fit: contain;
 }
+
+[data-th-page="career"] .career-logo-card .legal-thumbnail-art {
+  background: #fff;
+}
+[data-th-page="career"] .career-logo-card .legal-thumbnail-art img {
+  padding: 1.25rem;
+  object-fit: contain;
+}
+[data-th-page="career"] .career-photo-name .legal-thumbnail-art {
+  overflow: hidden;
+}
+[data-th-page="career"] .career-photo-name .legal-thumbnail-label {
+  display: none;
+}
+[data-th-page="career"] .career-photo-name .career-photo-title {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  padding: .9rem .55rem .65rem;
+  background: linear-gradient(transparent, #07101bea 55%);
+  color: white;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 750;
+  text-align: center;
+  pointer-events: none;
+}
+[data-th-page="career"] .career-photo-crop .legal-thumbnail-art img {
+  height: 137%;
+  object-position: center top;
+}
