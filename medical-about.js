@@ -662,6 +662,30 @@
       ['⚖','Weight',' lb','weight'],['◈','BMI','','bmi'],['◉','Body Fat','%','bodyFat'],
       ['◆','Muscle','%','muscle'],['◌','Water','%','water'],['⬡','Bone Mass','%','boneMass']
     ].map(([symbol,label,unit,key])=>[symbol,label,pairs[key][0],unit,pairs[key][1],key]);
+    const goals={
+      weight:{min:180,max:189,target:185,unit:' lb'},
+      bmi:{min:23.7,max:24.9,unit:''},
+      bodyFat:{min:18,max:22,unit:' pts'}
+    };
+    function goalStatus(key,value,prior){
+      if(!Number.isFinite(value))return null;
+      if(key==='muscle'){
+        const delta=Number.isFinite(prior)?rounded(rounded(value)-rounded(prior)):null;
+        const label=delta===null?'Track strength':delta===0?'Steady vs. prior':Math.abs(delta).toFixed(1)+' pts '+(delta>0?'up':'down');
+        return [label,'#b9cad9','Long-term goal: maintain or improve strength. Scale muscle readings are estimates.'];
+      }
+      const goal=goals[key];
+      if(!goal)return null;
+      const current=rounded(value);
+      const detail='Long-term range: '+goal.min+'–'+goal.max+(key==='bodyFat'?'%':goal.unit)+(goal.target?' (goal: '+goal.target+' lb)':'');
+      if(current>=goal.min&&current<=goal.max)return ['In range','#84f497',detail];
+      const above=current>goal.max;
+      const gap=Math.abs(current-(above?goal.max:goal.min)).toFixed(1);
+      const label=key==='weight'&&above
+        ? (current-goal.target).toFixed(1)+' lb to goal'
+        : gap+goal.unit+(above?' above':' below');
+      return [label,'#ffd27a',detail+'. '+gap+goal.unit+(above?' above':' below')+' range.'];
+    }
     for(const [symbol,label,value,unit,prior,key] of metricData){
       const card=make('div');card.className='medical-command-metric';
       card.append(dashboardIcon(symbol),make('span',label));
@@ -670,7 +694,14 @@
       if(source)card.title='Recorded '+(source.date||formatTime.format(measurementTime(source)));
       if(key==='bmi'&&!bmiPair.length&&Number.isFinite(value))card.title='Estimated from recorded weight and profile height';
       const change=make('small');
-      if(Number.isFinite(value)&&Number.isFinite(prior)){
+      const status=goalStatus(key,value,prior);
+      if(status){
+        const [label,color,detail]=status;
+        change.textContent=label;
+        change.style.cssText='color:'+color+';white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis';
+        change.title=detail;
+        card.title=[card.title,detail].filter(Boolean).join(' · ');
+      }else if(Number.isFinite(value)&&Number.isFinite(prior)){
         const delta=rounded(rounded(value)-rounded(prior));
         change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit;
       }else change.textContent='—';
