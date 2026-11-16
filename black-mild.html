@@ -59,8 +59,8 @@ function renderMonthlySubmissions(submittedCodes) {
  const previous = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
  const counts = new Map([[current, 0], [previous, 0]]);
  let undated = 0;
- for (const {code} of submittedCodes) {
-  const date = submittedDates[code];
+ for (const {code, added} of submittedCodes) {
+  const date = submittedDates[code] || added;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
    undated++;
    continue;
@@ -79,13 +79,13 @@ function renderMonthlySubmissions(submittedCodes) {
  document.querySelector("#undatedSummary").textContent = undated ? undated + " submitted codes without dates" : "";
  undatedSubmissions.textContent = undated
   ? undated + ' submitted codes need a submission date. Add dates in the code list to include them in these totals.'
-  : '';
+  : 'When a submission date is missing, the total uses the date added.';
 }
 try{savedStatuses=rewardsState?.statuses||JSON.parse(localStorage.getItem(statusKey)||'{}')||{};}catch(e){}
 function renderCodes(focusIndex){
  rows.innerHTML=codes.map((item,index)=>{
  const submitted=(savedStatuses[item.code]||item.status)==='Submitted';
- return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td>${item.added}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : ''}"></label>` : ''}</td></tr>`;
+ return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td>${item.added}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : item.added}"></label>` : ''}</td></tr>`;
  }).join('');
  const submittedCodes=codes.filter(x=>(savedStatuses[x.code]||x.status)==='Submitted');
  const submitted=submittedCodes.length;
@@ -162,7 +162,7 @@ rows.addEventListener('change', event => {
  try {
   persistRewardsState(statuses, balance, dates);
  } catch {
-  input.value = submittedDates[item.code] || '';
+  input.value = submittedDates[item.code] || item.added;
   message.textContent = 'Unable to save the submission date.';
   return;
  }
