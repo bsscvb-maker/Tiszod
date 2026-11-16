@@ -22,7 +22,11 @@
 .bm-months { margin-top: 16px; border: 1px solid #3979b7; border-radius: 14px; background: #10263d; color: #dceeff; }
 .bm-months summary { cursor: pointer; padding: 14px; }
 .bm-month-grid { display: inline-grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; width: 100%; vertical-align: top; }
-.bm-month-grid span { padding: 8px; background: #143457; border-radius: 8px; text-align: center; }
+.bm-month-card { padding: 8px; background: #143457; border: 1px solid transparent; border-radius: 8px; text-align: center; }
+.bm-month-card.bm-current-month { background: #392a13; border-color: #d5a64f; color: #ffe0a1; }
+.bm-month-card small { display: block; margin-top: 4px; }
+.bm-table td.bm-current-month { color: #ffe0a1; box-shadow: inset 3px 0 #d5a64f; }
+.bm-current-month-label { display: block; font-size: .75rem; font-weight: 700; }
 .bm-month-grid strong { display: block; margin-top: 4px; font-size: 1.25rem; }
 .bm-undated-summary { display: block; font-size: .85rem; }
 .bm-history-toggle { font-size: .85rem; }
@@ -53,14 +57,18 @@ function submissionToday() {
  const parts = Object.fromEntries(easternDate.formatToParts(new Date()).map(({type,value}) => [type,value]));
  return parts.year + '-' + parts.month + '-' + parts.day;
 }
+function effectiveSubmissionDate({code, added}) {
+ const saved = submittedDates[code];
+ return /^\d{4}-\d{2}-\d{2}$/.test(saved) ? saved : added;
+}
 function renderMonthlySubmissions(submittedCodes) {
  const current = submissionToday().slice(0, 7);
  const [year, month] = current.split('-').map(Number);
  const previous = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
  const counts = new Map([[current, 0], [previous, 0]]);
  let undated = 0;
- for (const {code, added} of submittedCodes) {
-  const date = submittedDates[code] || added;
+ for (const item of submittedCodes) {
+  const date = effectiveSubmissionDate(item);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
    undated++;
    continue;
@@ -70,9 +78,16 @@ function renderMonthlySubmissions(submittedCodes) {
  }
  const monthFormat = new Intl.DateTimeFormat('en-US', {month: 'short', year: 'numeric', timeZone: 'UTC'});
  const monthLabel = key => monthFormat.format(new Date(key + '-01T00:00:00Z'));
- monthlySummary.innerHTML = [current, previous].map(key =>
-  '<span>' + monthLabel(key) + '<strong>' + counts.get(key) + ' / 20</strong> submitted</span>'
- ).join('');
+ monthlySummary.innerHTML = [current, previous].map(key => {
+  const isCurrent = key === current;
+  const count = counts.get(key);
+  const remaining = Math.max(0, 20 - count);
+  return `<span class="bm-month-card${isCurrent ? ' bm-current-month' : ''}">
+   ${monthLabel(key)}<small>${isCurrent ? 'Current month' : 'Previous month'}</small>
+   <strong>${count} / 20</strong> submitted
+   ${isCurrent ? `<small>${remaining ? remaining + ' left' : 'Monthly limit reached'}</small>` : ''}
+  </span>`;
+ }).join('');
  monthlyHistory.innerHTML = [...counts.keys()].sort().reverse().map(key =>
   '<tr><td>' + monthLabel(key) + '</td><td>' + counts.get(key) + ' / 20</td></tr>'
  ).join('');
@@ -83,9 +98,11 @@ function renderMonthlySubmissions(submittedCodes) {
 }
 try{savedStatuses=rewardsState?.statuses||JSON.parse(localStorage.getItem(statusKey)||'{}')||{};}catch(e){}
 function renderCodes(focusIndex){
+ const currentMonth = submissionToday().slice(0, 7);
  rows.innerHTML=codes.map((item,index)=>{
  const submitted=(savedStatuses[item.code]||item.status)==='Submitted';
- return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td>${item.added}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : item.added}"></label>` : ''}</td></tr>`;
+ const inCurrentMonth = submitted && effectiveSubmissionDate(item)?.slice(0, 7) === currentMonth;
+ return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td class="${inCurrentMonth ? 'bm-current-month' : ''}">${item.added}${inCurrentMonth ? '<small class="bm-current-month-label">Current month submission</small>' : ''}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : item.added}"></label>` : ''}</td></tr>`;
  }).join('');
  const submittedCodes=codes.filter(x=>(savedStatuses[x.code]||x.status)==='Submitted');
  const submitted=submittedCodes.length;
@@ -170,7 +187,8 @@ rows.addEventListener('change', event => {
  submittedDates = dates;
  currentBalance = balance;
  renderBalance();
- renderMonthlySubmissions(codes.filter(code => (statuses[code.code] || code.status) === 'Submitted'));
+ renderCodes();
+ rows.querySelector(`[data-submit-date="${input.dataset.submitDate}"]`)?.focus();
  message.textContent = 'Submission date saved.';
 });
 renderCodes();
