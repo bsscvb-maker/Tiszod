@@ -18,20 +18,78 @@
 }
 .bm-label-link { text-decoration: none; }
 .bm-label-link:focus-visible { outline: 2px solid #f4ce7d; outline-offset: 3px; }
-</style><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"></head><body data-th-page="black-mild"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in">Sign in with Google</button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div><div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark"><img src="tiszod-crest.svg" alt="" style="width:100%"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Overview</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Dashboard</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon">$</span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon">F</span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon">V</span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon">E</span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon">W</span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon">P</span>Pets</a><a class="th-nav-link active" aria-current="page" href="black-mild.html"><span class="th-nav-icon" style="font-family:Georgia,serif;color:#f0d18d">B&amp;M</span>Black &amp; Mild</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav></aside><div class="th-app-main"><header class="th-app-topbar"><div><strong>Black &amp; Mild</strong><small>Aroma Rewards</small></div></header><main class="th-page-content bm-main portal-section"><a class="bm-official-link" href="https://www.blackandmild.com/" target="_blank" rel="noopener noreferrer" aria-label="Open official Black and Mild website in a new tab">↗ Black &amp; Mild Website</a><header class="bm-head portal-section-hero"><div><span class="bm-kicker portal-section-kicker">TISZOD / REWARDS WORKSHEET</span><h1 class="bm-logo">Black<i>&amp;</i>Mild</h1><p>A single place for every Aroma Rewards code. Click a status button to switch between blue Submitted and green Not Submitted.</p></div></header><div class="bm-counts"><div class="bm-count"><strong id="unredeemedCount">0</strong><span>Not submitted</span></div><div class="bm-count bm-count-submitted"><strong id="submittedCount">0</strong><span>Submitted codes</span></div><div class="bm-count bm-balance"><label for="currentBalance">Current balance</label><div class="bm-balance-controls"><input id="currentBalance" type="number" min="0" step="1" value="20" inputmode="numeric"></div><p id="balanceMessage" class="bm-balance-message" hidden role="status" aria-live="polite"></p></div></div><section class="bm-sheet" aria-labelledby="codeListTitle"><div class="bm-sheet-head"><div><h2 id="codeListTitle">Aroma Rewards Code List</h2><p>Updated whenever you send me another code.</p></div><span class="bm-live">Current list</span></div><div class="bm-table-wrap"><table class="bm-table"><thead><tr><th>#</th><th>Date added</th><th>Rewards code</th><th>Label</th><th>Status</th></tr></thead><tbody id="codeRows"></tbody></table></div></section><p class="bm-note">Use the copy icon beside a code to copy it without dashes. Click any status to change it. Changes are saved in this browser on this device.</p><p id="codeSaveMessage" class="bm-note" role="status" aria-live="polite"></p></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="black-mild-data.js?v=20261102-label-strips"></script><script>
+
+.bm-months { margin-top: 16px; border: 1px solid #3979b7; border-radius: 14px; background: #10263d; color: #dceeff; }
+.bm-months summary { cursor: pointer; padding: 14px; }
+.bm-month-grid { display: inline-grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; width: 100%; vertical-align: top; }
+.bm-month-grid span { padding: 8px; background: #143457; border-radius: 8px; text-align: center; }
+.bm-month-grid strong { display: block; margin-top: 4px; font-size: 1.25rem; }
+.bm-undated-summary { display: block; font-size: .85rem; }
+.bm-history-toggle { font-size: .85rem; }
+.bm-month-body { padding: 0 14px 14px; }
+.bm-month-body table { width: 100%; text-align: left; }
+.bm-month-body td, .bm-month-body th { padding: 6px 0; }
+.bm-month-body p { margin: 8px 0 0; font-size: .85rem; }
+.bm-submit-date { display: block; margin-top: 8px; font-size: .8rem; }
+.bm-submit-date input { display: block; }
+</style><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"></head><body data-th-page="black-mild"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in">Sign in with Google</button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div><div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark"><img src="tiszod-crest.svg" alt="" style="width:100%"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Overview</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Dashboard</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon">$</span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon">F</span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon">V</span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon">E</span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon">W</span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon">P</span>Pets</a><a class="th-nav-link active" aria-current="page" href="black-mild.html"><span class="th-nav-icon" style="font-family:Georgia,serif;color:#f0d18d">B&amp;M</span>Black &amp; Mild</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav></aside><div class="th-app-main"><header class="th-app-topbar"><div><strong>Black &amp; Mild</strong><small>Aroma Rewards</small></div></header><main class="th-page-content bm-main portal-section"><a class="bm-official-link" href="https://www.blackandmild.com/" target="_blank" rel="noopener noreferrer" aria-label="Open official Black and Mild website in a new tab">↗ Black &amp; Mild Website</a><header class="bm-head portal-section-hero"><div><span class="bm-kicker portal-section-kicker">TISZOD / REWARDS WORKSHEET</span><h1 class="bm-logo">Black<i>&amp;</i>Mild</h1><p>A single place for every Aroma Rewards code. Click a status button to switch between blue Submitted and green Not Submitted.</p></div></header><div class="bm-counts"><div class="bm-count"><strong id="unredeemedCount">0</strong><span>Not submitted</span></div><div class="bm-count bm-count-submitted"><strong id="submittedCount">0</strong><span>Submitted codes</span></div><div class="bm-count bm-balance"><label for="currentBalance">Current balance</label><div class="bm-balance-controls"><input id="currentBalance" type="number" min="0" step="1" value="20" inputmode="numeric"></div><p id="balanceMessage" class="bm-balance-message" hidden role="status" aria-live="polite"></p></div></div><details class="bm-months">
+ <summary><span class="bm-month-grid" id="monthlySummary"></span><span class="bm-history-toggle">Monthly history</span><span class="bm-undated-summary" id="undatedSummary"></span></summary>
+ <div class="bm-month-body"><table><thead><tr><th scope="col">Month</th><th scope="col">Submitted</th></tr></thead><tbody id="monthlyHistory"></tbody></table><p id="undatedSubmissions"></p></div>
+</details><section class="bm-sheet" aria-labelledby="codeListTitle"><div class="bm-sheet-head"><div><h2 id="codeListTitle">Aroma Rewards Code List</h2><p>Updated whenever you send me another code.</p></div><span class="bm-live">Current list</span></div><div class="bm-table-wrap"><table class="bm-table"><thead><tr><th>#</th><th>Date added</th><th>Rewards code</th><th>Label</th><th>Status</th></tr></thead><tbody id="codeRows"></tbody></table></div></section><p class="bm-note">Use the copy icon beside a code to copy it without dashes. Click any status to change it. Changes are saved in this browser on this device.</p><p id="codeSaveMessage" class="bm-note" role="status" aria-live="polite"></p></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="black-mild-data.js?v=20261102-label-strips"></script><script>
 const rows=document.querySelector('#codeRows'),codes=[...(window.blackMildCodes||[])].sort((a,b)=>a.added.localeCompare(b.added)).reverse();
 const statusKey='tiszod.blackMild.statuses.v1';
 const rewardsStateKey='tiszod.blackMild.rewards.v2';
 let rewardsState=null;
 try{const value=JSON.parse(localStorage.getItem(rewardsStateKey)||'null');if(value&&value.statuses&&Number.isSafeInteger(value.balance)&&value.balance>=0)rewardsState=value;}catch(e){}
 let savedStatuses={};
+let submittedDates = rewardsState?.submittedDates || {};
+const monthlySummary = document.querySelector('#monthlySummary');
+const monthlyHistory = document.querySelector('#monthlyHistory');
+const undatedSubmissions = document.querySelector('#undatedSubmissions');
+const easternDate = new Intl.DateTimeFormat('en-CA', {
+ timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'
+});
+function submissionToday() {
+ const parts = Object.fromEntries(easternDate.formatToParts(new Date()).map(({type,value}) => [type,value]));
+ return parts.year + '-' + parts.month + '-' + parts.day;
+}
+function renderMonthlySubmissions(submittedCodes) {
+ const current = submissionToday().slice(0, 7);
+ const [year, month] = current.split('-').map(Number);
+ const previous = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
+ const counts = new Map([[current, 0], [previous, 0]]);
+ let undated = 0;
+ for (const {code} of submittedCodes) {
+  const date = submittedDates[code];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+   undated++;
+   continue;
+  }
+  const key = date.slice(0, 7);
+  counts.set(key, (counts.get(key) || 0) + 1);
+ }
+ const monthFormat = new Intl.DateTimeFormat('en-US', {month: 'short', year: 'numeric', timeZone: 'UTC'});
+ const monthLabel = key => monthFormat.format(new Date(key + '-01T00:00:00Z'));
+ monthlySummary.innerHTML = [current, previous].map(key =>
+  '<span>' + monthLabel(key) + '<strong>' + counts.get(key) + ' / 20</strong> submitted</span>'
+ ).join('');
+ monthlyHistory.innerHTML = [...counts.keys()].sort().reverse().map(key =>
+  '<tr><td>' + monthLabel(key) + '</td><td>' + counts.get(key) + ' / 20</td></tr>'
+ ).join('');
+ document.querySelector("#undatedSummary").textContent = undated ? undated + " submitted codes without dates" : "";
+ undatedSubmissions.textContent = undated
+  ? undated + ' submitted codes need a submission date. Add dates in the code list to include them in these totals.'
+  : '';
+}
 try{savedStatuses=rewardsState?.statuses||JSON.parse(localStorage.getItem(statusKey)||'{}')||{};}catch(e){}
 function renderCodes(focusIndex){
  rows.innerHTML=codes.map((item,index)=>{
  const submitted=(savedStatuses[item.code]||item.status)==='Submitted';
- return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td>${item.added}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button></td></tr>`;
+ return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td>${item.added}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : ''}"></label>` : ''}</td></tr>`;
  }).join('');
- const submitted=codes.filter(x=>(savedStatuses[x.code]||x.status)==='Submitted').length;
+ const submittedCodes=codes.filter(x=>(savedStatuses[x.code]||x.status)==='Submitted');
+ const submitted=submittedCodes.length;
+ renderMonthlySubmissions(submittedCodes);
  document.querySelector('#submittedCount').textContent=submitted;
  document.querySelector('#unredeemedCount').textContent=codes.length-submitted;
  if(focusIndex!==undefined)rows.querySelector('[data-code-index="'+focusIndex+'"]')?.focus();
@@ -72,12 +130,49 @@ rows.addEventListener('click',async event=>{
  const wasSubmitted=(savedStatuses[item.code]||item.status)==='Submitted';
  const next={...savedStatuses,[item.code]:wasSubmitted?'Unredeemed':'Submitted'};
  const nextBalance=Math.max(0,currentBalance+(wasSubmitted?-1:1));
- try{persistRewardsState(next,nextBalance);}
+ const nextDates = {...(latest?.submittedDates || submittedDates)};
+ if (wasSubmitted) delete nextDates[item.code];
+ else nextDates[item.code] = submissionToday();
+ try{persistRewardsState(next,nextBalance,nextDates);}
  catch(e){document.querySelector('#codeSaveMessage').textContent='Unable to save. Allow browser storage and try again.';return;}
- savedStatuses=next;currentBalance=nextBalance;renderBalance();renderCodes(index);
+ savedStatuses=next;submittedDates=nextDates;currentBalance=nextBalance;renderBalance();renderCodes(index);
  document.querySelector('#codeSaveMessage').textContent=item.code+' marked '+(next[item.code]==='Submitted'?'Submitted':'Not Submitted')+'. Saved.';
 });
 
+rows.addEventListener('change', event => {
+ const input = event.target.closest('input[data-submit-date]');
+ if (!input) return;
+ const item = codes[Number(input.dataset.submitDate)];
+ const latest = readRewardsState();
+ const statuses = latest?.statuses || savedStatuses;
+ if ((statuses[item.code] || item.status) !== 'Submitted') {
+  savedStatuses = statuses;
+  renderCodes();
+  return;
+ }
+ const message = document.querySelector('#codeSaveMessage');
+ if (!input.validity.valid) {
+  input.reportValidity();
+  return;
+ }
+ const dates = {...(latest?.submittedDates || submittedDates)};
+ if (input.value) dates[item.code] = input.value;
+ else delete dates[item.code];
+ const balance = latest?.balance ?? currentBalance;
+ try {
+  persistRewardsState(statuses, balance, dates);
+ } catch {
+  input.value = submittedDates[item.code] || '';
+  message.textContent = 'Unable to save the submission date.';
+  return;
+ }
+ savedStatuses = statuses;
+ submittedDates = dates;
+ currentBalance = balance;
+ renderBalance();
+ renderMonthlySubmissions(codes.filter(code => (statuses[code.code] || code.status) === 'Submitted'));
+ message.textContent = 'Submission date saved.';
+});
 renderCodes();
 
 const balanceKey='tiszod.blackMild.balance.v1';
@@ -87,17 +182,17 @@ let currentBalance=29;
 function validBalance(value){return String(value).trim()!==''&&Number.isSafeInteger(Number(value))&&Number(value)>=0;}
 try{const saved=localStorage.getItem(balanceKey);if(rewardsState)currentBalance=rewardsState.balance;else if(saved!==null&&validBalance(saved))currentBalance=Number(saved);}catch(e){}
 function readRewardsState(){try{const value=JSON.parse(localStorage.getItem(rewardsStateKey)||'null');return value&&value.statuses&&validBalance(value.balance)?value:null;}catch(e){return null;}}
-function persistRewardsState(statuses,balance){localStorage.setItem(rewardsStateKey,JSON.stringify({statuses,balance}));}
+function persistRewardsState(statuses,balance,dates){localStorage.setItem(rewardsStateKey,JSON.stringify({statuses,balance,submittedDates:dates}));}
 function renderBalance(){balanceInput.value=currentBalance;}
 function saveBalance(value){
  if(!validBalance(value)){balanceMessage.hidden=false;balanceMessage.textContent='Enter a whole number of zero or more.';renderBalance();return;}
  const next=Number(value);
- try{const latest=readRewardsState();if(latest)savedStatuses=latest.statuses;persistRewardsState(savedStatuses,next);}catch(e){balanceMessage.hidden=false;balanceMessage.textContent='Unable to save. Allow browser storage and try again.';renderBalance();return;}
+ try{const latest=readRewardsState();if(latest){savedStatuses=latest.statuses;submittedDates=latest.submittedDates||{};}persistRewardsState(savedStatuses,next,submittedDates);}catch(e){balanceMessage.hidden=false;balanceMessage.textContent='Unable to save. Allow browser storage and try again.';renderBalance();return;}
  currentBalance=next;renderBalance();renderCodes();balanceMessage.textContent='';balanceMessage.hidden=true;
 }
 balanceInput.addEventListener('change',()=>saveBalance(balanceInput.value));
 balanceInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();balanceInput.blur();}});
-window.addEventListener('storage',event=>{if(event.key!==rewardsStateKey)return;const value=readRewardsState();if(!value)return;savedStatuses=value.statuses;currentBalance=value.balance;renderCodes();renderBalance();balanceMessage.textContent='';balanceMessage.hidden=true;});
+window.addEventListener('storage',event=>{if(event.key!==rewardsStateKey)return;const value=readRewardsState();if(!value)return;savedStatuses=value.statuses;submittedDates=value.submittedDates||{};currentBalance=value.balance;renderCodes();renderBalance();balanceMessage.textContent='';balanceMessage.hidden=true;});
 renderBalance();
 
 const legacyCodes = codes.slice();
