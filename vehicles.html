@@ -1039,13 +1039,9 @@ function renderAsset(tab='details'){
  const isUltra=/ultraclassic|electraglide|flhtcui/.test(fuelName)&&String(asset.year)==='2000';
  const isF150=/f150|f100|fseries/.test(fuelName)&&String(asset.year)==='1977';
  const isRam3500=/ram3500|3500.*ram|ram.*3500/.test(fuelName)&&String(asset.year)==='2022';
- const canFuel=!hours&&!['Trailers','RVs','Campers','Bicycles'].includes(asset.readingCategory||asset.category)&&!/trek7200|huffy/.test(clean(asset.make+' '+asset.model));
- document.getElementById('mustangFuelTab').hidden=!canFuel;
- document.getElementById('logAssetFuel').hidden=!canFuel||clean(asset.status)!=='active';
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
  const historyUrl='fuel-history.html?v=20261109-mpg-numeric&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
- const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&canFuel&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
- if(tab==='fuel'&&!canFuel)tab='details';
+ const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
  document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
  document.querySelector('[data-asset-tab="recommended"]').hidden=false;
  editing=false;
@@ -1678,7 +1674,7 @@ function fuelVehicleRank(a){
  return 4;
 }
 window.tiszodFuelOptions=()=>({
- vehicles:assets.filter(a=>clean(a.status)==='active'&&!usesHours(a)&&!['Trailers','RVs','Campers','Bicycles'].includes(a.readingCategory||a.category)&&!/trek7200|huffy/.test(clean(a.make+' '+a.model))).sort((a,b)=>fuelVehicleRank(a)-fuelVehicleRank(b)||[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' '))).map(a=>({key:serviceAssetKey(a),name:[a.year,a.make,a.model].filter(Boolean).join(' '),profileRow:a.profileRow||null,year:Number(a.year),mileageName:[a.make,a.model].filter(Boolean).join(' '),mileageRow:mileageFor(a)?.sheetRow||null,current:mileageFor(a)?.currentMileage??null})),
+ vehicles:[...assets].sort((a,b)=>fuelVehicleRank(a)-fuelVehicleRank(b)||[a.year,a.make,a.model].join(' ').localeCompare([b.year,b.make,b.model].join(' '))).map(a=>({key:serviceAssetKey(a),name:[a.year,a.make,a.model].filter(Boolean).join(' '),profileRow:a.profileRow||null,year:Number(a.year),mileageName:[a.make,a.model].filter(Boolean).join(' '),mileageRow:mileageFor(a)?.sheetRow||null,usesHours:usesHours(a),current:usesHours(a)?null:(mileageFor(a)?.currentMileage??null)})),
  selected:asset&&!document.getElementById('assetView').hidden?serviceAssetKey(asset):null,
  onSaved:async entry=>{const fresh=await thFleetData();for(const a of assets){const p=fresh.profiles.find(p=>p.profileRow===a.profileRow);if(p)a.lastUpdated=p.lastUpdated}paintUpdated();mileage.splice(0,mileage.length,...fresh.vehicles);renderCategory();renderGarageStats();if(asset&&!document.getElementById('assetView').hidden)renderAsset('fuel');}
 });
@@ -1713,7 +1709,7 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261109-mpg-auto"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261117-inline-preview"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261109-mpg-auto"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261117-all-vehicles"></script><script src="fuel-capture.js?v=20261117-all-vehicles"></script><script src="vehicle-documents.js?v=20261117-inline-preview"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
 
 
 
