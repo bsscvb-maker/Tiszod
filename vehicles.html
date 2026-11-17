@@ -485,7 +485,7 @@ body[data-th-page] #categoryView #assetGrid .asset-card .card-photo--road-glide 
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete vehicle</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
 <p id="assetLastUpdated" role="status" style="font-size:13px;margin:8px 0 14px"></p>
-<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button></div>
+<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="mileage">Odometer</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>Fuel History &amp; MPG</button></div>
  <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span><a id="assetFloorPlan" class="asset-floor-plan" href="command-photos/keystone-bullet-331bhs-floor-plan.png" target="_blank" rel="noopener" hidden><span>Floor plan</span><img alt="2020 Keystone Bullet 331BHS camper floor plan" width="540" height="229"></a></div><div class="asset-facts" id="assetFacts"></div><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
@@ -1042,7 +1042,7 @@ function renderAsset(tab='details'){
  const fuelPage=isRoadGlide?'road-glide-fuel.html':isUltra?'ultra-classic-fuel.html':isF150?'f150-fuel.html':isRam3500?'ram3500-fuel.html':'mustang-fuel.html';
  const historyUrl='fuel-history.html?v=20261109-mpg-numeric&vehicle='+encodeURIComponent(serviceAssetKey(asset))+'&name='+encodeURIComponent([asset.year,asset.make,asset.model].filter(Boolean).join(' '));
  const fuelFrame=document.getElementById('fuelFrame');if(tab==='fuel'&&fuelFrame.getAttribute('src')!==historyUrl)fuelFrame.src=historyUrl;
- document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Mileage';
+ document.querySelector('[data-asset-tab="mileage"]').textContent=hours?'Hours':'Odometer';
  document.querySelector('[data-asset-tab="recommended"]').hidden=false;
  editing=false;
  document.getElementById('assetDetails').classList.remove('editing-specs');
