@@ -784,7 +784,15 @@ function oilCard(a){
  const values=[['Manufacturer',clean(a.make)==='seadoo'?'Sea-Doo':a.make||'Not recorded'],['Oil Filter',noEngine?'Not applicable':specs.oilFilter||'Not recorded'],['Engine oil',noEngine?'Not applicable':recordedOil||'Not recorded'],['Oil Amount',noEngine?'Not applicable':specs.oilCapacity||'Not recorded']];
  return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Engine oil specifications">'+values.map(([label,value])=>'<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(noEngine?'Not applicable':value)+'</b></div>').join('')+'</aside>';
 }
-function cardService(a){return '<div class="card-service">'+deadlineCard(a)+oilCard(a)+'</div>'}
+function filterCard(a){
+ if(!['active','managed','maintained'].includes(clean(a.status)))return '';
+ if(!showCardEngine(a)||/electric|watt/.test(clean(a.engine||'')))return '';
+ const specs=specRecord(a).specs;
+ const air=String(specs.airFilter||'').trim()||'Not recorded';
+ const cabin=String(specs.cabinAirFilter||'').trim()||((/motorcycle|minibike|quad|yard|tractor|equipment/.test(clean(a.category||'')))?'None':'Not recorded');
+ return '<aside class="card-oil card-air-filters" aria-label="Factory air filters">'+[['Engine Air Filter',air],['Cabin Air Filter',cabin]].map(([label,value])=>'<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(value)+'</b></div>').join('')+'</aside>';
+}
+function cardService(a){return '<div class="card-service">'+deadlineCard(a)+oilCard(a)+filterCard(a)+'</div>'}
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
 complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
 let complianceTarget=null;
