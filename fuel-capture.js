@@ -2,7 +2,7 @@
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const dialog=document.createElement('dialog');dialog.id='fuelCapture';dialog.setAttribute('aria-labelledby','fuelCaptureTitle');
  dialog.innerHTML=`<form id="fuelCaptureForm"><header><div><small>VEHICLES / LOG FUEL</small><h2 id="fuelCaptureTitle">Fuel log</h2></div><button type="button" id="fuelClose" aria-label="Close fuel entry">✕</button></header>
- <div class="fuel-body"><section class="fuel-vehicle"><label>Active vehicle<select name="vehicle" required></select></label><p id="fuelCurrent" class="fuel-muted"></p></section><div class="fuel-workspace"><section class="fuel-evidence"><div class="fuel-section-title"><span>01</span><div><h3>Photos</h3><p class="fuel-muted">Upload a receipt and mileage photo to read the details.</p></div></div>
+ <div class="fuel-body"><section class="fuel-vehicle"><label>Vehicle<select name="vehicle" required></select></label><p id="fuelCurrent" class="fuel-muted"></p></section><div class="fuel-workspace"><section class="fuel-evidence"><div class="fuel-section-title"><span>01</span><div><h3>Photos</h3><p class="fuel-muted">Upload a receipt and mileage photo to read the details.</p></div></div>
  <div class="fuel-photos"><section><h3>Fuel receipt</h3><label class="fuel-photo-pick">＋ Add receipt photo<input id="fuelReceiptFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelReceiptFile">Take photo</button><img id="fuelReceiptPreview" hidden alt="Receipt preview"><p id="fuelReceiptStatus" class="fuel-muted"></p></section>
  <section><h3>Odometer</h3><label class="fuel-photo-pick">＋ Add mileage photo<input id="fuelOdoFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" data-camera="fuelOdoFile">Take photo</button><img id="fuelOdoPreview" hidden alt="Odometer preview"><p id="fuelOdoStatus" class="fuel-muted"></p></section></div>
  <p class="fuel-review-note">Review the numbers before saving. You can also enter them yourself if a photo is hard to read.</p>
@@ -36,8 +36,8 @@
  async function open(options={}){
   if(busy||dialog.open)return;
   vehicles=options.vehicles||vehicles;onSaved=options.onSaved||onSaved;
-  if(!vehicles.length)return alert('No active vehicles are available for fuel logging. Mark a vehicle Active in Vehicles first.');
-  if(options.entry&&!vehicles.some(v=>v.key===options.entry.vehicle))return alert('Fuel entries can only be edited for an active vehicle.');
+  if(!vehicles.length)return alert('No vehicles are available for fuel logging.');
+  if(options.entry&&!vehicles.some(v=>v.key===options.entry.vehicle))return alert('This fuel entry’s vehicle is no longer in the vehicle list.');
   delete dialog.dataset.uncertain;form.reset();tx=[];financeLoaded=false;files={};links={};readGeneration.receipt++;readGeneration.odo++;
   for(const url of Object.values(previews))URL.revokeObjectURL(url);previews={};
   currentEntry=options.entry?{...options.entry,editing:true}:{id:'fuel-'+FuelCore.uuid()};
