@@ -720,10 +720,17 @@ function reportSpecificationSeed(a){
  const vin=clean(a.vin),number=String(a.vehicleNumber||a.reportId||'').toLowerCase(),identity=String(a.year)+' '+a.make;
  return (reportSpecificationSeeds.find(([id])=>vin&&clean(id)===vin)||reportSpecificationSeeds.find(([id,name])=>id.toLowerCase()===number&&number)||[]) [2]||{};
 }
+// Manufacturer operator guides: Yamaha LS2000, Engine Oil; Sea-Doo 1997, Recommended Oil.
+function watercraftOilDefaults(a){
+ const make=clean(a.make),model=clean(a.model),year=String(a.year);
+ if(make==='yamaha'&&year==='1999'&&/ls2000|lst1200/.test(model))return {oilType:'TC-W3 two-stroke injection oil (Yamalube 2-W)',oilFilter:'None',oilCapacity:'3 US gal (oil reservoir)',oilSource:'Yamaha LS2000 owner/operator manual, Engine Oil and Specifications'};
+ if(make==='seadoo'&&year==='1997'&&/bombardier|gti/.test(model))return {oilType:'Low-ash API TC two-stroke injection oil (Bombardier Rotax)',oilFilter:'None',oilSource:'1997 Sea-Doo operator guide, Recommended Oil; TC-W3 is not suitable'};
+ return {};
+}
 function specRecord(a){
  const raw=String(a.reportNotes||'');let saved={};
  if(raw.trim().startsWith('{'))try{const parsed=JSON.parse(raw);if(parsed&&parsed.type==='vehicle-quick-specs-v1')saved=parsed}catch(_){}
- const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...(saved.specs||{})};
+ const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...watercraftOilDefaults(a),...(saved.specs||{})};
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
  return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
@@ -771,7 +778,7 @@ function oilCard(a){
  const noEngine=/^(noengine|nomotor|none|notapplicable)/.test(clean(a.engine||''))||/kayak|sailboat/.test(clean(a.sourceType+' '+a.model)),muted=['sold','inactive'].includes(clean(a.status))||noEngine;
  const legacy=specRecord(a).legacyNotes||'';
  const recordedOil=specs.oilType||legacy.match(/Oil Type:\s*([^\n]+)/i)?.[1]||'';
- const values=[['Manufacturer',specs.oilManufacturer||'Not recorded'],['Oil Filter',noEngine?'Not applicable':specs.oilFilter||'Not recorded'],['Engine oil',noEngine?'Not applicable':recordedOil||'Not recorded'],['Oil Amount',noEngine?'Not applicable':specs.oilCapacity||'Not recorded']];
+ const values=[['Manufacturer',clean(a.make)==='seadoo'?'Sea-Doo':a.make||'Not recorded'],['Oil Filter',noEngine?'Not applicable':specs.oilFilter||'Not recorded'],['Engine oil',noEngine?'Not applicable':recordedOil||'Not recorded'],['Oil Amount',noEngine?'Not applicable':specs.oilCapacity||'Not recorded']];
  return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Engine oil specifications">'+values.map(([label,value])=>'<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(noEngine?'Not applicable':value)+'</b></div>').join('')+'</aside>';
 }
 function cardService(a){return '<div class="card-service">'+deadlineCard(a)+oilCard(a)+'</div>'}
