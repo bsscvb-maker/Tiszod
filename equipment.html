@@ -782,7 +782,15 @@ function deadlineCard(a){
   return '<div class="deadline-row" data-tone="'+(muted?'disabled':state.tone)+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
  }).join('')+'</aside>';
 }
-function cardService(a){return '<div class="card-service">'+deadlineCard(a)+window.TiszodSmallEngineOil.card(a,esc)+'</div>'}
+function filterCard(a){
+ if(!['active','managed','maintained'].includes(clean(a.status)))return '';
+ if(!showCardEngine(a)||/electric|watt/.test(clean(a.engine||'')))return '';
+ const specs=specRecord(a).specs;
+ const air=String(specs.airFilter||'').trim()||'Not recorded';
+ const cabin=String(specs.cabinAirFilter||'').trim()||((/motorcycle|minibike|quad|yard|tractor|equipment/.test(clean(a.category||'')))?'None':'Not recorded');
+ return '<aside class="card-oil card-air-filters" aria-label="Factory air filters">'+[['Engine Air Filter',air],['Cabin Air Filter',cabin]].map(([label,value])=>'<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(value)+'</b></div>').join('')+'</aside>';
+}
+function cardService(a){return '<div class="card-service">'+deadlineCard(a)+window.TiszodSmallEngineOil.card(a,esc)+filterCard(a)+'</div>'}
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
 complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
 let complianceTarget=null;
