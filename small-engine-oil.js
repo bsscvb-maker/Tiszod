@@ -32,9 +32,21 @@
   // Saved user specifications remain visible when no verified model rule supplies a value.
   if(out.oilType==='Engine model needed'&&s.oilType)out.oilType=s.oilType;
   if(out.oilFilter==='Engine model needed'&&s.oilFilter&&!/wrench|drain plug/i.test(s.oilFilter))out.oilFilter=s.oilFilter;
+  // Keep the summary to the three requested service values.
+  if(/xpro|coleman/.test(name))out.oilFilter='None';
+  const simple=(value,kind)=>{
+   if(/^(None|Not applicable|No oil fill|No spin-on)/i.test(value))return 'None';
+   if(/needed|requires exact|Confirm|verify filter|Check dipstick|Fill to dipstick/i.test(value))return 'Unknown';
+   let text=value.split(' — ')[0].split(';')[0].replace(/\s*\([^)]*\)/g,'').replace(/\s+per .*$/i,'').replace(/\s+recorded.*$/i,'').trim();
+   if(kind==='oil')text=text.replace(/ · API .*$/,'').replace('ECHO Power Blend / Red Armor · JASO FD / ISO-L-EGD air-cooled two-stroke oil','ECHO two-stroke oil').replace(' air-cooled two-stroke oil',' two-stroke oil').replace(' (SAE 30 for suitable temperatures)','').replace(' above 40°F','');
+   if(kind==='amount')text=text.replace(' fuel mix','').replace(' oil / US gal gasoline',' / US gal gasoline').replace(' with filter','');
+   return text;
+  };
+  out.oilType=simple(out.oilType,'oil');out.oilFilter=simple(out.oilFilter,'filter');out.oilCapacity=simple(out.oilCapacity,'amount');
   return out;
  }
  function defaults(a){const d=service(a);return d?{oilType:d.oilType,oilFilter:d.oilFilter,oilCapacity:d.oilCapacity,oilSource:d.source||'',oilServiceNote:d.note||''}:{};}
- function card(a,esc){const d=service(a);if(!d)return '';const muted=['sold','inactive','totaled','repo'].includes(clean(a.status))||d.oilType.startsWith('Not applicable');return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Engine oil specifications">'+[['Manufacturer',d.manufacturer],['Oil Filter',d.oilFilter],['Engine oil',d.oilType],['Oil Amount',d.oilCapacity]].map(([k,v])=>'<div><b>'+esc(k)+':</b> <b class="oil-value">'+esc(v)+'</b></div>').join('')+(d.note?'<small class="oil-note">'+esc(d.note)+'</small>':'')+(d.source?'<a class="oil-source" href="'+esc(d.source)+'" target="_blank" rel="noopener noreferrer">Manufacturer specifications</a>':'')+'</aside>';}
+ function card(a,esc){const d=service(a);if(!d)return '';const muted=['sold','inactive','totaled','repo'].includes(clean(a.status))||d.oilType==='None';return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Oil and filter">'+[['Oil',d.oilType],['Oil Filter',d.oilFilter],['Oil Amount',d.oilCapacity]].map(([k,v])=>'<div><b>'+esc(k)+':</b> <b class="oil-value">'+esc(v)+'</b></div>').join('')+'</aside>';}
+
  window.TiszodSmallEngineOil={service,defaults,card};
 })();
