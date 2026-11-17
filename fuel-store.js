@@ -10,9 +10,9 @@
   const result=await response.json();if(!response.ok)throw Error(result.error?.message||'The workbook could not be saved.');return result;
  }
  async function meta(){return thSheets('?fields=sheets.properties(sheetId,title,gridProperties(rowCount,columnCount))');}
- async function read(){const m=await meta(),sheet=m.sheets.find(s=>s.properties.title===SHEET);if(!sheet)return {meta:m,sheet:null,entries:[]};return {meta:m,sheet:sheet.properties,entries:(await thValues("'"+SHEET+"'!A2:S5000")).map((r,i)=>decode(r,i)).filter(e=>e.id)};}
+ async function read(){const m=await meta(),sheet=m.sheets.find(s=>s.properties.title===SHEET);if(!sheet)return {meta:m,sheet:null,entries:[]};return {meta:m,sheet:sheet.properties,entries:(await thValues("'"+SHEET+"'!A2:S")).map((r,i)=>decode(r,i)).filter(e=>e.id)};}
  async function ensure(){let state=await read();if(state.sheet)return state;try{await request(':batchUpdate',{requests:[{addSheet:{properties:{title:SHEET,gridProperties:{rowCount:1000,columnCount:19,frozenRowCount:1}}}}]});}catch(error){state=await read();if(!state.sheet)throw error;}state=await read();return state;}
- async function transactions(){return (await thValues("'Personal Finance Transactions'!A2:O5000")).map((r,i)=>({row:i+2,r})).filter(x=>x.r[0]);}
+ async function transactions(){return (await thValues("'Personal Finance Transactions'!A2:O")).map((r,i)=>({row:i+2,r})).filter(x=>x.r[0]);}
  function legacy(vehicle){
   const spec=(window.FUEL_LEGACY||{})[vehicle.key];if(!spec)return [];
   let data=spec.entries;try{const stored=JSON.parse(localStorage.getItem(spec.storage)||'null');if(Array.isArray(stored))data=stored;}catch{}
