@@ -192,7 +192,7 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 
 #assetGrid .card-oil{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#e0eafb;font-size:12px;line-height:1.4}
 #assetGrid .card-oil b{color:#fff}
-#assetGrid .card-oil .oil-value{color:#9bcdff}
+#assetGrid .card-oil .oil-value{color:#ffdc85}
 #assetGrid .card-deadlines{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#fff}
 #assetGrid .deadline-row{padding:6px 0;font-size:12px;line-height:1.4}
 #assetGrid .deadline-row b{display:block;font-size:13px}
@@ -835,12 +835,16 @@ const cardOilSpecs={
  '1977fordf150':['10W-30','6 qt (estimated)','Motorcraft FL-1A'],
  '2008chrysleraspen':['5W-20','6 qt (4.7L) / 7 qt (5.7L)','Mopar 5281090']
 };
+const motorcycleOilSpecs={
+ '1HD1FCW14YY615621':['20W-50','3.5 qt (service refill)','FRAM PH6065B'],
+ '1HD1KZF15PB653889':['20W-50','4.75 qt (service refill)','Harley-Davidson 62700296A']
+};
 function oilCard(a){
  if(!['active','managed'].includes(clean(a.status)))return '';
  const key=clean([a.year,a.make,a.model].join(' '));
- const entry=Object.entries(cardOilSpecs).find(([model])=>key.startsWith(model));
+ const entry=motorcycleOilSpecs[String(a.vin||'').trim().toUpperCase()]||Object.entries(cardOilSpecs).find(([model])=>key.startsWith(model))?.[1];
  if(!entry)return '';
- const [type,amount,filterSpec]=entry[1];
+ const [type,amount,filterSpec]=entry;
  const [manufacturer,filter]=filterSpec.split(' ');
  const engine=clean(a.engine);
  const capacity=key.startsWith('2008chrysleraspen')?(engine.includes('47l')?'6 qt':engine.includes('57l')?'7 qt':amount):amount;
