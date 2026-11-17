@@ -191,7 +191,7 @@ tr.detail-row td{padding:0 14px 14px;background:#eaf1f2;border-top:0;white-space
 [data-history-search]{cursor:pointer}.service-entry-open{border:0;background:transparent;color:#a9ceff;font:700 17px Arial;cursor:pointer;text-align:left;padding:8px 0}.service-item-preview{font-size:14px;white-space:normal;line-height:1.8}.service-detail-table{min-width:950px}.service-detail-table td{white-space:normal;vertical-align:top}.service-detail-table td:first-child{min-width:240px}.service-detail-table input{min-width:100px}#workItemCosts label{margin:10px 0}
 
 #assetGrid .card-oil{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#e0eafb;font-size:12px;line-height:1.4}
-#assetGrid .card-oil b{display:block;margin-bottom:3px;color:#fff;font-size:13px}
+#assetGrid .card-oil b{color:#fff}\n#assetGrid .card-oil .oil-value{color:#9bcdff}
 #assetGrid .card-deadlines{margin:12px 0;padding:10px;border:1px solid #8cadd0;border-radius:8px;background:#102a49;color:#fff}
 #assetGrid .deadline-row{padding:6px 0;font-size:12px;line-height:1.4}
 #assetGrid .deadline-row b{display:block;font-size:13px}
@@ -843,7 +843,7 @@ function oilCard(a){
  const [manufacturer,filter]=filterSpec.split(' ');
  const engine=clean(a.engine);
  const capacity=key.startsWith('2008chrysleraspen')?(engine.includes('47l')?'6 qt':engine.includes('57l')?'7 qt':amount):amount;
- return '<aside class="card-oil" aria-label="Engine oil specifications"><div>Manufacture: '+esc(manufacturer)+'</div><div>Oil Filter: '+esc(filter)+'</div><div>Engine oil '+esc(type)+'</div><div>Oil Amount '+esc(capacity)+'</div></aside>';
+ return '<aside class="card-oil" aria-label="Engine oil specifications"><div><b>Manufacture:</b> <b class="oil-value">'+esc(manufacturer)+'</b></div><div><b>Oil Filter:</b> <b class="oil-value">'+esc(filter)+'</b></div><div><b>Engine oil</b> <b class="oil-value">'+esc(type)+'</b></div><div><b>Oil Amount</b> <b class="oil-value">'+esc(capacity)+'</b></div></aside>';
 }
 function cardService(a){
  const details=deadlineCard(a)+oilCard(a);
