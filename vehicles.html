@@ -839,10 +839,11 @@ function oilCard(a){
  const key=clean([a.year,a.make,a.model].join(' '));
  const entry=Object.entries(cardOilSpecs).find(([model])=>key.startsWith(model));
  if(!entry)return '';
- const [type,amount,filter]=entry[1];
+ const [type,amount,filterSpec]=entry[1];
+ const [manufacturer,filter]=filterSpec.split(' ');
  const engine=clean(a.engine);
  const capacity=key.startsWith('2008chrysleraspen')?(engine.includes('47l')?'6 qt':engine.includes('57l')?'7 qt':amount):amount;
- return '<aside class="card-oil" aria-label="Engine oil specifications"><div>Oil Filter: '+esc(filter)+'</div><div>Engine oil '+esc(type)+'</div><div>Oil Amount '+esc(capacity)+'</div></aside>';
+ return '<aside class="card-oil" aria-label="Engine oil specifications"><div>Manufacture: '+esc(manufacturer)+'</div><div>Oil Filter: '+esc(filter)+'</div><div>Engine oil '+esc(type)+'</div><div>Oil Amount '+esc(capacity)+'</div></aside>';
 }
 function cardService(a){
  const details=deadlineCard(a)+oilCard(a);
