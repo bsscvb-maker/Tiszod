@@ -836,8 +836,8 @@ const cardOilSpecs={
  '2008chrysleraspen':['5W-20','6 qt (4.7L) / 7 qt (5.7L)','Mopar 5281090']
 };
 const motorcycleOilSpecs={
- '1HD1FCW14YY615621':['20W-50','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','20W-50 · 32 fl oz (dry capacity)'],
- '1HD1KZF15PB653889':['Screamin’ Eagle SYN3 20W-50','4.75 qt','Harley-Davidson 62700296A (black)','H-D Formula+ · 28 fl oz','H-D Formula+ · 30 fl oz']
+ '1HD1FCW14YY615621':['H-D 360 20W-50 · 62600007','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','20W-50 · 32 fl oz (dry capacity)'],
+ '1HD1KZF15PB653889':['H-D SYN-BLEND 15W-50 · 62600151','4.75 qt','Harley-Davidson 62700296A (black)','H-D Formula+ · 28 fl oz','H-D Formula+ · 30 fl oz']
 };
 function oilCard(a){
  if(!['active','managed'].includes(clean(a.status)))return '';
@@ -850,7 +850,7 @@ function oilCard(a){
  const filter=filterSpec.slice(separator+1);
  const engine=clean(a.engine);
  const capacity=key.startsWith('2008chrysleraspen')?(engine.includes('47l')?'6 qt':engine.includes('57l')?'7 qt':amount):amount;
- return '<aside class="card-oil" aria-label="Engine oil specifications"><div><b>Manufacture:</b> <b class="oil-value">'+esc(manufacturer)+'</b></div><div><b>Oil Filter:</b> <b class="oil-value">'+esc(filter)+'</b></div><div><b>Engine oil</b> <b class="oil-value">'+esc(type)+'</b></div><div><b>Oil Amount</b> <b class="oil-value">'+esc(capacity)+'</b></div>'+(transmission?'<div><b>Transmission</b> <b class="oil-value">'+esc(transmission)+'</b></div><div><b>Primary</b> <b class="oil-value">'+esc(primary)+'</b></div>':'')+'</aside>';
+ return '<aside class="card-oil" aria-label="Engine oil specifications"><div><b>Manufacture:</b> <b class="oil-value">'+esc(manufacturer)+'</b></div><div><b>Oil Filter:</b> <b class="oil-value">'+esc(filter)+'</b></div><div><b>Engine oil</b> <b class="oil-value">'+esc(type)+'</b></div><div><b>Oil Amount</b> <b class="oil-value">'+esc(capacity)+'</b></div>'+(transmission?'<div><b>O-ring</b> <b class="oil-value">11105 (1)</b></div><div><b>Transmission</b> <b class="oil-value">'+esc(transmission)+'</b></div><div><b>Primary</b> <b class="oil-value">'+esc(primary)+'</b></div>':'')+'</aside>';
 }
 function cardService(a){
  const details=deadlineCard(a)+oilCard(a);
