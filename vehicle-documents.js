@@ -34,6 +34,24 @@ window.TiszodVehicleDocuments = (() => {
   }
   function inTab(r,tab){return tab==='All Documents'||tab==='documents-all'?!['Pictures','Other Files'].includes(r.category):r.category===tab;}
   function parse(rows){return rows.slice(1).map((r,i)=>{const record={...Object.fromEntries(fields.map((key,j)=>[key,String(r[j]??'')])),row:i+2};record.category=documentCategory(record);return record;}).filter(r=>r.id&&r.status!=='Removed');}
+  function consolidateUltraClassic(rows){
+    const groups=new Map();
+    for(const record of rows){
+      if(record.assetKey!=='PDF-33'||record.kind!=='document')continue;
+      const name=record.name.trim().toLowerCase();
+      if(!name)continue;
+      if(!groups.has(name))groups.set(name,[]);
+      groups.get(name).push(record);
+    }
+    const hidden=new Set();
+    for(const copies of groups.values()){
+      if(copies.length<2)continue;
+      const original=copies.find(r=>r.notes.startsWith('Filed from the existing vehicle folder'))||copies[0];
+      original.previewCopies=copies.filter(r=>r!==original);
+      for(const copy of original.previewCopies)hidden.add(copy);
+    }
+    return rows.filter(r=>!hidden.has(r));
+  }
   function driveUrl(value){try{const u=new URL(value);if(u.protocol!=='https:'||!['drive.google.com','docs.google.com'].includes(u.hostname))return '';return u.href}catch{return ''}}
   function fileId(url){try{const u=new URL(url);return u.pathname.match(/\/(?:d|folders)\/([a-zA-Z0-9_-]+)/)?.[1]||u.searchParams.get('id')||''}catch{return ''}}
   function driveFolderUrl(record){
@@ -75,7 +93,7 @@ window.TiszodVehicleDocuments = (() => {
       return '<option value="all">All vehicles</option><option value="unassigned">Needs filing</option>'+sorted.map(a=>option(assetKey(a),assetName(a))).join('')+(other.size?'<optgroup label="Other vehicles &amp; shared records">'+Array.from(other).sort((a,b)=>a[1].localeCompare(b[1])).map(([key,name])=>option(key,name)).join('')+'</optgroup>':'');
     }
     function updateCounts(){for(const tab of tabs){const n=records.filter(r=>r.kind!=='folder'&&r.assetKey===assetKey(current||{})&&inTab(r,tab.name)).length;const b=nav.querySelector('[data-asset-tab="'+tab.id+'"]');b.textContent=tab.name+(loaded?' ('+n+')':'');}const pending=records.filter(r=>r.kind!=='folder'&&!r.assetKey).length;for(const b of hubButtons)b.textContent=filingShortcut?'Needs filing'+(loaded?' · '+pending:''):'Vehicle documents'+(loaded?' · '+records.filter(r=>r.kind!=='folder').length:'')+(pending?' · '+pending+' need filing':'');}
-    async function load(force=false){if(loaded&&!force)return;if(loading)return loading;loadError='';loading=thValues("'"+SHEET+"'!A1:O5000").then(rows=>{records=parse(rows);loaded=true;}).catch(error=>{loadError=error.message||'Could not load vehicle documents.';throw error;}).finally(()=>{loading=null;updateCounts();});return loading;}
+    async function load(force=false){if(loaded&&!force)return;if(loading)return loading;loadError='';loading=thValues("'"+SHEET+"'!A1:O5000").then(rows=>{records=consolidateUltraClassic(parse(rows));loaded=true;}).catch(error=>{loadError=error.message||'Could not load vehicle documents.';throw error;}).finally(()=>{loading=null;updateCounts();});return loading;}
     function rowsHtml(rows,global=false){if(!rows.length)return '<div class="document-empty"><strong>No documents '+(loaded?'filed here yet':'loaded yet')+'.</strong><p>'+(!loaded?'Use Refresh to try again.':'Add a Drive link, or check All Documents and Needs filing.')+'</p></div>';return '<div class="document-list">'+rows.map(r=>'<article class="document-row"><button type="button" class="document-thumbnail" data-preview-document="'+esc(r.id)+'" aria-label="Preview '+esc(r.name)+'"><img data-document-thumbnail="'+esc(r.id)+'" alt="" hidden><span class="document-thumbnail-status">Loading preview…</span></button><div class="document-copy"><strong>'+esc(r.name)+'</strong><div class="document-meta"><span>'+esc(r.category)+'</span>'+(global?'<span>'+esc(r.vehicle||'Needs filing')+'</span>':'')+'</div>'+(r.notes?'<p>'+esc(r.notes)+'</p>':'')+'<small>'+esc(r.sourcePath||'Added in portal')+'</small>'+alternateCopies(r)+'</div><div class="document-actions"><button type="button" data-preview-document="'+esc(r.id)+'">Preview</button><a href="'+esc(driveFolderUrl(r))+'" data-drive-document="'+esc(r.id)+'" target="_blank" rel="noopener noreferrer">Drive ↗</a><button type="button" data-edit-document="'+esc(r.id)+'">Edit / Move</button></div></article>').join('')+'</div>';}
     const thumbnailCache=new Map(),thumbnailPending=new Map();
     let pdfModule;
@@ -104,6 +122,7 @@ window.TiszodVehicleDocuments = (() => {
     function imageThumbnail(url){return new Promise((resolve,reject)=>{const probe=new Image();probe.referrerPolicy='no-referrer';const timer=setTimeout(()=>{probe.src='';reject(new Error('Thumbnail timed out'));},12000);probe.onload=()=>{clearTimeout(timer);resolve(url);};probe.onerror=()=>{clearTimeout(timer);reject(new Error('Thumbnail unavailable'));};probe.src=url;});}
     async function thumbnailWithFallback(r){
       try{return await makeThumbnail(r);}catch(error){
+        for(const copy of r.previewCopies||[]){try{return await makeThumbnail(copy);}catch{}}
         const id=r.fileId||fileId(r.url);
         if(id){try{return await imageThumbnail('https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w320');}catch{}}
         throw error;
@@ -145,7 +164,68 @@ window.TiszodVehicleDocuments = (() => {
     editor.querySelector('form').addEventListener('submit',async e=>{e.preventDefault();const form=e.target,msg=editor.querySelector('#vehicleDocumentSaveStatus'),url=driveUrl(form.elements.url.value);if(!url){msg.textContent='Use a Google Drive or Google Docs link.';return;}const a=assets.find(a=>assetKey(a)===form.elements.assetKey.value),next={...(editRecord||{}),id:editRecord?.id||'doc-'+(window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)),assetKey:form.elements.assetKey.value,vehicle:a?assetName(a):form.elements.assetKey.value==='shared-reference'?'Vehicle Reference & Accessories':form.elements.assetKey.value==='shared-equipment'?'Shared equipment manuals':form.elements.assetKey.value?editRecord?.vehicle||'':'Unassigned',category:form.elements.category.value,name:form.elements.name.value.trim(),url,fileId:fileId(url),notes:form.elements.notes.value.trim(),sourceFolder:form.elements.sourceFolder.value.trim(),sourcePath:form.elements.sourcePath.value.trim(),mime:form.elements.mime.value.trim(),kind:'document',status:form.elements.assetKey.value?'Filed':'Needs filing',updated:new Date().toISOString()};if(!next.name){msg.textContent='Enter a document name.';return;}const buttons=editor.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);msg.textContent='Saving…';try{await write(next);const i=records.findIndex(r=>r.id===next.id);if(i<0)records.push(next);else records[i]=next;editor.close();afterChange();}catch(error){msg.textContent=error.message;}finally{buttons.forEach(b=>b.disabled=false);}});
     editor.querySelector('[data-remove-document]').addEventListener('click',async()=>{if(!editRecord||!confirm('Remove this document link from the portal? The original Drive file will remain.'))return;const next={...editRecord,status:'Removed',updated:new Date().toISOString()},msg=editor.querySelector('#vehicleDocumentSaveStatus');editor.querySelectorAll('button').forEach(b=>b.disabled=true);try{await write(next);records=records.filter(r=>r.id!==next.id);editor.close();afterChange();}catch(error){msg.textContent=error.message;}finally{editor.querySelectorAll('button').forEach(b=>b.disabled=false);}});
     editor.querySelector('[data-close-editor]').addEventListener('click',()=>editor.close());
-    function handleClick(e){const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-new-document')){openEditor(null,panel.contains(b));return;}if(b.hasAttribute('data-open-document-hub')){openHub();return;}if(b.hasAttribute('data-refresh-documents')){load(true).catch(()=>{}).finally(()=>{paint();if(hub.open)paintHub();});return;}const r=records.find(r=>r.id===(b.dataset.previewDocument||b.dataset.editDocument));if(!r)return;if(b.dataset.editDocument){openEditor(r);return;}if(b.dataset.previewDocument){const url=driveUrl(r.url);if(!url)return;preview.querySelector('#documentPreviewTitle').textContent=r.name;preview.querySelector('#documentPreviewDrive').href=driveFolderUrl(r);preview.querySelector('#documentPreviewDrive').dataset.driveDocument=r.id;const cover=documentCovers[r.fileId||fileId(r.url)],coverImage=preview.querySelector('#vehicleDocumentCover'),frame=preview.querySelector('iframe');coverImage.hidden=!cover;coverImage.style.display=cover?'block':'none';frame.hidden=!!cover;frame.style.display=cover?'none':'';if(cover){coverImage.src=new URL(cover,location.href).href;frame.removeAttribute('src');preview.querySelector('p').textContent='Cover preview. This 2,827-page manual is too large for a reliable embedded preview. Use Open in Drive to open or download the full manual.';}else{coverImage.removeAttribute('src');preview.querySelector('p').textContent='If Google asks you to sign in or a preview is unavailable, use Open in Drive.';frame.src=r.fileId?'https://drive.google.com/file/d/'+encodeURIComponent(r.fileId)+'/preview':url;}preview.showModal();}}
+    function handleClick(e){const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-new-document')){openEditor(null,panel.contains(b));return;}if(b.hasAttribute('data-open-document-hub')){openHub();return;}if(b.hasAttribute('data-refresh-documents')){load(true).catch(()=>{}).finally(()=>{paint();if(hub.open)paintHub();});return;}const r=records.find(r=>r.id===(b.dataset.previewDocument||b.dataset.editDocument));if(!r)return;if(b.dataset.editDocument){openEditor(r);return;}if(b.dataset.previewDocument)openPreview(r);}
+    let previewRequest,previewObjectUrl;
+    function clearPreview(){
+      previewRequest?.abort();
+      if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl=null;
+      preview.querySelector('iframe').removeAttribute('src');
+      preview.querySelector('#vehicleDocumentCover').removeAttribute('src');
+    }
+    async function openPreview(r){
+      clearPreview();
+      const request=previewRequest=new AbortController();
+      const id=r.fileId||fileId(r.url),cover=documentCovers[id];
+      const image=preview.querySelector('#vehicleDocumentCover'),frame=preview.querySelector('iframe'),status=preview.querySelector('p');
+      preview.querySelector('#documentPreviewTitle').textContent=r.name;
+      const link=preview.querySelector('#documentPreviewDrive');
+      link.href=driveFolderUrl(r);
+      link.dataset.driveDocument=r.id;
+      image.style.display='none';
+      image.hidden=true;
+      frame.hidden=true;
+      frame.style.display='none';
+      status.textContent='Loading preview…';
+      if(!preview.open)preview.showModal();
+      if(cover){
+        image.src=new URL(cover,location.href).href;
+        image.hidden=false;
+        image.style.display='block';
+        status.textContent='Cover preview. Use Open in Drive for the full manual.';
+        return;
+      }
+      const isImage=/^image\//i.test(r.mime)||/\.(png|jpe?g|gif|webp|bmp)$/i.test(r.name);
+      const isPdf=r.mime==='application/pdf'||/\.pdf$/i.test(r.name);
+      if(isPdf||isImage){
+        for(const copy of [r,...(r.previewCopies||[])]){
+          const copyId=copy.fileId||fileId(copy.url);
+          if(!copyId)continue;
+          try{
+            const response=await thDriveFetch(copyId,{signal:request.signal});
+            if(!response.ok)continue;
+            const blob=await response.blob();
+            if(request.signal.aborted)return;
+            if(!blob.size||/^(text\/html|application\/json)/i.test(blob.type))continue;
+            previewObjectUrl=URL.createObjectURL(isPdf?new Blob([blob],{type:'application/pdf'}):blob);
+            const target=isImage?image:frame;
+            target.hidden=false;
+            target.style.display='block';
+            target.src=previewObjectUrl;
+            status.textContent='';
+            return;
+          }catch(error){if(request.signal.aborted)return;if(error.status===401){status.textContent=error.message;return;}}
+        }
+        status.textContent='This document could not be loaded with your connected Google account.';
+        return;
+      }
+      const url=id?'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview':driveUrl(r.url);
+      if(!url){status.textContent='Preview unavailable.';return;}
+      frame.hidden=false;
+      frame.style.display='';
+      frame.src=url;
+      status.textContent='';
+    }
     async function openDriveFolder(event){
       const link=event.target.closest('a[data-drive-document]');if(!link||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
       const record=records.find(r=>r.id===link.dataset.driveDocument);if(!record)return;
@@ -163,7 +243,7 @@ window.TiszodVehicleDocuments = (() => {
     panel.addEventListener('input',e=>{if(!e.target.matches('[data-document-search]'))return;query=e.target.value;const tab=tabs.find(t=>t.id===activeTab);const rows=sorted(records.filter(r=>r.kind!=='folder'&&r.assetKey===assetKey(current)&&inTab(r,tab.name)&&matches(r,query)));panel.querySelector('[data-document-results]').innerHTML=rowsHtml(rows);});
     hub.querySelector('#documentHubSearch').addEventListener('input',e=>{globalQuery=e.target.value;paintHub();});
     hub.querySelector('#documentHubVehicle').addEventListener('change',e=>{globalVehicle=e.target.value;paintHub();});hub.querySelector('#documentHubCategory').addEventListener('change',e=>{globalCategory=e.target.value;paintHub();});
-    hub.querySelector('[data-close-hub]').addEventListener('click',()=>hub.close());preview.querySelector('[data-close-preview]').addEventListener('click',()=>preview.close());preview.addEventListener('close',()=>preview.querySelector('iframe').removeAttribute('src'));
+    hub.querySelector('[data-close-hub]').addEventListener('click',()=>hub.close());preview.querySelector('[data-close-preview]').addEventListener('click',()=>preview.close());preview.addEventListener('close',clearPreview);
     if(!deferLoad)load().catch(()=>{});
     return {render(tab,a){if(assetKey(current||{})!==assetKey(a))query='';current=a;activeTab=tab;panel.hidden=!tab.startsWith('documents-');updateCounts();if(!panel.hidden){document.querySelector('.edit-bar').hidden=true;paint();load().catch(()=>{}).finally(()=>{if(activeTab.startsWith('documents-'))paint();});}},openHub};
   }
