@@ -58,10 +58,10 @@
    requests.push({appendCells:{sheetId:finance.sheetId,rows:[{values:[entry.transactionId,entry.date,entry.account,entry.station,'Transportation','Fuel',entry.name,0,entry.total,'Pending',notes,entry.method,'Expense','','No'].map(val)}],fields:'userEnteredValue'}});
   }
   const readings=await thValues("'Mileage-2025.10.16'!B5:F1500",'UNFORMATTED_VALUE');
-  if(vehicle.mileageRow){
+  if(!vehicle.usesHours&&vehicle.mileageRow){
    const current=FuelCore.number(readings[vehicle.mileageRow-5]?.[4]);if(!Number.isFinite(current))throw Error('Current mileage could not be verified. Refresh Vehicles.');
    if(entry.odo>current)requests.push(update(mileage.sheetId,vehicle.mileageRow-1,5,[entry.odo]));
-  }else{
+  }else if(!vehicle.usesHours){
    const n=mileage.gridProperties.rowCount+1;
    requests.push({appendDimension:{sheetId:mileage.sheetId,dimension:'ROWS',length:1}});
    const values=['',vehicle.mileageName,vehicle.year,entry.date,entry.odo,entry.odo];
