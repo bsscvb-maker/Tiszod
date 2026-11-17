@@ -1,26 +1,29 @@
 /* Shared fleet directory cards: all content stays in normal document flow. */
-#categoryView #assetGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:22px;align-items:stretch}
-#categoryView #assetGrid .fleet-card{display:flex;flex-direction:column;align-items:stretch;gap:18px;min-width:0;min-height:0;height:auto;padding:22px;overflow:visible;cursor:default;background:linear-gradient(145deg,#203f6b,#172d4c);border:1px solid #42618a;border-radius:12px;box-shadow:0 4px 16px #0003;transform:none}
-#categoryView #assetGrid .fleet-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;min-width:0}
-#categoryView #assetGrid .fleet-card-title{display:block;flex:1;min-width:0;margin:0;font-size:19px;line-height:1.4;color:#fff;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;-webkit-line-clamp:unset}
-#categoryView #assetGrid .card-status{position:static;flex:none;align-self:flex-start;margin:0;padding:8px 10px;max-width:100%}
-#categoryView #assetGrid .fleet-card-main{display:grid;grid-template-columns:minmax(120px,38%) minmax(0,1fr);gap:20px;align-items:center;min-width:0}
-#categoryView #assetGrid .card-photo{display:grid;place-items:center;flex:none;width:100%;height:174px;min-width:0;aspect-ratio:auto;margin:0;padding:8px;background:#10243d;border:1px solid #3b5677;border-radius:8px;overflow:hidden}
-#categoryView #assetGrid .card-photo img{display:block;width:100%;height:100%;object-fit:contain;max-height:100%;max-width:100%}
-#categoryView #assetGrid .card-copy{display:flex;flex-direction:column;gap:8px;position:static;min-width:0;min-height:0;width:auto;padding:0;margin:0}
-#categoryView #assetGrid .card-copy .card-stat{display:block;margin:0;font-size:13px;line-height:1.5;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
-#categoryView #assetGrid .card-service{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;min-width:0;width:100%;margin:0;padding:0;align-items:stretch}
-#categoryView #assetGrid .card-service>aside{position:static;box-sizing:border-box;min-width:0;width:auto;min-height:0;margin:0;padding:13px;border-radius:8px;font-size:12px;line-height:1.55;white-space:normal;overflow:visible;overflow-wrap:anywhere;box-shadow:none}
-#categoryView #assetGrid .card-service>aside>div+div{margin-top:9px}
-#categoryView #assetGrid .card-service .oil-value{white-space:normal;overflow-wrap:anywhere}
-#categoryView #assetGrid .card-ownership{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:12px;margin:0;padding:15px 0 0;border-top:1px solid #ffffff26}
-#categoryView #assetGrid .card-ownership span{font-size:11px;color:#b5c9e3;line-height:1.5;letter-spacing:.03em}
-#categoryView #assetGrid .card-ownership b{display:block;margin-top:4px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
-#categoryView #assetGrid .card-last-updated{position:static;margin:0;font-size:11px;line-height:1.5;white-space:normal}
-#categoryView #assetGrid .fleet-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto;padding-top:2px}
-#categoryView #assetGrid .fleet-card-actions button{position:static;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:42px;margin:0;padding:10px 12px;border-radius:7px;font:700 13px/1.4 Arial,Helvetica,sans-serif;white-space:normal;text-align:center}
-#categoryView #assetGrid .card-open{background:#e4efff;border:1px solid #bdd5f6;color:#16355b}
-#categoryView #assetGrid .card-mileage{background:#193858;border:1px solid #6a94c8;color:#eff6ff}
-#categoryView #assetGrid .fleet-card button:focus-visible,#categoryView #assetGrid .fleet-card select:focus-visible{outline:3px solid #a8d5ff;outline-offset:3px}
-@media(max-width:680px){#categoryView #assetGrid{grid-template-columns:1fr;gap:16px}#categoryView #assetGrid .fleet-card{padding:17px;gap:16px}#categoryView #assetGrid .fleet-card-title{font-size:17px}#categoryView #assetGrid .fleet-card-head{gap:10px}#categoryView #assetGrid .fleet-card-main{grid-template-columns:minmax(100px,34%) minmax(0,1fr);gap:14px}#categoryView #assetGrid .card-photo{height:145px}#categoryView #assetGrid .card-service{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}}
-@media(max-width:390px){#categoryView #assetGrid .fleet-card-head{flex-wrap:wrap}#categoryView #assetGrid .fleet-card-main{grid-template-columns:1fr}#categoryView #assetGrid .card-photo{height:180px}#categoryView #assetGrid .fleet-card-actions{grid-template-columns:1fr}}
+body[data-th-page] #categoryView #assetGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:22px;align-items:stretch}
+body[data-th-page] #categoryView #assetGrid .fleet-card{display:flex;flex-direction:column;align-items:stretch;gap:18px;min-width:0;min-height:0;height:auto;padding:22px;overflow:visible;cursor:default;background:linear-gradient(145deg,#203f6b,#172d4c);border:1px solid #42618a;border-radius:12px;box-shadow:0 4px 16px #0003;transform:none}
+body[data-th-page] #categoryView #assetGrid .fleet-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;min-width:0}
+body[data-th-page] #categoryView #assetGrid .fleet-card-title{display:block;flex:1;min-width:0;margin:0;font-size:19px;line-height:1.4;color:#fff;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;-webkit-line-clamp:unset}
+body[data-th-page] #categoryView #assetGrid .card-status{position:static;flex:none;align-self:flex-start;margin:0;padding:8px 10px;max-width:100%}
+body[data-th-page] #categoryView #assetGrid .fleet-card-main{display:grid;grid-template-columns:minmax(120px,38%) minmax(0,1fr);gap:20px;align-items:center;min-width:0}
+body[data-th-page] #categoryView #assetGrid .card-photo{display:grid;place-items:center;flex:none;width:100%;height:174px;min-width:0;aspect-ratio:auto;margin:0;padding:8px;background:#10243d;border:1px solid #3b5677;border-radius:8px;overflow:hidden}
+body[data-th-page] #categoryView #assetGrid .card-photo img{display:block;width:100%;height:100%;object-fit:contain;max-height:100%;max-width:100%}
+body[data-th-page] #categoryView #assetGrid .card-copy{display:flex;flex-direction:column;gap:8px;position:static;min-width:0;min-height:0;width:auto;padding:0;margin:0}
+body[data-th-page] #categoryView #assetGrid .card-copy .card-stat{display:block;margin:0;font-size:13px;line-height:1.5;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+body[data-th-page] #categoryView #assetGrid .card-service{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;min-width:0;width:100%;margin:0;padding:0;align-items:stretch}
+body[data-th-page] #categoryView #assetGrid .card-service>aside{position:static;box-sizing:border-box;min-width:0;width:auto;min-height:0;margin:0;padding:13px;border-radius:8px;font-size:12px;line-height:1.55;white-space:normal;overflow:visible;overflow-wrap:anywhere;box-shadow:none}
+body[data-th-page] #categoryView #assetGrid .card-service>aside>div+div{margin-top:9px}
+body[data-th-page] #categoryView #assetGrid .card-service .oil-value{white-space:normal;overflow-wrap:anywhere}
+body[data-th-page] #categoryView #assetGrid .card-ownership{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:12px;margin:0;padding:15px 0 0;border-top:1px solid #ffffff26}
+body[data-th-page] #categoryView #assetGrid .card-ownership span{font-size:11px;color:#b5c9e3;line-height:1.5;letter-spacing:.03em}
+body[data-th-page] #categoryView #assetGrid .card-ownership b{display:block;margin-top:4px;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+body[data-th-page] #categoryView #assetGrid .card-last-updated{position:static;margin:0;font-size:11px;line-height:1.5;white-space:normal}
+body[data-th-page] #categoryView #assetGrid .fleet-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto;padding-top:2px}
+body[data-th-page] #categoryView #assetGrid .fleet-card-actions button{position:static;display:flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:42px;margin:0;padding:10px 12px;border-radius:7px;font:700 13px/1.4 Arial,Helvetica,sans-serif;white-space:normal;text-align:center}
+body[data-th-page] #categoryView #assetGrid .card-open{background:#e4efff;border:1px solid #bdd5f6;color:#16355b}
+body[data-th-page] #categoryView #assetGrid .card-mileage{background:#193858;border:1px solid #6a94c8;color:#eff6ff}
+body[data-th-page] #categoryView #assetGrid .fleet-card button:focus-visible,body[data-th-page] #categoryView #assetGrid .fleet-card select:focus-visible{outline:3px solid #a8d5ff;outline-offset:3px}
+@media(max-width:680px){body[data-th-page] #categoryView #assetGrid{grid-template-columns:1fr;gap:16px}body[data-th-page] #categoryView #assetGrid .fleet-card{padding:17px;gap:16px}body[data-th-page] #categoryView #assetGrid .fleet-card-title{font-size:17px}body[data-th-page] #categoryView #assetGrid .fleet-card-head{gap:10px}body[data-th-page] #categoryView #assetGrid .fleet-card-main{grid-template-columns:minmax(100px,34%) minmax(0,1fr);gap:14px}body[data-th-page] #categoryView #assetGrid .card-photo{height:145px}body[data-th-page] #categoryView #assetGrid .card-service{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}}
+@media(max-width:390px){body[data-th-page] #categoryView #assetGrid .fleet-card-head{flex-wrap:wrap}body[data-th-page] #categoryView #assetGrid .fleet-card-main{grid-template-columns:1fr}body[data-th-page] #categoryView #assetGrid .card-photo{height:180px}body[data-th-page] #categoryView #assetGrid .fleet-card-actions{grid-template-columns:1fr}}
+
+body[data-th-page] #categoryView #assetGrid .fleet-card-head{position:static;inset:auto;min-height:0;height:auto;padding:0;margin:0;background:transparent;border:0;box-shadow:none;width:auto;transform:none}
+body[data-th-page] #categoryView #assetGrid .card-photo{max-width:none;max-height:none;justify-self:stretch}
