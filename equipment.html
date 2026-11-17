@@ -638,7 +638,7 @@ async function loadServiceDetails(){
  return serviceLoad;
 }
 async function openServiceDetails(a){
- try{await loadServiceDetails();if(asset===a)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
+ try{await loadServiceDetails();if(asset===a&&!editing&&!document.getElementById('assetView').hidden)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
  catch(error){if(asset===a){document.getElementById('assetMaintenance').innerHTML='<div class="asset-note">'+esc(error.message)+' Select another tab and return to Service Log to retry.</div>';document.getElementById('assetRecommended').innerHTML='<div class="asset-note">'+esc(error.message)+'</div>'}}
 }
 const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','chrysleraspen':'Aspen','hondacivic':'Civic','fordmustang':'Mustang','fordf150':'F150','harleydavidsonultra':'FLHTCUI','harleydavidsonroad':'FLTRK','makdaddy':'Legend','stirling':'Stirling','westbrook':'Stirling','trek':'trek','colemanb200':'B200','volpam':'SP03','coolster':'3050C','xpro':'Xpro'};
