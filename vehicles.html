@@ -658,7 +658,7 @@ async function loadServiceDetails(){
  return serviceLoad;
 }
 async function openServiceDetails(a){
- try{await loadServiceDetails();if(asset===a&&!document.getElementById('assetView').hidden)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
+ try{await loadServiceDetails();if(asset===a&&!editing&&!document.getElementById('assetView').hidden)renderAsset(document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details')}
  catch(error){if(asset===a){document.getElementById('assetMaintenance').innerHTML='<div class="asset-note">'+esc(error.message)+' Select another tab and return to Service Log to retry.</div>';document.getElementById('assetRecommended').innerHTML='<div class="asset-note">'+esc(error.message)+'</div>'}}
 }
 const serviceKeys={'keystone':'331','ram3500':'3500','toyota4runner':'4Runner','chrysleraspen':'Aspen','hondacivic':'Civic','fordmustang':'Mustang','fordf150':'F150','harleydavidsonultra':'FLHTCUI','harleydavidsonroad':'FLTRK','makdaddy':'Legend','stirling':'Stirling','westbrook':'Stirling','trek':'trek','colemanb200':'B200','volpam':'SP03','coolster':'3050C','xpro':'Xpro'};
@@ -880,8 +880,16 @@ function oilCard(a){
  const {type,capacity,manufacturer,filter}=service;
  return '<aside class="card-oil" aria-label="Engine oil specifications"><div><b>Manufacture:</b> <b class="oil-value">'+esc(manufacturer)+'</b></div><div><b>Oil Filter:</b> <b class="oil-value">'+esc(filter)+'</b></div><div><b>Engine oil</b> <b class="oil-value">'+esc(type)+'</b></div><div><b>Oil Amount</b> <b class="oil-value">'+esc(capacity)+'</b></div>'+'</aside>';
 }
+function filterCard(a){
+ if(!['active','managed','maintained'].includes(clean(a.status)))return '';
+ if(!showCardEngine(a)||/electric|watt/.test(clean(a.engine||'')))return '';
+ const specs=specRecord(a).specs;
+ const air=String(specs.airFilter||'').trim()||'Not recorded';
+ const cabin=String(specs.cabinAirFilter||'').trim()||((/motorcycle|minibike|quad|yard|tractor|equipment/.test(clean(a.category||'')))?'None':'Not recorded');
+ return '<aside class="card-oil card-air-filters" aria-label="Factory air filters">'+[['Engine Air Filter',air],['Cabin Air Filter',cabin]].map(([label,value])=>'<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(value)+'</b></div>').join('')+'</aside>';
+}
 function cardService(a){
- const details=deadlineCard(a)+oilCard(a);
+ const details=deadlineCard(a)+oilCard(a)+filterCard(a);
  return details?'<div class="card-service">'+details+'</div>':'';
 }
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
