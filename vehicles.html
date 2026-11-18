@@ -373,6 +373,14 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-photo [hidden] {
   display: none !important;
 }
 @media (min-width: 681px) {
+  body[data-th-page="fleet"] #categoryView #assetGrid .card-service:has(.antique-deadlines) {
+    min-height: 129px;
+  }
+  body[data-th-page="fleet"] #categoryView #assetGrid .card-service:has(.antique-deadlines) > .card-oil > div + div {
+    margin-top: 3px !important;
+  }
+}
+@media (min-width: 681px) {
   body[data-th-page="fleet"] #categoryView #assetGrid .fleet-card-main {
     grid-template-columns: minmax(0, 46%) minmax(0, 1fr) !important;
   }
