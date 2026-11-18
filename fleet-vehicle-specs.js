@@ -11,13 +11,16 @@ function reportSpecificationSeed(a){
 function specRecord(a){
  const raw=String(a.reportNotes||'');let saved={};
  if(raw.trim().startsWith('{'))try{const parsed=JSON.parse(raw);if(parsed&&parsed.type==='vehicle-quick-specs-v1')saved=parsed}catch(_){}
- const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...partsAndFluidsDefaults(a),...window.TiszodSmallEngineOil?.defaults(a),...(saved.specs||{})};
+ const fluidDefaults=partsAndFluidsDefaults(a);
+ const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...fluidDefaults,...window.TiszodSmallEngineOil?.defaults(a),...(saved.specs||{})};
  if(String(a.vin||'').trim().toUpperCase()==='1HD1FCW14YY615621'){
   if(/^primary\s*-\s*1\s*quarts?\s+of\s+20w[/-]50$/i.test(String(specs.oilCapacity||'').trim())){
    specs.oilCapacity=partsAndFluidsDefaults(a).oilCapacity;
   }
   if(/^(?:(?:harley-davidson|h-d|fram)\s+)?ph60-?65b$/i.test(String(specs.oilFilter||'').trim()))specs.oilFilter='Harley-Davidson 63798-99B (chrome)';
  }
+ const drainRings=fluidDefaults.drainPlugOring;
+ if(drainRings&&(!specs.drainPlugOring||/^(?:Harley-Davidson |H-D )?11105\s*(?:\(1\)|×\s*1)?$/i.test(specs.drainPlugOring)))specs.drainPlugOring=drainRings;
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
  return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }
@@ -113,7 +116,7 @@ function partsAndFluidsDefaults(a){
  if(model.startsWith('2012hondacivic'))specs.batteryPart='Advance Auto Parts 51RAGM';
  if(model.startsWith('2019ram3500'))specs.frontWipers='FS22 × 2 (Advance Auto warranty receipt)';
  if(model.startsWith('1999chevrolettahoe'))Object.assign(specs,{frontWipers:'XtraClear XQ18 × 2',rearWiper:'Bosch 40513',sparkPlug:'ACDelco R44LTS6 × 8'});
- if(transmission)Object.assign(specs,{transmissionFluid:transmission,primaryFluid:primary,drainPlugOring:'Harley-Davidson 11105 (1)'});
+ if(transmission)Object.assign(specs,{transmissionFluid:transmission,primaryFluid:primary,drainPlugOring:String(a.vin||'').trim().toUpperCase()==='1HD1FCW14YY615621'?'H-D 11105 × 2 (engine + transmission); H-D 11324 × 1 if primary plug is 60391-04':'H-D 11105 × 3 (engine, transmission, primary)'});
  if(String(a.vin||'').trim().toUpperCase()==='1HD1FCW14YY615621')specs.airFilter='Harley-Davidson 29462-99';
  return {...specs,...transmissionAndCoolantDefaults(a,model)};
 }
