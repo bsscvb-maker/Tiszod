@@ -556,7 +556,7 @@ body[data-th-page="fleet"] #categoryView #assetGrid .service-entry b {
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
 <dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script src="small-engine-oil.js?v=20261118-garage-save"></script>
-<script src="fleet-vehicle-specs.js?v=7"></script>
+<script src="fleet-vehicle-specs.js?v=8"></script>
 <script src="door-jamb.js?v=20261117-factory-colors4"></script>
 <script>
 function renderFleetPage(D,PORTAL) {
@@ -899,6 +899,7 @@ function cardService(a){
  const filterLabel=value=>String(value||'').trim().replace(/^Harley-Davidson\s+/i,'H-D ')||'Not recorded';
  const parts=[['Oil filter',filterLabel(specs.oilFilter)],['Engine air filter',filterLabel(specs.airFilter)]];
  if(kind!=='Motorcycles')parts.push(['Cabin air filter',filterLabel(specs.cabinAirFilter)]);
+ if(specs.drainPlugOring)parts.push(['Drain plug O-rings',filterLabel(specs.drainPlugOring)]);
  const fluids=[['Engine oil',[specs.oilType,specs.oilCapacity].filter(Boolean).join(' · ')||'Not recorded']];
  if(specs.primaryFluid||kind==='Motorcycles')fluids.push(['Primary oil',refillCardValue(specs.primaryFluid)]);
  if(specs.transmissionFluid||hasEngine)fluids.push(['Transmission',refillCardValue(specs.transmissionFluid)]);
