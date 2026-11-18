@@ -26,7 +26,7 @@ const cardOilSpecs={
  '2008chrysleraspen':['5W-20','6 qt (4.7L) / 7 qt (5.7L)','Mopar 5281090']
 };
 const motorcycleOilSpecs={
- '1HD1FCW14YY615621':['H-D 360 20W-50 · 62600007','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','20W-50 · 32 fl oz (dry capacity)'],
+ '1HD1FCW14YY615621':['H-D 360 20W-50','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','20W-50 · 32 fl oz (dry capacity)'],
  '1HD1KZF15PB653889':['H-D SYN-BLEND 15W-50 · 62600151','4.75 qt','Harley-Davidson 62700296A (black)','H-D Formula+ (62600004) · 28 fl oz','H-D Formula+ (62600004) · 30 fl oz']
 };
 function oilServiceFor(a){
