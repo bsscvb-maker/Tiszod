@@ -829,7 +829,7 @@
   }
 
   function printPhotoAsset(group, assets) {
-    if (group.item?.photoFileId || group.item?.photo) return group.item;
+    if (group.item?.printPhotoFileId || group.item?.photoFileId || group.item?.photo) return group.item;
     const label = clean(group.name);
     if (!label) return null;
     const matches = assets.filter(item => (!group.year || String(item.year) === String(group.year)) &&
@@ -869,27 +869,33 @@
   }
 
   async function addPrintPhoto(header, asset, objectUrls, signal) {
-    if (!asset?.photo && !asset?.photoFileId) return;
+    if (!asset?.photo && !asset?.photoFileId && !asset?.printPhotoFileId) return;
     const photo = node('img', '', 'report-print-photo');
     photo.alt = '';
     photo.referrerPolicy = 'no-referrer';
     const cutout = window.TiszodEquipmentCutouts?.[clean(asset.make + ' ' + asset.model)];
-    let src = cutout || asset.photo;
-    if (!cutout && asset.photoFileId) {
+    const loadPhoto = async src => {
+      if (!src || signal.aborted) return false;
+      photo.src = src;
+      return Promise.race([
+        photo.decode().then(() => true, () => false),
+        new Promise(resolve => signal.addEventListener('abort', () => resolve(false), {once:true}))
+      ]);
+    };
+    const loadDrivePhoto = async id => {
+      if (!id || signal.aborted) return false;
       try {
-        const response = await thDriveFetch(asset.photoFileId, {signal});
-        if (response.ok) {
-          src = URL.createObjectURL(await response.blob());
-          objectUrls.push(src);
-        }
-      } catch {}
-    }
-    if (!src || signal.aborted) return;
-    photo.src = src;
-    const loaded = await Promise.race([
-      photo.decode().then(() => true, () => false),
-      new Promise(resolve => signal.addEventListener('abort', () => resolve(false), {once:true}))
-    ]);
+        const response = await thDriveFetch(id, {signal});
+        if (!response.ok) return false;
+        const src = URL.createObjectURL(await response.blob());
+        objectUrls.push(src);
+        return await loadPhoto(src);
+      } catch {
+        return false;
+      }
+    };
+    const loaded = await loadDrivePhoto(asset.printPhotoFileId) ||
+      await loadPhoto(cutout) || await loadDrivePhoto(asset.photoFileId) || await loadPhoto(asset.photo);
     if (loaded) header.append(photo);
   }
 
