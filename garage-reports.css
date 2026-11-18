@@ -49,3 +49,13 @@
  body.printing-garage-report .report-preview>:is(.report-work-list,.report-recall-tools,.report-summary){display:none}
  body.printing-garage-report .report-preview:has(.report-recall-row) :is(th,td):last-child{display:none}
 }
+
+.report-print-pages{display:none}
+@media print{
+ body.printing-garage-report .report-preview:has(.report-print-pages) .report-table{display:none}
+ body.printing-garage-report .report-print-pages{display:block}
+ .report-print-asset + .report-print-asset{break-before:page}
+ .report-print-asset h4{break-after:avoid;margin:0 0 8pt}
+ .report-print-asset table{width:100%;border-collapse:collapse}
+ .report-print-asset thead{display:table-header-group}
+}

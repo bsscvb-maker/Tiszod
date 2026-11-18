@@ -15,7 +15,6 @@
   const workList = preview.querySelector('.report-work-list');
   const run = form.querySelector('[type="submit"]');
   const download = section.querySelector('[data-download]');
-  const print = section.querySelector('[data-print]');
   const gate = document.querySelector('#th-auth');
   const connect = section.querySelector('[data-connect]');
   const filters = form.elements;
@@ -818,9 +817,50 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  print.addEventListener('click', () => {
-    if (!exportable()) return;
-    document.body.classList.add('printing-garage-report');
-    try { window.print(); } finally { document.body.classList.remove('printing-garage-report'); }
-  });
+  function printSectionsByAsset({report, rows}) {
+    const assetColumn = report.headers.findIndex(heading => heading.startsWith('Asset'));
+    const yearColumn = report.headers.indexOf('Model year');
+    const groups = new Map();
+    for (const row of rows) {
+      const name = String(row.cells[assetColumn] ?? '').trim();
+      const year = yearColumn < 0 ? '' : row.cells[yearColumn];
+      const heading = [name, year].filter(Boolean).join(' · ') || 'Unspecified asset';
+      const key = row.item ? assetKey(row.item) : heading;
+      if (!groups.has(key)) groups.set(key, {heading, rows: []});
+      groups.get(key).rows.push(row);
+    }
+    const pages = node('div', '', 'report-print-pages');
+    for (const group of groups.values()) {
+      const page = node('section', '', 'report-print-asset');
+      page.append(node('h4', group.heading));
+      const printTable = node('table');
+      const head = printTable.createTHead().insertRow();
+      for (const heading of report.headers) {
+        const th = node('th', heading);
+        th.scope = 'col';
+        head.append(th);
+      }
+      const body = printTable.createTBody();
+      for (const row of group.rows) {
+        const tr = body.insertRow();
+        for (const value of row.cells) tr.append(node('td', String(value ?? '')));
+      }
+      page.append(printTable);
+      pages.append(page);
+    }
+    return pages;
+  }
+
+  for (const button of exportMenu.querySelectorAll('[data-print]')) {
+    button.addEventListener('click', () => {
+      if (!exportable()) return;
+      const pages = button.dataset.print === 'by-asset' ? printSectionsByAsset(result) : null;
+      if (pages) preview.append(pages);
+      document.body.classList.add('printing-garage-report');
+      try { window.print(); } finally {
+        document.body.classList.remove('printing-garage-report');
+        pages?.remove();
+      }
+    });
+  }
 })();
