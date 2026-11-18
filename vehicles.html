@@ -364,7 +364,13 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-photo {
   padding: 0 !important;
 }
 body[data-th-page="fleet"] #categoryView #assetGrid .card-photo img {
+  object-fit: contain !important;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .card-photo--edge-to-edge img {
   object-fit: cover !important;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .card-photo [hidden] {
+  display: none !important;
 }
 @media (min-width: 681px) {
   body[data-th-page="fleet"] #categoryView #assetGrid .fleet-card-main {
@@ -961,9 +967,10 @@ function renderCategory(){
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const override=cardPhotoOverride(a);
-  const photo=override||a.photoObjectUrl||(!a.photoFileId&&a.photo)||'';
-  const photoClass=override?' card-photo--road-glide':String(a.year)==='1998'&&clean(a.make+' '+a.model).includes('toyotatacoma')?' card-photo--tacoma':'';
-  const picture=photo||a.photoFileId?'<button type="button" class="card-photo'+photoClass+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'><img src="'+esc(photo)+'" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true"></button>':'<span class="card-photo"><span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span></span>';
+  const photo=a.photoObjectUrl||(!a.photoFileId&&a.photo)||override||'';
+  const keepFraming=/^1977fordf150|buickenclave/.test(clean(title));
+  const placeholder='<span class="category-icon" aria-hidden="true"'+(photo?' hidden':'')+'>'+icon(a.category)+'</span>';
+  const picture=photo||a.photoFileId?'<button type="button" class="card-photo'+(keepFraming?' card-photo--edge-to-edge':'')+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'>'+placeholder+'<img'+(photo?' src="'+esc(photo)+'"':' hidden')+' decoding="async" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true;this.previousElementSibling.hidden=false;this.parentElement.disabled=true"></button>':'<span class="card-photo">'+placeholder+'</span>';
   const hours=usesHours(a),ownership=ownershipFor(a,m);
   return `<article class="asset-card fleet-card" data-asset="${esc(a.id)}">
    <header class="fleet-card-head"><strong class="fleet-card-title">${esc(title)}</strong><span class="card-status ${['active','inactive','sold','managed','totaled','repo'].includes(s)?s:''}"><select data-card-status="${esc(a.id)}" aria-label="Status for ${esc(title)}">${['Active','Inactive','Managed','Sold','Totaled','Repo'].map(option=>'<option value="'+option+'"'+(clean(a.status)===clean(option)?' selected':'')+'>'+option+'</option>').join('')}</select></span></header>
@@ -985,17 +992,21 @@ function renderCategory(){
   assetPhoto(a).then(src=>{
    const card=[...document.querySelectorAll('#assetGrid [data-asset]')].find(el=>el.dataset.asset===a.id);
    const img=card?.querySelector('.card-photo img');
-   if(img){img.src=src;img.hidden=false;card.querySelector('[data-preview]').disabled=false}
-  }).catch(()=>{
-   const card=[...document.querySelectorAll('#assetGrid [data-asset]')].find(el=>el.dataset.asset===a.id);
-   const spot=card?.querySelector('.card-photo');
-   if(spot){spot.replaceWith(Object.assign(document.createElement('span'),{className:'card-photo',innerHTML:'<span class="category-icon" aria-hidden="true">'+icon(a.category)+'</span>'}))}
-  });
+   if(img){
+    const fallback=cardPhotoOverride(a);
+    img.onload=()=>{img.hidden=false;img.previousElementSibling.hidden=true;img.parentElement.disabled=false};
+    if(fallback)img.onerror=()=>{
+     if(img.getAttribute('src')!==fallback)img.src=fallback;
+     else{img.hidden=true;img.previousElementSibling.hidden=false;img.parentElement.disabled=true}
+    };
+    img.src=src;
+   }
+  }).catch(()=>{/* Keep the static Road Glide fallback or the category placeholder. */});
  };
  if('IntersectionObserver' in window){
   const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){observer.unobserve(entry.target);const a=assets.find(item=>item.id===entry.target.dataset.asset);if(a)loadCardPhoto(a)}},{rootMargin:'250px'});photoObserver=observer;
-  for(const card of document.querySelectorAll('#assetGrid [data-asset]')){const a=assets.find(item=>item.id===card.dataset.asset);if(a?.photoFileId&&!a.photoObjectUrl&&!cardPhotoOverride(a))photoObserver.observe(card)}
- }else for(const a of shown.filter(a=>a.photoFileId&&!a.photoObjectUrl&&!cardPhotoOverride(a)))loadCardPhoto(a);
+  for(const card of document.querySelectorAll('#assetGrid [data-asset]')){const a=assets.find(item=>item.id===card.dataset.asset);if(a?.photoFileId&&!a.photoObjectUrl)photoObserver.observe(card)}
+ }else for(const a of shown.filter(a=>a.photoFileId&&!a.photoObjectUrl))loadCardPhoto(a);
 
 }
 // Save the edit time with the vehicle record, never with page visits.
