@@ -684,7 +684,7 @@
       if (report === reports.recalls) tr.insertCell().append(recallControl(row));
     }
     preview.querySelector('h3').textContent = report.name;
-    result = {report, rows};
+    result = {report, rows, generatedAt:new Date()};
     expiredTimer = setTimeout(() => {
       clear();
       connect.hidden = false;
@@ -917,10 +917,13 @@
   }
 
   async function addPrintPhoto(header, asset, objectUrls, signal, processPhoto) {
-    const source = window.TiszodEquipmentCutouts?.[clean(asset?.make + ' ' + asset?.model)] || asset?.photo;
+    const equipmentKey = clean(asset?.make + ' ' + asset?.model);
+    const equipmentPhoto = window.TiszodEquipmentCutouts?.[equipmentKey];
+    const source = equipmentPhoto || asset?.photo;
     if (!asset?.printPhotoFileId && !asset?.photoFileId && !source) return true;
     const photo = node('img', '', 'report-print-photo');
     photo.alt = '';
+    photo.referrerPolicy = 'no-referrer';
     const drivePhoto = async id => {
       if (!id || signal.aborted) return null;
       try {
@@ -937,6 +940,14 @@
     };
     const key = [asset?.photoFileId, source].join('|');
     const saved = await drivePhoto(asset?.printPhotoFileId);
+    if (!saved && (equipmentPhoto?.startsWith('equipment-photos/') || equipmentKey === 'echopb2520powerblower')) {
+      try {
+        photo.src = equipmentPhoto;
+        await photo.decode();
+        header.append(photo);
+        return true;
+      } catch { /* Continue through the original-photo path. */ }
+    }
     let cutout = saved || printCutouts.get(key);
     if (!cutout) {
       const original = await drivePhoto(asset?.photoFileId) || await sourcePhoto();
@@ -1032,6 +1043,17 @@
     return pages;
   }
 
+  function printFilename(date) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
+    }).formatToParts(date);
+    const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    const day = [fields.year, fields.month, fields.day].join('.');
+    const time = [fields.hour, fields.minute, fields.second].join('.');
+    return 'TisZod Garage Reports - ' + day + ' - ' + time;
+  }
+
   const printButtons = [...exportMenu.querySelectorAll('[data-print]')];
   for (const button of printButtons) {
     button.addEventListener('click', async () => {
@@ -1041,6 +1063,7 @@
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 240000);
       const priorStatus = status.textContent;
+      const pageTitle = document.title;
       let printable;
       printButtons.forEach(control => { control.disabled = true; });
       try {
@@ -1052,10 +1075,12 @@
         if (status.textContent.startsWith('Preparing report photos')) status.textContent = priorStatus;
         preview.append(printable);
         document.body.classList.add('printing-garage-report');
+        document.title = printFilename(current.generatedAt);
         window.print();
       } finally {
         clearTimeout(timeout);
         controller.abort();
+        document.title = pageTitle;
         document.body.classList.remove('printing-garage-report');
         printable?.remove();
         objectUrls.forEach(url => URL.revokeObjectURL(url));
