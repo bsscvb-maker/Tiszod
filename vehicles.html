@@ -864,7 +864,29 @@ complianceDialog.querySelector('form').onsubmit=async e=>{
  e.preventDefault();const a=complianceTarget,form=e.target,msg=document.getElementById('complianceMessage'),updates={};
  for(const k of ['registration','inspection']){updates[k+'Mode']=form.elements[k+'Mode'].value;updates[k+'Due']=form.elements[k+'Due'].value;updates[k+'Last']=form.elements[k+'Last'].value;if(updates[k+'Mode']==='dated'&&!updates[k+'Due']){msg.textContent='Enter both due dates, or choose a status for dates you cannot confirm.';return}updates[k+'Source']='Updated in portal '+new Date().toISOString().slice(0,10)}
  const button=form.querySelector('[type="submit"]');button.disabled=true;msg.textContent='Saving…';
- const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{await ensureProfileRow(a);let record;try{record=JSON.parse(a.reportNotes)}catch(_){}if(!record||record.type!=='vehicle-quick-specs-v1')record=specRecord(a);record.specs={...(record.specs||{}),...updates};const json=JSON.stringify(record);await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,json);a.reportNotes=json});a.specSaveQueue=saving;
+ const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+  await ensureProfileRow(a);
+  const record=specRecord(a);
+  Object.assign(record.specs,updates);
+  const json=JSON.stringify(record);
+  const writes=[{sheet:'Portal Asset Profiles',range:'AB'+a.profileRow,values:[[json]]}];
+  const taskUpdates=[];
+  for(const task of scheduleFor(a)?.tasks||[]){
+   const kind=complianceKind(task.task);
+   if(!kind||!task.sheetRow)continue;
+   const nextDate=updates[kind+'Mode']==='dated'?updates[kind+'Due']:'';
+   const lastDate=updates[kind+'Last'];
+   writes.push(
+    {sheet:'Portal Service Schedules',range:'E'+task.sheetRow,values:[[lastDate]]},
+    {sheet:'Portal Service Schedules',range:'G'+task.sheetRow,values:[[nextDate]]}
+   );
+   taskUpdates.push({task,nextDate,lastDate});
+  }
+  await fleetWriteRanges(writes,'RAW');
+  a.reportNotes=json;
+  for(const {task,nextDate,lastDate} of taskUpdates)Object.assign(task,{nextDate,lastDate});
+ });
+ a.specSaveQueue=saving;
  try{await saving;renderCategory();complianceDialog.close();if(asset===a&&!document.getElementById('assetRecommended').hidden)renderRecommended(a)}catch(error){msg.textContent='Could not save: '+error.message}finally{button.disabled=false}
 };
 

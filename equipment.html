@@ -759,7 +759,7 @@ function complianceFor(a){
  // Only credible future profile renewal dates are usable as a starting reminder.
  const old=String(a.renewal||''),parts=old.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
  if(!base.registrationDue&&!base.registrationMode&&parts&&+parts[3]>=2026&&+parts[3]<2100){base.registrationDue=parts[3]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');base.registrationSource='Recorded profile renewal date; verify against current registration'}
- for(const kind of ['registration','inspection'])for(const tail of ['Due','Mode','Source']){const k=kind+tail;if(Object.prototype.hasOwnProperty.call(specs,k))base[k]=specs[k]}
+ for(const kind of ['registration','inspection'])for(const tail of ['Due','Last','Mode','Source']){const k=kind+tail;if(Object.prototype.hasOwnProperty.call(specs,k))base[k]=specs[k]}
  return base;
 }
 function deadlineState(date,mode,today=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})){
