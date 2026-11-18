@@ -993,18 +993,28 @@
     return printTable;
   }
 
-  function printCombined({report, rows}) {
+  function printGroupRank(asset, heading) {
+    const name = [asset?.category, asset && title(asset), heading].filter(Boolean).join(' ');
+    const category = asset ? collection(asset) : collection({name:heading});
+    if (category === 'Trailers') return 2;
+    if (category === 'Watercraft') return 6;
+    if (category === 'Equipment') return /tractor/i.test(name) ? 4 : 5;
+    if (category === 'Off-Road') return 3;
+    if (/motorcycles?|harley|\bH-D\b|fltrk|flhtcui/i.test(name)) return 1;
+    return asset && category === 'Vehicles' ? 0 : 6;
+  }
+
+  function printCombined(report, groups) {
     const pages = node('div', '', 'report-print-pages');
     const page = node('section', '', 'report-print-asset');
     page.append(printLetterhead(false));
     if (report !== reports.attention) page.append(node('h4', report.name));
-    page.append(printReportTable(report, rows));
+    page.append(printReportTable(report, groups.flatMap(group => group.rows)));
     pages.append(page);
     return pages;
   }
 
-  async function printSectionsByAsset(current, objectUrls, signal) {
-    const {report, rows} = current;
+  async function printAssetGroups({report, rows}) {
     const assetColumn = report.headers.findIndex(heading => heading.startsWith('Asset'));
     const yearColumn = report.headers.indexOf('Model year');
     const groups = new Map();
@@ -1016,20 +1026,28 @@
       if (!groups.has(key)) groups.set(key, {heading, name, year, item:row.item, rows: []});
       groups.get(key).rows.push(row);
     }
-    const pages = node('div', '', 'report-print-pages');
     const needsLookup = [...groups.values()].some(group => !group.item);
     const assets = needsLookup ? await thFleetData().then(inventory).catch(() => []) : [];
+    return [...groups.values()].map(group => {
+      const asset = printPhotoAsset(group, assets) || group.item;
+      return {...group, asset, rank:printGroupRank(asset, group.heading)};
+    }).sort((left, right) => left.rank - right.rank);
+  }
+
+  async function printSectionsByAsset(current, groups, objectUrls, signal) {
+    const {report} = current;
+    const pages = node('div', '', 'report-print-pages');
     const photos = [];
     let processor;
     let completed = 0;
     const processPhoto = photo => (processor ||= createPhotoProcessor(signal))(photo);
-    for (const group of groups.values()) {
+    for (const group of groups) {
       const page = node('section', '', 'report-print-asset');
       const header = printLetterhead(true);
-      const asset = printPhotoAsset(group, assets) || group.item;
+      const {asset} = group;
       photos.push(addPrintPhoto(header, asset, objectUrls, signal, processPhoto).then(success => {
         completed++;
-        if (result === current) status.textContent = 'Preparing report photos ' + completed + ' of ' + groups.size + '…';
+        if (result === current) status.textContent = 'Preparing report photos ' + completed + ' of ' + groups.length + '…';
         return success;
       }));
       page.append(header, node('h4', printAssetName(group.heading)));
@@ -1067,9 +1085,11 @@
       let printable;
       printButtons.forEach(control => { control.disabled = true; });
       try {
+        const groups = await printAssetGroups(current);
+        if (result !== current || !exportable()) return;
         printable = button.dataset.print === 'by-asset'
-          ? await printSectionsByAsset(current, objectUrls, controller.signal)
-          : printCombined(current);
+          ? await printSectionsByAsset(current, groups, objectUrls, controller.signal)
+          : printCombined(current.report, groups);
         await printable.querySelector('.report-print-logo')?.decode().catch(() => {});
         if (result !== current || !exportable()) return;
         if (status.textContent.startsWith('Preparing report photos')) status.textContent = priorStatus;
