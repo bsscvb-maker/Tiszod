@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://esm.sh 'unsafe-inline' 'wasm-unsafe-eval' blob:; connect-src https://esm.sh https://staticimgly.com; worker-src blob:; img-src blob: data:">
+<title>Garage photo processing</title>
+<script type="module">
+  let processor;
+  addEventListener('message', async event => {
+    if (event.source !== parent || !(event.data?.photo instanceof Blob)) return;
+    const {id, photo} = event.data;
+    try {
+      processor ||= import('https://esm.sh/@imgly/background-removal@1.7.0');
+      const {removeBackground} = await processor;
+      const cutout = await removeBackground(photo, {model:'isnet_quint8'});
+      parent.postMessage({id, cutout}, event.origin);
+    } catch {
+      parent.postMessage({id, failed:true}, event.origin);
+    }
+  });
+  parent.postMessage({garagePhotoProcessorReady:true}, '*');
+</script>

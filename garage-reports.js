@@ -871,35 +871,89 @@
     return reference;
   }
 
-  async function addPrintPhoto(header, asset, objectUrls, signal) {
-    if (!asset?.photo && !asset?.photoFileId && !asset?.printPhotoFileId) return;
+  const printCutouts = new Map();
+
+  function createPhotoProcessor(signal) {
+    const frame = node('iframe');
+    frame.hidden = true;
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.src = 'garage-photo-cutout.html';
+    let pending;
+    let ready;
+    const initialized = new Promise(resolve => { ready = resolve; });
+    let queue = initialized;
+    let nextId = 0;
+
+    function receive(event) {
+      if (event.source !== frame.contentWindow || event.origin !== 'null') return;
+      if (event.data?.garagePhotoProcessorReady) ready(true);
+      else if (pending && event.data?.id === pending.id) {
+        pending.resolve(event.data.cutout instanceof Blob ? event.data.cutout : null);
+        pending = null;
+      }
+    }
+
+    window.addEventListener('message', receive);
+    signal.addEventListener('abort', () => {
+      window.removeEventListener('message', receive);
+      ready(false);
+      pending?.resolve(null);
+      frame.remove();
+    }, {once:true});
+    document.body.append(frame);
+
+    return photo => {
+      const job = queue.then(() => {
+        if (signal.aborted) return null;
+        return new Promise(resolve => {
+          const id = ++nextId;
+          pending = {id, resolve};
+          frame.contentWindow.postMessage({id, photo}, '*');
+        });
+      });
+      queue = job;
+      return job;
+    };
+  }
+
+  async function addPrintPhoto(header, asset, objectUrls, signal, processPhoto) {
+    const source = window.TiszodEquipmentCutouts?.[clean(asset?.make + ' ' + asset?.model)] || asset?.photo;
+    if (!asset?.printPhotoFileId && !asset?.photoFileId && !source) return true;
     const photo = node('img', '', 'report-print-photo');
     photo.alt = '';
-    photo.referrerPolicy = 'no-referrer';
-    const cutout = window.TiszodEquipmentCutouts?.[clean(asset.make + ' ' + asset.model)];
-    const loadPhoto = async src => {
-      if (!src || signal.aborted) return false;
-      photo.src = src;
-      return Promise.race([
-        photo.decode().then(() => true, () => false),
-        new Promise(resolve => signal.addEventListener('abort', () => resolve(false), {once:true}))
-      ]);
-    };
-    const loadDrivePhoto = async id => {
-      if (!id || signal.aborted) return false;
+    const drivePhoto = async id => {
+      if (!id || signal.aborted) return null;
       try {
         const response = await thDriveFetch(id, {signal});
-        if (!response.ok) return false;
-        const src = URL.createObjectURL(await response.blob());
-        objectUrls.push(src);
-        return await loadPhoto(src);
-      } catch {
-        return false;
-      }
+        return response.ok ? await response.blob() : null;
+      } catch { return null; }
     };
-    const loaded = await loadDrivePhoto(asset.printPhotoFileId) ||
-      await loadPhoto(cutout) || await loadDrivePhoto(asset.photoFileId) || await loadPhoto(asset.photo);
-    if (loaded) header.append(photo);
+    const sourcePhoto = async () => {
+      if (!source || signal.aborted) return null;
+      try {
+        const response = await fetch(source, {signal, referrerPolicy:'no-referrer'});
+        return response.ok ? await response.blob() : null;
+      } catch { return null; }
+    };
+    const key = [asset?.photoFileId, source].join('|');
+    const saved = await drivePhoto(asset?.printPhotoFileId);
+    let cutout = saved || printCutouts.get(key);
+    if (!cutout) {
+      const original = await drivePhoto(asset?.photoFileId) || await sourcePhoto();
+      if (original && !signal.aborted) {
+        cutout = await processPhoto(original);
+        if (cutout) printCutouts.set(key, cutout);
+      }
+    }
+    if (!cutout) return false;
+    const url = URL.createObjectURL(cutout);
+    objectUrls.push(url);
+    photo.src = url;
+    try {
+      await photo.decode();
+      header.append(photo);
+      return true;
+    } catch { return false; }
   }
 
   const printAssetName = name => String(name ?? '').replace(/\bHarley[ -]+Davidson\b/gi, 'H-D');
@@ -938,7 +992,8 @@
     return pages;
   }
 
-  async function printSectionsByAsset({report, rows}, objectUrls, signal) {
+  async function printSectionsByAsset(current, objectUrls, signal) {
+    const {report, rows} = current;
     const assetColumn = report.headers.findIndex(heading => heading.startsWith('Asset'));
     const yearColumn = report.headers.indexOf('Model year');
     const groups = new Map();
@@ -954,18 +1009,26 @@
     const needsLookup = [...groups.values()].some(group => !group.item);
     const assets = needsLookup ? await thFleetData().then(inventory).catch(() => []) : [];
     const photos = [];
+    let processor;
+    let completed = 0;
+    const processPhoto = photo => (processor ||= createPhotoProcessor(signal))(photo);
     for (const group of groups.values()) {
       const page = node('section', '', 'report-print-asset');
       const header = printLetterhead(true);
       const asset = printPhotoAsset(group, assets) || group.item;
-      photos.push(addPrintPhoto(header, asset, objectUrls, signal));
+      photos.push(addPrintPhoto(header, asset, objectUrls, signal, processPhoto).then(success => {
+        completed++;
+        if (result === current) status.textContent = 'Preparing report photos ' + completed + ' of ' + groups.size + '…';
+        return success;
+      }));
       page.append(header, node('h4', printAssetName(group.heading)));
       const reference = printServiceReference(asset, group.heading);
       if (reference) page.append(reference);
       page.append(printReportTable(report, group.rows, true));
       pages.append(page);
     }
-    await Promise.all(photos);
+    const unsuccessful = (await Promise.all(photos)).filter(success => !success).length;
+    if (unsuccessful && result === current) status.textContent = unsuccessful + ' report photo(s) could not be isolated and were left out.';
     return pages;
   }
 
@@ -976,7 +1039,8 @@
       const current = result;
       const objectUrls = [];
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 240000);
+      const priorStatus = status.textContent;
       let printable;
       printButtons.forEach(control => { control.disabled = true; });
       try {
@@ -985,6 +1049,7 @@
           : printCombined(current);
         await printable.querySelector('.report-print-logo')?.decode().catch(() => {});
         if (result !== current || !exportable()) return;
+        if (status.textContent.startsWith('Preparing report photos')) status.textContent = priorStatus;
         preview.append(printable);
         document.body.classList.add('printing-garage-report');
         window.print();
