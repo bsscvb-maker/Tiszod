@@ -533,9 +533,12 @@ const paths={
 'Bicycles':'<circle cx="5" cy="17" r="4"/><circle cx="19" cy="17" r="4"/><path d="m5 17 5-8 4 8 5-8M9 9h5M18 9h3"/>'
 };
 function icon(c){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[c]||paths[c==='Trucks & SUVs'?'Trucks':c==='Campers'?'RVs':c==='Off-Road'?'ATVs & Quads':c]||paths.Cars)+'</svg>'}
+function hasSavedSection(a){
+ try{return JSON.parse(a.reportNotes||'{}')?.sectionSetByUser===true}catch{return false}
+}
 function normalizeCategory(p){
  const source=String(p.category||'').toLowerCase(), name=clean([p.make,p.model,p.name].filter(Boolean).join(' '));
- if(p.category==='Unfiled')return 'Unfiled';
+ if(p.category==='Unfiled'||hasSavedSection(p))return p.category;
  if(categories.includes(p.category))return p.category; // The saved section takes priority over automatic guesses.
  // Identify distinctive models first, even when an old profile has a valid but incorrect section.
  if(/seadoo|jetski|personalwatercraft|yamaha.*(lst|waverunner|vx|fx)|kawasaki.*(jf650|jetski|stx)/.test(name)||/jet ski|jetski|personal watercraft/.test(source))return 'Personal Watercraft';
@@ -607,7 +610,7 @@ function listedCategory(a){const n=clean(a.make+' '+a.model);
 const assets=primary.concat(extras);
 for(const [i,item] of listed.entries())if(!deletedProfiles.some(p=>sameListedAsset(p,item))&&!assets.some(a=>sameListedAsset(a,item)))assets.push({...item,status:item.status||'Active',category:listedCategory(item),id:'f'+i});
 // Correct legacy category values for known vehicles before section filtering.
-for(const a of assets){const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
+for(const a of assets){if(a.category==='Unfiled'||hasSavedSection(a))continue;const n=clean([a.make,a.model].join(' '));if(/harleydavidson|roadglide|fltrk|flhtcui|electraglide|ultraclassic/.test(n))a.category='Motorcycles';else if(/ram3500|fordf150|fordf250|fordf350|chevrolets10|silverado|toyotatacoma/.test(n))a.category='Trucks';else if(/fordmustang|hondacivic/.test(n))a.category='Cars';}
 // Consolidate legacy sections while retaining their reading and engine semantics.
 for(const a of assets){a.readingCategory=a.category;a.category=vehicleSectionAliases[a.category]||a.category;}
 assets.splice(0,assets.length,...assets.filter(belongsHere));
@@ -948,7 +951,7 @@ async function fleetWriteRanges(updates,option='USER_ENTERED'){
  const changed=[...new Set(updates.map(u=>changedAsset(u.sheet,u.range)).filter(Boolean))];
  for(const a of changed)await ensureProfileRow(a);
  const now=new Date().toISOString();
- await thWriteRanges([...updates,...changed.map(a=>({sheet:'Portal Asset Profiles',range:'AD'+a.profileRow,values:[[now]]}))],option);
+ await thWriteRanges([...updates,...changed.map(a=>({sheet:'Portal Asset Profiles',range:'AD'+a.profileRow,values:[[now]]}))],option,true);
  for(const a of changed)a.lastUpdated=now;
  paintUpdated();
 }
@@ -981,7 +984,7 @@ function renderAsset(tab='details'){
  document.querySelector('[data-asset-tab="recommended"]').hidden=false;
  editing=false;
  document.getElementById('assetDetails').classList.remove('editing-specs');
- document.querySelector('.edit-bar').hidden=tab==='recommended'||tab==='doorjamb';
+ document.querySelector('.edit-bar').hidden=tab==='recommended'||tab==='doorjamb'||tab==='fuel';
  document.getElementById('toggleAssetEdit').textContent='Edit '+(tab==='details'?'details':tab);
  document.getElementById('toggleAssetEdit').setAttribute('aria-pressed','false');
  document.querySelector('.edit-bar span').textContent='Fields are locked until you choose Edit.';
@@ -1145,8 +1148,20 @@ document.getElementById('mileageForm').addEventListener('submit',async e=>{
 document.getElementById('assetPhoto').addEventListener('click',e=>{if(e.target.matches('img')&&asset)previewPhoto(asset,e.target.currentSrc||e.target.getAttribute('src'))});
 document.getElementById('closePhotoPreview').addEventListener('click',()=>document.getElementById('photoPreview').close());
 document.getElementById('photoPreview').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
-document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
+document.getElementById('toggleAssetEdit').addEventListener('click',async()=>{
  const tab=document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details';
+ if(editing&&tab==='details'){
+  const button=document.getElementById('toggleAssetEdit'),message=document.getElementById('assetEditStatus');
+  button.disabled=true;button.textContent='Saving…';message.classList.remove('error');
+  try{
+   if(asset.specSaveQueue)await asset.specSaveQueue;
+   for(const input of document.querySelectorAll('#assetFacts [data-asset-field]')){
+    if(!await saveAssetFact(input,asset)){button.textContent='Save changes';return}
+   }
+   message.textContent='Changes saved. License plate and vehicle details are up to date.';
+  }catch(error){message.textContent=error.message;message.classList.add('error');button.textContent='Save changes';return}
+  finally{button.disabled=false}
+ }
  editing=!editing;
  if(tab==='recommended')return;
  const panel=document.getElementById(({details:'assetDetails',mileage:'assetMileage',maintenance:'assetMaintenance'})[tab]);
@@ -1159,8 +1174,8 @@ document.getElementById('toggleAssetEdit').addEventListener('click',()=>{
  if(tab==='details')document.getElementById('assetStatusEdit').disabled=!editing;
  const button=document.getElementById('toggleAssetEdit');
  button.setAttribute('aria-pressed',String(editing));
- button.textContent=editing?'Finish editing':'Edit '+tab;
- document.querySelector('.edit-bar span').textContent=editing?'Changes save when you leave each field. Select Finish editing to lock them.':'Fields are locked until you choose Edit.';
+ button.textContent=editing?(tab==='details'?'Save changes':'Finish editing'):'Edit '+tab;
+ document.querySelector('.edit-bar span').textContent=editing?(tab==='details'?'Edit your details, then select Save changes.':'Changes save when you leave each field. Select Finish editing to lock them.'):'Fields are locked until you choose Edit.';
  if(!editing&&tab!=='details')renderAsset(tab);
 });
 document.querySelector('.asset-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-asset-tab]');if(b)renderAsset(b.dataset.assetTab)});
@@ -1174,7 +1189,7 @@ document.getElementById('quickSpecGroups').addEventListener('change',async e=>{
   await ensureProfileRow(a);
   const record=specRecord(a);record.specs[key]=next;
   const saved=JSON.stringify(record);
-  await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,saved);
+  await fleetWriteCell('Portal Asset Profiles','AB'+a.profileRow,saved,'RAW');
   a.reportNotes=saved;
  });
  a.specSaveQueue=saving;
@@ -1232,34 +1247,22 @@ document.getElementById('assetFacts').addEventListener('change',async e=>{
 const profileColumns={year:'C',make:'D',model:'E',color:'F',vin:'L',tag:'N',renewal:'O',engine:'P',transmission:'Q',tireSize:'R',vehicleNumber:'M',ownershipStart:'AC',reportOdometer:'K'};
 const registryColumns={year:'B',make:'C',model:'D',vin:'E',tag:'F'};
 async function saveAssetStatus(a,next){
- const prior=a.status||'Active';
  await ensureProfileRow(a);
- await fleetWriteCell('Portal Asset Profiles','I'+a.profileRow,next);
- try{
-  if(a.registryRow)await fleetWriteCell('Vehicle Registry','G'+a.registryRow,next);
-  const [profile,registry]=await Promise.all([
-   thValues("'Portal Asset Profiles'!I"+a.profileRow),
-   a.registryRow?thValues("'Vehicle Registry'!G"+a.registryRow):Promise.resolve([[next]])
-  ]);
-  if(profile[0]?.[0]!==next||registry[0]?.[0]!==next)throw new Error('The status was not confirmed in the workbook. Try again.');
- }catch(error){
-  // Do not leave the two source tabs disagreeing after a partial save.
-  await Promise.allSettled([
-   fleetWriteCell('Portal Asset Profiles','I'+a.profileRow,prior),
-   a.registryRow?fleetWriteCell('Vehicle Registry','G'+a.registryRow,prior):Promise.resolve()
-  ]);
-  throw error;
- }
+ const updates=[{sheet:'Portal Asset Profiles',range:'I'+a.profileRow,values:[[next]]}];
+ if(a.registryRow)updates.push({sheet:'Vehicle Registry',range:'G'+a.registryRow,values:[[next]]});
+ await fleetWriteRanges(updates,'RAW');
  a.status=next;
 }
 async function ensureProfileRow(a){
  if(a.profileRow)return a.profileRow;
+ if(a.profileCreation)return a.profileCreation;
  const row=Array(29).fill('');
  Object.assign(row,{1:[a.year,a.make,a.model].filter(Boolean).join(' '),2:a.year,3:a.make,4:a.model,5:a.color,7:a.category,8:a.status,11:a.vin,12:a.vehicleNumber,13:a.tag,14:a.renewal,15:a.engine,16:a.transmission,17:a.tireSize,23:a.photoFileId,24:a.photo,27:a.reportNotes||''});
- a.profileRow=await fleetAppendRow('Portal Asset Profiles',row);
- if(!a.profileRow)throw new Error('Could not locate the new profile row.');
- a.lastUpdated=new Date().toISOString();
- return a.profileRow;
+ a.profileCreation=fleetAppendRow('Portal Asset Profiles',row).then(profileRow=>{
+  if(!profileRow)throw new Error('Could not locate the new profile row.');
+  a.profileRow=profileRow;a.lastUpdated=new Date().toISOString();return profileRow;
+ });
+ try{return await a.profileCreation}finally{delete a.profileCreation}
 }
 async function moveAssetTo(next){
  const a=asset, message=document.getElementById('categoryMoveStatus');
@@ -1267,9 +1270,18 @@ async function moveAssetTo(next){
  const controls=[document.getElementById('moveAssetCategory'),document.getElementById('moveAssetButton'),document.getElementById('unfileAssetButton')];
  controls.forEach(control=>control.disabled=true);message.textContent='Saving section…';
  try{
-  await ensureProfileRow(a);
-  await fleetWriteCell('Portal Asset Profiles','H'+a.profileRow,next);
-  a.category=next;
+  const saving=(a.specSaveQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+   await ensureProfileRow(a);
+   const record=specRecord(a);record.sectionSetByUser=true;
+   const notes=JSON.stringify(record);
+   await fleetWriteRanges([
+    {sheet:'Portal Asset Profiles',range:'H'+a.profileRow,values:[[next]]},
+    {sheet:'Portal Asset Profiles',range:'AB'+a.profileRow,values:[[notes]]}
+   ],'RAW');
+   a.reportNotes=notes;a.category=next;
+  });
+  a.specSaveQueue=saving;
+  await saving;
   renderCategories();renderCategory();renderAsset();
   document.getElementById('categoryMoveStatus').textContent=next==='Unfiled'?'Removed from the section. Find it in Unfiled.':'Moved to '+next+'.';
  }catch(error){message.textContent=error.message}
@@ -1344,13 +1356,13 @@ document.getElementById('assetFacts').addEventListener('click',async e=>{
  }catch(error){message.textContent=error.message;message.classList.add('error')}
  finally{button.disabled=false;input.disabled=false;picker.disabled=false}
 });
-document.getElementById('assetFacts').addEventListener('change',async e=>{
-
- const input=e.target.closest('[data-asset-field]');if(!input||!asset||!editing)return;
- const a=asset,key=input.dataset.assetField,prior=key==='currentReading'?mileageFor(a)?.currentMileage??'':a[key]??'',message=document.getElementById('assetEditStatus');let next=input.value.trim();
+document.getElementById('assetFacts').addEventListener('input',e=>{if(editing&&e.target.matches('[data-asset-field]'))document.getElementById('assetEditStatus').textContent='Unsaved changes — select Save changes.'});
+async function saveAssetFact(input,a){
+ const key=input.dataset.assetField,prior=key==='currentReading'?mileageFor(a)?.currentMileage??'':key==='reportOdometer'?mileageFor(a)?.startMileage??a[key]??'':a[key]??'',message=document.getElementById('assetEditStatus');let next=input.value.trim();
+ if(next===String(prior))return true;
  if(key==='currentReading'){
-  const value=Number(next),m=mileageFor(a),start=Number(String(m?.startMileage??a.reportOdometer??'').replace(/,/g,''));
-  if(next===''||!Number.isFinite(value)||value<0||!Number.isFinite(start)||value<start){input.value=prior;message.textContent='Enter a current reading at least as high as the starting reading.';message.classList.add('error');return}
+  const value=Number(next.replace(/,/g,'')),m=mileageFor(a),start=Number(String(m?.startMileage??a.reportOdometer??'').replace(/,/g,''));
+  if(next===''||!Number.isFinite(value)||value<0||!Number.isFinite(start)||value<start){input.value=prior;message.textContent='Enter a current reading at least as high as the starting reading.';message.classList.add('error');return false}
   input.disabled=true;message.textContent='Saving current reading…';message.classList.remove('error');
   try{
    if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value);m.currentMileage=value;m.addedMileage=value-start}
@@ -1360,37 +1372,39 @@ document.getElementById('assetFacts').addEventListener('change',async e=>{
     const created={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date,startMileage:start,currentMileage:value,addedMileage:value-start};mileage.push(created);
     for(const [col,formula] of [['G','=F'+row+'-E'+row],['H','=TODAY()-D'+row],['I','=H'+row+'/30.4375'],['J','=IFERROR(G'+row+'/I'+row+',0)'],['K','=J'+row+'*12']])await fleetWriteCell('Mileage-2025.10.16',col+row,formula);
    }
-   renderCategory();message.textContent='Current reading saved.';
-  }catch(error){input.value=prior;message.textContent=error.message;message.classList.add('error')}
+   renderCategory();message.textContent='Current reading saved.';return true;
+  }catch(error){message.textContent=error.message;message.classList.add('error');return false}
   finally{input.disabled=false}
   return;
  }
  if(key==='reportOdometer'){
-  const value=Number(next),m=mileageFor(a),current=Number(String(m?.currentMileage??'').replace(/,/g,''));
-  if(next===''||!Number.isFinite(value)||value<0||(m&&Number.isFinite(current)&&value>current)){input.value=prior;message.textContent='Enter a starting reading no higher than the current reading.';message.classList.add('error');return}
+  const value=Number(next.replace(/,/g,'')),m=mileageFor(a),current=Number(String(m?.currentMileage??'').replace(/,/g,''));
+  if(next===''||!Number.isFinite(value)||value<0||(m&&Number.isFinite(current)&&value>current)){input.value=prior;message.textContent='Enter a starting reading no higher than the current reading.';message.classList.add('error');return false}
   next=String(value);
  }
- if(key==='ownershipStart'&&next){const date=ownershipDate(next);if(!date||date>new Date()){input.value=ownershipText(prior);message.textContent='Use a valid past date, like 01/25/2021.';message.classList.add('error');return}next=ownershipIso(date);input.value=ownershipText(next)}
- if(key==='ownershipStart')e.currentTarget.querySelector('[data-ownership-picker]').value=next;
+ if(key==='ownershipStart'&&next){const date=ownershipDate(next);if(!date||date>new Date()){input.value=ownershipText(prior);message.textContent='Use a valid past date, like 01/25/2021.';message.classList.add('error');return false}next=ownershipIso(date);input.value=ownershipText(next)}
+ if(key==='ownershipStart')document.getElementById('assetFacts').querySelector('[data-ownership-picker]').value=next;
  input.disabled=true;message.textContent='Saving '+input.getAttribute('aria-label')+'…';message.classList.remove('error');
  try{
   await ensureProfileRow(a);
-  if(key==='reportOdometer'){
-   const m=mileageFor(a);if(m)await fleetWriteCell('Mileage-2025.10.16','E'+m.sheetRow,next);
-  }
-  try{await fleetWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,next)}catch(error){if(key==='reportOdometer'){const m=mileageFor(a);if(m)await fleetWriteCell('Mileage-2025.10.16','E'+m.sheetRow,m.startMileage)}throw error}
-  if(key==='reportOdometer'){const m=mileageFor(a);if(m){m.startMileage=next;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(next)}}
-  if(a.registryRow&&registryColumns[key]){try{await fleetWriteCell('Vehicle Registry',registryColumns[key]+a.registryRow,next)}catch(error){await fleetWriteCell('Portal Asset Profiles',profileColumns[key]+a.profileRow,prior).catch(()=>{});throw error}}
+  const m=key==='reportOdometer'?mileageFor(a):null;
+  const updates=[{sheet:'Portal Asset Profiles',range:profileColumns[key]+a.profileRow,values:[[next]]}];
+  if(m)updates.push({sheet:'Mileage-2025.10.16',range:'E'+m.sheetRow,values:[[Number(next)]]});
+  if(a.registryRow&&registryColumns[key])updates.push({sheet:'Vehicle Registry',range:registryColumns[key]+a.registryRow,values:[[next]]});
+  await fleetWriteRanges(updates,'RAW');
+  if(m){m.startMileage=Number(next);m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(next)}
   a[key]=next;
-  message.textContent='Saved to your workbook.';
+  message.textContent='Saved to your workbook.';renderCategory();
   if(['year','make','model','ownershipStart','reportOdometer'].includes(key)){document.getElementById('assetTitle').textContent=[a.year,a.make,a.model].filter(Boolean).join(' ');renderCategory()}
-   if(['engine','vin'].includes(key))document.getElementById('photoSummary').innerHTML=[['Engine',a.engine],['HIN / serial number',a.vin]].filter(([label])=>label!=='Engine'||showCardEngine(a)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
- }catch(error){input.value=key==='ownershipStart'?ownershipText(prior):prior;message.textContent=error.message;message.classList.add('error')}
+   if(['engine','vin'].includes(key))document.getElementById('photoSummary').innerHTML=[['Engine',a.engine],['VIN / serial number',a.vin]].filter(([label])=>label!=='Engine'||showCardEngine(a)).map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value||'Not recorded')+'</strong></div>').join('');
+  return true;
+ }catch(error){message.textContent=error.message;message.classList.add('error');return false}
  finally{input.disabled=false}
-});
+}
 document.getElementById('assetMileage').addEventListener('change',async e=>{
  const input=e.target.closest('[data-mileage-col]');if(!input||!editing)return;
- const m=mileageFor(asset),old=m?.[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[input.dataset.mileageCol]];
+ const a=asset;
+ const m=mileageFor(a),old=m?.[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[input.dataset.mileageCol]];
  const col=input.dataset.mileageCol;
  if(col==='E'||col==='F'){
   const value=Number(input.value.replace(/,/g,'')),other=Number(String(col==='E'?m?.currentMileage:m?.startMileage).replace(/,/g,''));
@@ -1398,7 +1412,18 @@ document.getElementById('assetMileage').addEventListener('change',async e=>{
   input.value=String(value);
  }
  input.disabled=true;
- try{await fleetWriteCell('Mileage-2025.10.16',col+input.dataset.mileageRow,input.value);if(col==='E'){try{await ensureProfileRow(asset);await fleetWriteCell('Portal Asset Profiles','K'+asset.profileRow,input.value)}catch(error){await fleetWriteCell('Mileage-2025.10.16','E'+input.dataset.mileageRow,old);throw error}asset.reportOdometer=input.value}if(m){m[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[col]]=input.value;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(String(m.startMileage).replace(/,/g,''))}document.getElementById('assetEditStatus').textContent='Reading saved to your workbook.';renderCategory();}
+ try{
+  const value=col==='D'?input.value:Number(input.value);
+  const updates=[{sheet:'Mileage-2025.10.16',range:col+input.dataset.mileageRow,values:[[value]]}];
+  if(col==='E'){
+   await ensureProfileRow(a);
+   updates.push({sheet:'Portal Asset Profiles',range:'K'+a.profileRow,values:[[value]]});
+  }
+  await fleetWriteRanges(updates,col==='D'?'USER_ENTERED':'RAW');
+  if(col==='E')a.reportOdometer=value;
+  if(m){m[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[col]]=value;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(String(m.startMileage).replace(/,/g,''))}
+  document.getElementById('assetEditStatus').textContent='Reading saved and verified in your workbook.';renderCategory();
+ }
  catch(error){input.value=old??'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
  finally{input.disabled=false}
 });
@@ -1639,5 +1664,5 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261029-desktop2"></script><script src="vehicle-documents.js?v=20261107-lazy"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261102-updated"></script><script src="fuel-capture.js?v=20261118-garage-save"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261118-garage-save"></script></body></html>
 

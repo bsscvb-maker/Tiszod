@@ -11,7 +11,7 @@ function reportSpecificationSeed(a){
 function specRecord(a){
  const raw=String(a.reportNotes||'');let saved={};
  if(raw.trim().startsWith('{'))try{const parsed=JSON.parse(raw);if(parsed&&parsed.type==='vehicle-quick-specs-v1')saved=parsed}catch(_){}
- const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...partsAndFluidsDefaults(a),...(saved.specs||{}),...window.TiszodSmallEngineOil?.defaults(a)};
+ const specs={...(isLegend(a)?legendSpecs:{}),...reportSpecificationSeed(a),...partsAndFluidsDefaults(a),...window.TiszodSmallEngineOil?.defaults(a),...(saved.specs||{})};
  if(!saved.specs){const psi=raw.match(/Tire\s*PSI\s*[:\s]*([\d.]+)\s*(?:lbs?|psi)?/i),lug=raw.match(/Lug\s*Nut\s*Size\s*[:\s]*([\d.]+)\s*mm/i);if(psi)specs.tirePsi=psi[1]+' PSI';if(lug)specs.lugNutSize=lug[1]+' mm'}
  return {...saved,type:'vehicle-quick-specs-v1',specs,legacyNotes:saved.legacyNotes??(saved.type?'':raw)};
 }

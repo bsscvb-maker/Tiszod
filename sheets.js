@@ -218,7 +218,7 @@ async function thWriteCell(sheet, cell, value) {
   }
 }
 // Send related cell/range updates in one request instead of one per cell.
-async function thWriteRanges(updates, valueInputOption = 'USER_ENTERED') {
+async function thWriteRanges(updates, valueInputOption = 'USER_ENTERED', verify = false) {
   if (!updates.length) return;
   if (!thToken) throw new Error('Sign in again to save changes.');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
@@ -226,11 +226,23 @@ async function thWriteRanges(updates, valueInputOption = 'USER_ENTERED') {
     const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values:batchUpdate',{
       method:'POST',signal:controller.signal,
       headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
-      body:JSON.stringify({valueInputOption,data:updates.map(({sheet,range,values})=>({range:"'"+sheet.replace(/'/g,"''")+"'!"+range,majorDimension:'ROWS',values}))})
+      body:JSON.stringify({valueInputOption,includeValuesInResponse:verify,responseValueRenderOption:'FORMULA',data:updates.map(({sheet,range,values})=>({range:"'"+sheet.replace(/'/g,"''")+"'!"+range,majorDimension:'ROWS',values}))})
     });
     if (!response.ok) {
       const detail=await response.json().catch(()=>({}));
       throw new Error(response.status===401?'Your sign-in expired. Sign out and sign in again.':(detail.error?.message||'Could not save the updates.'));
+    }
+    if (verify) {
+      const {responses} = await response.json();
+      if (responses?.length !== updates.length || updates.some(({values}, index) => {
+        const written = responses[index]?.updatedData?.values || [];
+        return values.some((row, r) => row.some((value, c) => {
+          if (value == null) return false;
+          const actual = written[r]?.[c] ?? '';
+          return valueInputOption === 'RAW' || value === '' || typeof value !== 'string' || value.startsWith('=')
+            ? actual !== value : actual === '';
+        }));
+      })) throw new Error('Google Sheets did not confirm all changes. Reload and check the saved values before retrying.');
     }
   } catch(error) {
     if(error.name==='AbortError')throw new Error('The workbook took too long to respond. Refresh and check the saved service before trying again.');

@@ -46,7 +46,7 @@
   return out;
  }
  function defaults(a){const d=service(a);return d?{oilType:d.oilType,oilFilter:d.oilFilter,oilCapacity:d.oilCapacity,oilSource:d.source||'',oilServiceNote:d.note||''}:{};}
- function card(a,esc){const d=service(a);if(!d)return '';const muted=['sold','inactive','totaled','repo'].includes(clean(a.status))||d.oilType==='None';return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Oil and filter">'+[['Oil',d.oilType],['Oil Filter',d.oilFilter],['Oil Amount',d.oilCapacity]].map(([k,v])=>'<div><b>'+esc(k)+':</b> <b class="oil-value">'+esc(v)+'</b></div>').join('')+'</aside>';}
+ function card(a,esc,specs){const base=service(a);if(!base)return '';const d={...base,...specs};const muted=['sold','inactive','totaled','repo'].includes(clean(a.status))||d.oilType==='None';return '<aside class="card-oil'+(muted?' is-muted':'')+'" aria-label="Oil and filter">'+[['Oil',d.oilType],['Oil Filter',d.oilFilter],['Oil Amount',d.oilCapacity]].map(([k,v])=>'<div><b>'+esc(k)+':</b> <b class="oil-value">'+esc(v)+'</b></div>').join('')+'</aside>';}
 
  window.TiszodSmallEngineOil={service,defaults,card};
 })();

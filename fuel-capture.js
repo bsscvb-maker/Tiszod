@@ -97,7 +97,8 @@
    try{localStorage.setItem('tiszod-last-fuel-vehicle',v.key);localStorage.setItem('tiszod-last-fuel-account',entry.account);}catch{}
    message.textContent='Saved. Mileage, fuel history, and Finance are updated.';
    document.dispatchEvent(new CustomEvent('tiszod-fuel-saved',{detail:result.entry}));
-   await onSaved?.(result.entry);dialog.close();
+   dialog.close();
+   try{await onSaved?.(result.entry)}catch{message.textContent='Fuel was saved. Refresh Garage to reload its display.';}
    const toast=document.createElement('p');toast.className='fuel-toast';toast.setAttribute('role','status');toast.textContent='✓ Fuel saved · Mileage, fuel history & Finance updated';document.body.append(toast);setTimeout(()=>toast.remove(),6500);
   }catch(error){message.textContent=error.message;if(error.uncertain)dialog.dataset.uncertain='true';}
   finally{busy=false;for(const input of form.querySelectorAll('input,select,button'))input.disabled=false;field('vehicle').disabled=!!currentEntry.editing;$('fuelSave').disabled=dialog.dataset.uncertain==='true';}
