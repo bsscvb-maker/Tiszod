@@ -50,12 +50,27 @@
  body.printing-garage-report .report-preview:has(.report-recall-row) :is(th,td):last-child{display:none}
 }
 
-.report-print-pages{display:none}
+.report-print-pages,.report-print-letterhead{display:none}
 @media print{
  body.printing-garage-report .report-preview:has(.report-print-pages) .report-table{display:none}
  body.printing-garage-report .report-print-pages{display:block}
  .report-print-asset + .report-print-asset{break-before:page}
- .report-print-asset h4{break-after:avoid;margin:0 0 8pt}
+ .report-print-asset h4{break-after:avoid;margin:0 0 3pt}
+ .report-print-asset .report-print-subtitle{break-after:avoid;margin:0 0 8pt;color:#334155;font-size:10pt}
  .report-print-asset table{width:100%;border-collapse:collapse}
  .report-print-asset thead{display:table-header-group}
+}
+
+@media print{
+ body.printing-garage-report .report-print-letterhead{
+  display:grid;grid-template-columns:1.6in minmax(0,1fr) 1.6in;align-items:center;
+  column-gap:8pt;margin:0 0 12pt;break-after:avoid;
+ }
+ .report-print-logo{grid-column:1;width:.6in;height:.6in;object-fit:contain}
+ .report-print-letterhead .report-print-brand{
+  grid-column:2;text-align:center;margin:0;color:#182336;
+  font:700 19pt/1.15 Georgia,serif;
+ }
+ .report-print-photo{grid-column:3;justify-self:end;width:1.6in;height:.9in;object-fit:contain;object-position:right center}
+ body.printing-garage-report .report-preview:has(.report-print-pages)>h3{display:none}
 }

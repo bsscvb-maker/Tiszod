@@ -316,7 +316,7 @@
       name: 'Garage inventory', filters: ['collection', 'state'],
       headers: ['Asset', 'Collection', 'Category', 'Status', 'VIN / serial', 'Plate / tag'],
       read: async () => inventory(await thFleetData()).map(item => ({
-        collection: collection(item), state: item.status || 'Unspecified',
+        item, collection: collection(item), state: item.status || 'Unspecified',
         cells: [title(item), collection(item), item.category, item.status || 'Unspecified', item.vin, item.tag]
       }))
     },
@@ -353,7 +353,7 @@
       name: 'Recorded registration renewals', filters: ['collection', 'from', 'to'],
       headers: ['Renewal date', 'Asset', 'Collection', 'Plate / tag', 'Status'],
       read: async () => inventory(await thFleetData()).filter(item => item.renewal).map(item => ({
-        date: dateKey(item.renewal), collection: collection(item),
+        item, date: dateKey(item.renewal), collection: collection(item),
         cells: [item.renewal, title(item), collection(item), item.tag, item.status]
       }))
     },
@@ -817,7 +817,51 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  function printSectionsByAsset({report, rows}) {
+  function printLetterhead(byAsset) {
+    const header = node('div', '', 'report-print-letterhead');
+    const logo = node('img', '', 'report-print-logo');
+    logo.src = document.querySelector('.th-auth-logo').src;
+    logo.alt = 'TisZod';
+    header.append(logo);
+    if (byAsset) header.append(node('p', 'TisZod’s Garage', 'report-print-brand'));
+    return header;
+  }
+
+  function printPhotoAsset(group, assets) {
+    if (group.item?.photoFileId || group.item?.photo) return group.item;
+    const label = clean(group.name);
+    if (!label) return null;
+    const matches = assets.filter(item => (!group.year || String(item.year) === String(group.year)) &&
+      [title(item), item.name, item.model, [item.make, item.model].join(' '),
+        serviceAssetKey(item), scheduleKeyFor(item)].some(name => clean(name) === label));
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  async function addPrintPhoto(header, asset, objectUrls, signal) {
+    if (!asset?.photo && !asset?.photoFileId) return;
+    const photo = node('img', '', 'report-print-photo');
+    photo.alt = '';
+    photo.referrerPolicy = 'no-referrer';
+    let src = asset.photo;
+    if (asset.photoFileId) {
+      try {
+        const response = await thDriveFetch(asset.photoFileId, {signal});
+        if (response.ok) {
+          src = URL.createObjectURL(await response.blob());
+          objectUrls.push(src);
+        }
+      } catch {}
+    }
+    if (!src || signal.aborted) return;
+    photo.src = src;
+    const loaded = await Promise.race([
+      photo.decode().then(() => true, () => false),
+      new Promise(resolve => signal.addEventListener('abort', () => resolve(false), {once:true}))
+    ]);
+    if (loaded) header.append(photo);
+  }
+
+  async function printSectionsByAsset({report, rows}, objectUrls, signal) {
     const assetColumn = report.headers.findIndex(heading => heading.startsWith('Asset'));
     const yearColumn = report.headers.indexOf('Model year');
     const groups = new Map();
@@ -826,13 +870,18 @@
       const year = yearColumn < 0 ? '' : row.cells[yearColumn];
       const heading = [name, year].filter(Boolean).join(' · ') || 'Unspecified asset';
       const key = row.item ? assetKey(row.item) : heading;
-      if (!groups.has(key)) groups.set(key, {heading, rows: []});
+      if (!groups.has(key)) groups.set(key, {heading, name, year, item:row.item, rows: []});
       groups.get(key).rows.push(row);
     }
     const pages = node('div', '', 'report-print-pages');
+    const needsLookup = [...groups.values()].some(group => !group.item);
+    const assets = needsLookup ? await thFleetData().then(inventory).catch(() => []) : [];
+    const photos = [];
     for (const group of groups.values()) {
       const page = node('section', '', 'report-print-asset');
-      page.append(node('h4', group.heading));
+      const header = printLetterhead(true);
+      photos.push(addPrintPhoto(header, printPhotoAsset(group, assets), objectUrls, signal));
+      page.append(header, node('h4', group.heading), node('p', report.name, 'report-print-subtitle'));
       const printTable = node('table');
       const head = printTable.createTHead().insertRow();
       for (const heading of report.headers) {
@@ -848,18 +897,37 @@
       page.append(printTable);
       pages.append(page);
     }
+    await Promise.all(photos);
     return pages;
   }
 
-  for (const button of exportMenu.querySelectorAll('[data-print]')) {
-    button.addEventListener('click', () => {
+  const printButtons = [...exportMenu.querySelectorAll('[data-print]')];
+  for (const button of printButtons) {
+    button.addEventListener('click', async () => {
       if (!exportable()) return;
-      const pages = button.dataset.print === 'by-asset' ? printSectionsByAsset(result) : null;
-      if (pages) preview.append(pages);
-      document.body.classList.add('printing-garage-report');
-      try { window.print(); } finally {
+      const current = result;
+      const objectUrls = [];
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      let printable;
+      printButtons.forEach(control => { control.disabled = true; });
+      try {
+        printable = button.dataset.print === 'by-asset'
+          ? await printSectionsByAsset(current, objectUrls, controller.signal)
+          : printLetterhead(false);
+        await printable.querySelector('.report-print-logo')?.decode().catch(() => {});
+        if (result !== current || !exportable()) return;
+        if (button.dataset.print === 'by-asset') preview.append(printable);
+        else preview.prepend(printable);
+        document.body.classList.add('printing-garage-report');
+        window.print();
+      } finally {
+        clearTimeout(timeout);
+        controller.abort();
         document.body.classList.remove('printing-garage-report');
-        pages?.remove();
+        printable?.remove();
+        objectUrls.forEach(url => URL.revokeObjectURL(url));
+        printButtons.forEach(control => { control.disabled = false; });
       }
     });
   }
