@@ -931,9 +931,17 @@ function refillCardValue(value){
  const leading=fluid.match(/^([\d.]+(?:[–-][\d.]+)?\s*(?:fl\s*oz|oz|qts?|gal|L))\s+(.+)$/i);
  if(leading)return leading[2]+' · '+leading[1].replace(/^(.*\s)oz$/i,'$1fl oz');
  return fluid.split(/\s*·\s*/).map(part=>part
-  .replace(/\s*[\d.]+\s*(?:qt|gal|fl oz|L)\s*(?:\([^)]*\)\s*)?(?:dry\s*(?:fill|capacity)?|reference capacity|system(?: capacity)?)\b.*/i,'Refill varies')
-  .replace(/\s+(?:drain and refill|service fill|change)$/i,'')
- ).join(' · ');
+  .replace(/\s*[\d.]+\s*(?:qt|gal|fl oz|L)\s*(?:\([^)]*\)\s*)?(?:dry\s*(?:fill|capacity)?|reference capacity|system(?: capacity)?)\b.*/i,'')
+  .replace(/\b(?:refill varies|service quantity needs verification|amount not recorded)\s*(?=\/|$)/gi,'')
+  .replace(/\s+(?:after overflow fill|drain and refill|service fill|change)$/i,'')
+  .replace(/\b(\d+)\.0+\s+(qt|gal|fl oz)\b/gi,'$1 $2')
+  .trim()
+ ).filter(Boolean).join(' · ').replace(/ · \//g,' /')||'Not recorded';
+}
+function coolantCardValue(value){
+ const type=String(value||'').split(/\s*·\s*/)[0].trim();
+ if(!type||/^(?:confirm|refill varies)/i.test(type))return 'Not recorded';
+ return type.replace(/^Not applicable\s*\(.*\)$/i,'Not applicable');
 }
 function cardService(a){
  const deadlines=deadlineCard(a);
@@ -946,10 +954,10 @@ function cardService(a){
  const parts=[['Oil filter',filterLabel(specs.oilFilter)],['Engine air filter',filterLabel(specs.airFilter)]];
  if(kind!=='Motorcycles')parts.push(['Cabin air filter',filterLabel(specs.cabinAirFilter)]);
  if(specs.drainPlugOring)parts.push(['Drain plug O-rings',filterLabel(specs.drainPlugOring)]);
- const fluids=[['Engine oil',[specs.oilType,specs.oilCapacity].filter(Boolean).join(' · ')||'Not recorded']];
+ const fluids=[['Engine oil',refillCardValue([specs.oilType,specs.oilCapacity].filter(Boolean).join(' · '))]];
  if(specs.primaryFluid||kind==='Motorcycles')fluids.push(['Primary oil',refillCardValue(specs.primaryFluid)]);
  if(specs.transmissionFluid||hasEngine)fluids.push(['Transmission',refillCardValue(specs.transmissionFluid)]);
- if(specs.engineCoolant||hasEngine)fluids.push(['Coolant',refillCardValue(specs.engineCoolant)]);
+ if(specs.engineCoolant||hasEngine)fluids.push(['Coolant',coolantCardValue(specs.engineCoolant)]);
  const partsPanel=hasEngine?servicePanel('Parts',parts,'card-air-filters'):'';
  const fluidPanel=smallEngine||((hasEngine||specs.oilType||specs.engineCoolant||specs.transmissionFluid)?servicePanel('Drain & refill',fluids):'');
  return '<div class="card-service">'+deadlines+partsPanel+fluidPanel+'</div>';
