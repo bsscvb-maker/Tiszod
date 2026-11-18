@@ -838,9 +838,12 @@
     return matches.length === 1 ? matches[0] : null;
   }
 
-  function printServiceReference(asset) {
-    if (!asset) return null;
-    const {specs} = window.TiszodVehicleSpecs.specRecord(asset);
+  function printServiceReference(asset, heading) {
+    const {specs} = asset ? window.TiszodVehicleSpecs.specRecord(asset) : {specs:{}};
+    const description = [heading, asset?.category].join(' ');
+    const group = asset ? collection(asset) : '';
+    const wheeled = ['Vehicles', 'Trailers', 'Off-Road'].includes(group) || Boolean(specs.wheelSize) ||
+      /tractor|(?:riding|zero.turn) mower|dump cart|golf cart|aerator|air compressor|pressure washer|generator|splitter|wheelbarrow|trailer|bicycle|scooter|moped|motorcycle|4runner|mustang|civic|fltrk|flhtcui/i.test(description);
     const pressure = value => {
       const text = String(value ?? '').trim();
       return /^\d+(?:\.\d+)?$/.test(text) ? text + ' PSI' : text;
@@ -852,7 +855,7 @@
       ? front + ' all tires'
       : [front && 'Front ' + front, rear && 'Rear ' + rear].filter(Boolean).join(' / ') || all;
     const fields = [
-      ['Tire pressure', tire],
+      ['PSI', tire || (wheeled ? 'Not recorded' : '')],
       ['Engine oil', [specs.oilCapacity, specs.oilType].filter(Boolean).join(' · ')],
       ['Oil filter', specs.oilFilter],
       ['Engine air filter', specs.airFilter],
@@ -957,7 +960,7 @@
       const asset = printPhotoAsset(group, assets) || group.item;
       photos.push(addPrintPhoto(header, asset, objectUrls, signal));
       page.append(header, node('h4', printAssetName(group.heading)));
-      const reference = printServiceReference(asset);
+      const reference = printServiceReference(asset, group.heading);
       if (reference) page.append(reference);
       page.append(printReportTable(report, group.rows, true));
       pages.append(page);
