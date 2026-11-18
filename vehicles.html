@@ -385,6 +385,34 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-photo [hidden] {
     grid-template-columns: minmax(0, 46%) minmax(0, 1fr) !important;
   }
 }
+</style><style>
+body[data-th-page="fleet"] #categoryView #assetGrid .card-service:has(.service-checklist) {
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) minmax(0, 1.2fr) !important;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .service-checklist h3 {
+  margin: 0 0 7px;
+  color: #f1f6ff;
+  font-size: 13px;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .service-checklist .service-entry {
+  line-height: 1.35;
+  margin-top: 6px !important;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .service-entry span {
+  display: block;
+  color: #b8cbe5;
+  font-size: 11px;
+}
+body[data-th-page="fleet"] #categoryView #assetGrid .service-entry b {
+  font-weight: 650;
+  color: #ffdc85;
+  overflow-wrap: break-word;
+}
+@media (max-width: 680px) {
+  body[data-th-page="fleet"] #categoryView #assetGrid .card-service:has(.service-checklist) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr)) !important;
+  }
+}
 </style></head>
 <body data-th-page="fleet"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>
@@ -528,7 +556,7 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-photo [hidden] {
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
 <dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script src="small-engine-oil.js?v=20261118-garage-save"></script>
-<script src="fleet-vehicle-specs.js?v=6"></script>
+<script src="fleet-vehicle-specs.js?v=7"></script>
 <script src="door-jamb.js?v=20261117-factory-colors4"></script>
 <script>
 function renderFleetPage(D,PORTAL) {
@@ -846,45 +874,38 @@ function deadlineCard(a){
   return '<div class="deadline-row" data-tone="'+(muted?'disabled':state.tone)+'" title="'+esc(d[k+'Source']||'Confirm the current due date or exemption.')+'"><b>'+heading+'</b>'+esc(text)+'</div>';
  }).join('')+'</aside>';
 }
-function serviceSpecRow(label,value){
- return '<div><b>'+esc(label)+':</b> <b class="oil-value">'+esc(value)+'</b></div>';
+function servicePanel(title,rows,extraClass=''){
+ return '<aside class="card-oil service-checklist '+extraClass+'" aria-label="'+esc(title)+'"><h3>'+esc(title)+'</h3>'+
+  rows.map(([label,value])=>'<div class="service-entry"><span>'+esc(label)+'</span><b>'+esc(value)+'</b></div>').join('')+'</aside>';
 }
-function fluidCardValue(value){
+function refillCardValue(value){
  const fluid=String(value||'').trim();
  if(!fluid)return 'Not recorded';
- if(/^(?:not applicable|confirm|not recorded)|needs verification/i.test(fluid))return fluid;
- // Older records may store the amount before the fluid name.
- const leading=fluid.match(/^([\d.]+(?:[–-][\d.]+)?\s*(?:fl\s*oz|oz|qts?|L))\s+(.+)$/i);
+ // Older saved specs sometimes put the amount first or include a full capacity.
+ const leading=fluid.match(/^([\d.]+(?:[–-][\d.]+)?\s*(?:fl\s*oz|oz|qts?|gal|L))\s+(.+)$/i);
  if(leading)return leading[2]+' · '+leading[1].replace(/^(.*\s)oz$/i,'$1fl oz');
- return /\d\s*(?:fl\s*oz|oz|qts?|liters?|litres?|L)\b/i.test(fluid)?fluid:fluid+' · amount not recorded';
-}
-function oilCard(a){
- const {specs}=specRecord(a);
- const smallEngine=window.TiszodSmallEngineOil.card(a,esc,specs);if(smallEngine)return smallEngine;
- if(!['active','managed','maintained'].includes(clean(a.status)))return '';
- const service=oilServiceFor(a);
- if(!service&&!specs.oilType&&!specs.oilCapacity&&!specs.oilFilter&&!specs.primaryFluid)return '';
- const filter=String(specs.oilFilter||'').trim();
- const brand=filter.match(/^(Harley-Davidson|H-D|FRAM|Motorcraft|Mopar|Honda|Toyota|ACDelco)\s+(.+)$/i);
- const manufacturer=brand?.[1].replace(/^Harley-Davidson$/i,'H-D')||'Not recorded';
- const rows=[['Manufacturer',manufacturer],['Oil Filter',brand?.[2]||filter||'Not recorded'],['Engine oil',specs.oilType||'Not recorded'],['Oil Amount',specs.oilCapacity||'Not recorded']];
- if(specs.primaryFluid||collectionType(a)==='Motorcycles')rows.push(['Primary oil',fluidCardValue(specs.primaryFluid)]);
- return '<aside class="card-oil" aria-label="Engine and primary oil specifications">'+rows.map(([label,value])=>serviceSpecRow(label,value)).join('')+'</aside>';
-}
-function filterCard(a){
- if(!['active','managed','maintained'].includes(clean(a.status)))return '';
- if(!showCardEngine(a)||/electric|watt/.test(clean(a.engine||'')))return '';
- const specs=specRecord(a).specs;
- const air=String(specs.airFilter||'').trim().replace(/^Harley-Davidson\s+/i,'H-D ')||'Not recorded';
- const cabin=String(specs.cabinAirFilter||'').trim()||((/motorcycle|minibike|quad|yard|tractor|equipment/.test(clean(a.category||'')))?'None':'Not recorded');
- const rows=[['Engine Air Filter',air],['Cabin Air Filter',cabin]];
- if(specs.transmissionFluid||['Cars','Trucks','SUVs','Trucks & SUVs','Vans','Classic','Motorcycles','Golf Carts','Off-Road'].includes(collectionType(a)))rows.push(['Transmission fluid',fluidCardValue(specs.transmissionFluid)]);
- if(specs.engineCoolant||['Cars','Trucks','SUVs','Trucks & SUVs','Vans','Classic','Motorcycles','Golf Carts','Off-Road'].includes(collectionType(a)))rows.push(['Coolant',fluidCardValue(specs.engineCoolant)]);
- return '<aside class="card-oil card-air-filters" aria-label="Air filters and fluids">'+rows.map(([label,value])=>serviceSpecRow(label,value)).join('')+'</aside>';
+ return fluid.split(/\s*·\s*/).map(part=>part
+  .replace(/\s*[\d.]+\s*(?:qt|gal|fl oz|L)\s*(?:\([^)]*\)\s*)?(?:dry\s*(?:fill|capacity)?|reference capacity|system(?: capacity)?)\b.*/i,'Refill varies')
+  .replace(/\s+(?:drain and refill|service fill|change)$/i,'')
+ ).join(' · ');
 }
 function cardService(a){
- const details=deadlineCard(a)+oilCard(a)+filterCard(a);
- return details?'<div class="card-service">'+details+'</div>':'';
+ const deadlines=deadlineCard(a);
+ if(!['active','managed','maintained'].includes(clean(a.status)))return '<div class="card-service">'+deadlines+'</div>';
+ const specs=specRecord(a).specs;
+ const smallEngine=window.TiszodSmallEngineOil.card(a,esc,specs);
+ const kind=collectionType(a);
+ const hasEngine=showCardEngine(a)&&!/electric|watt/.test(clean(a.engine||''));
+ const filterLabel=value=>String(value||'').trim().replace(/^Harley-Davidson\s+/i,'H-D ')||'Not recorded';
+ const parts=[['Oil filter',filterLabel(specs.oilFilter)],['Engine air filter',filterLabel(specs.airFilter)]];
+ if(kind!=='Motorcycles')parts.push(['Cabin air filter',filterLabel(specs.cabinAirFilter)]);
+ const fluids=[['Engine oil',[specs.oilType,specs.oilCapacity].filter(Boolean).join(' · ')||'Not recorded']];
+ if(specs.primaryFluid||kind==='Motorcycles')fluids.push(['Primary oil',refillCardValue(specs.primaryFluid)]);
+ if(specs.transmissionFluid||hasEngine)fluids.push(['Transmission',refillCardValue(specs.transmissionFluid)]);
+ if(specs.engineCoolant||hasEngine)fluids.push(['Coolant',refillCardValue(specs.engineCoolant)]);
+ const partsPanel=hasEngine?servicePanel('Parts',parts,'card-air-filters'):'';
+ const fluidPanel=smallEngine||((hasEngine||specs.oilType||specs.engineCoolant||specs.transmissionFluid)?servicePanel('Drain & refill',fluids):'');
+ return '<div class="card-service">'+deadlines+partsPanel+fluidPanel+'</div>';
 }
 const complianceDialog=document.createElement('dialog');complianceDialog.id='complianceDialog';document.body.append(complianceDialog);
 complianceDialog.innerHTML='<form><h2>Registration & state inspection</h2><p data-name></p>'+['registration','inspection'].map(k=>'<label>'+(k==='registration'?'Registration':'State inspection')+' status<select name="'+k+'Mode"><option value="dated">Due date</option><option value="unknown">Date needs confirmation</option><option value="permanent">Permanent</option><option value="exempt">Exempt</option><option value="not-required">Not required</option></select></label><label>Due date<input type="date" name="'+k+'Due"></label><label>Last performed<input type="date" name="'+k+'Last"></label>').join('')+'<p id="complianceMessage" role="status"></p><button type="submit">Save dates</button><button type="button" data-cancel>Cancel</button></form>';
