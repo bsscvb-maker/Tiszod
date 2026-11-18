@@ -32,7 +32,7 @@ const cardOilSpecs={
  '2008chrysleraspen':['5W-20','6 qt (4.7L) / 7 qt (5.7L)','Mopar 5281090']
 };
 const motorcycleOilSpecs={
- '1HD1FCW14YY615621':['H-D 360 20W-50','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','20W-50 · 32 fl oz (dry capacity)'],
+ '1HD1FCW14YY615621':['H-D 360 20W-50','3.5 qt','Harley-Davidson 63798-99B (chrome)','75W-90 gear oil · 20–24 fl oz','H-D Formula+ (62600004) · 32 fl oz'],
  '1HD1KZF15PB653889':['H-D SYN-BLEND 15W-50 · 62600151','4.75 qt','Harley-Davidson 62700296A (black)','H-D Formula+ (62600004) · 28 fl oz','H-D Formula+ (62600004) · 30 fl oz']
 };
 function oilServiceFor(a){
@@ -50,53 +50,53 @@ function oilServiceFor(a){
 function transmissionAndCoolantDefaults(a,model){
  const transmission=clean(a.transmission);
  if(model.startsWith('2020toyota4runner'))return {
-  transmissionFluid:'Toyota Genuine ATF WS · 11.3 qt reference capacity',
-  engineCoolant:'Toyota Super Long Life Coolant · 11.1 qt system'
+  transmissionFluid:'Toyota ATF WS (00289-ATFWS) · 1.8 qt after overflow fill',
+  engineCoolant:'Toyota Super Long Life (00272-SLLC2) · Refill varies'
  };
  if(model.startsWith('2004fordmustang'))return {
   transmissionFluid:/manual|t5/.test(transmission)?'Motorcraft MERCON ATF (original spec) · 2.8 qt refill':
-   /automatic|4r7/.test(transmission)?'Motorcraft MERCON V ATF · 13.9 qt dry capacity':
-   'Confirm gearbox: automatic uses MERCON V (13.9 qt dry); manual originally used MERCON (2.8 qt refill)',
-  engineCoolant:'Motorcraft Premium Gold · 11.8 qt system (V6)'
+   /automatic|4r7/.test(transmission)?'Motorcraft MERCON V · Refill varies':
+   'Auto: MERCON V · Refill varies / Manual: MERCON · 2.8 qt',
+  engineCoolant:'Motorcraft Gold 50/50 (VC-7DIL-B) · Refill varies'
  };
  if(model.startsWith('2019ram3500')){
   const aisin=/aisin|as69rc/.test(transmission),rfe=transmission.includes('68rfe');
   return {
-   transmissionFluid:aisin?'Mopar ASRC ATF · 7.2 qt service fill':rfe?'Mopar ATF+4 · 5.5 qt 4×2 / 6.5 qt 4×4 service fill':
+   transmissionFluid:aisin?'Mopar ASRC ATF (05189966AB) · 7.2 qt':rfe?'Mopar ATF+4 (68218057AB) · 5.5 qt 4×2 / 6.5 qt 4×4':
     'Confirm gearbox: 68RFE uses ATF+4 (5.5 qt 4×2 / 6.5 qt 4×4); AS69RC uses ASRC ATF (7.2 qt service fill)',
-   engineCoolant:'Mopar 10-year OAT · '+(aisin?'22.5 qt system':rfe?'22.0 qt system':'22.0 qt (68RFE) / 22.5 qt (AS69RC) system')
+   engineCoolant:'Mopar OAT 50/50 (68163849AB) · Refill varies'
   };
  }
  if(model.startsWith('2012hondacivic'))return {
   transmissionFluid:/manual/.test(transmission)?'Honda MTF · 1.5 qt (1.8L) / 2.0 qt (Si 2.4L) change':
-   /automatic/.test(transmission)?'Honda ATF DW-1 · 2.5 qt change':
+   /automatic/.test(transmission)?'Honda ATF DW-1 (08200-9008) · 2.5 qt':
    'Automatic: Honda DW-1 · 2.5 qt change. Manual: Honda MTF · 1.5 qt (1.8L) / 2.0 qt (Si 2.4L) change',
-  engineCoolant:'Honda Type 2 50/50 · 1.45 gal change incl. reserve (1.8L)'
+  engineCoolant:'Honda Type 2 50/50 (OL999-9001) · 1.45 gal incl. reserve (1.8L)'
  };
  if(model.startsWith('2016buickenclave'))return {
   transmissionFluid:'DEXRON-VI ATF · 4.2–6.3 qt drain and refill',
-  engineCoolant:'DEX-COOL 50/50 · 11.9 qt system'
+  engineCoolant:'DEX-COOL 50/50 · Refill varies'
  };
  if(model.startsWith('2008chrysleraspen'))return {
   transmissionFluid:'Mopar ATF+4 · service quantity needs verification',
-  engineCoolant:'Mopar 5-year HOAT · '+(clean(a.engine).includes('47l')?'14.2 qt system':clean(a.engine).includes('57l')?'16.6 qt system':'14.2 qt (4.7L) / 16.6 qt (5.7L) system')
+  engineCoolant:'Mopar 5-year HOAT · Refill varies'
  };
  if(model.startsWith('1999chevrolettahoe'))return {
   transmissionFluid:'DEXRON-III (original spec) · service quantity needs verification',
-  engineCoolant:'DEX-COOL 50/50 · 17.5 qt (5.7L) / 20 qt (5.7L with rear heat) system'
+  engineCoolant:'DEX-COOL 50/50 · Refill varies'
  };
  if(model.startsWith('1998toyotatacoma'))return {
   transmissionFluid:/manual/.test(transmission)?'75W-90 API GL-4 or GL-5 · 2.3–2.7 qt by configuration':
    /automatic/.test(transmission)?'DEXRON II/III ATF (original spec) · 1.7–2.5 qt drain and refill by configuration':
    'Automatic: DEXRON II/III (1.7–2.5 qt drain and refill). Manual: 75W-90 GL-4 or GL-5 (2.3–2.7 qt). Confirm configuration',
-  engineCoolant:'Ethylene glycol coolant 50/50 · 8.2–10.7 qt system by configuration'
+  engineCoolant:'Ethylene glycol 50/50 · Refill varies'
  };
  if(model.startsWith('1977fordf150'))return {
   transmissionFluid:'Confirm installed gearbox before selecting fluid or amount',
   engineCoolant:'Confirm installed cooling system and existing coolant type'
  };
  const vin=String(a.vin||'').trim().toUpperCase();
- if(vin==='1HD1KZF15PB653889')return {engineCoolant:'H-D Extended Life Antifreeze & Coolant · approx. 0.8 qt system'};
+ if(vin==='1HD1KZF15PB653889')return {engineCoolant:'H-D Extended Life (99822-02A) · Refill varies'};
  if(vin==='1HD1FCW14YY615621')return {engineCoolant:'Not applicable (air-cooled)'};
  if(model.startsWith('2003harleydavidsonroadglide'))return {
   transmissionFluid:'H-D transmission lubricant · 20–24 fl oz change',
