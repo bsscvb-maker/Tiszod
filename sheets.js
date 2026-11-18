@@ -25,10 +25,11 @@ function thClearSession() {
   sessionStorage.removeItem('tiszod-vehicle-annual-usage-v1');
 }
 
-function thSignOut() {
+async function thSignOut() {
   // Sign out of the portal without revoking the user's Google consent grant.
   thClearSession();
-  location.reload();
+  try { await window.caches?.delete('tiszod-private-vehicle-thumbnails-v1'); }
+  finally { location.reload(); }
 }
 
 
