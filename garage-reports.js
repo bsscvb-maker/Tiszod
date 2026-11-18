@@ -861,6 +861,41 @@
     if (loaded) header.append(photo);
   }
 
+  const printAssetName = name => String(name ?? '').replace(/\bHarley[ -]+Davidson\b/gi, 'H-D');
+
+  function printReportTable(report, rows, omitAsset = false) {
+    const printTable = node('table');
+    const head = printTable.createTHead().insertRow();
+    const columns = report.headers.flatMap((heading, index) => {
+      const asset = heading.startsWith('Asset');
+      if (heading === 'Review date' || (asset && omitAsset)) return [];
+      const compact = asset || /date|reading|mileage|last service|last recorded|renewal date/i.test(heading);
+      const th = node('th', heading, compact ? 'report-print-nowrap' : '');
+      th.scope = 'col';
+      head.append(th);
+      return [{index, asset, compact}];
+    });
+    const body = printTable.createTBody();
+    for (const row of rows) {
+      const tr = body.insertRow();
+      for (const {index, asset, compact} of columns) {
+        const value = row.cells[index];
+        tr.append(node('td', asset ? printAssetName(value) : String(value ?? ''), compact ? 'report-print-nowrap' : ''));
+      }
+    }
+    return printTable;
+  }
+
+  function printCombined({report, rows}) {
+    const pages = node('div', '', 'report-print-pages');
+    const page = node('section', '', 'report-print-asset');
+    page.append(printLetterhead(false));
+    if (report !== reports.attention) page.append(node('h4', report.name));
+    page.append(printReportTable(report, rows));
+    pages.append(page);
+    return pages;
+  }
+
   async function printSectionsByAsset({report, rows}, objectUrls, signal) {
     const assetColumn = report.headers.findIndex(heading => heading.startsWith('Asset'));
     const yearColumn = report.headers.indexOf('Model year');
@@ -881,20 +916,7 @@
       const page = node('section', '', 'report-print-asset');
       const header = printLetterhead(true);
       photos.push(addPrintPhoto(header, printPhotoAsset(group, assets), objectUrls, signal));
-      page.append(header, node('h4', group.heading), node('p', report.name, 'report-print-subtitle'));
-      const printTable = node('table');
-      const head = printTable.createTHead().insertRow();
-      for (const heading of report.headers) {
-        const th = node('th', heading);
-        th.scope = 'col';
-        head.append(th);
-      }
-      const body = printTable.createTBody();
-      for (const row of group.rows) {
-        const tr = body.insertRow();
-        for (const value of row.cells) tr.append(node('td', String(value ?? '')));
-      }
-      page.append(printTable);
+      page.append(header, node('h4', printAssetName(group.heading)), printReportTable(report, group.rows, true));
       pages.append(page);
     }
     await Promise.all(photos);
@@ -914,11 +936,10 @@
       try {
         printable = button.dataset.print === 'by-asset'
           ? await printSectionsByAsset(current, objectUrls, controller.signal)
-          : printLetterhead(false);
+          : printCombined(current);
         await printable.querySelector('.report-print-logo')?.decode().catch(() => {});
         if (result !== current || !exportable()) return;
-        if (button.dataset.print === 'by-asset') preview.append(printable);
-        else preview.prepend(printable);
+        preview.append(printable);
         document.body.classList.add('printing-garage-report');
         window.print();
       } finally {
