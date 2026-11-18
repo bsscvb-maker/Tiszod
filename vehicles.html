@@ -916,6 +916,42 @@ let category='',asset=null,status='current',yearOrder='usage',editing=false,vehi
 const currentAsset=()=>asset;
 const vehicleDocuments=window.TiszodVehicleDocuments.create({assets,getAsset:currentAsset,filingShortcut:true,deferLoad:true,onChange:async changed=>{for(const a of changed)await touchAsset(a)}});
 let photoObserver;
+const vehiclePhotoCacheName='tiszod-private-vehicle-thumbnails-v1';
+function vehiclePhotoCacheKey(fileId){
+ return new URL('./.vehicle-thumbnail/'+encodeURIComponent(fileId),location.href).href;
+}
+async function vehicleCardPhoto(a){
+ if(a.photoObjectUrl)return a.photoObjectUrl;
+ const fileId=a.photoFileId;
+ if(a.cardThumbnail?.fileId===fileId)return a.cardThumbnail.url;
+ a.cardThumbnailLoad ||= (async()=>{
+  const key=vehiclePhotoCacheKey(fileId);
+  const cache=window.caches&&await caches.open(vehiclePhotoCacheName).catch(()=>null);
+  const cached=await cache?.match(key).catch(()=>null);
+  if(cached){
+   const url=URL.createObjectURL(await cached.blob());
+   if(a.photoFileId===fileId)a.cardThumbnail={fileId,url};
+   return url;
+  }
+  const original=await assetPhoto(a);
+  if(!cache)return original;
+  try{
+   const image=await createImageBitmap(await (await fetch(original)).blob());
+   const scale=Math.min(1,800/Math.max(image.width,image.height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(image.width*scale));
+   canvas.height=Math.max(1,Math.round(image.height*scale));
+   canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+   image.close();
+   const thumbnail=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.88));
+   if(thumbnail&&thAuthorized()&&a.photoFileId===fileId){
+    await cache.put(key,new Response(thumbnail,{headers:{'Content-Type':thumbnail.type}}));
+   }
+  }catch(_){/* The original remains usable when thumbnail storage is unavailable. */}
+  return original;
+ })().finally(()=>{a.cardThumbnailLoad=null});
+ return a.cardThumbnailLoad;
+}
 function assetPhoto(a){
  if(a.photoObjectUrl)return Promise.resolve(a.photoObjectUrl);
  a.photoLoading ||= thPhotoObjectUrl(a.photoFileId).then(url=>(a.photoObjectUrl=url)).finally(()=>{a.photoLoading=null});
@@ -975,7 +1011,7 @@ function renderCategory(){
  document.getElementById('assetGrid').innerHTML=shown.length?shown.map(a=>{
   const m=mileageFor(a),s=clean(a.status),added=cardNumber(m?Number((Number(m.currentMileage)-Number(m.startMileage)).toFixed(3)):null),title=[a.year,a.make,a.model].filter(Boolean).join(' ');
   const override=cardPhotoOverride(a);
-  const photo=a.photoObjectUrl||(!a.photoFileId&&a.photo)||override||'';
+  const photo=a.photoObjectUrl||(a.cardThumbnail?.fileId===a.photoFileId&&a.cardThumbnail?.url)||(!a.photoFileId&&a.photo)||override||'';
   const keepFraming=/^1977fordf150|buickenclave/.test(clean(title));
   const placeholder='<span class="category-icon" aria-hidden="true"'+(photo?' hidden':'')+'>'+icon(a.category)+'</span>';
   const picture=photo||a.photoFileId?'<button type="button" class="card-photo'+(keepFraming?' card-photo--edge-to-edge':'')+'" data-preview="'+esc(a.id)+'" aria-label="Enlarge photo of '+esc(title)+'"'+(!photo?' disabled':'')+'>'+placeholder+'<img'+(photo?' src="'+esc(photo)+'"':' hidden')+' decoding="async" alt="" referrerpolicy="no-referrer" onerror="this.hidden=true;this.previousElementSibling.hidden=false;this.parentElement.disabled=true"></button>':'<span class="card-photo">'+placeholder+'</span>';
@@ -997,7 +1033,9 @@ function renderCategory(){
   </article>`;
  }).join(''):'<div class="asset-note">No items match these filters.</div>';
  const loadCardPhoto=a=>{
-  assetPhoto(a).then(src=>{
+  const fileId=a.photoFileId;
+  vehicleCardPhoto(a).then(src=>{
+   if(a.photoFileId!==fileId)return;
    const card=[...document.querySelectorAll('#assetGrid [data-asset]')].find(el=>el.dataset.asset===a.id);
    const img=card?.querySelector('.card-photo img');
    if(img){
@@ -1208,7 +1246,11 @@ document.getElementById('assetGrid').addEventListener('change',async e=>{
  catch(error){input.value=prior;const message=document.createElement('span');message.className='card-status-error';message.setAttribute('role','alert');message.textContent=error.message||'Could not save status.';input.parentElement.append(message)}
  finally{input.disabled=false}
 });
-document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview),img=preview.querySelector('img');if(a&&img&&!img.hidden)previewPhoto(a,img.currentSrc||img.getAttribute('src'));return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
+document.getElementById('assetGrid').addEventListener('click',e=>{const preview=e.target.closest('[data-preview]'),open=e.target.closest('[data-open-asset]'),update=e.target.closest('[data-mileage-asset]');if(preview){const a=assets.find(x=>x.id===preview.dataset.preview),img=preview.querySelector('img');if(a&&img&&!img.hidden){
+ const displayed=img.currentSrc||img.getAttribute('src');
+ if(displayed===a.cardThumbnail?.url&&a.photoFileId)assetPhoto(a).then(src=>previewPhoto(a,src)).catch(()=>previewPhoto(a,displayed));
+ else previewPhoto(a,displayed);
+ }return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
 let mileageTarget=null;
  document.querySelector('#mileageForm [name="mode"]').addEventListener('change',e=>{
   const hours=usesHours(mileageTarget),adding=e.target.value==='add';
@@ -1721,7 +1763,7 @@ document.getElementById('assetPhotoInput').addEventListener('change',async e=>{
  const file=e.target.files?.[0];if(!file||!asset)return;const current=asset;
  const statusEl=document.getElementById('photoUploadStatus'),label=document.querySelector('.photo-upload');
  label.style.pointerEvents='none';statusEl.textContent='Uploading photo…';
- try {const url=await thUploadAssetPhoto(file,current);await touchAsset(current);current.photo=url;current.photoObjectUrl=URL.createObjectURL(file);renderAsset();renderCategory();document.getElementById('photoUploadStatus').textContent='Photo saved to this item.'}
+ try {const url=await thUploadAssetPhoto(file,current);await touchAsset(current);current.photo=url;if(current.cardThumbnail){URL.revokeObjectURL(current.cardThumbnail.url);current.cardThumbnail=null}current.photoObjectUrl=URL.createObjectURL(file);renderAsset();renderCategory();document.getElementById('photoUploadStatus').textContent='Photo saved to this item.'}
  catch(error){statusEl.textContent=error.message}
  finally {label.style.pointerEvents='';e.target.value=''}
 });
@@ -1777,7 +1819,7 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261109-mpg-auto"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261117-open-ranges"></script><script src="fuel-capture.js?v=20261118-garage-save"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261118-garage-save"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261109-mpg-auto"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261117-open-ranges"></script><script src="fuel-capture.js?v=20261118-garage-save"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261118-vehicle-photo-cache"></script></body></html>
 
 
 
