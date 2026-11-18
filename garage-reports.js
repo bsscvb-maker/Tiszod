@@ -194,10 +194,11 @@
     const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
     return [fields.year, fields.month, fields.day].join('-');
   }
-  function statusFor(days, reached) {
-    if (reached || (days !== null && days < 0)) return ['late', reached ? 'Reading reached' : 'Overdue'];
-    if (days === 0) return ['soon', 'Due today'];
-    if (days !== null) return [days <= 30 ? 'soon' : 'ok', 'Due in ' + days + ' days'];
+  function statusFor(days, readingDifference = null) {
+    if ((days !== null && days < 0) || readingDifference > 0) return ['late', 'Overdue'];
+    if (days === 0) return ['ok', 'Due today'];
+    if (readingDifference === 0) return ['ok', 'Due at current reading'];
+    if (days !== null) return [days <= 30 ? 'soon' : 'later', 'Due in ' + days + ' days'];
     return ['unknown', 'Needs confirmation'];
   }
   function rangeIncludes(date, config) {
@@ -251,7 +252,7 @@
           if (config.type === 'gaps') {
             if (!renewal.date) rows.push({...common, cells:[name, group, label + ' due date missing', 'Check the current document']});
           } else if (!renewal.date || rangeIncludes(renewal.date, config)) {
-            const [tone, state] = statusFor(renewal.date ? daysBetween(config.now, renewal.date) : null, false);
+            const [tone, state] = statusFor(renewal.date ? daysBetween(config.now, renewal.date) : null);
             rows.push({...common, date:renewal.date, tone, cells:[name, label, renewal.last, renewal.date, state]});
           }
         }
@@ -274,8 +275,8 @@
         const key = taskKey(item, task);
         const deferred = deferrals[key];
         const days = date ? daysBetween(config.now, date) : null;
-        const [tone, state] = statusFor(days, reached);
-        const reasons = [date && (!reached || rangeIncludes(date, config)) ? statusFor(days, false)[1] : '', reached ? 'Due by ' + taskUnit : '',
+        const [tone, state] = statusFor(days, comparable && target !== null ? reading - target : null);
+        const reasons = [date && (!reached || rangeIncludes(date, config)) ? statusFor(days)[1] : '', reached ? (reading > target ? 'Overdue by ' : 'Due at current ') + taskUnit : '',
           target !== null && (stale || !comparable) ? 'Needs a current reading' : ''].filter(Boolean);
         if (config.type === 'deferred') {
           if (deferred) rows.push({...common, key, task, date:deferred.date, tone:deferred.date <= config.now ? 'soon' : 'ok',
@@ -624,7 +625,7 @@
   }
   function renderSummary(report, rows) {
     if (report === reports.attention || report === reports.renewals) {
-      const counts = [['late','Overdue / reading reached'],['soon','Due within 30 days'],['ok','Later in range'],['unknown','Needs confirmation']];
+      const counts = [['late','Overdue'],['soon','Due within 30 days'],['ok','Due now'],['later','Later in range'],['unknown','Needs confirmation']];
       for (const [tone, label] of counts) {
         const item = node('div', '', 'report-metric');
         item.dataset.tone = tone;
@@ -776,7 +777,7 @@
       if (!thAuthorized()) throw Object.assign(new Error('Your sign-in expired. Sign in and run the report again.'), {status: 401});
       rows.sort((a, b) => report === reports.history || report === reports.fuel
         ? (b.date || '').localeCompare(a.date || '')
-        : (({late:0, soon:1, ok:2, unknown:3})[a.tone] ?? 4) - (({late:0, soon:1, ok:2, unknown:3})[b.tone] ?? 4)
+        : (({late:0, ok:1, soon:2, later:3, unknown:4})[a.tone] ?? 4) - (({late:0, ok:1, soon:2, later:3, unknown:4})[b.tone] ?? 4)
           || (a.date || '9999').localeCompare(b.date || '9999') || String(a.cells[0]).localeCompare(String(b.cells[0])));
       status.textContent = rows.length ? rows.length + (rows.length === 1 ? ' record' : ' records') + ' found.' : 'No records match these filters.';
       if (!rows.length && report === reports.attention)
@@ -837,13 +838,44 @@
     return matches.length === 1 ? matches[0] : null;
   }
 
+  function printServiceReference(asset) {
+    if (!asset) return null;
+    const {specs} = window.TiszodVehicleSpecs.specRecord(asset);
+    const pressure = value => {
+      const text = String(value ?? '').trim();
+      return /^\d+(?:\.\d+)?$/.test(text) ? text + ' PSI' : text;
+    };
+    const front = pressure(specs.frontTirePsi);
+    const rear = pressure(specs.rearTirePsi);
+    const all = pressure(specs.tirePsi);
+    const tire = front && rear && front.toLowerCase() === rear.toLowerCase()
+      ? front + ' all tires'
+      : [front && 'Front ' + front, rear && 'Rear ' + rear].filter(Boolean).join(' / ') || all;
+    const fields = [
+      ['Tire pressure', tire],
+      ['Engine oil', [specs.oilCapacity, specs.oilType].filter(Boolean).join(' · ')],
+      ['Oil filter', specs.oilFilter],
+      ['Engine air filter', specs.airFilter],
+      ['Cabin air filter', specs.cabinAirFilter],
+    ].filter(([, value]) => String(value ?? '').trim());
+    if (!fields.length) return null;
+    const reference = node('dl', '', 'report-print-specs');
+    for (const [label, value] of fields) {
+      const field = node('div');
+      field.append(node('dt', label), node('dd', String(value)));
+      reference.append(field);
+    }
+    return reference;
+  }
+
   async function addPrintPhoto(header, asset, objectUrls, signal) {
     if (!asset?.photo && !asset?.photoFileId) return;
     const photo = node('img', '', 'report-print-photo');
     photo.alt = '';
     photo.referrerPolicy = 'no-referrer';
-    let src = asset.photo;
-    if (asset.photoFileId) {
+    const cutout = window.TiszodEquipmentCutouts?.[clean(asset.make + ' ' + asset.model)];
+    let src = cutout || asset.photo;
+    if (!cutout && asset.photoFileId) {
       try {
         const response = await thDriveFetch(asset.photoFileId, {signal});
         if (response.ok) {
@@ -878,6 +910,7 @@
     const body = printTable.createTBody();
     for (const row of rows) {
       const tr = body.insertRow();
+      if (row.tone) tr.dataset.tone = row.tone;
       for (const {index, asset, compact} of columns) {
         const value = row.cells[index];
         tr.append(node('td', asset ? printAssetName(value) : String(value ?? ''), compact ? 'report-print-nowrap' : ''));
@@ -915,8 +948,12 @@
     for (const group of groups.values()) {
       const page = node('section', '', 'report-print-asset');
       const header = printLetterhead(true);
-      photos.push(addPrintPhoto(header, printPhotoAsset(group, assets), objectUrls, signal));
-      page.append(header, node('h4', printAssetName(group.heading)), printReportTable(report, group.rows, true));
+      const asset = printPhotoAsset(group, assets) || group.item;
+      photos.push(addPrintPhoto(header, asset, objectUrls, signal));
+      page.append(header, node('h4', printAssetName(group.heading)));
+      const reference = printServiceReference(asset);
+      if (reference) page.append(reference);
+      page.append(printReportTable(report, group.rows, true));
       pages.append(page);
     }
     await Promise.all(photos);

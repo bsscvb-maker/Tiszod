@@ -68,3 +68,22 @@
  }
  .report-print-photo{grid-column:3;justify-self:end;width:2.05in;height:1.12in;object-fit:contain;object-position:right center}
 }
+
+@media print{
+ .report-print-specs{
+  display:flex;flex-wrap:wrap;gap:6pt 14pt;margin:0 0 9pt;padding:6pt 8pt;
+  border:1px solid #bcc6d3;break-inside:avoid;break-after:avoid;
+ }
+ .report-print-specs div{flex:0 1 auto}
+ .report-print-specs dt{color:#41516a;font-size:7pt;font-weight:700;letter-spacing:.035em;text-transform:uppercase}
+ .report-print-specs dd{margin:1pt 0 0;color:#182336;font-size:8.5pt;font-weight:600}
+}
+
+@media print{
+ .report-print-asset tr[data-tone=late]{--report-status-color:#a41624}
+ .report-print-asset tr[data-tone=soon]{--report-status-color:#8a6200}
+ .report-print-asset tr[data-tone=ok]{--report-status-color:#12603d}
+ body.printing-garage-report .report-print-asset tr[data-tone] td:first-child{
+  border-left:3pt solid var(--report-status-color,#bbb);color:var(--report-status-color,#000);font-weight:650;
+ }
+}
