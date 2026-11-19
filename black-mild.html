@@ -39,14 +39,8 @@
 </style><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"></head><body data-th-page="black-mild"><div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in">Sign in with Google</button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div><div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark"><img src="tiszod-crest.svg" alt="" style="width:100%"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Overview</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Dashboard</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link" href="finance.html"><span class="th-nav-icon">$</span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon">F</span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon">V</span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon">E</span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon">W</span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon">P</span>Pets</a><a class="th-nav-link active" aria-current="page" href="black-mild.html"><span class="th-nav-icon" style="font-family:Georgia,serif;color:#f0d18d">B&amp;M</span>Black &amp; Mild</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav></aside><div class="th-app-main"><header class="th-app-topbar"><div><strong>Black &amp; Mild</strong><small>Aroma Rewards</small></div></header><main class="th-page-content bm-main portal-section"><a class="bm-official-link" href="https://www.blackandmild.com/" target="_blank" rel="noopener noreferrer" aria-label="Open official Black and Mild website in a new tab">↗ Black &amp; Mild Website</a><header class="bm-head portal-section-hero"><div><span class="bm-kicker portal-section-kicker">TISZOD / REWARDS WORKSHEET</span><h1 class="bm-logo">Black<i>&amp;</i>Mild</h1><p>A single place for every Aroma Rewards code. Click a status button to switch between blue Submitted and green Not Submitted.</p></div></header><div class="bm-counts"><div class="bm-count"><strong id="unredeemedCount">0</strong><span>Not submitted</span></div><div class="bm-count bm-count-submitted"><strong id="submittedCount">0</strong><span>Submitted codes</span></div><div class="bm-count bm-balance"><label for="currentBalance">Current balance</label><div class="bm-balance-controls"><input id="currentBalance" type="number" min="0" step="1" value="20" inputmode="numeric"></div><p id="balanceMessage" class="bm-balance-message" hidden role="status" aria-live="polite"></p></div></div><details class="bm-months">
  <summary><span class="bm-month-grid" id="monthlySummary"></span><span class="bm-history-toggle">Monthly history</span><span class="bm-undated-summary" id="undatedSummary"></span></summary>
  <div class="bm-month-body"><table><thead><tr><th scope="col">Month</th><th scope="col">Submitted</th></tr></thead><tbody id="monthlyHistory"></tbody></table><p id="undatedSubmissions"></p></div>
-</details><section class="bm-sheet" aria-labelledby="codeListTitle"><div class="bm-sheet-head"><div><h2 id="codeListTitle">Aroma Rewards Code List</h2><p>Updated whenever you send me another code.</p></div><span class="bm-live">Current list</span></div><div class="bm-table-wrap"><table class="bm-table"><thead><tr><th>#</th><th>Date added</th><th>Rewards code</th><th>Label</th><th>Status</th></tr></thead><tbody id="codeRows"></tbody></table></div></section><p class="bm-note">Use the copy icon beside a code to copy it without dashes. Click any status to change it. Changes are saved in this browser on this device.</p><p id="codeSaveMessage" class="bm-note" role="status" aria-live="polite"></p></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="black-mild-data.js?v=20261102-label-strips"></script><script>
-const rows=document.querySelector('#codeRows'),codes=[...(window.blackMildCodes||[])].sort((a,b)=>a.added.localeCompare(b.added)).reverse();
-const statusKey='tiszod.blackMild.statuses.v1';
-const rewardsStateKey='tiszod.blackMild.rewards.v2';
-let rewardsState=null;
-try{const value=JSON.parse(localStorage.getItem(rewardsStateKey)||'null');if(value&&value.statuses&&Number.isSafeInteger(value.balance)&&value.balance>=0)rewardsState=value;}catch(e){}
-let savedStatuses={};
-let submittedDates = rewardsState?.submittedDates || {};
+</details><section class="bm-sheet" aria-labelledby="codeListTitle"><div class="bm-sheet-head"><div><h2 id="codeListTitle">Aroma Rewards Code List</h2><p>Updated whenever you send me another code.</p></div><span class="bm-live">Current list</span></div><div class="bm-table-wrap"><table class="bm-table"><thead><tr><th>#</th><th>Date added</th><th>Rewards code</th><th>Label</th><th>Status</th></tr></thead><tbody id="codeRows"></tbody></table></div></section><p class="bm-note">Use the copy icon beside a code to copy it without dashes. Click any status to change it. Changes are saved in this browser on this device.</p><p id="codeSaveMessage" class="bm-note" role="status" aria-live="polite"></p></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script>
+const rows = document.querySelector('#codeRows'), codes = [];
 const monthlySummary = document.querySelector('#monthlySummary');
 const monthlyHistory = document.querySelector('#monthlyHistory');
 const undatedSubmissions = document.querySelector('#undatedSubmissions');
@@ -57,9 +51,8 @@ function submissionToday() {
  const parts = Object.fromEntries(easternDate.formatToParts(new Date()).map(({type,value}) => [type,value]));
  return parts.year + '-' + parts.month + '-' + parts.day;
 }
-function effectiveSubmissionDate({code, added}) {
- const saved = submittedDates[code];
- return /^\d{4}-\d{2}-\d{2}$/.test(saved) ? saved : added;
+function effectiveSubmissionDate({date, added}) {
+ return datePattern.test(date) ? date : added;
 }
 function renderMonthlySubmissions(submittedCodes) {
  const current = submissionToday().slice(0, 7);
@@ -96,15 +89,14 @@ function renderMonthlySubmissions(submittedCodes) {
   ? undated + ' submitted codes need a submission date. Add dates in the code list to include them in these totals.'
   : 'When a submission date is missing, the total uses the date added.';
 }
-try{savedStatuses=rewardsState?.statuses||JSON.parse(localStorage.getItem(statusKey)||'{}')||{};}catch(e){}
 function renderCodes(focusIndex){
  const currentMonth = submissionToday().slice(0, 7);
  rows.innerHTML=codes.map((item,index)=>{
- const submitted=(savedStatuses[item.code]||item.status)==='Submitted';
+ const submitted=item.status === 'Submitted';
  const inCurrentMonth = submitted && effectiveSubmissionDate(item)?.slice(0, 7) === currentMonth;
- return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td class="${inCurrentMonth ? 'bm-current-month' : ''}">${item.added}${inCurrentMonth ? '<small class="bm-current-month-label">Current month submission</small>' : ''}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${/^\d{4}-\d{2}-\d{2}$/.test(submittedDates[item.code]) ? submittedDates[item.code] : item.added}"></label>` : ''}</td></tr>`;
+ return `<tr class="${submitted?'bm-submitted':''}"><td class="bm-index">${codes.length-index}</td><td class="${inCurrentMonth ? 'bm-current-month' : ''}">${item.added}${inCurrentMonth ? '<small class="bm-current-month-label">Current month submission</small>' : ''}</td><td class="bm-code"><span data-code-text="${index}">${item.code}</span> <button type="button" data-copy-code="${index}" class="bm-copy" aria-label="Copy ${item.code} without dashes" title="Copy without dashes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button></td><td>${item.photo?`<a class="bm-label-link" href="${item.photo}" target="_blank" rel="noopener" aria-label="View source label for ${item.code}"><span class="bm-label">${item.code}</span></a>`:`<span class="bm-label">${item.code}</span>`}</td><td><button type="button" data-code-index="${index}" class="bm-status${submitted?' bm-status-submitted':''}" aria-pressed="${submitted}" aria-label="${item.code}: ${submitted?'Submitted. Click to mark not submitted':'Not Submitted. Click to mark submitted'}">${submitted?'Submitted':'Not Submitted'}</button>${submitted ? `<label class="bm-submit-date">Submitted on<input type="date" data-submit-date="${index}" max="${submissionToday()}" value="${effectiveSubmissionDate(item)}"></label>` : ''}</td></tr>`;
  }).join('');
- const submittedCodes=codes.filter(x=>(savedStatuses[x.code]||x.status)==='Submitted');
+ const submittedCodes=codes.filter(x=>x.status === 'Submitted');
  const submitted=submittedCodes.length;
  renderMonthlySubmissions(submittedCodes);
  document.querySelector('#submittedCount').textContent=submitted;
@@ -140,116 +132,183 @@ rows.addEventListener('click',async event=>{
   return;
  }
  const button=event.target.closest('button[data-code-index]');
- if(!button)return;
- const index=Number(button.dataset.codeIndex),item=codes[index];
- // Read the latest saved snapshot so open tabs share the same starting balance.
- const latest=readRewardsState();if(latest){savedStatuses=latest.statuses;currentBalance=latest.balance;}
- const wasSubmitted=(savedStatuses[item.code]||item.status)==='Submitted';
- const next={...savedStatuses,[item.code]:wasSubmitted?'Unredeemed':'Submitted'};
- const nextBalance=Math.max(0,currentBalance+(wasSubmitted?-1:1));
- const nextDates = {...(latest?.submittedDates || submittedDates)};
- if (wasSubmitted) delete nextDates[item.code];
- else nextDates[item.code] = submissionToday();
- try{persistRewardsState(next,nextBalance,nextDates);}
- catch(e){document.querySelector('#codeSaveMessage').textContent='Unable to save. Allow browser storage and try again.';return;}
- savedStatuses=next;submittedDates=nextDates;currentBalance=nextBalance;renderBalance();renderCodes(index);
- document.querySelector('#codeSaveMessage').textContent=item.code+' marked '+(next[item.code]==='Submitted'?'Submitted':'Not Submitted')+'. Saved.';
+ if (!button || !ready || saving) return;
+ const item = codes[Number(button.dataset.codeIndex)];
+ const next = item.status === 'Submitted' ? 'Unredeemed' : 'Submitted';
+ await saveRewards(saveMessage, ({entries}) => {
+  const latest = entries.find(entry => entry.code === item.code);
+  if (!latest) throw new Error('The code is no longer in the workbook.');
+  if (latest.status === next) return [];
+  return statusUpdates(latest, next, next === 'Submitted' ? submissionToday() : '');
+ }, item.code + ' marked ' + (next === 'Submitted' ? 'Submitted' : 'Not Submitted') + '. Saved.');
+ rows.querySelector('[data-code-index="' + codes.findIndex(entry => entry.code === item.code) + '"]')?.focus();
 });
+
+const rewardSheet = 'Portal Aroma Rewards';
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const codePattern = /^[A-Z0-9]{3}(?:-[A-Z0-9]{3}){3}$/;
+let ready = false;
+let saving = false;
+let currentBalance = 29;
+const balanceInput = document.getElementById('currentBalance');
+const balanceMessage = document.getElementById('balanceMessage');
+const saveMessage = document.getElementById('codeSaveMessage');
+const photos = new Map();
+
+async function readRewards() {
+ const values = await thValues("'Portal Aroma Rewards'!A2:H", 'UNFORMATTED_VALUE');
+ const entries = values.flatMap(([added, code, , status, photoId, date, savedAt], index) =>
+  datePattern.test(added) && codePattern.test(code)
+   ? [{added, code, status: status === 'Submitted' ? 'Submitted' : 'Unredeemed',
+       photoId, date, savedAt, row: index + 2}]
+   : []
+ );
+ const adjustment = values[0]?.[7];
+ return {entries, adjustment: Number.isSafeInteger(adjustment) ? adjustment : null};
+}
+
+function submittedCount(entries) {
+ return entries.filter(item => item.status === 'Submitted').length;
+}
+
+function renderRewards({entries, adjustment}) {
+ codes.splice(0, codes.length, ...entries.map(item => ({
+  ...item, photo: photos.get(item.photoId)
+ })).sort((a, b) => b.added.localeCompare(a.added)));
+ currentBalance = Math.max(0, (adjustment ?? 29) + submittedCount(entries));
+ balanceInput.value = currentBalance;
+ balanceInput.disabled = !ready;
+ renderCodes();
+}
+
+function statusUpdates(item, status, date) {
+ return [
+  {sheet: rewardSheet, range: 'D' + item.row, values: [[status]]},
+  {sheet: rewardSheet, range: 'F' + item.row + ':G' + item.row,
+   values: [[date, new Date().toISOString()]]}
+ ];
+}
+
+function balanceUpdate(adjustment) {
+ return {sheet: rewardSheet, range: 'H2', values: [[adjustment]]};
+}
+
+async function recoverBrowserSubmissions(state) {
+ let local;
+ try {
+  local = JSON.parse(localStorage.getItem('tiszod.blackMild.rewards.v2') || 'null') || {
+   statuses: JSON.parse(localStorage.getItem('tiszod.blackMild.statuses.v1') || '{}'),
+   balance: Number(localStorage.getItem('tiszod.blackMild.balance.v1') ?? NaN)
+  };
+ } catch { return state; }
+ const updates = [];
+ for (const item of state.entries) {
+  if (!item.savedAt && item.status === 'Unredeemed' && local.statuses?.[item.code] === 'Submitted') {
+   const date = local.submittedDates?.[item.code];
+   updates.push(...statusUpdates(item, 'Submitted', datePattern.test(date) ? date : ''));
+  }
+ }
+ if (state.adjustment === null && Number.isSafeInteger(local.balance) && local.balance >= 0) {
+  const knownCount = state.entries.filter(item =>
+   local.statuses?.[item.code] === 'Submitted').length;
+  updates.push(balanceUpdate(local.balance - knownCount));
+ }
+ if (!updates.length) return state;
+ await thWriteRanges(updates, 'RAW', true);
+ return readRewards();
+}
+
+async function saveRewards(message, update, success, onError) {
+ if (!ready || saving) return;
+ saving = true;
+ const controls = () => [balanceInput, ...rows.querySelectorAll('[data-code-index], [data-submit-date]')];
+ controls().forEach(control => { control.disabled = true; });
+ message.hidden = false;
+ message.textContent = 'Saving…';
+ let state;
+ try {
+  state = await readRewards();
+  const updates = update(state);
+  if (updates.length) await thWriteRanges(updates, 'RAW', true);
+  state = await readRewards();
+  if (thAuthorized()) renderRewards(state);
+  message.textContent = success;
+ } catch (error) {
+  try {
+   state = await readRewards();
+   if (thAuthorized()) renderRewards(state);
+  } catch { onError?.(); }
+  message.textContent = 'Could not confirm the save. ' + error.message;
+ } finally {
+  saving = false;
+  controls().forEach(control => { control.disabled = !ready; });
+ }
+}
 
 rows.addEventListener('change', event => {
  const input = event.target.closest('input[data-submit-date]');
  if (!input) return;
  const item = codes[Number(input.dataset.submitDate)];
- const latest = readRewardsState();
- const statuses = latest?.statuses || savedStatuses;
- if ((statuses[item.code] || item.status) !== 'Submitted') {
-  savedStatuses = statuses;
-  renderCodes();
-  return;
- }
- const message = document.querySelector('#codeSaveMessage');
  if (!input.validity.valid) {
   input.reportValidity();
   return;
  }
- const dates = {...(latest?.submittedDates || submittedDates)};
- if (input.value) dates[item.code] = input.value;
- else delete dates[item.code];
- const balance = latest?.balance ?? currentBalance;
- try {
-  persistRewardsState(statuses, balance, dates);
- } catch {
-  input.value = submittedDates[item.code] || item.added;
-  message.textContent = 'Unable to save the submission date.';
+ const date = input.value;
+ saveRewards(saveMessage, ({entries}) => {
+  const latest = entries.find(entry => entry.code === item.code);
+  if (latest?.status !== 'Submitted') throw new Error('The code is no longer marked Submitted.');
+  return statusUpdates(latest, 'Submitted', date);
+ }, 'Submission date saved.', () => { input.value = item.date || item.added; });
+});
+
+balanceInput.addEventListener('change', () => {
+ const value = balanceInput.value;
+ if (value.trim() === '' || !Number.isSafeInteger(Number(value)) || Number(value) < 0) {
+  balanceMessage.hidden = false;
+  balanceMessage.textContent = 'Enter a whole number of zero or more.';
+  balanceInput.value = currentBalance;
   return;
  }
- savedStatuses = statuses;
- submittedDates = dates;
- currentBalance = balance;
- renderBalance();
- renderCodes();
- rows.querySelector(`[data-submit-date="${input.dataset.submitDate}"]`)?.focus();
- message.textContent = 'Submission date saved.';
+ saveRewards(balanceMessage, ({entries}) => [balanceUpdate(Number(value) - submittedCount(entries))],
+  'Balance saved.', () => { balanceInput.value = currentBalance; });
 });
-renderCodes();
+balanceInput.addEventListener('keydown', event => {
+ if (event.key === 'Enter') { event.preventDefault(); balanceInput.blur(); }
+});
+balanceInput.disabled = true;
 
-const balanceKey='tiszod.blackMild.balance.v1';
-const balanceInput=document.getElementById('currentBalance');
-const balanceMessage=document.getElementById('balanceMessage');
-let currentBalance=29;
-function validBalance(value){return String(value).trim()!==''&&Number.isSafeInteger(Number(value))&&Number(value)>=0;}
-try{const saved=localStorage.getItem(balanceKey);if(rewardsState)currentBalance=rewardsState.balance;else if(saved!==null&&validBalance(saved))currentBalance=Number(saved);}catch(e){}
-function readRewardsState(){try{const value=JSON.parse(localStorage.getItem(rewardsStateKey)||'null');return value&&value.statuses&&validBalance(value.balance)?value:null;}catch(e){return null;}}
-function persistRewardsState(statuses,balance,dates){localStorage.setItem(rewardsStateKey,JSON.stringify({statuses,balance,submittedDates:dates}));}
-function renderBalance(){balanceInput.value=currentBalance;}
-function saveBalance(value){
- if(!validBalance(value)){balanceMessage.hidden=false;balanceMessage.textContent='Enter a whole number of zero or more.';renderBalance();return;}
- const next=Number(value);
- try{const latest=readRewardsState();if(latest){savedStatuses=latest.statuses;submittedDates=latest.submittedDates||{};}persistRewardsState(savedStatuses,next,submittedDates);}catch(e){balanceMessage.hidden=false;balanceMessage.textContent='Unable to save. Allow browser storage and try again.';renderBalance();return;}
- currentBalance=next;renderBalance();renderCodes();balanceMessage.textContent='';balanceMessage.hidden=true;
-}
-balanceInput.addEventListener('change',()=>saveBalance(balanceInput.value));
-balanceInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();balanceInput.blur();}});
-window.addEventListener('storage',event=>{if(event.key!==rewardsStateKey)return;const value=readRewardsState();if(!value)return;savedStatuses=value.statuses;submittedDates=value.submittedDates||{};currentBalance=value.balance;renderCodes();renderBalance();balanceMessage.textContent='';balanceMessage.hidden=true;});
-renderBalance();
-
-const legacyCodes = codes.slice();
-let privatePhotoUrls = [];
-function showRewardCodes(privateCodes = []) {
- const entries = new Map(legacyCodes.map(item => [cleanCode(item.code).toUpperCase(), item]));
- for (const item of privateCodes) {
-  const key = cleanCode(item.code).toUpperCase();
-  if (!entries.has(key)) entries.set(key, item);
- }
- codes.splice(0, codes.length, ...[...entries.values()].sort((a, b) => b.added.localeCompare(a.added)));
- renderCodes();
-}
 window.thStart = async function () {
- const values = await thValues("'Portal Aroma Rewards'!A2:E1000", 'UNFORMATTED_VALUE');
+ ready = false;
+ let state = await readRewards();
+ try {
+  state = await recoverBrowserSubmissions(state);
+ } catch (error) {
+  saveMessage.textContent = 'Could not recover previous browser submissions. ' + error.message;
+ }
  if (!thAuthorized()) return;
- const privateCodes = values.flatMap(([added, code, source, status, photoId]) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(added) && /^[A-Z0-9]{3}(?:-[A-Z0-9]{3}){3}$/.test(code)
-   ? [{added, code, source: source === 'Photo' ? 'Photo' : 'Manual', status: status === 'Submitted' ? 'Submitted' : 'Unredeemed', photoId}]
-   : []
- );
- showRewardCodes(privateCodes);
- await Promise.all(privateCodes.map(async item => {
-  if (!/^[A-Za-z0-9_-]{10,}$/.test(item.photoId || '')) return;
+ ready = true;
+ renderRewards(state);
+ await Promise.all(state.entries.map(async item => {
+  const id = item.photoId;
+  if (!/^[A-Za-z0-9_-]{10,}$/.test(id || '') || photos.has(id)) return;
   try {
-   const url = await thPhotoObjectUrl(item.photoId);
-   if (!thAuthorized()) { URL.revokeObjectURL(url); return; }
-   privatePhotoUrls.push(url);
-   item.photo = url;
+   const url = await thPhotoObjectUrl(id);
+   if (!thAuthorized() || photos.has(id)) { URL.revokeObjectURL(url); return; }
+   photos.set(id, url);
   } catch {
-   // Keep the code usable when the photo is temporarily unavailable.
+   // The reward code remains usable if its photo cannot be loaded.
   }
  }));
- if (thAuthorized()) showRewardCodes(privateCodes);
+ if (thAuthorized() && !saving) {
+  for (const item of codes) item.photo = photos.get(item.photoId);
+  renderCodes();
+ }
 };
 addEventListener('storage', event => {
  if (event.key !== TH_SESSION_KEY || event.newValue) return;
- privatePhotoUrls.forEach(url => URL.revokeObjectURL(url));
- privatePhotoUrls = [];
- showRewardCodes();
+ ready = false;
+ for (const url of photos.values()) URL.revokeObjectURL(url);
+ photos.clear();
+ renderRewards({entries: [], adjustment: null});
 });
 </script><script src="sheets.js?v=20261107-schedule-plans"></script></body></html>
