@@ -213,7 +213,7 @@
   return bkDataCache.get(id);
  }
  async function bkPdfDocument(id){
-  if(!bkPdfCache.has(id))bkPdfCache.set(id,(async()=>{const [pdf,file]=await Promise.all([bkPdfLibrary(),bkDocumentData(id)]);return pdf.getDocument({data:new Uint8Array(file.bytes.slice(0)),isEvalSupported:false,useWasm:false}).promise})().catch(error=>{bkPdfCache.delete(id);throw error}));
+  if(!bkPdfCache.has(id))bkPdfCache.set(id,(async()=>{const [pdf,file]=await Promise.all([bkPdfLibrary(),bkDocumentData(id)]);return pdf.getDocument({data:new Uint8Array(file.bytes.slice(0)),isEvalSupported:false,wasmUrl:new URL('./vendor/pdfjs/wasm/',document.baseURI).href}).promise})().catch(error=>{bkPdfCache.delete(id);throw error}));
   return bkPdfCache.get(id);
  }
  const bkBlobUrl=blob=>{const url=URL.createObjectURL(blob);bkObjectUrls.add(url);return url};

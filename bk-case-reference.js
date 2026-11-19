@@ -79,20 +79,7 @@ window.thCaseReference = (() => {
    const number = pageNumber;
    const preview = document.createElement('div');
    preview.textContent = 'Loading page ' + number + '…';
-   const details = document.createElement('details');
-   const summary = document.createElement('summary');
-   summary.textContent = 'Read page text';
-   const text = document.createElement('p');
-   text.textContent = 'Loading page text…';
-   details.append(summary, text);
-   sheet.replaceChildren(details, preview);
-
-   const extracted = indexed.get(current.id)?.[number - 1];
-   const readText = Promise.resolve(extracted ?? readPageText(source, number)).then(pageText => {
-    text.textContent = pageText || 'No extractable text on this page.';
-   }, () => {
-    text.textContent = 'Page text is unavailable. Use Open original PDF.';
-   });
+   sheet.replaceChildren(preview);
    try {
     const canvas = await renderPage(source, number, Math.max(320, sheet.clientWidth));
     if (sequence !== pageRender || !root.isConnected) return;
@@ -100,10 +87,8 @@ window.thCaseReference = (() => {
     canvas.setAttribute('aria-label', 'Original PDF page ' + number);
     preview.replaceChildren(canvas);
    } catch {
-    preview.textContent = 'Could not display this page. You can read the text above or open the original PDF.';
-    details.open = true;
+    preview.textContent = 'Could not display this page. Use Open original PDF above.';
    }
-   await readText;
   }
 
   async function readPageText(source, number) {
