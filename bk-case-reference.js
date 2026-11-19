@@ -8,10 +8,27 @@ window.thCaseReference = (() => {
   [29, 'Income'], [31, 'Expenses'], [34, 'Statement of Financial Affairs'],
   [53, 'Chapter 13 Plan'], [64, 'Trustee Questionnaire']
  ];
+ const historicalShortcuts = {
+  '2009': [
+   [1, 'Voluntary petition'], [6, 'Summary of schedules'], [8, 'Real property'],
+   [9, 'Personal property'], [12, 'Property claimed as exempt'], [13, 'Secured creditors'],
+   [14, 'Priority unsecured creditors'], [16, 'Nonpriority unsecured creditors'],
+   [23, 'Leases and contracts'], [24, 'Codebtors'], [26, 'Income'],
+   [27, 'Expenses'], [30, 'Statement of Financial Affairs']
+  ],
+  '2020': [
+   [1, 'Voluntary petition'], [8, 'Assets and liabilities summary'],
+   [10, 'Real and personal property'], [16, 'Property claimed as exempt'],
+   [18, 'Secured creditors'], [19, 'Unsecured creditors'], [34, 'Leases and contracts'],
+   [35, 'Codebtors'], [36, 'Income'], [38, 'Expenses'],
+   [41, 'Statement of Financial Affairs'], [49, 'Statement of intention'],
+   [54, 'Chapter 7 means test']
+  ]
+ };
  const normalize = text => text.replace(/\s+/g, ' ').trim();
  const dateLabel = stamp => stamp ? stamp.slice(0, 10) : 'Undated';
 
- function open(panel, versions, supporting, loadPdf, renderPage) {
+ function open(panel, versions, supporting, loadPdf, renderPage, loadOcr) {
   panel.innerHTML = `<section class="bk-reference bk-panel" aria-label="Case Reference">
    <header class="bk-panel-head"><div><h3>Search bankruptcy documents</h3><p class="bk-muted">Search the case packet and supporting PDFs in one place.</p></div>
    <label>Open a PDF <select data-ref-version></select></label></header>
@@ -44,6 +61,7 @@ window.thCaseReference = (() => {
   const passage = find('[data-ref-passage]');
   const hash = new URLSearchParams(location.hash.slice(1));
   const documents = [...versions, ...supporting];
+  let ocrIndex;
   const indexed = new Map();
   const failed = new Set();
   let pdf, pageNumber, current, generation = 0, pageRender = 0, indexing = false;
@@ -141,11 +159,21 @@ window.thCaseReference = (() => {
     if (!root.isConnected) break;
     try {
      const source = await loadPdf(doc);
+     let scannedPages;
+     if (doc.related === 'case-reference:support:ocr') {
+      ocrIndex ??= loadOcr();
+      scannedPages = (await ocrIndex).get(doc.id);
+      if (!scannedPages?.size) throw new Error('Search text is unavailable.');
+     }
      const pages = [];
      for (let first = 1; first <= source.numPages; first += 6) {
       if (!root.isConnected) return;
       const batch = await Promise.all(Array.from({length: Math.min(6, source.numPages - first + 1)},
-       (_, offset) => readPageText(source, first + offset)));
+       (_, offset) => {
+        const number = first + offset;
+        const scannedText = scannedPages?.get(number);
+        return scannedText ? normalize(scannedText) : readPageText(source, number);
+       }));
       pages.push(...batch);
      }
      indexed.set(doc.id, pages);
@@ -172,10 +200,14 @@ window.thCaseReference = (() => {
     const documentPdf = await loadPdf(version);
     if (request !== generation || !root.isConnected) return;
     pdf = documentPdf;
-    if (version.related === 'case-reference:initial') {
-     for (const [page, label] of shortcuts) {
-      if (page <= pdf.numPages) contents.append(button(label + ' · ' + page, () => showPage(page)));
-     }
+    const sections = version.related === 'case-reference:initial' ? shortcuts :
+     version.related === 'case-reference:historical' ? historicalShortcuts[version.year] || [] : [];
+    for (const [page, label] of sections) {
+     if (page <= pdf.numPages) contents.append(button(label + ' · ' + page, () => showPage(page)));
+    }
+    if (version.related === 'case-reference:historical') {
+     const plan = supporting.find(doc => doc.related === 'case-reference:support:plan');
+     if (plan) contents.append(button('Chapter 13 Plan · 1', () => load(plan, 1)));
     }
     find('[data-ref-count]').textContent = 'of ' + pdf.numPages;
     pageInput.max = pdf.numPages;
@@ -200,7 +232,7 @@ window.thCaseReference = (() => {
    for (const doc of files) group.append(new Option(files === versions ? dateLabel(doc.created) + ' · ' + doc.title : doc.title, doc.id));
    select.append(group);
   }
-  const bookmarked = documents.find(doc => doc.id === hash.get('packet'));
+  const bookmarked = documents.find(doc => doc.year === hash.get('year') && doc.id === hash.get('packet'));
   select.onchange = () => load(documents.find(doc => doc.id === select.value), 1);
   search.oninput = () => {
    searchDocuments();
@@ -221,7 +253,7 @@ window.thCaseReference = (() => {
    }
   };
   const firstPage = Number.parseInt(hash.get('page'), 10) || 1;
-  load(bookmarked || documents[0], firstPage);
+  load(bookmarked || documents[0], bookmarked ? firstPage : 1);
  }
  return {open};
 })();
