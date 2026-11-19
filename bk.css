@@ -136,3 +136,12 @@
  .bk-reference [data-ref-shortcuts] { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
  .bk-reference [data-ref-results] { max-height: 300px; overflow: auto; }
 }
+
+.bk-reference [data-ref-version] { max-width: min(100%, 420px); }
+.bk-reference .bk-panel-head > label { min-width: 0; max-width: 100%; }
+.bk-reference [data-ref-results] { max-height: 65vh; overflow: auto; }
+.bk-reference [data-ref-shortcuts][hidden] { display: none; }
+.bk [data-focus-reference] { margin-block-end: 12px; }
+@media (max-width: 850px) {
+ .bk-reference [data-ref-results] { max-height: 300px; }
+}
