@@ -196,7 +196,7 @@
  let bkPdfLibraryPromise;
  const documentDriveId=link=>{try{const u=new URL(link);if(!['drive.google.com','docs.google.com'].includes(u.hostname))return '';return u.pathname.match(/\/(?:d|folders)\/([a-zA-Z0-9_-]+)/)?.[1]||u.searchParams.get('id')||''}catch{return ''}};
  function bkPdfLibrary(){
-  return bkPdfLibraryPromise||=(import(new URL('./vendor/pdfjs/pdf.min.mjs',document.baseURI).href).then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',document.baseURI).href;return pdf}));
+  return bkPdfLibraryPromise||=(import('./pdf-compat.mjs').then(()=>import('./vendor/pdfjs/pdf.min.mjs')).then(pdf=>{pdf.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.compat.mjs',document.baseURI).href;return pdf}));
  }
  async function bkDriveMeta(id){
   if(!bkFileCache.has(id))bkFileCache.set(id,(async()=>{const response=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,capabilities(canDownload)&supportsAllDrives=true',{headers:{Authorization:'Bearer '+thToken}});if(!response.ok)throw new Error('Document access could not be verified. Reconnect Google Drive and try again.');return response.json()})().catch(error=>{bkFileCache.delete(id);throw error}));
@@ -220,7 +220,7 @@
  async function bkPageCanvas(pdf,number,width){
   const page=await pdf.getPage(number),base=page.getViewport({scale:1}),scale=width/base.width,ratio=Math.min(window.devicePixelRatio||1,2);
   const viewport=page.getViewport({scale:scale*ratio}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);canvas.style.width='100%';canvas.style.height='auto';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport,background:'#ffffff'}).promise;return canvas;
+  await page.render({canvas,viewport,background:'#ffffff'}).promise;return canvas;
  }
  let bkThumbObserver;
  function loadDocumentThumbnails(){
@@ -263,7 +263,7 @@
   async function renderPage(){
    const sequence=++renderSequence;stage.setAttribute('aria-busy','true');
    $('bk-preview-prev').disabled=pageNumber<=1;$('bk-preview-next').disabled=pageNumber>=pdf.numPages;$('bk-preview-page-label').textContent='Page '+pageNumber+' of '+pdf.numPages;
-   try{const canvas=await bkPageCanvas(pdf,pageNumber,Math.max(260,stage.clientWidth-32));canvas.setAttribute('role','img');canvas.setAttribute('aria-label',item.title+' — page '+pageNumber);if(sequence===renderSequence&&dialog.open&&dialog.bkPreviewToken===previewToken){stage.replaceChildren(canvas);stage.scrollTop=0}}catch(error){message.textContent=error.message}finally{if(sequence===renderSequence)stage.setAttribute('aria-busy','false')}
+   try{const canvas=await bkPageCanvas(pdf,pageNumber,Math.max(260,stage.clientWidth-32));canvas.setAttribute('role','img');canvas.setAttribute('aria-label',item.title+' — page '+pageNumber);if(sequence===renderSequence&&dialog.open&&dialog.bkPreviewToken===previewToken){stage.replaceChildren(canvas);stage.scrollTop=0}}catch(error){if(sequence===renderSequence&&dialog.open&&dialog.bkPreviewToken===previewToken){stage.textContent='This preview could not render. Use Open original below.';message.textContent=error.message}}finally{if(sequence===renderSequence)stage.setAttribute('aria-busy','false')}
   }
   $('bk-preview-close').onclick=()=>dialog.close();
   $('bk-preview-expand').onclick=e=>{const expanded=dialog.classList.toggle('bk-preview-expanded');e.currentTarget.textContent=expanded?'Restore size':'Expand';e.currentTarget.setAttribute('aria-pressed',String(expanded));if(pdf)requestAnimationFrame(renderPage)};
@@ -275,11 +275,10 @@
    if(!driveId)throw new Error('Open the original document to view this file.');
    const file=await bkDocumentData(driveId);if(!dialog.open||dialog.bkPreviewToken!==previewToken)return;
    if(file.mime==='application/pdf'){
-    const frame=document.createElement('iframe');
-    frame.title=item.title;
-    frame.src=bkBlobUrl(new Blob([file.bytes],{type:'application/pdf'}))+'#view=FitH';
-    frame.style.cssText='display:block;width:100%;height:100%;min-height:0;border:0;background:#fff';
-    stage.style.padding='0';stage.style.overflow='hidden';stage.replaceChildren(frame);
+    pdf=await bkPdfDocument(driveId);
+    if(!dialog.open||dialog.bkPreviewToken!==previewToken)return;
+    $('bk-preview-prev').parentElement.hidden=false;
+    await renderPage();
    }
    else if(file.mime.startsWith('image/')){const image=document.createElement('img');image.alt=item.title;image.src=bkBlobUrl(new Blob([file.bytes],{type:file.mime}));stage.replaceChildren(image)}
    else{const iframe=document.createElement('iframe');iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';iframe.title=item.title;stage.replaceChildren(iframe)}

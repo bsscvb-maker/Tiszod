@@ -75,23 +75,35 @@ window.thCaseReference = (() => {
    next.disabled = pageNumber === pdf.numPages;
    passage.hidden = !match;
    if (match) excerpt(match.text, match.query, passage);
-   sheet.textContent = 'Loading page ' + pageNumber + '…';
+   const source = pdf;
+   const number = pageNumber;
+   const preview = document.createElement('div');
+   preview.textContent = 'Loading page ' + number + '…';
+   const details = document.createElement('details');
+   const summary = document.createElement('summary');
+   summary.textContent = 'Read page text';
+   const text = document.createElement('p');
+   text.textContent = 'Loading page text…';
+   details.append(summary, text);
+   sheet.replaceChildren(details, preview);
+
+   const extracted = indexed.get(current.id)?.[number - 1];
+   const readText = Promise.resolve(extracted ?? readPageText(source, number)).then(pageText => {
+    text.textContent = pageText || 'No extractable text on this page.';
+   }, () => {
+    text.textContent = 'Page text is unavailable. Use Open original PDF.';
+   });
    try {
-    const canvas = await renderPage(pdf, pageNumber, Math.max(320, sheet.clientWidth));
+    const canvas = await renderPage(source, number, Math.max(320, sheet.clientWidth));
     if (sequence !== pageRender || !root.isConnected) return;
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', 'Original PDF page ' + pageNumber);
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = 'Read page text';
-    const text = document.createElement('p');
-    details.append(summary, text);
-    sheet.replaceChildren(canvas, details);
-    const pageText = indexed.get(current.id)?.[pageNumber - 1] ?? await readPageText(pdf, pageNumber);
-    text.textContent = pageText || 'No extractable text on this page.';
+    canvas.setAttribute('aria-label', 'Original PDF page ' + number);
+    preview.replaceChildren(canvas);
    } catch {
-    if (sequence === pageRender) sheet.textContent = 'Could not display this page. Use Open original PDF.';
+    preview.textContent = 'Could not display this page. You can read the text above or open the original PDF.';
+    details.open = true;
    }
+   await readText;
   }
 
   async function readPageText(source, number) {
