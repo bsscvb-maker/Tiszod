@@ -17,8 +17,18 @@ async function display(bytes,run){
  rendition=book.renderTo('reader-pages',{width:'100%',height:'100%',spread:'none',allowScriptedContent:false,allowPopups:false});
  rendition.themes.fontSize(size+'%');
  const nav=await book.loaded.navigation;$('reader-chapters').replaceChildren();function add(items,depth=0){for(const item of items||[]){const o=document.createElement('option');o.value=item.href;o.textContent='  '.repeat(depth)+item.label.trim();$('reader-chapters').append(o);add(item.subitems,depth+1)}}add(nav.toc);
- rendition.on('relocated',loc=>{try{localStorage.setItem('tiszod-reading:'+activeId,loc.start.cfi)}catch{}$('reader-prev').disabled=loc.atStart;$('reader-next').disabled=loc.atEnd;status('Reading position saved on this browser.');});
- let saved;try{saved=localStorage.getItem('tiszod-reading:'+activeId)}catch{}
+ const positionKey='tiszod-reading:'+activeId;
+ const saved=await thSaved.readPreference(positionKey);
+ if(run!==generation||!dlg.open)return;
+ let lastPosition=saved;
+ rendition.on('relocated',async loc=>{
+  $('reader-prev').disabled=loc.atStart;
+  $('reader-next').disabled=loc.atEnd;
+  if(loc.start.cfi===lastPosition)return;
+  lastPosition=loc.start.cfi;
+  const ok=await thSaved.writePreference(positionKey,lastPosition);
+  if(run===generation&&dlg.open)status(ok?'Reading position saved.':'Could not save your reading position.');
+ });
  try{await rendition.display(saved||undefined)}catch{await rendition.display()}
  $('reader-help').hidden=true;
 }

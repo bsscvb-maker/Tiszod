@@ -181,12 +181,12 @@
   mount?.append(avatar);
  }
 
- function renderHideablePeople(cards,entries){
+ async function renderHideablePeople(cards,entries){
   const members=entries.map(card=>card.dataset.person);
   const prefix=area==='hobbies'?'recreation':'medical';
   const key='tiszod-'+prefix+'-hidden-people';
   let hidden=new Set();
-  try{const saved=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(saved))hidden=new Set(saved.filter(name=>members.includes(name)));}catch{}
+  try{const saved=JSON.parse(await thSaved.readPreference(key)||'[]');if(Array.isArray(saved))hidden=new Set(saved.filter(name=>members.includes(name)));}catch{}
   let showHidden=false;
   const toggle=document.createElement('button');
   toggle.type='button';
@@ -212,10 +212,11 @@
    button.type='button';
    button.className=prefix+'-hide-person';
    button.setAttribute('role','switch');
-   button.onclick=()=>{
-    const name=card.dataset.person;
-    if(hidden.has(name))hidden.delete(name);else hidden.add(name);
-    try{localStorage.setItem(key,JSON.stringify([...hidden]));}catch{}
+   button.onclick=async()=>{
+    const name=card.dataset.person,next=new Set(hidden);
+    if(next.has(name))next.delete(name);else next.add(name);
+    if(!await thSaved.writePreference(key,JSON.stringify([...next])))return;
+    hidden=next;
     updateVisibility();
     if(card.hidden)(toggle.hidden?entries.find(entry=>!entry.hidden)?.querySelector('.'+prefix+'-hide-person'):toggle)?.focus();
    };
@@ -230,7 +231,7 @@
   medicalFolders??=readPeopleFolders().catch(error=>{medicalFolders=undefined;throw error;});
   return medicalFolders;
  }
- function renderMedicalPeople(cards,status){
+ async function renderMedicalPeople(cards,status){
   const members=['Todd','Tracy','Aiden','Alexis','Zach'];
   const entries=members.map(name=>{
    let pendingRecords;
@@ -246,7 +247,7 @@
    appendPortrait(card,name,new Map());
    return card;
   });
-  renderHideablePeople(cards,entries);
+  await renderHideablePeople(cards,entries);
   status.textContent='';
   void loadPortraits(()=>{
    if(cards.isConnected)status.textContent='Profile photos could not load.';
@@ -260,7 +261,7 @@
   });
  }
 
- function renderRecreationPeople(cards,status,clubsReady){
+ async function renderRecreationPeople(cards,status,clubsReady){
   const members=['Todd','Aiden','Alexis','Zach','Tracy'];
   let peopleFolders;
   const loadPeople=()=>peopleFolders??=readPeopleFolders().catch(error=>{peopleFolders=undefined;throw error;});
@@ -286,7 +287,7 @@
    appendPortrait(card,name,new Map());
    return card;
   });
-  renderHideablePeople(cards,entries);
+  await renderHideablePeople(cards,entries);
   status.textContent='';
   window.thLoadRecreationSearchEntries=async()=>{
    const results=await Promise.allSettled(loaders.map(load=>load()));

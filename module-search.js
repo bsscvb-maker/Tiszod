@@ -176,7 +176,7 @@
   const {owner,isBook,isCareer,isManual,readRecords} = thLibraryBooks;
   let hidden = [];
   try {
-   const saved = JSON.parse(localStorage.getItem('tiszod-education-hidden-people') || '[]');
+   const saved = JSON.parse(await window.thSaved?.readPreference('tiszod-education-hidden-people') || '[]');
    if (Array.isArray(saved)) hidden = saved;
   } catch {}
   const [records,hiddenPeople] = await Promise.all([readRecords(),preferences]);

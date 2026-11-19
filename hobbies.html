@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TisZod · Recreation</title><meta name="theme-color" content="#0b1019">
-<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><style>.hobby-page{max-width:1100px;margin:auto}</style><link rel="stylesheet" href="family-collections.css?v=20261108-recreation-cards"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="module-search.css?v=1"><style>
+<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><style>.hobby-page{max-width:1100px;margin:auto}</style><link rel="stylesheet" href="family-collections.css?v=20261108-recreation-cards"><script src="saved-state.js?v=1"></script><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="module-search.css?v=1"><style>
 .hobby-page:has(~ #legal-view:not([hidden])){display:none}
 #legal-view{width:100%;max-height:none;margin:0;overflow:visible}
 #legal-view .recreation-todd-grid > .legal-file{padding:0;overflow:hidden}
@@ -108,11 +108,20 @@ window.thStart=async()=>{
  }catch(error){status.textContent='Could not load recreation folders.';throw error}
 };
 </script><script>
-/* Todd's Recreation cards can be hidden locally without deleting Drive records. */
+/* Todd's Recreation card visibility follows the signed-in account. */
 (()=>{
  const key='tiszod-recreation-todd-hidden-cards';
- const hiddenCards=()=>{try{return new Set(JSON.parse(localStorage.getItem(key)||'[]'))}catch{return new Set()}};
- const save=set=>{try{localStorage.setItem(key,JSON.stringify([...set]))}catch{}};
+ let savedHidden=new Set();
+ const hiddenCards=()=>new Set(savedHidden);
+ const save=async set=>{
+  if(await thSaved.writePreference(key,JSON.stringify([...set]))){savedHidden=set;refresh()}
+ };
+ const start=window.thStart;
+ window.thStart=async (...args)=>{
+  try{savedHidden=new Set(JSON.parse(await thSaved.readPreference(key)||'[]'))}catch{}
+  refresh();
+  return start(...args);
+ };
  function refresh(){
   const grid=document.querySelector('#legal-view .recreation-todd-grid');
   if(!grid)return;
@@ -130,7 +139,7 @@ window.thStart=async()=>{
    let button=card.querySelector('.recreation-hide-card');
    if(!button){
     button=document.createElement('button');button.type='button';button.className='recreation-hide-card';button.setAttribute('role','switch');button.setAttribute('aria-label','Hide '+title);button.setAttribute('aria-checked','false');
-    button.addEventListener('click',e=>{e.stopPropagation();const next=hiddenCards();next.add(id);save(next);refresh()});
+    button.addEventListener('click',e=>{e.stopPropagation();const next=hiddenCards();next.add(id);void save(next)});
     card.append(button);
    }
    button.setAttribute('aria-checked',String(hidden.has(id)));card.hidden=hidden.has(id);
@@ -144,7 +153,7 @@ window.thStart=async()=>{
     const title=card.querySelector('strong')?.textContent?.trim()||card.querySelector('.legal-thumbnail-title')?.textContent?.trim()||card.querySelector('.legal-thumbnail')?.getAttribute('aria-label')||'';
     next.delete('Todd/'+title);
    }
-   save(next);refresh();
+   void save(next);
   };
  }
  let scheduled=false;
@@ -152,4 +161,4 @@ window.thStart=async()=>{
  observer.observe(document.getElementById('legal-view-body'),{childList:true,subtree:true});
 })();
 </script>
-<script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261108-recreation-photos"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261104-read-retry-1"></script><script src="module-search.js?v=20261108-recreation-lazy"></script></body></html>
+<script src="person-portraits.js?v=1"></script><script src="family-collections.js?v=20261119-workbook-sync"></script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261119-workbook-sync"></script><script src="module-search.js?v=20261119-workbook-sync"></script></body></html>

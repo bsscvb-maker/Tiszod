@@ -402,19 +402,34 @@
       workbook = rootFiles.find(f => /^body composition(?: metrics)?\.xlsx$/i.test(f.name));
       $('weight-range').onchange = renderWeight;
       const weighInKey=key+':weigh-ins', weighInForm=$('medical-add-weigh-in');
+      const weightSection = 'Medical weigh-ins';
+      const weightIdentity = row => Number.isFinite(row.time) ? 'scale:' + row.time : 'manual:' + row.date;
+      const savedWeights = new Map();
       try {
-        const saved=JSON.parse(localStorage.getItem(weighInKey)||'[]');
-        if(Array.isArray(saved)) browserWeights=saved;
-      } catch {}
-      weighInForm.onsubmit=event=>{
+        for (const pair of await thSaved.recover(weightSection, thSaved.oldWeighIns(weighInKey))) {
+          savedWeights.set(...pair);
+        }
+        browserWeights = [...savedWeights.values()];
+      } catch (error) { thSaved.notice('Could not load your saved weigh-ins. ' + error.message); }
+      let savingWeights = false;
+      async function saveWeighIns(readings) {
+        if (savingWeights) throw Error('Wait for the current weigh-in save to finish.');
+        savingWeights = true;
+        try {
+          const entries = readings.map(row => [weightIdentity(row), row]);
+          await thSaved.save(weightSection, entries);
+          for (const pair of entries) savedWeights.set(...pair);
+          browserWeights = [...savedWeights.values()];
+        } finally { savingWeights = false; }
+      }
+      weighInForm.onsubmit=async event=>{
         event.preventDefault();
         const fields=new FormData(weighInForm), date=fields.get('date'), weight=Number(fields.get('weight'));
         const status=weighInForm.querySelector('[role="status"]');
         if(!date || !Number.isFinite(weight) || weight<=0) return;
-        const next=[...browserWeights.filter(row=>row.date!==date || Number.isFinite(row.time)),{date,weight,unit:'lb',source:'Self-reported weigh-in'}];
-        try {localStorage.setItem(weighInKey,JSON.stringify(next));}
-        catch {status.textContent='This browser could not save the weigh-in.';return;}
-        browserWeights=next;
+        status.textContent='Saving weigh-in…';
+        try { await saveWeighIns([{date,weight,unit:'lb',source:'Self-reported weigh-in'}]); }
+        catch (error) {status.textContent='Could not save the weigh-in. ' + error.message;return;}
         updateWeights();
         weighInForm.reset();
         status.textContent='Weigh-in saved.';
@@ -436,7 +451,7 @@
           const [header,...lines]=(await file.text()).trim().split(/\r?\n/);
           const columns=header.split(',').map(value=>value.trim().replace(/^"|"$/g,''));
           const weightColumn=columns.indexOf('Weight (lb)'), dateColumn=columns.indexOf('Date/Time');
-          if(weightColumn<0 || dateColumn<0) throw Error();
+          if(weightColumn<0 || dateColumn<0) throw Error('Use a scale CSV with Weight (lb) and Date/Time columns.');
           const imported=new Map();
           for(const line of lines){
             const values=line.split(',').map(value=>value.trim().replace(/^"|"$/g,''));
@@ -444,14 +459,12 @@
             if(values.length!==columns.length || !Number.isFinite(weight) || weight<=0 || !Number.isFinite(time)) continue;
             imported.set(time,{date:new Date(time).toISOString().slice(0,10),time,weight,unit:'lb',source:'Scale CSV'});
           }
-          if(!imported.size) throw Error();
-          const next=[...browserWeights.filter(row=>!imported.has(row.time)),...imported.values()];
-          localStorage.setItem(weighInKey,JSON.stringify(next));
-          browserWeights=next;
+          if(!imported.size) throw Error('No valid readings were found.');
+          await saveWeighIns([...imported.values()]);
           updateWeights();
           importForm.reset();
           status.textContent=imported.size+' readings imported.';
-        } catch {status.textContent='Could not import the file. Use a scale CSV with Weight (lb) and Date/Time columns.';}
+        } catch (error) {status.textContent='Could not import the file. ' + error.message;}
         finally {button.disabled=false;}
       };
       let toddFiles;
@@ -472,18 +485,20 @@
         const fileId = page.searchParams.get('healthExportFile');
         const validId = id => typeof id === 'string' && /^[\w-]{10,}$/.test(id);
         if (validId(folderId) && validId(fileId)) {
-          localStorage.setItem(sourceKey, JSON.stringify({folderId,fileId}));
+          await thSaved.save('Preferences', [[sourceKey, JSON.stringify({folderId,fileId})]]);
           page.searchParams.delete('healthExportFolder');
           page.searchParams.delete('healthExportFile');
           history.replaceState(history.state,'',page);
         }
-        const linked = JSON.parse(localStorage.getItem(sourceKey) || 'null');
+        let linked;
+        try { linked = JSON.parse(await thSaved.readPreference(sourceKey) || 'null'); } catch {}
+        if (!validId(linked?.folderId) || !validId(linked?.fileId)) linked = null;
         const previous = await readToddSource(appleHealthFilename);
         const dailyName = /^HealthAutoExport-\d{4}-\d{2}-\d{2}\.json$/;
         const order = 'name desc,modifiedTime desc';
         const loadDailyFiles = async id => (await list("'" + escapeQuery(id) + "' in parents", order))
           .filter(file => !file.folder && dailyName.test(file.name));
-        const configuredFolder = previous?.dailyExportFolderId;
+        const configuredFolder = linked?.folderId || previous?.dailyExportFolderId;
         let files = validId(configuredFolder) ? await loadDailyFiles(configuredFolder) : [];
         let linkedFileOnly = false;
         if (!files.length && validId(linked?.folderId) && validId(linked?.fileId)) {

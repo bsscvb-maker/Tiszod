@@ -216,7 +216,7 @@ async function loadPortraits(){
   }
  }catch{}
 }
-window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}records=await readRecords();if(!ready){const person=pageParams.get('person'),query=pageParams.get('q');if(!dedicated&&Object.hasOwn(personLabels,person)&&!hiddenPeople.has(person))selectedPerson=person;if(query&&(careerMode||selectedPerson))$('education-search').value=query.slice(0,120);}const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected';
+window.thStart=async()=>{if(careerLanding){await loadCareerFolder();return;}await loadHiddenPeople();records=await readRecords();if(!ready){const person=pageParams.get('person'),query=pageParams.get('q');if(!dedicated&&Object.hasOwn(personLabels,person)&&!hiddenPeople.has(person))selectedPerson=person;if(query&&(careerMode||selectedPerson))$('education-search').value=query.slice(0,120);}const folderSelect=$('education-folder'),prior=folderSelect.value;folderSelect.innerHTML='<option value="">All folders</option>'+[...new Set(records.map(r=>r.data.folder).filter(Boolean))].sort().map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');folderSelect.value=prior;ready=true;render();if(!dedicated)void loadPortraits();message(bookMode?'Private book collection connected.':careerMode?'Private career records connected.':'Private education records connected.');$('th-connection').textContent='Private workbook connected';
  if(bookMode&&manualToEdit){
   const id=manualToEdit;
   manualToEdit=null;
@@ -232,10 +232,12 @@ let selectedPerson='',selectedCategory='',selectedFolder='',recordPage=1;
 const personLabels={Todd:'Todd',Aiden:'Aiden',Alexis:'Alexis',Tracy:'Tracy',Zach:'Zach'};
 const visibilityKey='tiszod-education-hidden-people';
 let hiddenPeople=new Set(),showHiddenPeople=false;
-try{
- const saved=JSON.parse(localStorage.getItem(visibilityKey)||'[]');
- if(Array.isArray(saved))hiddenPeople=new Set(saved.filter(name=>Object.hasOwn(personLabels,name)));
-}catch{}
+async function loadHiddenPeople(){
+ try{
+  const saved=JSON.parse(await thSaved.readPreference(visibilityKey)||'[]');
+  if(Array.isArray(saved))hiddenPeople=new Set(saved.filter(name=>Object.hasOwn(personLabels,name)));
+ }catch{}
+}
 function renderPeople(){
  $('education-people').hidden=dedicated||Boolean(selectedPerson);
  $('education-visibility').hidden=dedicated||Boolean(selectedPerson)||!hiddenPeople.size;
@@ -374,7 +376,7 @@ function render(){
  if(booksView){if(bookMode)heading.textContent='Book collection';renderBooks(shown,bookMode?'':html);return}
  grid.innerHTML=(careerMode?'':html)+shown.sort((a,b)=>title(a.data).localeCompare(title(b.data))).map(card).join('')+(shown.length?'':'<p class="record-empty">No documents here yet.</p>');
 }
-document.querySelector('.education').addEventListener('click',e=>{
+document.querySelector('.education').addEventListener('click',async e=>{
  const link=e.target.closest('[data-read-book]');if(link){e.preventDefault();const r=records.find(r=>r.id===link.dataset.readBook);const id=r?.data.url.match(/\/d\/([^/]+)/)?.[1];if(id&&window.thReadBook)window.thReadBook(id,title(r.data),r.data.url);return;}
  const b=e.target.closest('button');if(!b)return;
  if(b.id==='education-show-hidden'){
@@ -385,11 +387,13 @@ document.querySelector('.education').addEventListener('click',e=>{
  const unhideAll=b.id==='education-unhide-all';
  if(unhideAll||b.dataset.educationHide){
   const person=b.dataset.educationHide;
-  if(unhideAll)hiddenPeople.clear();
-  else if(hiddenPeople.has(person))hiddenPeople.delete(person);
-  else hiddenPeople.add(person);
+  const next=new Set(hiddenPeople);
+  if(unhideAll)next.clear();
+  else if(next.has(person))next.delete(person);
+  else next.add(person);
+  if(!await thSaved.writePreference(visibilityKey,JSON.stringify([...next])))return;
+  hiddenPeople=next;
   if(!hiddenPeople.size)showHiddenPeople=false;
-  try{localStorage.setItem(visibilityKey,JSON.stringify([...hiddenPeople]));}catch{}
   renderPeople();
   if(unhideAll)$('education-people').querySelector('[data-person]').focus();
   else if(b.closest('[hidden]'))$('education-show-hidden').focus();

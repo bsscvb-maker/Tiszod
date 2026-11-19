@@ -44,10 +44,14 @@
   for(const kind of ['Receipt','Odo']){$('fuel'+kind+'Preview').hidden=true;$('fuel'+kind+'Status').textContent='';}
   $('fuelSaveStatus').textContent='';$('fuelSave').disabled=true;
   field('vehicle').innerHTML=vehicles.map(v=>'<option value="'+esc(v.key)+'">'+esc(v.name)+'</option>').join('');
-  const chosen=options.selected||currentEntry.vehicle||vehicles[0]?.key;if(vehicles.some(v=>v.key===chosen))field('vehicle').value=chosen;
+  const [rememberedVehicle,rememberedAccount]=await Promise.all([
+   thSaved.readPreference('tiszod-last-fuel-vehicle'),thSaved.readPreference('tiszod-last-fuel-account')
+  ]);
+  const chosen=options.selected||currentEntry.vehicle||rememberedVehicle||vehicles[0]?.key;
+  if(vehicles.some(v=>v.key===chosen))field('vehicle').value=chosen;
   field('vehicle').disabled=!!options.entry;
   field('date').value=localDate();
-  let rememberedAccount;try{rememberedAccount=localStorage.getItem('tiszod-last-fuel-account');}catch{}if(rememberedAccount)field('account').value=rememberedAccount;
+  if(rememberedAccount)field('account').value=rememberedAccount;
   if(options.entry){for(const key of ['date','odo','gallons','price','total','full','station','location','notes','receipt'])field(key).value=currentEntry[key]??'';links.receipt=currentEntry.receiptPhoto||'';links.odo=currentEntry.odoPhoto||'';}
   dialog.showModal();selectVehicle();
   try{tx=await TisFuelStore.transactions();financeLoaded=true;$('fuelAccounts').innerHTML=[...new Set(tx.map(x=>x.r[2]).filter(Boolean))].map(a=>'<option value="'+esc(a)+'"></option>').join('');
@@ -94,7 +98,9 @@
    entry.receiptPhoto=links.receipt||'';entry.odoPhoto=links.odo||'';
    message.textContent='Saving mileage, fuel history, and Finance together…';
    const result=await TisFuelStore.save(entry,v,$('fuelTransactionMatch').value);
-   try{localStorage.setItem('tiszod-last-fuel-vehicle',v.key);localStorage.setItem('tiszod-last-fuel-account',entry.account);}catch{}
+   void thSaved.save('Preferences', [
+    ['tiszod-last-fuel-vehicle',v.key],['tiszod-last-fuel-account',entry.account]
+   ]).catch(error=>thSaved.notice('Fuel was saved. Could not save your last-used fuel options. '+error.message));
    message.textContent='Saved. Mileage, fuel history, and Finance are updated.';
    document.dispatchEvent(new CustomEvent('tiszod-fuel-saved',{detail:result.entry}));
    dialog.close();

@@ -267,7 +267,7 @@ async function thAppendRow(sheet, values, valueInputOption = 'USER_ENTERED') {
   return thAppendRows(sheet,[values],valueInputOption);
 }
 async function thAppendRows(sheet, rows, valueInputOption = 'USER_ENTERED') {
-  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC'};
+  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC','Portal Saved State':'A:F'};
   const range="'"+sheet.replace(/'/g,"''")+"'!"+(appendRanges[sheet]||'A:Z');
   const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+':append?valueInputOption='+encodeURIComponent(valueInputOption)+'&insertDataOption=INSERT_ROWS',{
     method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},

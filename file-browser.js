@@ -4,7 +4,7 @@ const style=document.createElement('style');style.textContent=`.file-browser-too
 function mount(config){
  const host=document.getElementById(config.host);if(!host)return;
  const key='tiszod-file-view:'+config.name,selected=new Set();let mode='grid',busy=false,lastVisible=[],pending=false;
- try{mode=localStorage.getItem(key)==='list'?'list':'grid'}catch{}
+
  const toolbar=document.createElement('div');toolbar.className='file-browser-tools';toolbar.hidden=true;
  toolbar.innerHTML='<div class="file-browser-actions"><label><input type="checkbox" data-file-all> Select all</label><span data-file-count role="status" aria-live="polite">0 selected</span><button type="button" data-file-clear disabled>Clear selection</button><button type="button" data-file-delete disabled>Delete selected</button></div><div class="file-view-buttons" role="group" aria-label="Document view"><button type="button" data-file-view="list" title="List view" aria-label="List view">☰ List</button><button type="button" data-file-view="grid" title="Grid / thumbnail view" aria-label="Grid / thumbnail view">▦ Grid</button></div><span class="file-browser-status" data-file-status role="status" aria-live="polite"></span>';
  host.before(toolbar);
@@ -21,7 +21,17 @@ function mount(config){
  host.addEventListener('change',e=>{const id=e.target.dataset.fileSelect;if(!id||busy)return;if(e.target.checked)selected.add(id);else selected.delete(id);status.textContent='';update()});
  all.onchange=()=>{if(busy)return;selected.clear();if(all.checked)lastVisible.forEach(id=>selected.add(id));status.textContent='';update()};
  clear.onclick=()=>{selected.clear();status.textContent='';update()};
- toolbar.addEventListener('click',e=>{const view=e.target.closest('[data-file-view]')?.dataset.fileView;if(!view)return;mode=view;try{localStorage.setItem(key,mode)}catch{}update()});
+ async function loadView(){
+  if(!thAuthorized())return;
+  mode=(await thSaved.readPreference(key))==='list'?'list':'grid';
+  update();
+ }
+ window.addEventListener('tiszod-drive-books-connected',loadView);
+ queueMicrotask(loadView);
+ toolbar.addEventListener('click',async e=>{
+  const view=e.target.closest('[data-file-view]')?.dataset.fileView;
+  if(view&&await thSaved.writePreference(key,view)){mode=view;update()}
+ });
  remove.onclick=async()=>{if(busy||!selected.size)return;const ids=[...selected],restoring=config.deleted();if(!confirm((restoring?'Restore ':'Delete ')+ids.length+' selected documents?'+(restoring?'':' You can restore them from Deleted documents. Their original Drive files stay unchanged.')))return;busy=true;status.textContent=restoring?'Restoring…':'Deleting…';update();try{await config.change(ids,!restoring);selected.clear();status.textContent=ids.length+(restoring?' documents restored.':' documents deleted. You can restore them from Deleted documents.')}catch(e){status.textContent=e.message||'The selected documents could not be updated.'}finally{busy=false;update()}};
  update();return {refresh:update,mode:()=>mode};
 }

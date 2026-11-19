@@ -158,15 +158,16 @@
   const assetKey = item => vinFor(item) || clean(title(item));
   const taskKey = (item, task) => JSON.stringify([assetKey(item), task.sheetRow, task.task, task.lastDate, task.nextDate, task.nextReading]);
   const recallSite = 'https://www.nhtsa.gov/recalls';
-  const readState = kind => {
-    try { return JSON.parse(localStorage.getItem('tiszod-garage-report-' + kind) || '{}') || {}; }
-    catch { return {}; }
-  };
-  function saveState(kind, key, entry) {
-    const saved = readState(kind);
-    if (entry) saved[key] = entry;
-    else delete saved[key];
-    localStorage.setItem('tiszod-garage-report-' + kind, JSON.stringify(saved));
+  const reportState = {};
+  const stateSection = kind => kind === 'deferrals' ? 'Garage deferrals' : 'Garage recall results';
+  async function loadState(kind) {
+    let previous = {};
+    try { previous = JSON.parse(thSaved.legacy('tiszod-garage-report-' + kind) || '{}') || {}; } catch {}
+    reportState[kind] = Object.fromEntries(await thSaved.recover(stateSection(kind), Object.entries(previous)));
+  }
+  const readState = kind => reportState[kind] || {};
+  async function saveState(kind, key, entry) {
+    await thSaved.save(stateSection(kind), [[key, entry]]);
   }
   function profileLink(item, schedule = false) {
     const group = collection(item);
@@ -367,7 +368,7 @@
         const names = {'3500': 'Ram 3500', Mustang: 'Ford Mustang', FLTRK: 'Harley-Davidson Road Glide',
           FLHTCUI: 'Harley-Davidson Ultra Classic', F150: 'Ford F-150'};
         for (const key of Object.keys(window.FUEL_LEGACY || {})) if (!keys.has(key)) keys.set(key, names[key] || key);
-        return Array.from(keys, ([key, name]) => TisFuelStore.merge({key, name}, entries)).flat()
+        return (await Promise.all(Array.from(keys, ([key, name]) => TisFuelStore.history({key, name}, entries)))).flat()
           .map(item => ({
             date: dateKey(item.date),
             cells: [item.date, item.name || item.vehicle, item.odo, item.gallons, item.price, item.total, item.station]
@@ -428,7 +429,7 @@
     return button;
   }
   function recordError() {
-    status.textContent = 'This browser could not save the report note.';
+    status.textContent = 'The workbook did not confirm the report change. Refresh before retrying.';
   }
   function defer(row) {
     const saved = readState('deferrals')[row.key];
@@ -440,13 +441,13 @@
     edit.elements.date.value = saved?.date || '';
     edit.elements.reason.value = saved?.reason || '';
     message.textContent = '';
-    edit.onsubmit = event => {
+    edit.onsubmit = async event => {
       event.preventDefault();
       try {
-        saveState('deferrals', row.key, {date:edit.elements.date.value, reason:edit.elements.reason.value.trim()});
+        await saveState('deferrals', row.key, {date:edit.elements.date.value, reason:edit.elements.reason.value.trim()});
         dialog.close();
         form.requestSubmit();
-      } catch { message.textContent = 'This browser could not save the deferral.'; }
+      } catch { message.textContent = 'The workbook did not confirm the deferral. Refresh before retrying.'; }
     };
     dialog.showModal();
   }
@@ -475,8 +476,8 @@
         task.append(title, ...labels);
         if (row.tone) task.dataset.tone = row.tone;
         if (row.task) task.append(action('Defer / edit review', () => defer(row)));
-        if (report === reports.deferred) task.append(action('Resume tracking', () => {
-          try { saveState('deferrals', row.key, null); form.requestSubmit(); } catch { recordError(); }
+        if (report === reports.deferred) task.append(action('Resume tracking', async () => {
+          try { await saveState('deferrals', row.key, null); form.requestSubmit(); } catch { recordError(); }
         }));
         tasks.append(task);
       }
@@ -603,7 +604,7 @@
       try { await navigator.clipboard.writeText(vins.join('\n')); status.textContent = vins.length + ' VINs copied.'; }
       catch { status.textContent = 'Clipboard unavailable. Use the VINs in the report.'; }
     }));
-    recallTools.append(node('p', 'Run checks on the official sites, then record the results here. Older or specialty vehicles may need a manufacturer or dealer check. Results are saved in this browser.'));
+    recallTools.append(node('p', 'Run checks on the official sites, then record the results here. Older or specialty vehicles may need a manufacturer or dealer check. Results are saved to your private workbook.'));
   }
   function recallControl(row) {
     const holder = node('div', '', 'report-recall-row');
@@ -614,9 +615,9 @@
     select.setAttribute('aria-label', 'Recall result for ' + title(row.item));
     for (const value of ['Needs checking', 'Open recall', 'None found', 'Lookup unavailable']) select.add(new Option(value, value));
     select.value = row.cells[3] === 'Manual lookup needed' ? 'Needs checking' : row.cells[3];
-    const save = action('Save result', () => {
+    const save = action('Save result', async () => {
       try {
-        saveState('recalls', assetKey(row.item), select.value === 'Needs checking' ? null : {status:select.value, date:today()});
+        await saveState('recalls', assetKey(row.item), select.value === 'Needs checking' ? null : {status:select.value, date:today()});
         form.requestSubmit();
       } catch { recordError(); }
     });
@@ -765,6 +766,8 @@
     run.disabled = true;
     status.textContent = 'Loading ' + report.name.toLowerCase() + '…';
     try {
+      if (report === reports.attention || report === reports.deferred) await loadState('deferrals');
+      if (report === reports.recalls) await loadState('recalls');
       const allRows = await report.read({type, window:filters.window.value, now:today(), from, to});
       const rows = allRows.filter(row =>
         (!group || row.collection === group) &&

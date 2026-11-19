@@ -13,13 +13,25 @@
  async function read(){const m=await meta(),sheet=m.sheets.find(s=>s.properties.title===SHEET);if(!sheet)return {meta:m,sheet:null,entries:[]};return {meta:m,sheet:sheet.properties,entries:(await thValues("'"+SHEET+"'!A2:S")).map((r,i)=>decode(r,i)).filter(e=>e.id)};}
  async function ensure(){let state=await read();if(state.sheet)return state;try{await request(':batchUpdate',{requests:[{addSheet:{properties:{title:SHEET,gridProperties:{rowCount:1000,columnCount:19,frozenRowCount:1}}}}]});}catch(error){state=await read();if(!state.sheet)throw error;}state=await read();return state;}
  async function transactions(){return (await thValues("'Personal Finance Transactions'!A2:O")).map((r,i)=>({row:i+2,r})).filter(x=>x.r[0]);}
- function legacy(vehicle){
-  const spec=(window.FUEL_LEGACY||{})[vehicle.key];if(!spec)return [];
-  let data=spec.entries;try{const stored=JSON.parse(localStorage.getItem(spec.storage)||'null');if(Array.isArray(stored))data=stored;}catch{}
-  return data.map(x=>spec.compact&&x.d?{date:x.d,odo:x.o,gallons:x.g,price:x.p,total:x.t,full:x.partial?'no':'yes',flag:!!x.flag}:x).map((x,i)=>({id:'import-'+vehicle.key+'-'+x.date+'-'+x.odo,vehicle:vehicle.key,name:vehicle.name,date:x.date,odo:x.odo,gallons:x.gallons,price:x.price,total:x.total,full:x.full||'yes',station:x.station||'Historical import',notes:x.notes||'',flag:!!x.flag,created:'Historical import'})).filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date)&&Number.isFinite(e.odo)&&e.gallons>0);
+ async function historical(vehicle) {
+  const spec=(window.FUEL_LEGACY||{})[vehicle.key];
+  if(!spec) return {entries:new Map(), overlay:new Map()};
+  return window.thHistoricalFuel.load(vehicle.key,spec.entries,spec.storage);
  }
- function merge(vehicle,cloud){const all=cloud.filter(e=>e.vehicle===vehicle.key),known=new Set(all.map(e=>e.date+'|'+e.odo));return [...all.filter(e=>!e.deleted),...legacy(vehicle).filter(e=>!known.has(e.date+'|'+e.odo))];}
- async function history(vehicle){const state=await read();return merge(vehicle,state.entries);}
+ function merge(vehicle,cloud,{entries,overlay}) {
+  const all=cloud.filter(entry=>entry.vehicle===vehicle.key);
+  const keyOf=entry=>entry.date+'|'+entry.odo;
+  const known=new Set(all.filter(entry=>entry.transactionId||entry.deleted).map(keyOf));
+  const shared=all.filter(entry=>!entry.deleted&&(entry.transactionId||!overlay.has(keyOf(entry))));
+  const included=new Set(shared.map(keyOf));
+  return [...shared,...[...entries].filter(([id])=>!known.has(id)&&!included.has(id))
+   .map(([id, entry])=>({...entry,id:'import-'+vehicle.key+'-'+entry.date+'-'+entry.odo,vehicle:vehicle.key,
+    name:vehicle.name,station:'Historical import',created:'Historical import'}))];
+ }
+ async function history(vehicle, cloud) {
+  const entries=cloud ?? (await read()).entries;
+  return merge(vehicle,entries,await historical(vehicle));
+ }
  async function upload(file,label,id){
   if(!file)return '';if(!/^image\/(jpeg|png|webp)$/.test(file.type))throw Error('Choose a JPG, PNG, or WebP image.');if(file.size>15*1024*1024)throw Error('Choose a photo under 15 MB.');
   const boundary='fuel-'+FuelCore.uuid(),metadata={name:label+' '+id+' '+file.name,appProperties:{tiszodFuelId:id}};
@@ -44,9 +56,7 @@
   const mileage=state.meta.sheets.find(s=>s.properties.title==='Mileage-2025.10.16')?.properties;
   if(!finance||!mileage)throw Error('Finance or mileage sheet is missing. No fuel records were written.');
   const requests=[update(state.sheet.sheetId,0,0,HEADERS)];
-  const imported=merge(vehicle,state.entries).filter(e=>!state.entries.some(x=>x.id===e.id)&&!(e.date===entry.date&&Math.abs(e.odo-entry.odo)<.05));
-  // Only fuel-history rows are imported: historical spending is never added again.
-  const newRows=[...imported,...(!already?[entry]:[])];if(newRows.length)requests.push({appendCells:{sheetId:state.sheet.sheetId,rows:newRows.map(e=>({values:row(e).map(val)})),fields:'userEnteredValue'}});
+  if(!already)requests.push({appendCells:{sheetId:state.sheet.sheetId,rows:[{values:row(entry).map(val)}],fields:'userEnteredValue'}});
   if(already)requests.push(update(state.sheet.sheetId,already.row-1,0,row(entry)));
   if(match){
    const r=match.r.concat(Array(15).fill('')).slice(0,15),oldNote=String(r[10]||'').split(' · Fuel receipt')[0];
@@ -87,5 +97,5 @@
   }
   return {entry};
  }
- window.TisFuelStore={read,history,transactions,save,upload,merge,legacy};
+ window.TisFuelStore={read,history,transactions,save,upload};
 })();
