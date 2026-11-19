@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101b2d">
+<title>TisZod · Garage Insurance</title>
+<link rel="stylesheet" href="auth.css?v=20261030-in-page-loading-5">
+<link rel="stylesheet" href="insurance.css?v=1">
+</head>
+<body data-th-page="insurance">
+<div id="th-auth" role="dialog" aria-modal="true" aria-labelledby="th-auth-title" hidden>
+  <div class="th-auth-card">
+    <div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">Garage Insurance</span></div>
+    <button type="button" id="th-sign-in">Sign in with Google</button>
+    <p id="th-auth-message" role="status" aria-live="polite"></p>
+    <a href="garage.html">Back to Garage</a>
+  </div>
+</div>
+<main class="insurance-shell">
+  <nav aria-label="Breadcrumb"><a href="garage.html">Garage</a><span aria-hidden="true">/</span><span aria-current="page">Insurance</span></nav>
+  <header class="insurance-header">
+    <div><p class="insurance-kicker">Garage insurance</p><h1>Progressive</h1><p>Declarations, ID cards, and verification letters.</p></div>
+    <img src="tiszod-crest.svg" alt="" width="76" height="76">
+  </header>
+  <p id="insurance-status" role="status"></p>
+  <button id="insurance-retry" type="button" hidden>Try again</button>
+  <div id="insurance-policies" class="insurance-policies"></div>
+</main>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="insurance.js?v=1"></script>
+<script src="sheets.js?v=20261104-read-retry-1"></script>
+</body>
+</html>

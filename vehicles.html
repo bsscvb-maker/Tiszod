@@ -468,7 +468,8 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-service > .antique-dea
 #th-auth h1{color:#fff;font-size:32px;margin:15px 0}#th-auth p{color:#d0e3e6}#th-sign-in{padding:12px 22px;background:#24c5ce;color:#10252b;border:0;border-radius:6px;font:700 16px system-ui;cursor:pointer}#th-sign-in:focus-visible{outline:3px solid white;outline-offset:3px}
 #th-auth-message{font-size:13px;min-height:2em}
  .report-details{margin-top:18px;border:1px solid var(--line);padding:13px;border-radius:4px}.report-details summary{cursor:pointer;font-weight:700}.report-details p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;color:var(--muted)}.notes-cell{white-space:normal;min-width:180px;max-width:480px}#assetMaintenance table{min-width:700px} #assetView .edit-bar[hidden]{display:none}
-.asset-tabs button[hidden]{display:none}
+.asset-tabs button[hidden],#assetInsuranceLink[hidden]{display:none}
+#assetInsuranceLink{text-decoration:none}
 #assetRecommended .recommend-intro{font-size:15px;line-height:1.55;color:#b7c9e1;margin:0 0 18px}
 #assetRecommended .recommend-section{margin:18px 0 25px}
 #assetRecommended .recommend-section h3{font-size:19px;color:#f1f6ff;margin:0 0 11px}
@@ -584,7 +585,7 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-service > .antique-dea
 </div>
 <div class="workspace-view" id="assetView" hidden>
 <button type="button" class="back-link" id="backCategory">Back</button>
-<div class="asset-header"><div class="kicker" id="assetCategory"></div><h2 id="assetTitle"></h2><div class="asset-header-actions"><span id="assetStatus"></span><button type="button" class="fuel-log-button" id="logAssetFuel">⛽ Log Fuel</button><button type="button" class="add-vehicle-button" id="addDetailVehicleButton">+ Add vehicle</button></div></div>
+<div class="asset-header"><div class="kicker" id="assetCategory"></div><h2 id="assetTitle"></h2><div class="asset-header-actions"><span id="assetStatus"></span><a class="fuel-log-button" id="assetInsuranceLink" href="insurance.html" hidden>Insurance</a><button type="button" class="fuel-log-button" id="logAssetFuel">⛽ Log Fuel</button><button type="button" class="add-vehicle-button" id="addDetailVehicleButton">+ Add vehicle</button></div></div>
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete vehicle</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
 <p id="assetLastUpdated" role="status" style="font-size:13px;margin:8px 0 14px"></p>
@@ -1202,6 +1203,15 @@ function renderAsset(tab='details'){
  const hours=usesHours(asset);
  const fuelName=clean([asset.make,asset.model,asset.name].filter(Boolean).join(' '));
  const isMustang=/mustang/.test(fuelName)&&String(asset.year)==='2004';
+ const insurancePolicies=[
+  ['auto', {'2004':/mustang/, '2012':/civic/, '2019':/ram3500|3500.*ram|ram.*3500/, '2020':/4runner/}],
+  ['motorcycle', {'2023':/roadglide|fltrk/}],
+  ['camper', {'2020':/keystone.*bullet|bullet.*keystone/}]
+ ];
+ const insurancePolicy=insurancePolicies.find(([,models])=>models[asset.year]?.test(fuelName));
+ const insuranceLink=document.getElementById('assetInsuranceLink');
+ insuranceLink.hidden=!insurancePolicy;
+ insuranceLink.href='insurance.html'+(insurancePolicy?'#'+insurancePolicy[0]:'');
  const isRoadGlide=/roadglide|fltrk/.test(fuelName)&&String(asset.year)==='2023';
  const isUltra=/ultraclassic|electraglide|flhtcui/.test(fuelName)&&String(asset.year)==='2000';
  const isF150=/f150|f100|fseries/.test(fuelName)&&String(asset.year)==='1977';

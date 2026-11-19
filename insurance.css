@@ -1,0 +1,25 @@
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0b1320;color:#f1f6ff}
+body{margin:0}
+.insurance-shell{box-sizing:border-box;max-width:1170px;margin:auto;padding:clamp(20px,5vw,64px)}
+.insurance-shell nav{display:flex;align-items:center;gap:12px;color:#9eafc8;font-size:.9rem;margin-bottom:20px}
+.insurance-shell a{color:#a9d5ff}
+.insurance-header{display:flex;justify-content:space-between;align-items:center;gap:16px;background:linear-gradient(120deg,#193458,#131f34 75%);border:1px solid #365070;border-radius:16px;padding:clamp(20px,4vw,40px)}
+.insurance-header h1{font-size:clamp(2.25rem,6vw,4rem);line-height:1.06;letter-spacing:-.045em;margin:6px 0 9px}
+.insurance-header p{margin:0;color:#c2d2e7}
+.insurance-header .insurance-kicker{font-size:.75rem;text-transform:uppercase;letter-spacing:.16em;font-weight:700;color:#a9d5ff}
+.insurance-header img{width:clamp(42px,9vw,76px);height:auto}
+.insurance-policies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.insurance-policy{scroll-margin-top:20px;background:#141f31;border:1px solid #324761;border-radius:14px;overflow:hidden}
+.insurance-policy:target{border-color:#86bfff;box-shadow:0 0 0 2px #86bfff45}
+.insurance-policy header{padding:20px;background:#1a2b44}
+.insurance-policy h2{font-size:1.2rem;margin:0 0 6px}
+.insurance-policy p{font-size:.88rem;line-height:1.5;margin:0;color:#bdcce0}
+.insurance-policy ul{list-style:none;padding:0;margin:0}
+.insurance-policy li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-top:1px solid #324761;font-size:.88rem}
+.insurance-policy a,#insurance-retry{flex:none;background:#233a57;border:1px solid #4e7199;color:#e8f4ff;border-radius:7px;padding:8px 10px;text-decoration:none;font:inherit;cursor:pointer}
+.insurance-policy a:hover,#insurance-retry:hover{background:#31517a}
+.insurance-shell :focus-visible{outline:2px solid #a9d5ff;outline-offset:3px}
+#insurance-status{color:#bdcce0;margin:18px 0}
+#insurance-retry{margin-bottom:16px}
+.insurance-missing{color:#bdcce0;font-size:.8rem}
+@media(max-width:860px){.insurance-policies{grid-template-columns:1fr}}
