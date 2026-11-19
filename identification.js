@@ -223,7 +223,11 @@ function openPictures(id){
    const label=esc(side.label);
    return '<section class="identity-side"><h3>'+label+'</h3>'+
     '<div class="identity-side-image"><span class="record-placeholder">No '+label.toLowerCase()+' image added</span></div>'+
-    '<footer><button type="button" class="side-download" disabled>Download '+label.toLowerCase()+' (PNG)</button></footer></section>';
+    '<footer><button type="button" class="side-download" disabled>Download '+label.toLowerCase()+' (PNG)</button></footer>'+
+    '<form class="identity-side-upload" data-upload-side="'+index+'">'+
+    '<label>Choose '+label.toLowerCase()+' image <input type="file" accept="image/jpeg,image/png,image/webp" required></label> '+
+    '<button type="submit">Upload '+label.toLowerCase()+'</button>'+
+    '<p role="status"></p></form></section>';
   }
   const fileId=sideFileId(side),url=safe(side.url),download=fileId?'https://drive.google.com/uc?export=download&amp;id='+encodeURIComponent(fileId):url;return '<section class="identity-side"><h3>'+esc(side.label)+'</h3><div class="identity-side-image" data-side-index="'+index+'">'+(fileId?'<iframe src="https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/preview" title="'+esc(side.label)+' picture" loading="lazy" referrerpolicy="no-referrer"></iframe>':'')+'</div><footer><a class="side-download" href="'+download+'" target="_blank" rel="noopener noreferrer" download="'+esc(side.filename||'Identification-'+side.label)+'">Download '+esc(side.label.toLowerCase())+' ('+esc((side.filename||'image').split('.').pop().toUpperCase())+')</a><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">View full-size '+esc(side.label.toLowerCase())+' ↗</a>'+(side.originalUrl?'<a href="'+esc(safe(side.originalUrl))+'" target="_blank" rel="noopener noreferrer">Original photo ↗</a>':'')+'</footer></section>'}).join('');
  const attachments=(r.data.relatedDocuments||[]).filter(doc=>safe(doc.url));
@@ -235,6 +239,54 @@ function openPictures(id){
  if(!pictureDialog.open)pictureDialog.showModal();
  for(const holder of $('identity-picture-sides').querySelectorAll('[data-side-index]'))loadOriginalImage(r.data.sides[Number(holder.dataset.sideIndex)],holder);
 }
+const pendingPictureUploads=new WeakMap();
+let pictureUploadBusy=false;
+async function uploadIdentificationImage(file){
+ const extensions={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+ const extension=extensions[file.type];
+ if(!extension||!file.size||file.size>12*1024*1024)throw Error('Choose a JPG, PNG, or WebP image up to 12 MB.');
+ const boundary='tiszod-'+crypto.randomUUID();
+ const metadata=JSON.stringify({name:'Identification image '+crypto.randomUUID()+'.'+extension});
+ const body=new Blob([
+  '--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+'\r\n',
+  '--'+boundary+'\r\nContent-Type: '+file.type+'\r\n\r\n',file,'\r\n--'+boundary+'--\r\n'
+ ]);
+ const response=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+  method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'multipart/related; boundary='+boundary},body
+ });
+ if(!response.ok)throw Error('Google Drive could not save the image. Check your sign-in and try again.');
+ const {id}=await response.json();
+ if(!id)throw Error('Google Drive did not return a file ID.');
+ return {url:'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view',extension};
+}
+pictureDialog.addEventListener('submit',async event=>{
+ const form=event.target.closest('form[data-upload-side]');
+ if(!form)return;
+ event.preventDefault();
+ const status=form.querySelector('[role=status]');
+ if(pictureUploadBusy){status.textContent='Wait for the current upload to finish.';return}
+ const record=records.find(r=>r.id===openedPictureId);
+ const index=Number(form.dataset.uploadSide);
+ const side=record?.data.sides?.[index];
+ const input=form.querySelector('input');
+ const file=input.files[0];
+ if(!side||safe(side.url)||!file)return;
+ if(!thAuthorized()){status.textContent='Sign in again to upload an image.';return}
+ const button=form.querySelector('button');
+ pictureUploadBusy=true;
+ button.disabled=input.disabled=true;
+ status.textContent='Uploading to your Google Drive…';
+ try{
+  let upload=pendingPictureUploads.get(file);
+  if(!upload){upload=await uploadIdentificationImage(file);pendingPictureUploads.set(file,upload)}
+  const sides=record.data.sides.slice();
+  sides[index]={...side,url:upload.url,filename:'Identification-'+side.label+'.'+upload.extension};
+  await save(record,{...record.data,sides,url:index===0?upload.url:record.data.url});
+  pendingPictureUploads.delete(file);
+  if(pictureDialog.open&&openedPictureId===record.id)openPictures(record.id);
+ }catch(error){status.textContent=error.message}
+ finally{pictureUploadBusy=false;button.disabled=input.disabled=false}
+});
 $('identity-pictures-close').onclick=()=>{openedPictureId=null;pictureDialog.close()};
 pictureDialog.addEventListener('close',()=>{openedPictureId=null});
 document.querySelector('.identification').addEventListener('click',e=>{const b=e.target.closest('[data-identity-open]');if(b){e.preventDefault();openPictures(b.dataset.identityOpen)}});
