@@ -97,7 +97,23 @@ async function showSocialSecurityNumber(button){
   actions.append(code,copy);button.replaceWith(actions);
  }finally{button.disabled=false}
 }
-function card(r){const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
+const checkingStyle=document.createElement('style');
+checkingStyle.textContent=`
+.identity-check{margin:12px;padding:clamp(14px,4vw,24px);border:3px double #716950;border-radius:5px;background:repeating-linear-gradient(135deg,#fcf8eb,#fcf8eb 8px,#f8f2e0 8px,#f8f2e0 9px);color:#252a30;box-shadow:0 2px 6px #0004}
+.identity-check header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.identity-check h3{margin:2px 0;color:#252a30;font:700 1.2rem Georgia,serif}
+.identity-check small{font-weight:700;color:#514a39}
+.identity-check p{margin:12px 0;border-bottom:1px solid #96896e;padding-bottom:6px}
+.identity-check summary{cursor:pointer;color:#293e55;font-weight:700}
+.identity-check dl{display:grid;grid-template-columns:1fr;gap:3px;margin:12px 0 0}
+.identity-check dd{margin:0 0 8px;font-family:monospace;overflow-wrap:anywhere;user-select:all}
+`;
+document.head.append(checkingStyle);
+function checkingCard(r){
+ const d=r.data,account=d.checking;
+ return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><section class="identity-check"><header><h3>'+esc(title(d))+'</h3><small>REFERENCE ONLY</small></header><p>'+esc(account.holder)+' · Checking</p><details><summary>Account details · •••• '+esc(String(account.number).slice(-4))+'</summary><dl><dt>Routing number</dt><dd>'+esc(account.routing)+'</dd><dt>Account number</dt><dd>'+esc(account.number)+'</dd></dl></details></section><footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>';
+}
+function card(r){if(!r.data.deleted&&r.data.checking)return checkingCard(r);const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
 const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Tracy’s Father']};
 function groupCard(label,count,attribute,value){
  const profile=attribute==='data-person'?(personStyles[label]||['other',label.charAt(0),'Documents']):null;
@@ -185,14 +201,14 @@ const identityForm=$('identity-form');
 const documentLink=identityForm.elements.namedItem('url');
 const documentCategory=identityForm.elements.namedItem('category');
 function updateDocumentLinkRequirement(){
- documentLink.required=documentCategory.value!=='Social Security Card';
+ documentLink.required=!editing?.data.checking&&documentCategory.value!=='Social Security Card';
 }
 documentCategory.addEventListener('change',updateDocumentLinkRequirement);
 $('identity-dialog').addEventListener('focusin',updateDocumentLinkRequirement);
 $('identity-form').onsubmit=async e=>{e.preventDefault();const f=e.target,b=f.querySelector('[type=submit]');b.disabled=true;try{const d={...(editing?.data||{favorite:false,deleted:false})};for(const k of ['name','person','category','url','expires','notes'])d[k]=f.elements.namedItem(k).value.trim();if(d.sides?.length)d.sides=d.sides.map((side,i)=>i===0?{...side,url:d.url}:side);if(!d.url&&d.category==='Social Security Card'&&!d.sides?.length){
  d.sides=[{label:'Front',url:''},{label:'Back',url:''}];
 }
-if((d.url||d.category!=='Social Security Card')&&!safe(d.url))throw Error('Enter a complete https:// document link.');await save(editing,d);$('identity-dialog').close();message('Document saved.')}catch(err){$('identity-save-status').textContent=err.message}finally{b.disabled=false}};
+if((d.url||(!d.checking&&d.category!=='Social Security Card'))&&!safe(d.url))throw Error('Enter a complete https:// document link.');await save(editing,d);$('identity-dialog').close();message('Document saved.')}catch(err){$('identity-save-status').textContent=err.message}finally{b.disabled=false}};
 for(const id of ['identity-search','identity-person','identity-category','identity-view'])$(id).addEventListener(id==='identity-search'?'input':'change',()=>{recordPage=1;render()});$('identity-refresh').onclick=()=>window.thStart().catch(e=>message(e.message));$('identity-close').onclick=()=>$('identity-dialog').close();
 
 for(const id of ['identity-person','identity-category','identity-view'])$(id).addEventListener('change',()=>{selectedPerson='';selectedCategory='';selectedFolder='';recordPage=1;render()});
