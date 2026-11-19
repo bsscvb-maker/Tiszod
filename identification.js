@@ -99,19 +99,35 @@ async function showSocialSecurityNumber(button){
 }
 const checkingStyle=document.createElement('style');
 checkingStyle.textContent=`
-.identity-check{margin:12px;padding:clamp(14px,4vw,24px);border:3px double #716950;border-radius:5px;background:repeating-linear-gradient(135deg,#fcf8eb,#fcf8eb 8px,#f8f2e0 8px,#f8f2e0 9px);color:#252a30;box-shadow:0 2px 6px #0004}
-.identity-check header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
-.identity-check h3{margin:2px 0;color:#252a30;font:700 1.2rem Georgia,serif}
-.identity-check small{font-weight:700;color:#514a39}
-.identity-check p{margin:12px 0;border-bottom:1px solid #96896e;padding-bottom:6px}
-.identity-check summary{cursor:pointer;color:#293e55;font-weight:700}
-.identity-check dl{display:grid;grid-template-columns:1fr;gap:3px;margin:12px 0 0}
-.identity-check dd{margin:0 0 8px;font-family:monospace;overflow-wrap:anywhere;user-select:all}
+.identity-check{margin:12px;padding:clamp(12px,3vw,22px);border:4px double #594b3d;border-radius:5px;background:repeating-linear-gradient(135deg,#fdf6e8,#fdf6e8 8px,#f8efdc 8px,#f8efdc 9px);color:#241e1a;box-shadow:0 2px 6px #0004}
+.identity-check header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 12px;align-items:center}
+.identity-check h3{margin:2px 0;color:#241e1a;font:700 1.15rem Georgia,serif}
+.identity-check small{color:#643619;font-size:.68rem;font-weight:800;letter-spacing:.08em}
+.identity-check .check-holder{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin:14px 0;padding-bottom:5px;border-bottom:1px solid #96896e}
+.identity-check .check-holder strong{font:700 1rem Georgia,serif}
+.identity-check .check-numbers{display:grid;gap:7px;margin-top:15px;padding-top:9px;border-top:2px solid #9b471e}
+.identity-check .check-number{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.identity-check .check-number div{flex:1 1 110px;min-width:0}
+.identity-check code{display:block;color:#241e1a;font-size:.9rem;overflow-wrap:anywhere;user-select:all}
+.identity-check button[data-check-copy]{padding:5px 8px;border:1px solid #68482f;border-radius:4px;background:#332822;color:#fff9eb;font-size:.78rem;white-space:nowrap}
+.identity-check .check-illustration{display:inline-flex;align-items:end;gap:5px;font-size:1.7rem;line-height:1}
+.identity-check .check-gnome{position:relative;display:block;width:30px;height:37px;background:#ded6ca;clip-path:polygon(45% 0,66% 8%,88% 43%,98% 48%,85% 59%,82% 75%,50% 100%,24% 77%,15% 60%,2% 49%,12% 43%);background:linear-gradient(#3c2b22 0 11%,#b94e1e 11% 46%,#342722 46% 55%,#ece2d6 55%)}
+.identity-check .check-gnome::after{content:'';position:absolute;top:49%;left:36%;width:29%;height:20%;border-radius:50%;background:#e8ac85}
 `;
 document.head.append(checkingStyle);
+const checkingFields=[['routing','Routing number','Copy routing'],['number','Account number','Copy account']];
 function checkingCard(r){
  const d=r.data,account=d.checking;
- return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><section class="identity-check"><header><h3>'+esc(title(d))+'</h3><small>REFERENCE ONLY</small></header><p>'+esc(account.holder)+' · Checking</p><details><summary>Account details · •••• '+esc(String(account.number).slice(-4))+'</summary><dl><dt>Routing number</dt><dd>'+esc(account.routing)+'</dd><dt>Account number</dt><dd>'+esc(account.number)+'</dd></dl></details></section><footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>';
+ const fields=checkingFields.map(([key,label,action])=>'<div class="check-number"><div><small>'+label+'</small><code>'+esc(account[key])+'</code></div><button type="button" data-check-copy="'+key+'" aria-label="Copy '+label.toLowerCase()+'">'+action+'</button></div>').join('');
+ return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><section class="identity-check"><header><div><h3>'+esc(title(d))+'</h3><small>CHECKING · REFERENCE ONLY</small></div><span class="check-illustration" aria-hidden="true"><span class="check-gnome"></span>🏍️</span></header><p class="check-holder"><small>ACCOUNT HOLDER</small><strong>'+esc(account.holder)+'</strong></p><div class="check-numbers">'+fields+'</div></section><footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>';
+}
+async function copyCheckingNumber(button){
+ const field=checkingFields.find(([key])=>key===button.dataset.checkCopy);
+ const record=records.find(r=>r.id===button.closest('[data-file-id]')?.dataset.fileId);
+ const value=field&&record?.data.checking?.[field[0]];
+ if(!value)return;
+ try{await navigator.clipboard.writeText(value);message(field[1]+' copied.');button.textContent='Copied';setTimeout(()=>{button.textContent=field[2]},1500)}
+ catch{const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(button.parentElement.querySelector('code'));selection.removeAllRanges();selection.addRange(range);message('Number selected. Use your device’s Copy command.')}
 }
 function card(r){if(!r.data.deleted&&r.data.checking)return checkingCard(r);const d=r.data,u=safe(d.url);if(d.sides?.length&&!d.deleted)return pictureCard(r);return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record">'+(u&&!d.deleted?'<a class="record-link" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(title(d))+'">'+preview(d)+'<div class="record-caption"><h3>'+esc(title(d))+'</h3>'+(isEducation||!['Birth Certificate','Social Security Card','Proof of Birth Letter'].includes(d.category)?'<small>'+esc(d.person||'General')+' · '+esc(d.category||'')+'</small>':'')+''+(isEducation&&d.folder?'<small>'+esc(d.folder)+'</small>':'')+(d.expires?'<small>Expires '+esc(d.expires)+'</small>':'')+'</div></a>':'<h3>'+esc(title(d))+'</h3>')+socialSecurityDetails(r)+'<footer>'+(d.deleted?'<button data-restore="'+esc(r.id)+'">Restore</button>':'<button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button>')+'</footer></article>'}
 const personStyles={Todd:['todd','TH','Me'],Aiden:['aiden','A','Son'],Alexis:['alexis','A','Stepdaughter'],Heather:['heather','H','Ex'],Tracy:['tracy','T','Girlfriend'],Zach:['zach','Z','Tracy’s Son'],Marty:['marty','M','Tracy’s Father']};
@@ -196,7 +212,7 @@ document.querySelector('.identification').addEventListener('click',e=>{
  if(b.dataset.recordPage){recordPage+=Number(b.dataset.recordPage);render()}
 });
 function edit(id){if(!ready)return;editing=records.find(r=>r.id===id)||null;const f=$('identity-form');f.reset();for(const k of ['name','person','category','url','expires','notes'])f.elements.namedItem(k).value=editing?.data[k]||({person:selectedPerson||'Todd',category:selectedCategory||'Other'}[k]||'');$('identity-save-status').textContent='';$('identity-dialog').showModal()}
-document.querySelector('.identification').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.dataset.showSsn){await showSocialSecurityNumber(b);return;} if(b.dataset.hideDocument){const r=records.find(r=>r.id===b.dataset.hideDocument);if(!r)return;b.disabled=true;await save(r,{...r.data,hidden:!r.data.hidden});message(r.data.hidden?'Document is visible again.':'Document hidden. Find it under Show → Hidden documents.')}else if(b.id==='identity-add')edit();else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
+document.querySelector('.identification').onclick=async e=>{const b=e.target.closest('button');if(!b||!ready)return;try{if(b.dataset.checkCopy){await copyCheckingNumber(b);return;} if(b.dataset.showSsn){await showSocialSecurityNumber(b);return;} if(b.dataset.hideDocument){const r=records.find(r=>r.id===b.dataset.hideDocument);if(!r)return;b.disabled=true;await save(r,{...r.data,hidden:!r.data.hidden});message(r.data.hidden?'Document is visible again.':'Document hidden. Find it under Show → Hidden documents.')}else if(b.id==='identity-add')edit();else if(b.dataset.edit)edit(b.dataset.edit);else {const id=b.dataset.delete||b.dataset.restore;if(!id)return;const r=records.find(r=>r.id===id),d={...r.data};if(b.dataset.delete){if(!confirm('Remove this document from the dashboard? You can restore it from Deleted documents. Its original Drive file stays unchanged.'))return;d.deleted=true}else d.deleted=false;await save(r,d)}}catch(err){message(err.message)}};
 const identityForm=$('identity-form');
 const documentLink=identityForm.elements.namedItem('url');
 const documentCategory=identityForm.elements.namedItem('category');
@@ -320,7 +336,7 @@ documentObserver.observe($('identity-grid'),{childList:true,subtree:true});
 
 function compareDocuments(a,b,person){
  const order=documentOrders.get(person)||[],ai=order.indexOf(a.id),bi=order.indexOf(b.id);
- return (ai<0?Infinity:ai)-(bi<0?Infinity:bi)||title(a.data).localeCompare(title(b.data));
+ return (ai<0?Infinity:ai)-(bi<0?Infinity:bi)||Number(!!a.data.checking)-Number(!!b.data.checking)||title(a.data).localeCompare(title(b.data));
 }
 function orderedCard(r,person,deleted){
  const attachments=!deleted&&!r.data.sides?.length?(r.data.relatedDocuments||[]).filter(doc=>safe(doc.url)):[];
