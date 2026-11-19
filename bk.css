@@ -145,3 +145,8 @@
 @media (max-width: 850px) {
  .bk-reference [data-ref-results] { max-height: 300px; }
 }
+
+.bk-year-card .bk-case-date-filed,
+.bk-year-card .bk-case-date-discharged { display: inline; font-weight: 650; white-space: nowrap; }
+.bk-year-card .bk-case-date-filed { color: #00bfff; }
+.bk-year-card .bk-case-date-discharged { color: #73e7a3; }

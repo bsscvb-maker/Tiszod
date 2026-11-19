@@ -11,7 +11,10 @@
   if(['2002','2009','2020','2026'].includes(referenceHash.get('year'))) caseYear=referenceHash.get('year');
  }
  function scopeCase(){items=allItems.filter(r=>r.year===caseYear);settings=caseRecords.find(r=>r.year===caseYear)?.details||{};if($('bk-case-year'))$('bk-case-year').value=caseYear;}
- function caseCards(){return '<section class="bk-years" aria-label="Bankruptcy years">'+caseRecords.map(c=>`<button class="bk-year-card ${c.year===caseYear?'selected':''}" data-case="${esc(c.year)}" aria-label="Open ${esc(c.year)} bankruptcy documents"><strong>${esc(c.year)}</strong><span>Chapter ${esc(c.details.chapter||'—')}</span><small>Case: ${esc(c.details.caseNumber||'Not recorded')}</small><small>Filed: ${reportChanged(c.details,['filedDate'],esc(c.details.filedDate||'Not recorded'))}</small><small>Discharged: ${esc(c.details.dischargeDate||'Not recorded')}</small></button>`).join('')+'</section>';}
+ function caseCardDate(value,status){
+  return value?'<time class="bk-case-date-'+status+'" datetime="'+esc(value)+'">'+esc(value)+'</time>':'Not recorded';
+ }
+ function caseCards(){return '<section class="bk-years" aria-label="Bankruptcy years">'+caseRecords.map(c=>`<button class="bk-year-card ${c.year===caseYear?'selected':''}" data-case="${esc(c.year)}" aria-label="Open ${esc(c.year)} bankruptcy documents"><strong>${esc(c.year)}</strong><span>Chapter ${esc(c.details.chapter||'—')}</span><small>Case: ${esc(c.details.caseNumber||'Not recorded')}</small><small>Filed: ${caseCardDate(c.details.filedDate,'filed')}</small><small>Discharged: ${caseCardDate(c.details.dischargeDate,'discharged')}</small></button>`).join('')+'</section>';}
  let bankruptcyFolder='';
  function folderControls(){const root=settings.rootTitle||caseYear,folders=settings.folders||[];return `${bankruptcyFolder?`<p><a href="${esc(bankruptcyFolder)}" target="_blank" rel="noopener noreferrer">Open Bankruptcy Folder</a></p>`:""}<p class="bk-muted">${esc(caseYear)} / ${esc(root)}${folder?' / '+esc(folder):''}</p><div class="bk-folders">${folder?'<button data-folder="">← '+esc(root)+'</button>':folders.map(f=>`<button data-folder="${esc(f)}">📁 ${esc(f)} <small>${items.filter(r=>r.type==='Document'&&r.folder===f).length} files</small></button>`).join('')}</div>`;}
 
