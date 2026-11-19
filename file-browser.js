@@ -22,12 +22,13 @@ function mount(config){
  all.onchange=()=>{if(busy)return;selected.clear();if(all.checked)lastVisible.forEach(id=>selected.add(id));status.textContent='';update()};
  clear.onclick=()=>{selected.clear();status.textContent='';update()};
  async function loadView(){
-  if(!thAuthorized())return;
+  if(typeof thAuthorized!=='function'||!thAuthorized())return;
   mode=(await thSaved.readPreference(key))==='list'?'list':'grid';
   update();
  }
  window.addEventListener('tiszod-drive-books-connected',loadView);
- queueMicrotask(loadView);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadView,{once:true});
+ else void loadView();
  toolbar.addEventListener('click',async e=>{
   const view=e.target.closest('[data-file-view]')?.dataset.fileView;
   if(view&&await thSaved.writePreference(key,view)){mode=view;update()}

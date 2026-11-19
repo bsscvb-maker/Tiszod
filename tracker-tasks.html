@@ -40,7 +40,10 @@ async function loadTaskView(){
  const saved=await taskPreferences()?.readPreference(taskViewKey);
  if(saved&&document.querySelector('[data-view="'+CSS.escape(saved)+'"]')){view=saved;render()}
 }
-if(window.parent!==window)window.parent.addEventListener('tiszod-drive-books-connected',loadTaskView);
+if(window.parent!==window){
+ window.parent.addEventListener('tiszod-drive-books-connected',loadTaskView);
+ if(window.parent.document.readyState==='loading')window.parent.addEventListener('DOMContentLoaded',loadTaskView,{once:true});
+}
 const TIERS=[['tier1','High','#fa627b'],['tier2','Medium','#f3cb65'],['tier3','Low','#7bd6a2']];
 const STATES=['ready','working','waiting','done'],TONES={ready:'#fa627b',working:'#f3cb65',waiting:'#6facff',done:'#7bd6a2'};
 const $=id=>document.getElementById(id);let personalState={},tasks=[],baseline='',ready=false,busy=false,editing=null,view='list',scope='all',projectFilter='',myOwner='',metricStatus='',dragId=null,calendarDate=new Date(),checkState=[];
