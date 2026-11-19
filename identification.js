@@ -99,27 +99,27 @@ async function showSocialSecurityNumber(button){
 }
 const checkingStyle=document.createElement('style');
 checkingStyle.textContent=`
-.identity-check{margin:12px;padding:clamp(12px,3vw,22px);border:4px double #594b3d;border-radius:5px;background:repeating-linear-gradient(135deg,#fdf6e8,#fdf6e8 8px,#f8efdc 8px,#f8efdc 9px);color:#241e1a;box-shadow:0 2px 6px #0004}
-.identity-check header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 12px;align-items:center}
-.identity-check h3{margin:2px 0;color:#241e1a;font:700 1.15rem Georgia,serif}
-.identity-check small{color:#643619;font-size:.68rem;font-weight:800;letter-spacing:.08em}
-.identity-check .check-holder{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin:14px 0;padding-bottom:5px;border-bottom:1px solid #96896e}
-.identity-check .check-holder strong{font:700 1rem Georgia,serif}
-.identity-check .check-numbers{display:grid;gap:7px;margin-top:15px;padding-top:9px;border-top:2px solid #9b471e}
-.identity-check .check-number{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
-.identity-check .check-number div{flex:1 1 110px;min-width:0}
-.identity-check code{display:block;color:#241e1a;font-size:.9rem;overflow-wrap:anywhere;user-select:all}
-.identity-check button[data-check-copy]{padding:5px 8px;border:1px solid #68482f;border-radius:4px;background:#332822;color:#fff9eb;font-size:.78rem;white-space:nowrap}
-.identity-check .check-illustration{display:inline-flex;align-items:end;gap:5px;font-size:1.7rem;line-height:1}
-.identity-check .check-gnome{position:relative;display:block;width:30px;height:37px;background:#ded6ca;clip-path:polygon(45% 0,66% 8%,88% 43%,98% 48%,85% 59%,82% 75%,50% 100%,24% 77%,15% 60%,2% 49%,12% 43%);background:linear-gradient(#3c2b22 0 11%,#b94e1e 11% 46%,#342722 46% 55%,#ece2d6 55%)}
-.identity-check .check-gnome::after{content:'';position:absolute;top:49%;left:36%;width:29%;height:20%;border-radius:50%;background:#e8ac85}
+.identity-check{margin:12px;padding:clamp(12px,3vw,22px);border:1px solid #8e9eac;border-radius:2px;background:linear-gradient(115deg,#f7fbff,#e7eff7);color:#263a4d;box-shadow:0 2px 6px #0003}
+.identity-check header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin-bottom:12px}
+.identity-check h3{margin:0;color:#263a4d;font:700 1rem Georgia,serif}
+.identity-check small{color:#40566b;font-size:.67rem;font-weight:700;letter-spacing:.04em}
+.identity-check .check-date,.identity-check .check-memo{display:flex;align-items:baseline;gap:8px}
+.identity-check .check-date{min-width:85px;margin-left:auto}
+.identity-check .check-line{flex:1;min-height:1em;border-bottom:1px solid #8193a4}
+.identity-check .check-holder{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin:8px 0}
+.identity-check .check-holder strong{flex:1;min-width:120px;border-bottom:1px solid #8193a4;color:#173f78;font:italic 1.35rem "Segoe Print","Bradley Hand","Comic Sans MS",cursive;overflow-wrap:anywhere}
+.identity-check .check-memo{margin:10px 0 14px}
+.identity-check .check-numbers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:8px 14px;padding-top:9px;border-top:1px solid #8193a4}
+.identity-check .check-number{display:grid;justify-items:start;gap:3px;min-width:0}
+.identity-check code{display:block;color:#263a4d;font-size:.9rem;letter-spacing:.06em;overflow-wrap:anywhere;user-select:all}
+.identity-check button[data-check-copy]{padding:4px 7px;border:1px solid #8296aa;border-radius:4px;background:#f7fbff;color:#294967;font-size:.75rem;white-space:nowrap}
 `;
 document.head.append(checkingStyle);
 const checkingFields=[['routing','Routing number','Copy routing'],['number','Account number','Copy account']];
 function checkingCard(r){
  const d=r.data,account=d.checking;
  const fields=checkingFields.map(([key,label,action])=>'<div class="check-number"><div><small>'+label+'</small><code>'+esc(account[key])+'</code></div><button type="button" data-check-copy="'+key+'" aria-label="Copy '+label.toLowerCase()+'">'+action+'</button></div>').join('');
- return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><section class="identity-check"><header><div><h3>'+esc(title(d))+'</h3><small>CHECKING · REFERENCE ONLY</small></div><span class="check-illustration" aria-hidden="true"><span class="check-gnome"></span>🏍️</span></header><p class="check-holder"><small>ACCOUNT HOLDER</small><strong>'+esc(account.holder)+'</strong></p><div class="check-numbers">'+fields+'</div></section><footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>';
+ return '<article data-file-id="'+esc(r.id)+'" class="identity-card visual-record"><section class="identity-check"><header><div><h3>'+esc(title(d))+'</h3><small>CHECKING · REFERENCE ONLY</small></div><span class="check-date" aria-hidden="true"><small>DATE</small><span class="check-line"></span></span></header><p class="check-holder"><small>ACCOUNT HOLDER</small><strong>'+esc(account.holder)+'</strong></p><p class="check-memo" aria-hidden="true"><small>MEMO</small><span class="check-line"></span></p><div class="check-numbers">'+fields+'</div></section><footer><button data-edit="'+esc(r.id)+'">Edit</button><button data-delete="'+esc(r.id)+'">Delete</button></footer></article>';
 }
 async function copyCheckingNumber(button){
  const field=checkingFields.find(([key])=>key===button.dataset.checkCopy);
