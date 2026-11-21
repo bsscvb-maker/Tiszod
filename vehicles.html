@@ -601,7 +601,7 @@ body[data-th-page="fleet"] #categoryView #assetGrid .card-service > .antique-dea
 <dialog id="addVehicleDialog" class="add-vehicle-dialog" aria-labelledby="addVehicleTitle"><form id="addVehicleForm"><div class="add-vehicle-head"><h2 id="addVehicleTitle">Add a vehicle</h2><button type="button" id="closeAddVehicle" aria-label="Close">×</button></div><div class="add-vehicle-fields"><label>Year <input name="year" type="number" min="1900" max="2100" required></label><label>Make <input name="make" required maxlength="100"></label><label>Model <input name="model" required maxlength="120"></label><label>Section <select name="category" id="newVehicleCategory" required></select></label><label>Status <select name="status"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Sold">Sold</option><option value="Managed">Managed</option><option value="Totaled">Totaled</option><option value="Repo">Repo</option></select></label><label>Engine <input name="engine" maxlength="100"></label><label>VIN / serial number <input name="vin" maxlength="100"></label><label>Tag / plate <input name="tag" maxlength="50"></label><label>Color <input name="color" maxlength="80"></label></div><p id="addVehicleStatus" role="status"></p><div class="add-vehicle-actions"><button type="button" id="cancelAddVehicle">Cancel</button><button type="submit" id="saveVehicle">Save vehicle</button></div></form></dialog>
 <dialog id="dueDialog" class="due-dialog" aria-labelledby="dueTitle"><h2 id="dueTitle">Service attention</h2><div id="dueContent"></div><button type="button" id="dueComplete">Complete tasks</button> <button type="button" id="dueSchedule">View Service Schedule</button> <button type="button" id="dueClose">Close</button></dialog>
 <dialog id="photoPreview" class="photo-preview" aria-labelledby="photoPreviewTitle"><div class="photo-preview-head"><strong id="photoPreviewTitle"></strong><button type="button" id="closePhotoPreview">Close</button></div><img id="photoPreviewImage" alt=""></dialog>
-<dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
+<dialog id="mileageDialog" class="mileage-dialog" aria-labelledby="mileageDialogTitle"><form id="mileageForm"><h2 id="mileageDialogTitle">Add miles</h2><p id="mileageVehicleName"></p><p id="mileageCurrentReading"></p><label>Entry type<select name="mode"><option value="current">Current odometer / hour reading</option><option value="add">Distance / hours to add</option><option value="start">Starting mileage / hours</option></select></label><label><span id="mileageInputLabel">Current odometer reading</span><input name="mileage" type="number" min="0" step="any" inputmode="decimal" required></label><div class="mileage-actions"><button type="button" id="cancelMileage">Cancel</button><button type="submit" id="saveMileage">Add miles</button></div><p id="mileageMessage" role="status"></p></form></dialog>
 <script src="small-engine-oil.js?v=20261118-garage-save"></script>
 <script src="fleet-vehicle-specs.js?v=9"></script>
 <script src="door-jamb.js?v=20261117-factory-colors4"></script>
@@ -1354,43 +1354,58 @@ document.getElementById('assetGrid').addEventListener('click',e=>{const preview=
  const displayed=img.currentSrc||img.getAttribute('src');
  if(displayed===a.cardThumbnail?.url&&a.photoFileId)assetPhoto(a).then(src=>previewPhoto(a,src)).catch(()=>previewPhoto(a,displayed));
  else previewPhoto(a,displayed);
- }return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget),unit=hours?'hours':'miles';document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=existing?.currentMileage??'';form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden)openDueReminder(asset)}).catch(()=>{});});
+ }return}if(update){mileageTarget=assets.find(a=>a.id===update.dataset.mileageAsset);if(!mileageTarget)return;const form=document.getElementById('mileageForm');form.reset();const existing=mileageFor(mileageTarget),hours=usesHours(mileageTarget);form.elements.mode.querySelector('[value="start"]').disabled=!existing;document.getElementById('mileageDialogTitle').textContent='Update '+(hours?'hours':'mileage');document.getElementById('mileageInputLabel').textContent=hours?'Current hour reading':'Current odometer reading';document.getElementById('saveMileage').textContent='Save current reading';document.getElementById('mileageVehicleName').textContent=[mileageTarget.year,mileageTarget.make,mileageTarget.model].filter(Boolean).join(' ');document.getElementById('mileageCurrentReading').textContent='Current: '+cardReading(mileageTarget,existing);document.getElementById('mileageMessage').textContent='';document.getElementById('mileageDialog').showModal();form.elements.mileage.value=String(existing?.currentMileage??'').replace(/,/g,'');form.elements.mileage.focus();return}if(!open)return;asset=assets.find(a=>a.id===open.dataset.openAsset);if(!asset)return;renderAsset();show('assetView');loadServiceDetails().then(()=>{if(asset&&asset.id===open.dataset.openAsset&&!document.getElementById('assetView').hidden&&!editing&&document.querySelector('[data-asset-tab].active')?.dataset.assetTab==='details')openDueReminder(asset)}).catch(()=>{});});
 let mileageTarget=null;
  document.querySelector('#mileageForm [name="mode"]').addEventListener('change',e=>{
-  const hours=usesHours(mileageTarget),adding=e.target.value==='add';
-  document.getElementById('mileageInputLabel').textContent=adding?(hours?'Hours to add':'Miles traveled to add'):(hours?'Current hour reading':'Current odometer reading');
-  document.getElementById('saveMileage').textContent=adding?(hours?'Add hours':'Add miles'):'Save current reading';
-  document.querySelector('#mileageForm [name="mileage"]').value=adding?'':mileageFor(mileageTarget)?.currentMileage??'';
+  const hours=usesHours(mileageTarget),mode=e.target.value,m=mileageFor(mileageTarget);
+  const starting=mode==='start',adding=mode==='add';
+  document.getElementById('mileageInputLabel').textContent=starting?(hours?'Starting hours':'Starting mileage'):adding?(hours?'Hours to add':'Miles traveled to add'):(hours?'Current hour reading':'Current odometer reading');
+  document.getElementById('saveMileage').textContent=starting?'Save starting reading':adding?(hours?'Add hours':'Add miles'):'Save current reading';
+  document.getElementById('mileageMessage').textContent='';
+  document.querySelector('#mileageForm [name="mileage"]').value=adding?'':String((starting?m?.startMileage:m?.currentMileage)??'').replace(/,/g,'');
  });
 document.getElementById('cancelMileage').addEventListener('click',()=>document.getElementById('mileageDialog').close());
 document.getElementById('mileageForm').addEventListener('submit',async e=>{
  e.preventDefault();const a=mileageTarget,form=e.currentTarget,button=document.getElementById('saveMileage'),message=document.getElementById('mileageMessage');if(!a)return;
- const adding=form.elements.mode.value==='add',entered=Number(form.elements.mileage.value);if(form.elements.mileage.value.trim()===''||!Number.isFinite(entered)||entered<0||(adding&&entered===0)){message.textContent='Enter a valid '+(adding?'amount to add.':'current reading.');return}
+ const mode=form.elements.mode.value,adding=mode==='add',starting=mode==='start',entered=Number(form.elements.mileage.value);if(form.elements.mileage.value.trim()===''||!Number.isFinite(entered)||entered<0||(adding&&entered===0)){message.textContent='Enter a valid '+(adding?'amount to add.':'current reading.');return}
  button.disabled=true;message.textContent='Saving reading…';
  try{
   let m=mileageFor(a);
   const current=Number(String(m?.currentMileage??a.reportOdometer??0).replace(/,/g,''));
   if(!Number.isFinite(current)||current<0)throw new Error('The current reading needs to be corrected before adding to it.');
   const value=Number((adding?current+entered:entered).toFixed(3));
-  const start=Number(m?.startMileage??a.reportOdometer??0);
-  if(!Number.isFinite(start)||value<start)throw new Error('Current reading cannot be lower than the starting reading ('+start+').');
-  if(adding&&!confirm('Add '+entered+' '+(usesHours(a)?'hours':'miles')+' to '+current+'? New total: '+value+'. To enter an odometer reading, cancel and choose Current odometer / hour reading.'))return;
-  if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value)}
-  else{
-   const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
-   const baseline=Number(String(a.reportOdometer||'').replace(/,/g,'')),starting=Number.isFinite(baseline)&&a.reportOdometer!==''?baseline:0;
-   const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,starting,value,'','','','','']);
-   m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date,startMileage:starting,currentMileage:value};mileage.push(m);
-   await fleetWriteCell('Mileage-2025.10.16','G'+row,'=F'+row+'-E'+row);
-   await fleetWriteCell('Mileage-2025.10.16','H'+row,'=TODAY()-D'+row);
-   await fleetWriteCell('Mileage-2025.10.16','I'+row,'=H'+row+'/30.4375');
-   await fleetWriteCell('Mileage-2025.10.16','J'+row,'=IFERROR(G'+row+'/I'+row+',0)');
-   await fleetWriteCell('Mileage-2025.10.16','K'+row,'=J'+row+'*12');
+  const start=Number(String(m?.startMileage??a.reportOdometer??0).replace(/,/g,''));
+  if(starting){
+   if(!m)throw new Error('Add a mileage record from the vehicle’s Odometer tab first.');
+   if(value>current)throw new Error('Starting reading cannot exceed the current reading ('+current+').');
+   await ensureProfileRow(a);
+   await fleetWriteRanges([
+    {sheet:'Mileage-2025.10.16',range:'E'+m.sheetRow,values:[[value]]},
+    {sheet:'Portal Asset Profiles',range:'K'+a.profileRow,values:[[value]]}
+   ],'RAW');
+   a.reportOdometer=value;
+   m.startMileage=value;
+   m.addedMileage=current-value;
+  }else{
+   if(!Number.isFinite(start)||value<start)throw new Error('Current reading cannot be lower than the starting reading ('+start+').');
+   if(adding&&!confirm('Add '+entered+' '+(usesHours(a)?'hours':'miles')+' to '+current+'? New total: '+value+'. To enter an odometer reading, cancel and choose Current odometer / hour reading.'))return;
+   if(m){await fleetWriteCell('Mileage-2025.10.16','F'+m.sheetRow,value)}
+   else{
+    const now=new Date(),date=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+    const baseline=Number(String(a.reportOdometer||'').replace(/,/g,'')),starting=Number.isFinite(baseline)&&a.reportOdometer!==''?baseline:0;
+    const row=await fleetAppendRow('Mileage-2025.10.16',['',[a.make,a.model].filter(Boolean).join(' '),a.year,date,starting,value,'','','','','']);
+    m={sheetRow:row,name:[a.make,a.model].filter(Boolean).join(' '),year:a.year,serviceStart:date,startMileage:starting,currentMileage:value};mileage.push(m);
+    await fleetWriteCell('Mileage-2025.10.16','G'+row,'=F'+row+'-E'+row);
+    await fleetWriteCell('Mileage-2025.10.16','H'+row,'=TODAY()-D'+row);
+    await fleetWriteCell('Mileage-2025.10.16','I'+row,'=H'+row+'/30.4375');
+    await fleetWriteCell('Mileage-2025.10.16','J'+row,'=IFERROR(G'+row+'/I'+row+',0)');
+    await fleetWriteCell('Mileage-2025.10.16','K'+row,'=J'+row+'*12');
+   }
   }
   const rows=await thValues("'Mileage-2025.10.16'!B"+m.sheetRow+':K'+m.sheetRow),r=rows[0]||[];
    const numeric=await thValues("'Mileage-2025.10.16'!E"+m.sheetRow+':K'+m.sheetRow,'UNFORMATTED_VALUE');
    (numeric[0]||[]).forEach((value,i)=>r[i+3]=value);
-  Object.assign(m,{name:r[0]||m.name,year:r[1]||m.year,serviceStart:r[2]||m.serviceStart,startMileage:r[3]??m.startMileage,currentMileage:r[4]??value,addedMileage:r[5]??(value-Number(String(m.startMileage||value).replace(/,/g,''))),daysDriven:r[6]??m.daysDriven,monthsDriven:r[7]??m.monthsDriven,monthlyEstimate:r[8]??m.monthlyEstimate,annualEstimate:r[9]??m.annualEstimate});
+  Object.assign(m,{name:r[0]||m.name,year:r[1]||m.year,serviceStart:r[2]||m.serviceStart,startMileage:r[3]??m.startMileage,currentMileage:r[4]??(starting?current:value),addedMileage:r[5]??((starting?current:value)-Number(String(m.startMileage??value).replace(/,/g,''))),daysDriven:r[6]??m.daysDriven,monthsDriven:r[7]??m.monthsDriven,monthlyEstimate:r[8]??m.monthlyEstimate,annualEstimate:r[9]??m.annualEstimate});
   renderCategory();if(asset===a)renderAsset('mileage');document.getElementById('mileageDialog').close();
  }catch(error){message.textContent=error.message}
  finally{button.disabled=false}
