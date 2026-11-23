@@ -19,6 +19,7 @@
   const connect = section.querySelector('[data-connect]');
   const filters = form.elements;
   let result;
+  let reportAssets = [];
   let generation = 0;
   let expiredTimer;
 
@@ -230,7 +231,8 @@
     });
   }
   async function operationalRows(config) {
-    const [fleet, service] = await Promise.all([thFleetData(), thFleetServiceData()]);
+    const fleet = config.fleet;
+    const service = await thFleetServiceData();
     const deferrals = readState('deferrals');
     const rows = [];
     for (const item of inventory(fleet)) {
@@ -293,9 +295,9 @@
     return rows;
   }
 
-  async function recallRows() {
+  async function recallRows({fleet}) {
     const state = readState('recalls');
-    return inventory(await thFleetData()).map(item => {
+    return inventory(fleet).map(item => {
       const vin = vinFor(item);
       const saved = state[assetKey(item)];
       const group = collection(item);
@@ -317,7 +319,7 @@
     inventory: {
       name: 'Garage inventory', filters: ['collection', 'state'],
       headers: ['Asset', 'Collection', 'Category', 'Status', 'VIN / serial', 'Plate / tag'],
-      read: async () => inventory(await thFleetData()).map(item => ({
+      read: async ({fleet}) => inventory(fleet).map(item => ({
         item, collection: collection(item), state: item.status || 'Unspecified',
         cells: [title(item), collection(item), item.category, item.status || 'Unspecified', item.vin, item.tag]
       }))
@@ -325,7 +327,8 @@
     mileage: {
       name: 'Mileage and readings', filters: [],
       headers: ['Asset as logged', 'Model year', 'Service start', 'Starting reading', 'Current reading', 'Change'],
-      read: async () => (await thFleetData()).vehicles.map(item => ({
+      read: async ({fleet}) => fleet.vehicles.map(item => ({
+        loggedAsset: {name:item.name, year:item.year},
         cells: [item.name, item.year, item.serviceStart, item.startMileage, item.currentMileage, item.addedMileage]
       }))
     },
@@ -334,6 +337,7 @@
       headers: ['Date', 'Asset', 'Service', 'Reading', 'Recorded cost', 'Notes'],
       read: async () => (await thFleetServiceData()).services.map(item => ({
         date: dateKey(item.date),
+        loggedAsset: {name:item.asset},
         cells: [item.date, item.asset, item.item, item.odometer, item.cost, item.notes]
       }))
     },
@@ -345,7 +349,7 @@
         const now = today();
         return Object.entries(schedules).flatMap(([key, entry]) => entry.tasks.map(task => {
           const date = dateKey(task.nextDate);
-          return {date, cells: [task.nextDate, entry.sourceName || key, task.task,
+          return {date, loggedAsset:{name:entry.sourceName, key}, cells: [task.nextDate, entry.sourceName || key, task.task,
             date ? (date < now ? 'Past due' : date === now ? 'Due today' : 'Upcoming') : 'No date recorded',
             task.nextReading, task.interval, task.notes]};
         }));
@@ -354,7 +358,7 @@
     registration: {
       name: 'Recorded registration renewals', filters: ['collection', 'from', 'to'],
       headers: ['Renewal date', 'Asset', 'Collection', 'Plate / tag', 'Status'],
-      read: async () => inventory(await thFleetData()).filter(item => item.renewal).map(item => ({
+      read: async ({fleet}) => inventory(fleet).filter(item => item.renewal).map(item => ({
         item, date: dateKey(item.renewal), collection: collection(item),
         cells: [item.renewal, title(item), collection(item), item.tag, item.status]
       }))
@@ -371,6 +375,7 @@
         return (await Promise.all(Array.from(keys, ([key, name]) => TisFuelStore.history({key, name}, entries)))).flat()
           .map(item => ({
             date: dateKey(item.date),
+            loggedAsset: {name:item.name, key:item.vehicle},
             cells: [item.date, item.name || item.vehicle, item.odo, item.gallons, item.price, item.total, item.station]
           }));
       }
@@ -386,6 +391,22 @@
     summary.replaceChildren();
     recallTools.replaceChildren();
     workList.replaceChildren();
+  }
+
+  function updateAssetOptions() {
+    const field = filters.asset;
+    const previous = field.value;
+    const group = filters.collection.disabled ? '' : filters.collection.value;
+    const choices = reportAssets.filter(item => !group || collection(item) === group)
+      .sort((left, right) => title(left).localeCompare(title(right)));
+    field.replaceChildren(new Option('All assets', ''), ...choices.map(item => {
+      const name = title(item);
+      const duplicate = choices.some(other => other !== item && title(other) === name);
+      const suffix = duplicate && (item.tag || vinFor(item).slice(-6));
+      return new Option(suffix ? name + ' · ' + suffix : name, assetKey(item));
+    }));
+    field.value = choices.some(item => assetKey(item) === previous) ? previous : '';
+    field.disabled = !choices.length;
   }
 
   function updateFilters() {
@@ -408,6 +429,7 @@
       field.disabled = !report.filters.includes(name) && !(planning && filters.window.value === 'custom' && ['from','to'].includes(name));
       field.closest('label').hidden = field.disabled;
     }
+    updateAssetOptions();
   }
 
   function node(tag, text, className) {
@@ -707,6 +729,8 @@
   function resetSession() {
     generation++;
     run.disabled = false;
+    reportAssets = [];
+    updateAssetOptions();
     clear();
     gate.hidden = true;
     connect.hidden = false;
@@ -723,7 +747,7 @@
   form.addEventListener('input', event => {
     generation++;
     run.disabled = false;
-    updateFilters();
+    if (event.target.name !== 'asset') updateFilters();
     clear();
     status.textContent = '';
     if (event.target.name === 'window' && event.target.value !== 'custom' && thAuthorized()) form.requestSubmit();
@@ -762,14 +786,29 @@
     const planning = report.filters.includes('window');
     const group = selected('collection');
     const state = selected('state');
+    const asset = selected('asset');
     const search = filters.search.value.trim().toLowerCase();
     run.disabled = true;
     status.textContent = 'Loading ' + report.name.toLowerCase() + '…';
     try {
       if (report === reports.attention || report === reports.deferred) await loadState('deferrals');
       if (report === reports.recalls) await loadState('recalls');
-      const allRows = await report.read({type, window:filters.window.value, now:today(), from, to});
-      const rows = allRows.filter(row =>
+      const fleet = await thFleetData();
+      const assets = inventory(fleet);
+      if (current !== generation) return;
+      if (!thAuthorized()) throw Object.assign(new Error('Your sign-in expired. Sign in and run the report again.'), {status: 401});
+      reportAssets = assets;
+      updateAssetOptions();
+      if (asset && filters.asset.value !== asset) {
+        status.textContent = 'That asset is no longer available. Choose another asset or run the report for all assets.';
+        return;
+      }
+      const allRows = await report.read({type, fleet, window:filters.window.value, now:today(), from, to});
+      const assetRows = asset ? allRows.filter(row => {
+        const item = row.item || findLoggedAsset(row.loggedAsset, assets);
+        return item && assetKey(item) === asset;
+      }) : allRows;
+      const rows = assetRows.filter(row =>
         (!group || row.collection === group) &&
         (!state || (/^(active|managed)$/i.test(String(row.state).trim()) === (state === 'current'))) &&
         (planning || !from || (row.date && row.date >= from)) &&
@@ -785,11 +824,13 @@
       status.textContent = rows.length ? rows.length + (rows.length === 1 ? ' record' : ' records') + ' found.' : 'No records match these filters.';
       if (!rows.length && report === reports.attention)
         status.textContent = 'No matching due tasks were found. Check Missing records for gaps in schedules or readings.';
-      if (rows.length || report === reports.recalls || report === reports.attention) show(report, rows, allRows);
+      if (rows.length || report === reports.recalls || report === reports.attention) show(report, rows, assetRows);
     } catch (error) {
       if (current !== generation) return;
       if (error.status === 401) {
         thClearSession();
+        reportAssets = [];
+        updateAssetOptions();
         connect.hidden = false;
       }
       status.textContent = error.message || 'The report could not load. Try again.';
@@ -833,11 +874,21 @@
 
   function printPhotoAsset(group, assets) {
     if (group.item?.printPhotoFileId || group.item?.photoFileId || group.item?.photo) return group.item;
-    const label = clean(group.name);
+    return findLoggedAsset(group, assets);
+  }
+
+  function findLoggedAsset({name, year, key} = {}, assets) {
+    const candidates = assets.filter(item => !year || String(item.year) === String(year));
+    if (key) {
+      const matches = candidates.filter(item =>
+        [assetKey(item), serviceAssetKey(item), scheduleKeyFor(item)].some(value => clean(value) === clean(key)));
+      if (matches.length === 1) return matches[0];
+    }
+    const label = clean(name || key);
     if (!label) return null;
-    const matches = assets.filter(item => (!group.year || String(item.year) === String(group.year)) &&
+    const matches = candidates.filter(item =>
       [title(item), item.name, item.model, [item.make, item.model].join(' '),
-        serviceAssetKey(item), scheduleKeyFor(item)].some(name => clean(name) === label));
+        serviceAssetKey(item), scheduleKeyFor(item)].some(value => clean(value) === label));
     return matches.length === 1 ? matches[0] : null;
   }
 
