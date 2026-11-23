@@ -798,6 +798,10 @@ function mileageFor(a){
  return matches[0]?.m||null;
 }
 function cardNumber(value){const n=Number(String(value??'').replace(/,/g,'').trim());return value!==undefined&&value!==null&&String(value).trim()!==''&&Number.isFinite(n)?n.toLocaleString('en-US',{maximumFractionDigits:1}):null}
+function usageEstimate(value, hours){
+ const text=String(value??'').trim(), number=Number(text.replace(/,/g,''));
+ return text&&Number.isFinite(number)?number.toLocaleString('en-US',{maximumFractionDigits:hours?1:0}):null;
+}
 function cardEngine(a){return a.engine&&clean(a.engine)!=='na'?a.engine:'Not recorded'}
 function showCardEngine(a){
  const model=clean([a.make,a.model].filter(Boolean).join(' '));
@@ -1264,7 +1268,7 @@ function renderAsset(tab='details'){
  document.getElementById('photoUploadStatus').textContent='';
  const m=mileageFor(asset);
  const mileageEditable=m?[['Service start date','serviceStart','D'],[hours?'Starting hours':'Starting mileage','startMileage','E'],[hours?'Current hours':'Current mileage','currentMileage','F']].map(([label,key,col])=>'<label class="asset-fact"><span>'+esc(label)+'</span><input data-mileage-col="'+col+'" data-mileage-row="'+m.sheetRow+'" aria-label="'+esc(label)+'" value="'+esc(m[key]??'')+'" readonly></label>').join(''):'';
- document.getElementById('assetMileage').innerHTML=m?'<div class="asset-facts">'+mileageEditable+[[hours?'Hours added':'Miles added',m.addedMileage],[hours?'Hours per month':'Miles per month',m.monthlyEstimate],[hours?'Estimated hours per year':'Estimated miles per year',m.annualEstimate]].map(([k,v])=>fact(k,v)).join('')+'</div>':'<div class="asset-note">No '+(hours?'hours':'mileage')+' record found for this vehicle. Add the starting and current readings below.</div><form id="newMileageForm" class="asset-facts"><label class="asset-fact"><span>Tracking start date</span><input name="startDate" type="date" required></label><label class="asset-fact"><span>'+(hours?'Starting hours':'Starting mileage')+'</span><input name="start" type="number" min="0" step="any" required></label><label class="asset-fact"><span>'+(hours?'Current hours':'Current mileage')+'</span><input name="current" type="number" min="0" step="any" required></label><div class="asset-fact"><button type="submit">Save readings</button><span role="status" id="newMileageStatus"></span></div></form>';
+ document.getElementById('assetMileage').innerHTML=m?'<div class="asset-facts">'+mileageEditable+[[hours?'Hours added':'Miles added',m.addedMileage],[hours?'Estimated hours per month':'Estimated miles per month',usageEstimate(m.monthlyEstimate,hours)],[hours?'Estimated hours per year':'Estimated miles per year',usageEstimate(m.annualEstimate,hours)]].map(([k,v])=>fact(k,v)).join('')+'</div>':'<div class="asset-note">No '+(hours?'hours':'mileage')+' record found for this vehicle. Add the starting and current readings below.</div><form id="newMileageForm" class="asset-facts"><label class="asset-fact"><span>Tracking start date</span><input name="startDate" type="date" required></label><label class="asset-fact"><span>'+(hours?'Starting hours':'Starting mileage')+'</span><input name="start" type="number" min="0" step="any" required></label><label class="asset-fact"><span>'+(hours?'Current hours':'Current mileage')+'</span><input name="current" type="number" min="0" step="any" required></label><div class="asset-fact"><button type="submit">Save readings</button><span role="status" id="newMileageStatus"></span></div></form>';
  if(!m){const date=document.querySelector('#newMileageForm [name="startDate"]'),today=new Date();date.value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');const reported=Number(String(asset.reportOdometer??'').replace(/,/g,''));if(asset.reportOdometer!==''&&Number.isFinite(reported))document.querySelector('#newMileageForm [name="start"]').value=reported}
  if(!serviceLoaded){for(const id of ['assetMaintenance','assetRecommended'])document.getElementById(id).innerHTML='<div class="asset-note">Loading service history and schedules…</div>';openServiceDetails(asset)}
  else{
@@ -1415,6 +1419,10 @@ document.getElementById('closePhotoPreview').addEventListener('click',()=>docume
 document.getElementById('photoPreview').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
 document.getElementById('toggleAssetEdit').addEventListener('click',async()=>{
  const tab=document.querySelector('[data-asset-tab].active')?.dataset.assetTab||'details';
+ if(editing&&tab==='mileage'){
+  await saveOdometerEdits(asset);
+  return;
+ }
  if(editing&&tab==='details'){
   const button=document.getElementById('toggleAssetEdit'),message=document.getElementById('assetEditStatus');
   button.disabled=true;button.textContent='Saving…';message.classList.remove('error');
@@ -1439,8 +1447,8 @@ document.getElementById('toggleAssetEdit').addEventListener('click',async()=>{
  if(tab==='details')document.getElementById('assetStatusEdit').disabled=!editing;
  const button=document.getElementById('toggleAssetEdit');
  button.setAttribute('aria-pressed',String(editing));
- button.textContent=editing?(tab==='details'?'Save changes':'Finish editing'):'Edit '+tab;
- document.querySelector('.edit-bar span').textContent=editing?(tab==='details'?'Edit your details, then select Save changes.':'Changes save when you leave each field. Select Finish editing to lock them.'):'Fields are locked until you choose Edit.';
+ button.textContent=editing?(tab==='details'||tab==='mileage'?'Save changes':'Finish editing'):'Edit '+tab;
+ document.querySelector('.edit-bar span').textContent=editing?(tab==='details'?'Edit your details, then select Save changes.':tab==='mileage'?'Edit your readings, then select Save changes.':'Changes save when you leave each field. Select Finish editing to lock them.'):'Fields are locked until you choose Edit.';
  if(!editing&&tab!=='details')renderAsset(tab);
 });
 document.querySelector('.asset-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-asset-tab]');if(b)renderAsset(b.dataset.assetTab)});
@@ -1667,32 +1675,61 @@ async function saveAssetFact(input,a){
  }catch(error){message.textContent=error.message;message.classList.add('error');return false}
  finally{input.disabled=false}
 }
-document.getElementById('assetMileage').addEventListener('change',async e=>{
- const input=e.target.closest('[data-mileage-col]');if(!input||!editing)return;
- const a=asset;
- const m=mileageFor(a),old=m?.[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[input.dataset.mileageCol]];
- const col=input.dataset.mileageCol;
- if(col==='E'||col==='F'){
-  const value=Number(input.value.replace(/,/g,'')),other=Number(String(col==='E'?m?.currentMileage:m?.startMileage).replace(/,/g,''));
-  if(input.value.trim()===''||!Number.isFinite(value)||value<0||!Number.isFinite(other)||(col==='E'&&value>other)||(col==='F'&&value<other)){input.value=old??'';document.getElementById('assetEditStatus').textContent='Enter a valid reading. Starting mileage cannot exceed current mileage.';return}
-  input.value=String(value);
+async function saveOdometerEdits(a){
+ const m=mileageFor(a), panel=document.getElementById('assetMileage');
+ const fields=[...panel.querySelectorAll('[data-mileage-col]')];
+ if(!m||!fields.length){renderAsset('mileage');return}
+ const button=document.getElementById('toggleAssetEdit'),message=document.getElementById('assetEditStatus');
+ const [dateText,startText,currentText]=fields.map(field=>field.value.trim());
+ const dateChanged=dateText!==String(m.serviceStart??'').trim();
+ const date=ownershipDate(dateText);
+ const parseReading=text=>text?Number(text.replace(/,/g,'')):NaN;
+ const starting=parseReading(startText),current=parseReading(currentText);
+ const startChanged=startText!==String(m.startMileage??'').trim()&&starting!==parseReading(String(m.startMileage??'').trim());
+ const currentChanged=currentText!==String(m.currentMileage??'').trim()&&current!==parseReading(String(m.currentMileage??'').trim());
+ message.classList.remove('error');
+ if((dateChanged&&!date)||(startChanged||currentChanged)&&(!Number.isFinite(starting)||!Number.isFinite(current)||starting<0||current<starting)){
+  message.textContent=dateChanged&&!date?'Enter a valid service start date.':'Enter valid readings. Current mileage or hours must be at least the starting reading.';
+  message.classList.add('error');
+  return;
  }
- input.disabled=true;
+ const updates=[];
+ if(dateChanged)updates.push({sheet:'Mileage-2025.10.16',range:'D'+m.sheetRow,values:[[ownershipIso(date)]]});
+ if(startChanged)updates.push({sheet:'Mileage-2025.10.16',range:'E'+m.sheetRow,values:[[starting]]});
+ if(currentChanged)updates.push({sheet:'Mileage-2025.10.16',range:'F'+m.sheetRow,values:[[current]]});
+ if(!updates.length){renderAsset('mileage');return}
+ button.disabled=true;
+ button.textContent='Saving…';
+ fields.forEach(field=>field.readOnly=true);
+ message.textContent='Saving readings…';
+ const stillEditing=()=>asset===a&&fields[0].isConnected;
  try{
-  const value=col==='D'?input.value:Number(input.value);
-  const updates=[{sheet:'Mileage-2025.10.16',range:col+input.dataset.mileageRow,values:[[value]]}];
-  if(col==='E'){
+  if(startChanged){
    await ensureProfileRow(a);
-   updates.push({sheet:'Portal Asset Profiles',range:'K'+a.profileRow,values:[[value]]});
+   updates.push({sheet:'Portal Asset Profiles',range:'K'+a.profileRow,values:[[starting]]});
   }
-  await fleetWriteRanges(updates,col==='D'?'USER_ENTERED':'RAW');
-  if(col==='E')a.reportOdometer=value;
-  if(m){m[{D:'serviceStart',E:'startMileage',F:'currentMileage'}[col]]=value;m.addedMileage=Number(String(m.currentMileage).replace(/,/g,''))-Number(String(m.startMileage).replace(/,/g,''))}
-  document.getElementById('assetEditStatus').textContent='Reading saved and verified in your workbook.';renderCategory();
- }
- catch(error){input.value=old??'';document.getElementById('assetEditStatus').textContent=error.message;document.getElementById('assetEditStatus').classList.add('error')}
- finally{input.disabled=false}
-});
+  await fleetWriteRanges(updates,dateChanged?'USER_ENTERED':'RAW');
+  if(dateChanged)m.serviceStart=ownershipIso(date);
+  if(startChanged)m.startMileage=a.reportOdometer=starting;
+  if(currentChanged)m.currentMileage=current;
+  if(Number.isFinite(starting)&&Number.isFinite(current)){
+   m.addedMileage=current-starting;
+   const days=date?Math.round((Date.parse(ownershipIso(new Date()))-Date.parse(ownershipIso(date)))/86400000):Number(m.daysDriven);
+   m.monthlyEstimate=days>0?m.addedMileage*30.4375/days:null;
+   m.annualEstimate=m.monthlyEstimate===null?null:m.monthlyEstimate*12;
+  }
+  const showSaved=stillEditing();
+  renderCategory();
+  if(showSaved){renderAsset('mileage');message.textContent='Readings saved and verified in your workbook.'}
+ }catch(error){
+  if(stillEditing()){
+   message.textContent=error.message||'Could not save readings. Try again.';
+   message.classList.add('error');
+   button.textContent='Save changes';
+   fields.forEach(field=>field.readOnly=false);
+  }
+ }finally{button.disabled=false}
+}
 document.getElementById('assetMileage').addEventListener('submit',async e=>{
  if(e.target.id!=='newMileageForm')return;e.preventDefault();const form=e.target,a=asset,button=form.querySelector('button'),status=form.querySelector('#newMileageStatus');
  const starting=Number(form.elements.start.value),current=Number(form.elements.current.value);
