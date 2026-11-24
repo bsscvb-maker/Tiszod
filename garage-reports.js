@@ -231,6 +231,20 @@
       return [{kind, date, last}];
     });
   }
+  function maintenanceTaskLabel(task, specs) {
+    if (!/\btire\s+(?:inflation|pressure)\b/i.test(task)) return task;
+    const pressure = value => /\bpsi\b|^\d+(?:\.\d+)?$/i.test(String(value ?? '')) ? String(value).trim() : '';
+    const front = pressure(specs.frontTirePsi);
+    const rear = pressure(specs.rearTirePsi);
+    const all = pressure(specs.tirePsi);
+    const withUnit = value => /\bpsi\b/i.test(value) ? value : value + ' PSI';
+    const detail = front || rear
+      ? [front && 'Front ' + withUnit(front), rear && 'Rear ' + withUnit(rear),
+         (!front || !rear) && all && 'General ' + withUnit(all)].filter(Boolean).join(' / ')
+      : all && withUnit(all);
+    return detail ? task + ' (' + detail + ')' : task + ' (PSI not recorded)';
+  }
+
   async function operationalRows(config) {
     const fleet = config.fleet;
     const service = await thFleetServiceData();
@@ -270,7 +284,9 @@
         continue;
       }
       if (config.type === 'renewals') continue;
+      const {specs} = window.TiszodVehicleSpecs.specRecord(item);
       for (const task of maintenance) {
+        const taskLabel = maintenanceTaskLabel(task.task, specs);
         const date = dateKey(task.nextDate);
         const target = number(task.nextReading);
         const taskUnit = /\bhours?\b/i.test(task.interval + ' ' + task.nextReading) ? 'hours' : /\bmiles?\b/i.test(task.interval + ' ' + task.nextReading) ? 'miles' : unit;
@@ -284,11 +300,11 @@
           target !== null && (stale || !comparable) ? 'Needs a current reading' : ''].filter(Boolean);
         if (config.type === 'deferred') {
           if (deferred) rows.push({...common, key, task, date:deferred.date, tone:deferred.date <= config.now ? 'soon' : 'ok',
-            cells:[name, task.task, deferred.date, deferred.reason, date, target === null ? '' : target + ' ' + taskUnit]});
+            cells:[name, taskLabel, deferred.date, deferred.reason, date, target === null ? '' : target + ' ' + taskUnit]});
         } else if ((reached || rangeIncludes(date, config) || (deferred && deferred.date <= config.now)) &&
             (!deferred || deferred.date <= config.now || reached || (days !== null && days < 0))) {
           rows.push({...common, key, task, date, tone,
-            cells:[name, task.task, reasons.join(' · ') || state, date, target === null ? '' : target + ' ' + taskUnit,
+            cells:[name, taskLabel, reasons.join(' · ') || state, date, target === null ? '' : target + ' ' + taskUnit,
               readingText, dateKey(task.lastDate), deferred ? deferred.date : '']});
         }
       }
@@ -461,7 +477,7 @@
     const dialog = section.querySelector('.report-defer-dialog');
     const edit = dialog.querySelector('form');
     const message = dialog.querySelector('[role=status]');
-    dialog.querySelector('h2').textContent = 'Review ' + row.task.task + ' later';
+    dialog.querySelector('h2').textContent = 'Review ' + row.cells[1] + ' later';
     edit.elements.date.min = today();
     edit.elements.date.value = saved?.date || '';
     edit.elements.reason.value = saved?.reason || '';
