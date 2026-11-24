@@ -26,6 +26,12 @@
 .legal-document-card{min-width:0;padding:1rem;background:#172131;border:1px solid #38475e;border-radius:.65rem}
 .legal-document-card h3{margin:0 0 .5rem;overflow-wrap:anywhere}
 .legal-document-card p:empty{display:none}
+.legal-document-pages[role="button"]{cursor:zoom-in}
+.legal-document-pages[role="button"]:focus-visible{outline:2px solid #9abfff}
+.legal-document-dialog{width:min(65rem,94vw);max-height:94vh;padding:1rem;color:#eef4ff;background:#172131;border:1px solid #53627a;border-radius:.65rem}
+.legal-document-dialog::backdrop{background:#050a12cc}
+.legal-document-dialog header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.legal-document-dialog .legal-document-pages{width:100%;max-width:none;height:70vh;margin-top:.75rem}
 .legal-document-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;margin-top:.75rem}
 .legal-document-actions .legal-document-download{display:inline-flex;padding:.5rem .85rem;background:#244267;color:#fff;border:1px solid #9abfff;border-radius:.5rem;text-decoration:none}
 .legal-document-actions .legal-document-download:hover{background:#315583}
@@ -138,6 +144,33 @@ function legalRecordCard(record,linkedFolderIds){
 function legalDocumentGrid(records){
  const grid=document.createElement('div');
  grid.className='legal-document-grid';
+ const dialog=document.createElement('dialog');
+ dialog.className='legal-document-dialog';
+ grid.append(dialog);
+ let viewerRequest,opener;
+ dialog.addEventListener('close',()=>{
+  viewerRequest?.abort();
+  dialog.replaceChildren();
+  if(opener?.isConnected)opener.focus();
+ });
+ function openDocument(record,download,thumbnail){
+  opener=thumbnail;
+  viewerRequest=new AbortController();
+  const header=document.createElement('header'),title=document.createElement('h3');
+  const close=document.createElement('button'),status=document.createElement('p');
+  const pages=document.createElement('div'),actions=document.createElement('div');
+  title.id='legal-document-view-title';title.textContent=record.name;
+  dialog.setAttribute('aria-labelledby',title.id);
+  close.type='button';close.textContent='Close';close.onclick=()=>dialog.close();
+  status.setAttribute('role','status');
+  pages.className='legal-document-pages';pages.tabIndex=0;
+  pages.setAttribute('aria-label','Scrollable PDF pages');
+  actions.className='legal-document-actions';actions.append(download);
+  header.append(title,close);
+  dialog.replaceChildren(header,actions,status,pages);
+  dialog.showModal();
+  thDriveRecords.renderDocumentPages(record,pages,status,viewerRequest.signal);
+ }
  const previews=new Map();
  const observer=new IntersectionObserver(entries=>{
   for(const entry of entries){
@@ -153,14 +186,14 @@ function legalDocumentGrid(records){
   const card=document.createElement('article');
   card.className='legal-document-card';
   const heading=document.createElement('h3'),status=document.createElement('p');
-  const pages=document.createElement('div'),actions=document.createElement('div');
+  const pages=document.createElement('div');
   const download=document.createElement('a');
   heading.textContent=record.name;
   status.setAttribute('role','status');
   pages.className='legal-document-pages';
   pages.tabIndex=0;
-  pages.setAttribute('aria-label','Scrollable preview of '+record.name);
-  actions.className='legal-document-actions';
+  pages.setAttribute('role','button');
+  pages.setAttribute('aria-label','Enlarge preview of '+record.name);
   const url=new URL('https://drive.google.com/uc');
   url.searchParams.set('export','download');
   url.searchParams.set('id',record.id);
@@ -168,8 +201,12 @@ function legalDocumentGrid(records){
   download.className='legal-document-download';
   download.href=url.href;download.textContent='Download PDF';
   download.target='_blank';download.rel='noopener';
-  actions.append(download);
-  card.append(heading,status,pages,actions);
+  function enlarge(){openDocument(record,download,pages)}
+  pages.addEventListener('click',enlarge);
+  pages.addEventListener('keydown',event=>{
+   if(event.key==='Enter'||event.key===' '){event.preventDefault();enlarge()}
+  });
+  card.append(heading,status,pages);
   grid.append(card);
   previews.set(card,{record,pages,status});
   observer.observe(card);
