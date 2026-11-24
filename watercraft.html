@@ -1097,7 +1097,12 @@ document.getElementById('applyReport').addEventListener('click',()=>{appliedRepo
 document.getElementById('exportReport').addEventListener('click',()=>{const {columns,rows}=reportData(),csv=[columns,...rows].map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='vehicle-'+appliedReport.type+'-report.csv';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
 document.getElementById('printReport').addEventListener('click',()=>window.print());
 document.getElementById('dueClose').addEventListener('click',()=>document.getElementById('dueDialog').close());
-document.getElementById('dueComplete').addEventListener('click',()=>{if(!asset)return;document.getElementById('dueDialog').close();openWorkDialog('service');});
+document.getElementById('dueComplete').addEventListener('click',()=>{
+ if(!asset)return;
+ const tasks=dueItems(asset).map(({task})=>task);
+ document.getElementById('dueDialog').close();
+ openWorkDialog('service',[],tasks);
+});
 document.getElementById('dueSchedule').addEventListener('click',()=>{document.getElementById('dueDialog').close();if(!document.querySelector('[data-asset-tab="recommended"]').hidden)renderAsset('recommended')});
 document.getElementById('homeLink').href=PORTAL;
 document.getElementById('allLink').href=PORTAL+'finance.html';
@@ -1535,8 +1540,8 @@ workDialog.innerHTML='<form id="workEntryForm"><h2 id="workEntryTitle"></h2><p i
 document.body.append(workDialog);workDialog.addEventListener('cancel',e=>{if(workDialog.dataset.saving)e.preventDefault()});
 workDialog.querySelector('#cancelWorkEntry').onclick=()=>workDialog.close();
 let workTarget=null,workMode='service';
-function openWorkDialog(mode,selected=[]){
- workTarget=asset;workMode=mode;const tasks=scheduleFor(asset)?.tasks||[],todo=mode==='todo';
+function openWorkDialog(mode,selected=[],tasks=scheduleFor(asset)?.tasks||[]){
+ workTarget=asset;workMode=mode;const todo=mode==='todo';
  document.getElementById('workEntryTitle').textContent=todo?'Add service to-do':'Record completed service';
  document.getElementById('workVehicleName').textContent=[asset.year,asset.make,asset.model].join(' ');
  const field=(label,name,type='text',value='',required=false)=>'<label>'+label+'<input name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'></label>';
