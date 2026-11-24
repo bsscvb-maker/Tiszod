@@ -644,5 +644,31 @@ async function showLegalRecord(record,back){
  await loadPage();
 }
 
-window.thDriveRecords = { card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, restoreNavigation, uniqueCover, cover: legalDocumentCover };
+async function renderDocumentPages(record,container,status,signal){
+ status.textContent='Loading PDF…';
+ let task;
+ try{
+  const blob=await legalMedia(record,signal);
+  if(signal.aborted)return;
+  task=await legalPdf(blob);
+  if(signal.aborted)return;
+  const pdf=await task.promise;
+  const width=Math.max(640,Math.min(1800,container.clientWidth*2));
+  for(let page=1;page<=pdf.numPages;page++){
+   if(signal.aborted)return;
+   const canvas=await legalPdfPage(pdf,page,width);
+   if(signal.aborted)return;
+   canvas.setAttribute('role','img');
+   canvas.setAttribute('aria-label','Page '+page+' of '+pdf.numPages);
+   container.append(canvas);
+  }
+  status.textContent=pdf.numPages+' '+(pdf.numPages===1?'page':'pages');
+ }catch{
+  if(!signal.aborted)status.textContent='Preview unavailable. Open the PDF in Drive or download it below.';
+ }finally{
+  if(task)await task.destroy().catch(()=>{});
+ }
+}
+
+window.thDriveRecords = { renderDocumentPages, card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, restoreNavigation, uniqueCover, cover: legalDocumentCover };
 })();
