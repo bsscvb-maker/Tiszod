@@ -25,10 +25,12 @@
 .legal-document-tabs{display:flex;flex-wrap:wrap;gap:.45rem;margin:.75rem 0}
 .legal-document-tabs button{font:inherit;text-align:left;color:inherit;background:#151e2b;border:1px solid #53627a;border-radius:.5rem;padding:.5rem .75rem;cursor:pointer}
 .legal-document-tabs button[aria-selected="true"]{background:#244267;border-color:#9abfff}
-.legal-document-actions{display:flex;flex-wrap:wrap;gap:1rem}
-.legal-document-pages{max-height:70vh;overflow:auto;background:#0b1019;border:1px solid #53627a;border-radius:.5rem}
+.legal-document-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;margin-top:.75rem}
+.legal-document-actions .legal-document-download{display:inline-flex;padding:.5rem .85rem;background:#244267;color:#fff;border:1px solid #9abfff;border-radius:.5rem;text-decoration:none}
+.legal-document-actions .legal-document-download:hover{background:#315583}
+.legal-document-pages{width:100%;max-width:25rem;height:min(19rem,55vh);overflow:auto;overscroll-behavior:contain;background:#0b1019;border:1px solid #53627a;border-radius:.5rem}
 .legal-document-pages:empty{display:none}
-.legal-document-pages canvas{display:block;width:100%;max-width:58rem;height:auto;margin:0 auto .75rem;background:white}
+.legal-document-pages canvas{display:block;width:100%;height:auto;margin:0 auto .75rem;background:white}
 .legal-document-pages canvas:last-child{margin-bottom:0}
 </style></head><body data-th-page="legal">
 
@@ -182,13 +184,14 @@ function legalDocumentTabs(records){
   downloadUrl.searchParams.set('export','download');
   downloadUrl.searchParams.set('id',record.id);
   if(record.resourceKey)downloadUrl.searchParams.set('resourcekey',record.resourceKey);
+  download.className='legal-document-download';
   download.href=downloadUrl.href;download.textContent='Download PDF';
   drive.href=record.url;drive.textContent='Open in Drive';
   for(const action of [download,drive]){
    action.target='_blank';action.rel='noopener';
   }
   actions.append(download,drive);
-  content.append(heading,actions,status,pages);
+  content.append(heading,status,pages,actions);
   previews.push({record,pages,status});
   tabs.push(tab);panels.push(content);list.append(tab);
  });
