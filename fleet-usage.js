@@ -20,12 +20,22 @@ function createFleetUsage({workspace,assets,getServices,onRefresh,serviceAssetKe
  }
  function annualVehicleUsage(a){
   const today=new Date(),year=today.getFullYear(),start=new Date(year,0,1),key=serviceAssetKey(a),points=[];
+  const m=mileageFor(a), record=specRecord(a), trailer=a.category==='Trailers';
+  const number=value=>String(value??'').trim()===''?NaN:Number(String(value).replace(/,/g,''));
+  const uncertain=!trailer&&(record.specs.odometerBrand==='NOT ACTUAL'||/keystonebullet/.test(clean(a.make+' '+a.model)));
+  const acquired=ownershipDate(a.ownershipStart),tracked=ownershipDate(m?.serviceStart);
+  const openingReading=number(m?.startMileage),current=number(m?.currentMileage);
+  const unit=usesHours(a)?'hours':'mi';
+  if(!uncertain&&acquired&&acquired>=start&&acquired<=today&&tracked?.getTime()===acquired.getTime()&&
+   Number.isFinite(openingReading)&&openingReading>=0&&Number.isFinite(current)&&current>=openingReading){
+   return {year,value:Math.round((current-openingReading)*10)/10,unit,date:acquired,
+    detail:'Reading at acquisition ('+ownershipText(ownershipIso(acquired))+') · '+cardNumber(openingReading)+' to '+cardNumber(current)};
+  }
   const cached=usageCache.metrics?.[key];
   const services=getServices();
   if(!services&&!usageReadings&&cached?.value!=null)return cached;
-  const trailer=a.category==='Trailers',legend=isLegend(a),record=specRecord(a),usePrior=trailer||legend;
+  const legend=isLegend(a),usePrior=trailer||legend;
   const historyKeys=legend?['legend','makdaddylegend','makdaddy']:[clean(key)];
-  const number=value=>String(value??'').trim()===''?NaN:Number(String(value).replace(/,/g,''));
   let prior;
   const add=(raw,value,service=false)=>{
    const date=ownershipDate(String(raw||'').slice(0,10)),reading=number(value);
@@ -35,20 +45,19 @@ function createFleetUsage({workspace,assets,getServices,onRefresh,serviceAssetKe
   };
   for(const entry of (services||usageReadings||[]))if(historyKeys.includes(clean(entry.asset)))add(entry.date,entry.odometer,true);
   for(const entry of (window.FUEL_LEGACY||{})[key]?.entries||[])add(entry.date||entry.d,entry.odo??entry.o);
-  const m=mileageFor(a);if(m)add(m.serviceStart,m.startMileage);
+  if(m)add(m.serviceStart,m.startMileage);
   points.sort((x,y)=>x.date-y.date||x.reading-y.reading);
   const saved=trailer?record.annualUsageBaselines?.[year]:null;
   const opening=number(saved?.reading);
   const confirmed=Number.isFinite(opening)&&opening>=0;
   const first=confirmed?{date:start,reading:opening}:points[0]?.date.getTime()===start.getTime()?points[0]:prior||points[0];
-  const current=number(m?.currentMileage),latest=points[points.length-1];
+  const latest=points[points.length-1];
   const end=Number.isFinite(current)?(trailer?current:Math.max(current,latest?.reading??current)):latest?.reading;
   const comparable=confirmed||prior||points.length>1||Number.isFinite(current);
   const value=comparable&&first&&Number.isFinite(end)&&end>=first.reading?Math.round((end-first.reading)*10)/10:null;
-  const uncertain=!trailer&&(record.specs.odometerBrand==='NOT ACTUAL'||/keystonebullet/.test(clean(a.make+' '+a.model)));
   const source=confirmed?saved.source:first&&first===prior?'Latest service reading before January 1 ('+ownershipText(ownershipIso(prior.date))+')':'First available dated reading this calendar year';
   const detail=value===null?'':source+' · '+cardNumber(first.reading)+' to '+cardNumber(end)+(trailer?' tracked mi':'');
-  return {year,value:uncertain?null:value,unit:usesHours(a)?'hours':'mi',date:first&&first===prior?start:first?.date,detail};
+  return {year,value:uncertain?null:value,unit,date:first&&first===prior?start:first?.date,detail};
  }
  function compareVehicleUsage(a,b,metrics,yearOrder){
   if(yearOrder==='usage'){
