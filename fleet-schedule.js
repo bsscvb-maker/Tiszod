@@ -159,3 +159,20 @@ function fleetApplyServiceSearch(panel,query){
  const status=panel.querySelector('[data-service-search-status]');
  if(status)status.textContent=words.length?(matches?matches+' matching '+(matches===1?'entry':'entries'):'No matching service entries.'):'';
 }
+
+function fleetServiceProviderMarkup(){
+ return '<label>Shop / person doing the work<select name="provider">'+
+  '<option value="">Select a shop or person</option><option>TisZod’s Garage</option>'+
+  '<option>Conrad’s Garage</option><option value="other">Other shop or person</option>'+
+  '</select></label><label class="complete-wide" data-custom-provider hidden>Shop or person name'+
+  '<input name="customProvider" type="text" disabled></label>';
+}
+
+function fleetChangeServiceProvider(form){
+ const custom=form.elements.provider.value==='other';
+ form.querySelector('[data-custom-provider]').hidden=!custom;
+ const input=form.elements.customProvider;
+ input.disabled=!custom;
+ input.required=custom;
+ if(custom)input.focus();
+}
