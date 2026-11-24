@@ -1672,6 +1672,16 @@ if(linkedAsset){
 requestAnimationFrame(()=>requestAnimationFrame(refreshAnnualUsage));
 
 document.getElementById('backCategory').addEventListener('click',()=>{renderCategory();show('categoryView')});
+window.TiszodGarageAudit.configure((sheet,range,row,previous)=>{
+ if(sheet==='Portal Vehicle Documents')return assets.find(a=>window.TiszodVehicleDocuments?.assetKey(a)===(row[1]||previous[1]));
+ if(range==='A1'){
+  if(sheet==='Portal Asset Profiles')return assets.find(a=>a.reportId&&String(a.reportId)===String(row[0]))||
+    assets.find(a=>clean([a.year,a.make,a.model].join(' '))===clean(row[1]));
+  if(sheet==='Mileage-2025.10.16')return assets.find(a=>String(a.year)===String(row[2])&&clean(a.make+' '+a.model).includes(clean(row[1])))||asset;
+  if(sheet==='Portal Service History'||sheet==='Portal Service Schedules')return assets.find(a=>serviceAssetKey(a)===row[0])||asset;
+ }
+ return changedAsset(sheet,range);
+});
 }
 
 // Rebuild from intact markup on retries; prior rendering may have moved controls.
@@ -1688,17 +1698,3 @@ window.thStart=()=>{
  return thFleetStarting;
 };
 </script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=garage-audit-1"></script><script src="fuel-capture.js?v=20261119-workbook-sync"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="equipment-photos.js?v=20261102-compressor-todd"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=service-search-1"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="garage-audit.js?v=mileage-save-2"></script><script src="sheets.js?v=garage-audit-1"></script></body></html>
-
-
-<script>
-window.TiszodGarageAudit.configure((sheet,range,row,previous)=>{
- if(sheet==='Portal Vehicle Documents')return assets.find(a=>window.TiszodVehicleDocuments?.assetKey(a)===(row[1]||previous[1]));
- if(range==='A1'){
-  if(sheet==='Portal Asset Profiles')return assets.find(a=>a.reportId&&String(a.reportId)===String(row[0]))||
-    assets.find(a=>clean([a.year,a.make,a.model].join(' '))===clean(row[1]));
-  if(sheet==='Mileage-2025.10.16')return assets.find(a=>String(a.year)===String(row[2])&&clean(a.make+' '+a.model).includes(clean(row[1])))||asset;
-  if(sheet==='Portal Service History'||sheet==='Portal Service Schedules')return assets.find(a=>serviceAssetKey(a)===row[0])||asset;
- }
- return changedAsset(sheet,range);
-});
-</script>
