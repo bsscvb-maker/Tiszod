@@ -484,9 +484,10 @@ body[data-th-page] #categoryView #assetGrid .asset-card .card-photo img { object
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete equipment</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
 <p id="assetLastUpdated" role="status" style="font-size:13px;margin:8px 0 14px"></p>
+<div id="assetEditStatus" class="asset-edit-status" role="status"></div>
 <div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="doorjamb">Factory Specifications</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button><button type="button" data-asset-tab="audit">History</button></div>
  <section class="asset-tab-panel" id="assetAudit" hidden></section>
-<section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
+<section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div></section>
 <section class="asset-tab-panel" id="assetDoorJamb" hidden></section><section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
 <section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
@@ -951,9 +952,10 @@ function changedAsset(sheet,range){
 }
 async function fleetWriteRanges(updates,option='USER_ENTERED'){
  const changed=[...new Set(updates.map(u=>changedAsset(u.sheet,u.range)).filter(Boolean))];
- for(const a of changed)await ensureProfileRow(a);
+ const mileageOnly=updates.every(({sheet})=>sheet==='Mileage-2025.10.16');
+ if(!mileageOnly)for(const a of changed)await ensureProfileRow(a);
  const now=new Date().toISOString();
- await thWriteRanges([...updates,...changed.map(a=>({sheet:'Portal Asset Profiles',range:'AD'+a.profileRow,values:[[now]]}))],option,true);
+ await thWriteRanges([...updates,...changed.filter(a=>a.profileRow).map(a=>({sheet:'Portal Asset Profiles',range:'AD'+a.profileRow,values:[[now]]}))],option,true);
  for(const a of changed)a.lastUpdated=now;
  paintUpdated();
 }
