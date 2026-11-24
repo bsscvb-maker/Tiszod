@@ -22,9 +22,10 @@
 #legal-search-results{margin-top:1rem}
 .legal-return{display:inline-block;margin:0 0 14px;color:var(--gold)}
 </style><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><style>
-.legal-document-tabs{display:flex;flex-wrap:wrap;gap:.45rem;margin:.75rem 0}
-.legal-document-tabs button{font:inherit;text-align:left;color:inherit;background:#151e2b;border:1px solid #53627a;border-radius:.5rem;padding:.5rem .75rem;cursor:pointer}
-.legal-document-tabs button[aria-selected="true"]{background:#244267;border-color:#9abfff}
+.legal-document-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:1rem}
+.legal-document-card{min-width:0;padding:1rem;background:#172131;border:1px solid #38475e;border-radius:.65rem}
+.legal-document-card h3{margin:0 0 .5rem;overflow-wrap:anywhere}
+.legal-document-card p:empty{display:none}
 .legal-document-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;margin-top:.75rem}
 .legal-document-actions .legal-document-download{display:inline-flex;padding:.5rem .85rem;background:#244267;color:#fff;border:1px solid #9abfff;border-radius:.5rem;text-decoration:none}
 .legal-document-actions .legal-document-download:hover{background:#315583}
@@ -134,69 +135,46 @@ function legalRecordCard(record,linkedFolderIds){
     excludedFolderIds:linkedFolderIds
  });
 }
-function legalDocumentTabs(records){
- const wrapper=document.createElement('div');
- const list=document.createElement('div');
- list.className='legal-document-tabs';
- list.setAttribute('role','tablist');
- list.setAttribute('aria-label','Record Sealing & Pardon documents');
- const tabs=[],panels=[],previews=[];
- let previewRequest;
- function select(index,focus=false){
-  tabs.forEach((tab,i)=>{
-   tab.setAttribute('aria-selected',String(i===index));
-   tab.tabIndex=i===index?0:-1;
-   panels[i].hidden=i!==index;
-  });
-  previewRequest?.abort();
-  previewRequest=new AbortController();
-  const {record,pages,status}=previews[index];
-  pages.replaceChildren();
-  pages.scrollTop=0;
-  thDriveRecords.renderDocumentPages(record,pages,status,previewRequest.signal);
-  if(focus)tabs[index].focus();
- }
- records.forEach((record,index)=>{
-  const tab=document.createElement('button'),content=document.createElement('div');
-  tab.type='button';tab.id='legal-document-tab-'+index;
-  tab.textContent=record.name.replace(/\.pdf$/i,'').replace(/_/g,' ');
-  tab.setAttribute('role','tab');
-  content.id='legal-document-panel-'+index;
-  content.setAttribute('role','tabpanel');
-  content.setAttribute('aria-labelledby',tab.id);
-  tab.setAttribute('aria-controls',content.id);
-  tab.addEventListener('click',()=>select(index));
-  tab.addEventListener('keydown',event=>{
-   const next={ArrowRight:(index+1)%records.length,ArrowLeft:(index+records.length-1)%records.length,Home:0,End:records.length-1}[event.key];
-   if(next===undefined)return;
-   event.preventDefault();select(next,true);
-  });
-  const heading=document.createElement('h3'), status=document.createElement('p');
+function legalDocumentGrid(records){
+ const grid=document.createElement('div');
+ grid.className='legal-document-grid';
+ const previews=new Map();
+ const observer=new IntersectionObserver(entries=>{
+  for(const entry of entries){
+   if(!entry.isIntersecting)continue;
+   const card=entry.target;
+   observer.unobserve(card);
+   const {record,pages,status}=previews.get(card);
+   previews.delete(card);
+   if(card.isConnected)thDriveRecords.renderDocumentPages(record,pages,status,AbortSignal.timeout(60000));
+  }
+ },{rootMargin:'100px'});
+ for(const record of records){
+  const card=document.createElement('article');
+  card.className='legal-document-card';
+  const heading=document.createElement('h3'),status=document.createElement('p');
   const pages=document.createElement('div'),actions=document.createElement('div');
-  const download=document.createElement('a'),drive=document.createElement('a');
+  const download=document.createElement('a');
   heading.textContent=record.name;
   status.setAttribute('role','status');
   pages.className='legal-document-pages';
   pages.tabIndex=0;
   pages.setAttribute('aria-label','Scrollable preview of '+record.name);
   actions.className='legal-document-actions';
-  const downloadUrl=new URL('https://drive.google.com/uc');
-  downloadUrl.searchParams.set('export','download');
-  downloadUrl.searchParams.set('id',record.id);
-  if(record.resourceKey)downloadUrl.searchParams.set('resourcekey',record.resourceKey);
+  const url=new URL('https://drive.google.com/uc');
+  url.searchParams.set('export','download');
+  url.searchParams.set('id',record.id);
+  if(record.resourceKey)url.searchParams.set('resourcekey',record.resourceKey);
   download.className='legal-document-download';
-  download.href=downloadUrl.href;download.textContent='Download PDF';
-  drive.href=record.url;drive.textContent='Open in Drive';
-  for(const action of [download,drive]){
-   action.target='_blank';action.rel='noopener';
-  }
-  actions.append(download,drive);
-  content.append(heading,status,pages,actions);
-  previews.push({record,pages,status});
-  tabs.push(tab);panels.push(content);list.append(tab);
- });
- wrapper.append(list,...panels);select(0);
- return wrapper;
+  download.href=url.href;download.textContent='Download PDF';
+  download.target='_blank';download.rel='noopener';
+  actions.append(download);
+  card.append(heading,status,pages,actions);
+  grid.append(card);
+  previews.set(card,{record,pages,status});
+  observer.observe(card);
+ }
+ return grid;
 }
 const legalSearch=document.getElementById('legal-search');
 let legalSearchRequest=0;
@@ -246,7 +224,7 @@ window.thStart=async()=>{
   const linkedFolderIds=new Set(recordsBySection.filter(record=>record.folder&&record.id).map(record=>record.id));
   const sectionRecords=recordsBySection.filter(record=>record.section===key&&!record.redundantLauncher);
   if(selected.id==='record-sealing'&&sectionRecords.length){
-   panel.append(heading,summary,legalDocumentTabs(sectionRecords));
+   panel.append(heading,legalDocumentGrid(sectionRecords));
    output.replaceChildren(back,panel);status.hidden=true;return;
   }
   for(const record of sectionRecords)cards.append(legalRecordCard(record,linkedFolderIds));
