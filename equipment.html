@@ -484,8 +484,9 @@ body[data-th-page] #categoryView #assetGrid .asset-card .card-photo img { object
 <div class="category-manager"><label for="moveAssetCategory">Section</label><select id="moveAssetCategory" aria-label="Move item to section"></select><button type="button" id="moveAssetButton">Move</button><button type="button" id="unfileAssetButton">Remove from section</button><button type="button" class="delete-asset" id="deleteAssetButton">Delete equipment</button><span id="categoryMoveStatus" role="status"></span></div>
 <div class="edit-bar"><button type="button" id="toggleAssetEdit" aria-pressed="false">Edit details</button><span>Fields are locked until you choose Edit.</span></div>
 <p id="assetLastUpdated" role="status" style="font-size:13px;margin:8px 0 14px"></p>
-<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="doorjamb">Factory Specifications</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button></div>
- <section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
+<div class="asset-tabs" role="tablist" aria-label="Item information"><button type="button" data-asset-tab="details" class="active">Details</button><button type="button" data-asset-tab="doorjamb">Factory Specifications</button><button type="button" data-asset-tab="mileage">Mileage</button><button type="button" data-asset-tab="recommended" hidden>Service Schedule</button><button type="button" data-asset-tab="maintenance">Service Log</button><button type="button" data-asset-tab="fuel" id="mustangFuelTab" hidden>⛽ Fuel & Mileage</button><button type="button" data-asset-tab="audit">History</button></div>
+ <section class="asset-tab-panel" id="assetAudit" hidden></section>
+<section class="asset-tab-panel" id="assetDetails"><div class="photo-manager"><div id="assetPhoto"></div><div class="photo-summary" id="photoSummary"></div><label class="photo-upload">Add or replace photo<input id="assetPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><span id="photoUploadStatus" role="status"></span></div><div class="asset-facts" id="assetFacts"></div><section id="assetRecordReview" class="record-review"></section><div id="quickSpecGroups" class="quick-spec-groups"></div><div id="assetEditStatus" class="asset-edit-status" role="status"></div></section>
 <section class="asset-tab-panel" id="assetDoorJamb" hidden></section><section class="asset-tab-panel" id="assetMileage" hidden></section>
 <section class="asset-tab-panel" id="assetMaintenance" hidden></section>
 <section class="asset-tab-panel" id="assetRecommended" hidden></section><section class="asset-tab-panel" id="assetFuel" hidden><iframe title="Mustang fuel and mileage history" id="fuelFrame" style="width:100%;height:1320px;border:0;background:#eeeadd" loading="lazy"></iframe></section>
@@ -650,8 +651,10 @@ function serviceFor(a){const key=serviceAssetKey(a);return services.filter(s=>cl
 const scheduleKeys=[[/trek.*7200/, 'trek7200'],[/harley.*(ultra|flhtcui)/,'harleydavidsonultra'],[/lifetime.*spitfire/,'lifetimespitfire'],[/keystone.*bullet/,'keystonebullet'],[/stirling|westbrook.*trailer/,'stirling'],[/makdaddy.*legend/,'makdaddylegend'],[/harley.*(roadglide|fltrk)/,'harleydavidsonroad'],[/ram.*3500/,'ram3500'],[/coleman.*(b200|8200)/,'colemanb200'],[/volpam.*sp03/,'volpamsp03'],[/coolster.*3050/,'coolster3050'],[/ford.*f150/,'fordf150'],[/xpro.*jaguar/,'xprojaguar'],[/ford.*mustang/,'fordmustang'],[/toyota.*4runner/,'toyota4runner'],[/chrysler.*aspen/,'chrysleraspen'],[/honda.*civic/,'hondacivic'],[/husqvarna.*122hd4[5s]/,'husqvarna122hd4s'],[/echo.*pb2520/,'echopb2520'],[/dewalt.*aircompressor/,'dewaltaircompressor'],[/dewalt.*dxpw3425|dewalt.*pressurewasher/,'dewaltdxpw3425'],[/craftsman.*18.*chainsaw/,'craftsman18inchchainsaw'],[/craftsman.*10.*polesaw/,'craftsman10polesaw'],[/husqvarna.*yth24k48/,'husqvarnayth24k48'],[/cubcadet.*kohler/,'cubcadetkohler'],[/husqvarna.*330lx|husqvarna.*weedeater/,'husqvarna330lx'],[/stihl.*fs56/,'stihlfs56']];
 function scheduleKeyFor(a){const name=clean([a.make,a.model,a.name].filter(Boolean).join(' '));const entry=scheduleKeys.find(([pattern])=>pattern.test(name));return entry?entry[1]:serviceAssetKey(a)}
 function scheduleFor(a){return schedules[scheduleKeyFor(a)]||null}
+const assetServiceSearch=Object.create(null);
 function renderRecommended(a){
  const panel=document.getElementById('assetRecommended');
+ const query=assetServiceSearch[a.id]?.schedule||'';
  const groups=[[],[],[],[]],tones=['late','soon','ok','unknown'];
  for(const task of (scheduleFor(a)?.tasks||[])){
   const state=dueState(a,task);
@@ -659,10 +662,11 @@ function renderRecommended(a){
  }
  for(const group of groups)group.sort((a,b)=>(a.state.days??Infinity)-(b.state.days??Infinity)||a.task.task.localeCompare(b.task.task));
  const titles=['Past due','Due within 30 days','Due later','Date or reading needed'];
- const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task,state})=>'<tr data-service-tone="'+state.tone+'"><td>'+
+ const sections=groups.map((group,i)=>group.length?'<section class="recommend-section"><h3>'+titles[i]+' <span>'+group.length+'</span></h3><div class="table-wrap"><table><thead><tr><th>Service item</th><th>Frequency</th><th>Last performed</th><th>Due date</th><th>Due reading</th><th>Action</th></tr></thead><tbody>'+group.map(({task,state})=>'<tr data-service-search="'+esc([task.task,task.interval,task.notes,task.lastDate,task.nextDate].join(' '))+'" data-service-tone="'+state.tone+'"><td>'+
 '<label><input type="checkbox" data-select-service="'+task.sheetRow+'" aria-label="Select '+esc(task.task)+'"> '+esc(task.task)+'</label>'+scheduleDateEditor.notes(task)+'</td><td>'+esc(task.interval)+'</td><td>'+esc(task.lastDate||'Needs confirmation')+'</td><td>'+esc(task.nextDate||'No date listed')+'<br><span class="service-due-status">'+fleetDueLabel(state.tone)+'</span>'+'</td><td>'+esc(task.nextReading?task.nextReading+' '+(task.interval.includes('Hours')?'hours':'miles'):'Not recorded')+'</td><td><button type="button" class="schedule-action" data-complete-row="'+task.sheetRow+'">Complete</button> '+scheduleDateEditor.action(task)+'</td></tr>').join('')+'</tbody></table></div></section>':'').join('');
  const warning=clean(a.make+' '+a.model).includes('ram3500')&&String(a.year)!=='2019'?'<p class="recommend-warning">This Ram 3500 is a 2019. Update the vehicle year to match the confirmed record.</p>':'';
- panel.innerHTML='<div class="complete-actions"><button type="button" id="completeSelected" disabled>Complete selected items</button><span id="scheduleSelectionCount" role="status">0 selected</span><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Check each item you completed, even across different sections, then choose Complete selected items to record one service visit. New to-dos appear here alongside your imported schedule. Choose Edit to update a scheduled item. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+fleetMaintenancePlanMarkup(fleetMaintenancePlan(a,scheduleFor(a)?.tasks||[]),esc)+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ panel.innerHTML=fleetServiceSearchMarkup('schedule',query,esc)+'<div class="complete-actions"><button type="button" id="completeSelected" disabled>Complete selected items</button><span id="scheduleSelectionCount" role="status">0 selected</span><button type="button" id="addScheduledTask">+ Add to-do / scheduled service</button></div><p class="recommend-intro">Check each item you completed, even across different sections, then choose Complete selected items to record one service visit. New to-dos appear here alongside your imported schedule. Choose Edit to update a scheduled item. Mileage or hours may make an item due sooner.</p><p id="scheduleDateStatus" role="status"></p>'+warning+fleetMaintenancePlanMarkup(fleetMaintenancePlan(a,scheduleFor(a)?.tasks||[]),esc)+sections+'<div id="completePanel" class="complete-panel" hidden></div>';
+ fleetApplyServiceSearch(panel,query);
 }
 const alias={'ram3500':'3500 DRW','fordmustang':'Mustang','hondacivic':'Civic','harleydavidsonroadglide':'FLTRK','harleydavidsonultra':'FLHTCUI','keystonebullet':'Bullet','makdaddylegend':'Legend','fordf150':'F150','stirlingtrailer':'Stirling'};
 function mileageFor(a){
@@ -1022,12 +1026,16 @@ function renderAsset(tab='details'){
  else{
   const entries=serviceFor(asset).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)||b.sheetRow-a.sheetRow);
   renderRecommended(asset);
-  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><p>Click an entry to view, edit, or delete its individual service items.</p><label>Find service <input id="serviceHistorySearch" type="search" placeholder="Search heater core, oil change…"></label><div class="table-wrap"><table><thead><tr><th>Date</th><th>Work completed</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Visit total ($)</th></tr></thead><tbody>'+entries.map(e=>{const parts=serviceItemization(e);return '<tr data-open-service="'+e.sheetRow+'" data-history-search="'+esc(parts.map(x=>x.name).join(' ').toLowerCase())+'"><td>'+esc(e.date||'Not recorded')+'</td><td><button type="button" class="service-entry-open" data-open-service="'+e.sheetRow+'">'+esc(parts.length===1?parts[0].name:parts.length+' service items completed')+'</button><div class="service-item-preview">'+parts.map(x=>'<div>'+esc(x.name)+'</div>').join('')+'</div></td><td>'+esc(e.odometer??'')+'</td><td>'+esc(e.cost??'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  document.getElementById('assetMaintenance').innerHTML='<button type="button" id="addService">+ Add service entry</button><p>Click an entry to view, edit, or delete its individual service items.</p>' + fleetServiceSearchMarkup('log',assetServiceSearch[asset.id]?.log||'',esc) + '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Work completed</th><th>'+(hours?'Hours':'Odometer')+'</th><th>Visit total ($)</th></tr></thead><tbody>'+entries.map(e=>{const parts=serviceItemization(e);return '<tr data-open-service="'+e.sheetRow+'" data-service-search="'+esc([e.item,e.notes,e.date,...parts.map(x=>x.name)].join(' '))+'"><td>'+esc(e.date||'Not recorded')+'</td><td><button type="button" class="service-entry-open" data-open-service="'+e.sheetRow+'">'+esc(parts.length===1?parts[0].name:parts.length+' service items completed')+'</button><div class="service-item-preview">'+parts.map(x=>'<div>'+esc(x.name)+'</div>').join('')+'</div></td><td>'+esc(e.odometer??'')+'</td><td>'+esc(e.cost??'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  fleetApplyServiceSearch(document.getElementById('assetMaintenance'),assetServiceSearch[asset.id]?.log||'');
 
  }
  for(const b of document.querySelectorAll('[data-asset-tab]'))b.classList.toggle('active',b.dataset.assetTab===tab);
  for(const [name,id] of [['details','assetDetails'],['doorjamb','assetDoorJamb'],['mileage','assetMileage'],['maintenance','assetMaintenance'],['recommended','assetRecommended'],['fuel','assetFuel']])document.getElementById(id).hidden=name!==tab;
  if(tab==='doorjamb')window.TiszodDoorJamb.render(asset,{esc,specRecord,ensureProfileRow,fleetWriteCell});
+ const auditPanel=document.getElementById('assetAudit');
+ auditPanel.hidden=tab!=='audit';
+ if(tab==='audit')window.TiszodGarageAudit.show(auditPanel,asset,mileageFor(asset)?.currentMileage);
  vehicleDocuments.render(tab,asset);
 }
 function dueState(a,task,windowDays=30){
@@ -1461,7 +1469,16 @@ function serviceItemization(entry){
  const names=String(entry.item||'Service').split(';').map(x=>x.trim()).filter(Boolean);
  return names.map(name=>({name,cost:names.length===1?(entry.cost??''):'',notes:''}));
 }
-document.getElementById('assetMaintenance').addEventListener('input',e=>{if(e.target.id==='serviceHistorySearch'){const q=e.target.value.toLowerCase();document.querySelectorAll('[data-history-search]').forEach(row=>row.hidden=!row.dataset.historySearch.includes(q))}});
+for(const id of ['assetMaintenance','assetRecommended']){
+ const panel=document.getElementById(id);
+ panel.addEventListener('input',event=>{
+  const input=event.target;
+  if(!asset||!input.matches('[data-service-query]'))return;
+  const state=assetServiceSearch[asset.id]||={};
+  state[input.dataset.serviceQuery]=input.value;
+  fleetApplyServiceSearch(panel,input.value);
+ });
+}
 const entryDialog=document.createElement('dialog');entryDialog.className='work-dialog';entryDialog.setAttribute('aria-label','Service entry details');document.body.append(entryDialog);
 let detailEntry=null,detailAsset=null;
 function openServiceEntry(entry){
@@ -1668,5 +1685,18 @@ window.thStart=()=>{
  })().finally(()=>{thFleetStarting=null});
  return thFleetStarting;
 };
-</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261119-workbook-sync"></script><script src="fuel-capture.js?v=20261119-workbook-sync"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="equipment-photos.js?v=20261102-compressor-todd"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=20261107-full-edit"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="sheets.js?v=20261119-workbook-sync"></script></body></html>
+</script><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=garage-audit-1"></script><script src="fuel-capture.js?v=20261119-workbook-sync"></script><script src="vehicle-documents.js?v=20261118-garage-save"></script><script src="equipment-photos.js?v=20261102-compressor-todd"></script><script src="fleet-usage.js?v=20261107"></script><script src="fleet-schedule.js?v=service-search-1"></script><script src="fleet-maintenance.js?v=20261107"></script><script src="garage-audit.js?v=1"></script><script src="sheets.js?v=garage-audit-1"></script></body></html>
 
+
+<script>
+window.TiszodGarageAudit.configure((sheet,range,row,previous)=>{
+ if(sheet==='Portal Vehicle Documents')return assets.find(a=>window.TiszodVehicleDocuments?.assetKey(a)===(row[1]||previous[1]));
+ if(range==='A1'){
+  if(sheet==='Portal Asset Profiles')return assets.find(a=>a.reportId&&String(a.reportId)===String(row[0]))||
+    assets.find(a=>clean([a.year,a.make,a.model].join(' '))===clean(row[1]));
+  if(sheet==='Mileage-2025.10.16')return assets.find(a=>String(a.year)===String(row[2])&&clean(a.make+' '+a.model).includes(clean(row[1])))||asset;
+  if(sheet==='Portal Service History'||sheet==='Portal Service Schedules')return assets.find(a=>serviceAssetKey(a)===row[0])||asset;
+ }
+ return changedAsset(sheet,range);
+});
+</script>

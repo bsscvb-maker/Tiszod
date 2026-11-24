@@ -138,3 +138,24 @@ function createFleetScheduleDateEditor({esc,ownershipDate,ownershipIso,getAsset,
   }
  };
 }
+
+function fleetServiceSearchMarkup(type,query,esc){
+ const label=type==='schedule'?'Search service schedule':'Search service log';
+ return '<label>'+label+' <input type="search" data-service-query="'+type+'" value="'+esc(query)+'" placeholder="e.g. heater core"></label> <span data-service-search-status role="status"></span>';
+}
+
+function fleetApplyServiceSearch(panel,query){
+ const words=query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+ let matches=0;
+ for(const row of panel.querySelectorAll('[data-service-search]')){
+  const text=row.dataset.serviceSearch.toLowerCase();
+  row.hidden=!words.every(word=>text.includes(word));
+  if(!row.hidden)matches++;
+ }
+ for(const section of panel.querySelectorAll('.recommend-section')){
+  const rows=section.querySelectorAll('[data-service-search]');
+  if(rows.length)section.hidden=words.length>0&&![...rows].some(row=>!row.hidden);
+ }
+ const status=panel.querySelector('[data-service-search-status]');
+ if(status)status.textContent=words.length?(matches?matches+' matching '+(matches===1?'entry':'entries'):'No matching service entries.'):'';
+}
