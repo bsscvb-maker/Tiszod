@@ -23,7 +23,7 @@ window.TiszodGarageAudit = (() => {
  const actor = () => {
   if(actorToken !== thToken){
    actorToken = thToken;
-   actorPending = fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress,displayName)',{headers:{Authorization:'Bearer '+thToken}})
+   actorPending = fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress,displayName)',{headers:{Authorization:'Bearer '+thToken},signal:AbortSignal.timeout(3000)})
     .then(r => r.ok ? r.json() : {}).then(r => r.user?.emailAddress || r.user?.displayName || '').catch(() => '');
   }
   return actorPending;
@@ -100,12 +100,50 @@ window.TiszodGarageAudit = (() => {
   }
   return result;
  }
+ async function saveMileage(updates,changes){
+  const [{sheetId},meta]=await Promise.all([ensureJournal(),thSheets('?fields=sheets(properties(sheetId,title))')]);
+  const ids=new Map(meta.sheets.map(({properties})=>[properties.title,properties.sheetId]));
+  const requests=updates.map(({sheet,range,values})=>{
+   const [,column,row]=range.match(/^([A-Z]+)(\d+)$/);
+   const value=values[0][0];
+   const isDate=sheet==='Mileage-2025.10.16'&&column==='D';
+   const cell=isDate?{
+    userEnteredValue:{numberValue:Date.parse(value+'T00:00:00Z')/86400000+25569},
+    userEnteredFormat:{numberFormat:{type:'DATE',pattern:'m/d/yyyy'}}
+   }:typeof value==='number'?{userEnteredValue:{numberValue:value}}:stringCell(value);
+   if(!ids.has(sheet))throw Error('The mileage sheet could not be located.');
+   return {updateCells:{
+    start:{sheetId:ids.get(sheet),rowIndex:Number(row)-1,columnIndex:columns(column)},
+    rows:[{values:[cell]}],
+    fields:isDate?'userEnteredValue,userEnteredFormat.numberFormat':'userEnteredValue'
+   }};
+  });
+  if(changes.length){
+   const entries=await decorate(changes,'Saved');
+   requests.push({appendCells:{sheetId,rows:entries.map(row=>({values:row.map(stringCell)})),fields:'userEnteredValue'}});
+  }
+  const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+':batchUpdate',{
+   method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
+   body:JSON.stringify({requests}),signal:AbortSignal.timeout(20000)
+  });
+  if(!response.ok){
+   const detail=await response.json().catch(()=>({}));
+   throw Error(detail.error?.message||'Could not save the mileage and its history.');
+  }
+ }
  function update(updates, save){
   const tracked = updates.filter(u => Object.hasOwn(fields,u.sheet) && !(u.sheet==='Portal Asset Profiles'&&/^AD\d+$/.test(u.range)));
   if(!tracked.length)return save();
   return serialize(async() => {
    const old = await Promise.all(tracked.map(u => thValues(rangeOf(u.sheet,u.range),'FORMULA')));
-   return record(tracked.flatMap((u,i) => changesFor(u,old[i])),save);
+   const changes=tracked.flatMap((u,i) => changesFor(u,old[i]));
+   const isMileage=tracked.some(u=>u.sheet==='Mileage-2025.10.16'&&/^[DEF]\d+$/.test(u.range));
+   const supported=updates.every(({sheet,range,values})=>values.length===1&&values[0].length===1&&(
+    (sheet==='Mileage-2025.10.16'&&(/^[EF]\d+$/.test(range)&&typeof values[0][0]==='number'||/^D\d+$/.test(range)&&/^\d{4}-\d{2}-\d{2}$/.test(values[0][0])))||
+    (sheet==='Portal Asset Profiles'&&(/^(AD|K)\d+$/.test(range)))
+   ));
+   if(isMileage&&supported)return saveMileage(updates,changes);
+   return record(changes,save);
   });
  }
  function append(sheet, rows, save){
