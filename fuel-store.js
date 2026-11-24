@@ -68,10 +68,16 @@
    requests.push({appendCells:{sheetId:finance.sheetId,rows:[{values:[entry.transactionId,entry.date,entry.account,entry.station,'Transportation','Fuel',entry.name,0,entry.total,'Pending',notes,entry.method,'Expense','','No'].map(val)}],fields:'userEnteredValue'}});
   }
   const readings=await thValues("'Mileage-2025.10.16'!B5:F1500",'UNFORMATTED_VALUE');
+  let oldReading, newReading;
   if(!vehicle.usesHours&&vehicle.mileageRow){
    const current=FuelCore.number(readings[vehicle.mileageRow-5]?.[4]);if(!Number.isFinite(current))throw Error('Current mileage could not be verified. Refresh Vehicles.');
-   if(entry.odo>current)requests.push(update(mileage.sheetId,vehicle.mileageRow-1,5,[entry.odo]));
+   if(entry.odo>current){
+    oldReading=current;
+    newReading=entry.odo;
+    requests.push(update(mileage.sheetId,vehicle.mileageRow-1,5,[entry.odo]));
+   }
   }else if(!vehicle.usesHours){
+   newReading=entry.odo;
    const n=mileage.gridProperties.rowCount+1;
    requests.push({appendDimension:{sheetId:mileage.sheetId,dimension:'ROWS',length:1}});
    const values=['',vehicle.mileageName,vehicle.year,entry.date,entry.odo,entry.odo];
@@ -91,6 +97,10 @@
    profileRow=matches[0].row;
   }
   requests.push(update(profiles.sheetId,profileRow-1,29,[new Date().toISOString()]));
+  if(window.TiszodGarageAudit){
+   const audit=await TiszodGarageAudit.fuelRequest({...vehicle,profileRow},already&&row(already),row(entry),oldReading,newReading,HEADERS);
+   if(audit)requests.push(audit);
+  }
   try{await request(':batchUpdate',{requests});}catch(error){
    try{const check=await read(),saved=check.entries.find(x=>x.id===entry.id);if(saved&&JSON.stringify(row(saved))===JSON.stringify(row(entry)))return {entry:saved,recovered:true};}catch{}
    const uncertain=new Error('Save was not confirmed. Reopen fuel history before retrying. Your photos may already be saved. '+error.message);uncertain.uncertain=true;throw uncertain;

@@ -207,6 +207,10 @@ async function thFleetServiceData() {
 }
 
 async function thWriteCell(sheet, cell, value) {
+  if (window.TiszodGarageAudit) return thWriteRanges([{sheet,range:cell,values:[[value]]}]);
+  return thWriteCellDirect(sheet,cell,value);
+}
+async function thWriteCellDirect(sheet, cell, value) {
   if (!thToken) throw new Error('Sign in again to save changes.');
   const range="'"+sheet.replace(/'/g,"''")+"'!"+cell;
   const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+'?valueInputOption=USER_ENTERED',{
@@ -220,6 +224,10 @@ async function thWriteCell(sheet, cell, value) {
 }
 // Send related cell/range updates in one request instead of one per cell.
 async function thWriteRanges(updates, valueInputOption = 'USER_ENTERED', verify = false) {
+  const save = () => thWriteRangesDirect(updates,valueInputOption,verify);
+  return window.TiszodGarageAudit ? TiszodGarageAudit.update(updates,save) : save();
+}
+async function thWriteRangesDirect(updates, valueInputOption, verify) {
   if (!updates.length) return;
   if (!thToken) throw new Error('Sign in again to save changes.');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
@@ -256,18 +264,19 @@ async function thAppendRow(sheet, values, valueInputOption = 'USER_ENTERED') {
     // finds the last of those tables and shifts a new entry into its columns.
     const rows = await thValues("'Mileage-2025.10.16'!A1:K");
     const row = Math.max(5, rows.length + 1);
-    const range = "'Mileage-2025.10.16'!B" + row + ':K' + row;
-    const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + TH_SHEET_ID + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
-      method: 'PUT', headers: {Authorization:'Bearer ' + thToken, 'Content-Type':'application/json'},
-      body: JSON.stringify({range, majorDimension:'ROWS', values:[values.slice(1, 11)]})
-    });
-    if (!response.ok) {const detail=await response.json().catch(()=>({}));throw new Error(detail.error?.message||'Could not add a mileage record.')}
+    const save = () => thWriteRangesDirect([{sheet,range:'B'+row+':K'+row,values:[values.slice(1,11)]}],valueInputOption,false);
+    if(window.TiszodGarageAudit)await TiszodGarageAudit.append(sheet,[values],save);
+    else await save();
     return row;
   }
   return thAppendRows(sheet,[values],valueInputOption);
 }
 async function thAppendRows(sheet, rows, valueInputOption = 'USER_ENTERED') {
-  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC','Portal Saved State':'A:F'};
+  const save = () => thAppendRowsDirect(sheet,rows,valueInputOption);
+  return window.TiszodGarageAudit ? TiszodGarageAudit.append(sheet,rows,save) : save();
+}
+async function thAppendRowsDirect(sheet, rows, valueInputOption) {
+  const appendRanges={'Mileage-2025.10.16':'A5:K','Portal Service History':'A:G','Portal Service Schedules':'A:I','FreeBirds':'A:P','Portal Asset Profiles':'A:AC','Portal Saved State':'A:F','Garage Audit Log':'A:L'};
   const range="'"+sheet.replace(/'/g,"''")+"'!"+(appendRanges[sheet]||'A:Z');
   const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+TH_SHEET_ID+'/values/'+encodeURIComponent(range)+':append?valueInputOption='+encodeURIComponent(valueInputOption)+'&insertDataOption=INSERT_ROWS',{
     method:'POST',headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},
@@ -320,21 +329,13 @@ async function thUploadAssetPhoto(file, asset) {
   const {id} = await upload.json();
   if (!id) throw new Error('Photo upload did not return a file ID.');
   const url = 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w800';
-  const base = 'https://sheets.googleapis.com/v4/spreadsheets/' + TH_SHEET_ID + '/values/';
-  let endpoint, values, method;
-  if (asset.profileRow) {
-    endpoint = base + encodeURIComponent("'Portal Asset Profiles'!X"+asset.profileRow+':Y'+asset.profileRow) + '?valueInputOption=RAW';
-    values = [[id,url]]; method = 'PUT';
-  } else {
+  if(asset.profileRow){
+    await thWriteRanges([{sheet:'Portal Asset Profiles',range:'X'+asset.profileRow+':Y'+asset.profileRow,values:[[id,url]]}],'RAW');
+  }else{
     const row = Array(25).fill('');
     Object.assign(row,{1:[asset.year,asset.make,asset.model].filter(Boolean).join(' '),2:asset.year,3:asset.make,4:asset.model,7:asset.category,8:asset.status,11:asset.vin,13:asset.tag,23:id,24:url});
-    endpoint = base + encodeURIComponent("'Portal Asset Profiles'!A:AA") + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS';
-    values = [row]; method = 'POST';
+    asset.profileRow=await thAppendRow('Portal Asset Profiles',row,'RAW');
   }
-  const save = await fetch(endpoint,{method,headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'},body:JSON.stringify({values})});
-  if (!save.ok) { const detail=await save.json().catch(()=>({})); throw new Error('Photo uploaded, but its vehicle link could not be saved: '+(detail.error?.message||('Google returned '+save.status))); }
-  const result = await save.json();
-  if (!asset.profileRow) asset.profileRow = Number(result.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1]) || 0;
   asset.photoFileId=id;
   return url;
 }

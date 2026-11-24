@@ -93,6 +93,11 @@ body[data-th-page="garage"] .garage-heading .garage-shortcut:hover{background:#2
 <a class="tile equipment-photo-tile" href="equipment.html"><img src="command-photos/equipment-workshop.jpg" alt="Yellow CAT RP6500 generator outside a workshop"><div class="tile-content"><h3>Equipment</h3><p>Tractors, shop equipment, and maintenance →</p></div></a>
 <a class="tile framed-tile" href="vehicles.html?section=off-road"><div class="tile-photo"><img class="tile-backdrop" src="command-photos/off-road-jaguar-chrome.jpg" alt=""><img class="tile-subject" src="command-photos/off-road-jaguar-chrome.jpg" alt="Green camo X-Pro Jaguar 200 quad with chrome rims on a wooded dirt trail"></div><div class="tile-content"><h3>Off-Road</h3><p>ATVs, quads, and mini bikes →</p></div></a>
 </div></section><form class="module-search" data-search-scope="garage" role="search" aria-label="Search across Garage collections"><label for="module-search-query">Search across Garage collections</label><div class="module-search-row"><input id="module-search-query" type="search" maxlength="120" autocomplete="off" placeholder="Try 4Runner, Yamaha, or generator" required><button type="submit">Search all</button></div><p class="module-search-status" role="status"></p><ul class="module-search-results" aria-label="Search results"></ul></form>
+<button class="garage-report-action secondary-action" type="button" id="openGarageAudit">Garage Audit Log</button>
+<dialog id="garageAuditDialog" class="garage-report-panel" style="display:revert;color:inherit;background:#152235;width:min(95vw,80rem)">
+ <form method="dialog"><button class="garage-report-action secondary-action">Close</button></form>
+ <section id="garageAuditContent"></section>
+</dialog>
 <section class="garage-report-panel" id="garage-reports" aria-labelledby="garage-reports-title" tabindex="-1">
   <a class="back" href="garage.html">← Back to Garage</a>
   <h1 id="garage-reports-title">Garage Reports</h1>
@@ -149,4 +154,10 @@ body[data-th-page="garage"] .garage-heading .garage-shortcut:hover{background:#2
     <div class="report-summary"></div><div class="report-recall-tools"></div><div class="report-work-list"></div>
     <div class="report-table" role="region" tabindex="0" aria-labelledby="garage-report-preview-title"><table aria-labelledby="garage-report-preview-title"></table></div>
   </div>
-</section></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="small-engine-oil.js?v=20261118-garage-save"></script><script src="fleet-vehicle-specs.js?v=2"></script><script src="equipment-photos.js?v=1"></script><script src="garage-reports.js?v=20261123-asset-filter"></script><script src="sheets.js?v=20261119-workbook-sync"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=20261119-workbook-sync"></script><script src="module-search.js?v=20261119-workbook-sync"></script></body></html>
+</section></main></div></div><script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="small-engine-oil.js?v=20261118-garage-save"></script><script src="fleet-vehicle-specs.js?v=2"></script><script src="equipment-photos.js?v=1"></script><script src="garage-reports.js?v=20261123-asset-filter"></script><script src="garage-audit.js?v=1"></script><script src="sheets.js?v=garage-audit-1"></script><script src="fuel-core.js?v=20261029-fuel1"></script><script src="fuel-seeds.js?v=20261029-fuel1"></script><script src="fuel-store.js?v=garage-audit-1"></script><script src="module-search.js?v=20261119-workbook-sync"></script></body></html>
+<script>
+document.getElementById('openGarageAudit').onclick=()=>{
+ document.getElementById('garageAuditDialog').showModal();
+ window.TiszodGarageAudit.show(document.getElementById('garageAuditContent'));
+};
+</script>
