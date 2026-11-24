@@ -87,3 +87,19 @@
   border-left:3pt solid var(--report-status-color,#bbb);color:var(--report-status-color,#000);font-weight:650;
  }
 }
+
+.report-metric-button{color:#eef4fd;text-align:left;font:inherit;cursor:pointer;min-height:78px}
+.report-metric-button:hover,.report-asset summary:hover{background:#1a304a}
+.report-metric-button:focus-visible,.report-asset summary:focus-visible{outline:2px solid #a9d4ff;outline-offset:2px}
+.report-work-list{grid-template-columns:minmax(0,1fr);gap:6px}
+.report-asset{padding:0;overflow:hidden;border-radius:8px}
+.report-asset summary{display:list-item;cursor:pointer;padding:10px 14px}
+.report-asset summary strong{margin-right:12px}
+.report-asset summary span{color:#b9cbe0;font-size:.85rem;margin-right:10px}
+.report-asset summary span:last-child{float:right;margin-right:0}
+.report-asset>a{display:inline-block;margin:10px 14px 0}
+.report-asset ul{margin:8px 14px 12px}
+.report-metric-dialog{width:min(860px,calc(100% - 28px));max-height:85vh;overflow:auto;background:#152235;color:#eef4fd;border:1px solid #617592;border-radius:14px;padding:18px}
+.report-metric-dialog::backdrop{background:#000a}
+.report-metric-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.report-metric-dialog h2{margin:0;font-size:1.35rem}
