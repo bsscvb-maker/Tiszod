@@ -22,10 +22,13 @@
 #legal-search-results{margin-top:1rem}
 .legal-return{display:inline-block;margin:0 0 14px;color:var(--gold)}
 </style><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><style>
-.legal-document-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:1rem}
+.legal-document-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,16.5rem),1fr));gap:1rem}
 .legal-document-card{min-width:0;padding:1rem;background:#172131;border:1px solid #38475e;border-radius:.65rem}
-.legal-document-card h3{margin:0 0 .5rem;overflow-wrap:anywhere}
-.legal-document-card p:empty{display:none}
+.legal-document-card h3{font-size:.875rem;line-height:1.3;margin:0 0 .5rem;min-height:2.6em;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.legal-document-card [role="status"]{height:2.5em;margin:0 0 .35rem;font-size:.75rem;line-height:1.25;overflow:auto}
+.legal-document-card .legal-document-pages{box-sizing:border-box;max-width:none;height:13rem;scrollbar-gutter:stable}
+.legal-document-card .legal-document-pages:empty{display:block}
+
 .legal-document-pages[role="button"]{cursor:zoom-in}
 .legal-document-pages[role="button"]:focus-visible{outline:2px solid #9abfff}
 .legal-document-dialog{width:min(65rem,94vw);max-height:94vh;padding:1rem;color:#eef4ff;background:#172131;border:1px solid #53627a;border-radius:.65rem}
@@ -188,7 +191,8 @@ function legalDocumentGrid(records){
   const heading=document.createElement('h3'),status=document.createElement('p');
   const pages=document.createElement('div');
   const download=document.createElement('a');
-  heading.textContent=record.name;
+  heading.textContent=record.name.replace(/\.pdf$/i,'').replace(/_/g,' ');
+  heading.title=record.name;
   status.setAttribute('role','status');
   pages.className='legal-document-pages';
   pages.tabIndex=0;
