@@ -233,16 +233,9 @@
   }
   function maintenanceTaskLabel(task, specs) {
     if (!/\btire\s+(?:inflation|pressure)\b/i.test(task)) return task;
-    const pressure = value => /\bpsi\b|^\d+(?:\.\d+)?$/i.test(String(value ?? '')) ? String(value).trim() : '';
-    const front = pressure(specs.frontTirePsi);
-    const rear = pressure(specs.rearTirePsi);
-    const all = pressure(specs.tirePsi);
-    const withUnit = value => /\bpsi\b/i.test(value) ? value : value + ' PSI';
-    const detail = front || rear
-      ? [front && 'Front ' + withUnit(front), rear && 'Rear ' + withUnit(rear),
-         (!front || !rear) && all && 'General ' + withUnit(all)].filter(Boolean).join(' / ')
-      : all && withUnit(all);
-    return detail ? task + ' (' + detail + ')' : task + ' (PSI not recorded)';
+    const pressure = garagePressureLabel(specs);
+    if (pressure === 'Solid tires') return 'Check tire condition (Solid tires)';
+    return task + ' (' + (pressure || 'PSI not recorded') + ')';
   }
 
   async function operationalRows(config) {
