@@ -13,6 +13,7 @@
   const summary = preview.querySelector('.report-summary');
   const recallTools = preview.querySelector('.report-recall-tools');
   const workList = preview.querySelector('.report-work-list');
+  const metricDialog = section.querySelector('.report-metric-dialog');
   const run = form.querySelector('[type="submit"]');
   const download = section.querySelector('[data-download]');
   const gate = document.querySelector('#th-auth');
@@ -391,6 +392,8 @@
     summary.replaceChildren();
     recallTools.replaceChildren();
     workList.replaceChildren();
+    if (metricDialog.open) metricDialog.close();
+    metricDialog.querySelector('[data-metric-results]').replaceChildren();
   }
 
   function updateAssetOptions() {
@@ -473,7 +476,7 @@
     };
     dialog.showModal();
   }
-  function renderGrouped(report, rows) {
+  function renderGrouped(report, rows, output = workList, expandFirst = false) {
     const groups = new Map();
     for (const row of rows) {
       const key = assetKey(row.item);
@@ -482,10 +485,12 @@
     }
     for (const group of groups.values()) {
       const item = group[0].item;
-      const card = node('section', '', 'report-asset');
-      const heading = node('h4');
-      heading.append(linkTo(title(item), profileLink(item)));
-      card.append(heading, node('p', collection(item) + ' · ' + (item.status || 'Status unknown')));
+      const card = node('details', '', 'report-asset');
+      card.open = expandFirst && !output.children.length;
+      const heading = node('summary');
+      heading.append(node('strong', title(item)), node('span', collection(item)),
+        node('span', group.length + (group.length === 1 ? ' item' : ' items')));
+      card.append(heading, linkTo('Open asset', profileLink(item)));
       const tasks = node('ul');
       for (const row of group) {
         const task = node('li', '', 'report-task');
@@ -504,7 +509,7 @@
         tasks.append(task);
       }
       card.append(tasks);
-      workList.append(card);
+      output.append(card);
     }
   }
   async function checkRecallCampaigns(rows, output, trigger) {
@@ -650,9 +655,25 @@
     if (report === reports.attention || report === reports.renewals) {
       const counts = [['late','Overdue'],['soon','Due within 30 days'],['ok','Due now'],['later','Later in range'],['unknown','Needs confirmation']];
       for (const [tone, label] of counts) {
-        const item = node('div', '', 'report-metric');
+        const matching = rows.filter(row => row.tone === tone);
+        const item = node('button', '', 'report-metric report-metric-button');
+        item.type = 'button';
         item.dataset.tone = tone;
-        item.append(node('strong', String(rows.filter(row => row.tone === tone).length)), node('span', label));
+        item.setAttribute('aria-haspopup', 'dialog');
+        item.append(node('strong', String(matching.length)), node('span', label));
+        item.onclick = () => {
+          metricDialog.querySelector('h2').textContent = label;
+          const output = metricDialog.querySelector('[data-metric-results]');
+          output.replaceChildren();
+          if (matching.length) {
+            const assets = new Set(matching.map(row => assetKey(row.item))).size;
+            metricDialog.querySelector('[data-metric-count]').textContent =
+              matching.length + (matching.length === 1 ? ' item' : ' items') +
+              ' across ' + assets + (assets === 1 ? ' asset' : ' assets');
+            renderGrouped(report, matching, output, true);
+          } else metricDialog.querySelector('[data-metric-count]').textContent = 'No matching items in this report.';
+          metricDialog.showModal();
+        };
         summary.append(item);
       }
     }
