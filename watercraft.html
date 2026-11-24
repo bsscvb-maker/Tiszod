@@ -1042,7 +1042,13 @@ function dueState(a,task,windowDays=30){
  const soon=!due&&(days!==null&&days<=windowDays||remaining!==null&&remaining<= (usesHours(a)?20:500));
  return {due,soon,days,remaining,tone:fleetDueTone(days,remaining,usesHours(a)?20:500),reason:[days!==null?(days<0?Math.abs(days)+' days past due':days===0?'due today':'due in '+days+' days'):'',remaining!==null?(remaining<0?'reading passed':remaining===0?'due at current reading':'in '+cardNumber(remaining)+' '+(usesHours(a)?'hours':'miles')):''].filter(Boolean).join(' · ')||'No next due date or reading'};
 }
-function dueItems(a){return ['active','managed'].includes(clean(a.status))?(scheduleFor(a)?.tasks||[]).map(task=>({task,state:dueState(a,task)})).filter(x=>x.state.due||x.state.soon).sort((x,y)=>Number(y.state.due)-Number(x.state.due)||((x.state.days??Infinity)-(y.state.days??Infinity))):[]}
+function dueItems(a){
+ if(!['active','managed'].includes(clean(a.status)))return [];
+ return (scheduleFor(a)?.tasks||[])
+  .map(task=>({task,state:dueState(a,task)}))
+  .filter(({state})=>state.days!==null&&state.days>=0&&state.days<=5)
+  .sort((x,y)=>x.state.days-y.state.days);
+}
 function openDueReminder(a){if(!a)return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);if(!items.length)return;document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li data-service-tone="'+x.state.tone+'"><strong>'+esc(x.task.task)+'</strong> — '+fleetDueLabel(x.state.tone)+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
 let appliedReport={type:'due',section:'all',vehicle:'all',vehicleStatus:'active',windowDays:30};
 function reportData(){const {type,section,vehicle,vehicleStatus,windowDays}=appliedReport,items=assets.filter(a=>(section==='all'||a.category===section)&&(vehicle==='all'||String(a.id)===vehicle)&&(vehicleStatus==='all'||clean(a.status)===vehicleStatus)),name=a=>[a.year,a.make,a.model].filter(Boolean).join(' ');let columns=[],rows=[];
