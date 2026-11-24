@@ -1044,8 +1044,8 @@ function dueItems(a){
  if(!['active','managed'].includes(clean(a.status)))return [];
  return (scheduleFor(a)?.tasks||[])
   .map(task=>({task,state:dueState(a,task)}))
-  .filter(({state})=>state.days!==null&&state.days>=0&&state.days<=5)
-  .sort((x,y)=>x.state.days-y.state.days);
+  .filter(({state})=>state.due||(state.days!==null&&state.days<=5))
+  .sort((x,y)=>Number(y.state.due)-Number(x.state.due)||((x.state.days??Infinity)-(y.state.days??Infinity)));
 }
 function openDueReminder(a){if(!a)return;const dialog=document.getElementById('dueDialog'),items=dueItems(a);if(!items.length)return;document.getElementById('dueTitle').textContent='Service attention · '+[a.year,a.make,a.model].filter(Boolean).join(' ');document.getElementById('dueContent').innerHTML=items.length?'<p>'+items.length+' scheduled service item'+(items.length===1?' needs':'s need')+' attention:</p><ul>'+items.map(x=>'<li data-service-tone="'+x.state.tone+'"><strong>'+esc(x.task.task)+'</strong> — '+fleetDueLabel(x.state.tone)+' · '+esc(x.state.reason)+'</li>').join('')+'</ul>':'<p>No scheduled service is currently due or coming up. Check the Service Schedule for items without a next due date or reading.</p>';dialog.showModal()}
 let appliedReport={type:'due',section:'all',vehicle:'all',vehicleStatus:'active',windowDays:30};
