@@ -387,7 +387,6 @@
   }
   const asPounds=reading=>reading?.unit==='lb'?reading.weight:reading?.unit==='kg'?reading.weight*2.2046226218:undefined;
   const bmiFor=(pounds,height)=>pounds>0&&height>0?703*pounds/(height*height):undefined;
-  const rounded=value=>Math.round(value*10)/10;
   const measurementTime=reading=>Number.isFinite(reading?.time)?reading.time:Date.parse(reading?.date);
 
   function compositionReadings(profile) {
@@ -674,54 +673,33 @@
       ['⚖','Weight',' lb','weight'],['◈','BMI','','bmi'],['◉','Body Fat','%','bodyFat'],
       ['◆','Muscle','%','muscle'],['◌','Water','%','water'],['⬡','Bone Mass','%','boneMass']
     ].map(([symbol,label,unit,key])=>[symbol,label,pairs[key][0],unit,pairs[key][1],key]);
-    const goals={
-      weight:{min:180,max:189,target:185,unit:' lb'},
-      bmi:{min:23.7,max:24.9,redAt:30,unit:''},
-      bodyFat:{min:18,max:22,unit:' pts'}
-    };
-    function goalStatus(key,value,prior){
-      if(!Number.isFinite(value))return null;
-      if(key==='muscle'){
-        const delta=Number.isFinite(prior)?rounded(rounded(value)-rounded(prior)):null;
-        const label=delta===null?'Track strength':delta===0?'Steady vs. prior':Math.abs(delta).toFixed(1)+' pts '+(delta>0?'up':'down');
-        return [label,'#7dd3fc','Long-term goal: maintain or improve strength. Scale muscle readings are estimates.'];
-      }
-      const goal=goals[key];
-      if(!goal)return null;
-      const current=rounded(value);
-      const detail='Long-term range: '+goal.min+'–'+goal.max+(key==='bodyFat'?'%':goal.unit)+(goal.target?' (goal: '+goal.target+' lb)':'');
-      if(current>=goal.min&&current<=goal.max)return ['In range','#84f497',detail];
-      const above=current>goal.max;
-      const gap=Math.abs(current-(above?goal.max:goal.min)).toFixed(1);
-      const label=key==='weight'&&above
-        ? (current-goal.target).toFixed(1)+' lb to goal'
-        : gap+goal.unit+(above?' above':' below');
-      const red=key==='weight' ? above&&rounded(current-goal.target)>10 : current>=goal.redAt;
-      const color=red?'#ff8b8b':'#ffd27a';
-      return [label,color,detail+'. '+gap+goal.unit+(above?' above':' below')+' range.'];
-    }
-    for(const [symbol,label,value,unit,prior,key] of metricData){
+    const metricStatus=window.thMedicalMetricStatus;
+    const compositionTypes=['BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'];
+    const statusByKey=new Map();
+    const compositionCards=[];
+    for(const [index,[symbol,label,value,unit,,key]] of metricData.entries()){
+      const isWeight=key==='weight';
+      const source=isWeight?(weightRows[0]||metricsFor(key)[0]):(metricsFor(key)[0]||weightRows[0]);
+      const makeReading=(row,amount)=>({
+        type:compositionTypes[index],value:amount,unit:unit.trim(),source:isWeight?'TisZod':(row?.source||'TisZod scale'),
+        date:row?.date,time:measurementTime(row)
+      });
+      const entry=makeReading(source,value);
+      const history=(isWeight?weighIns:composition).map(row=>makeReading(row,isWeight?asPounds(row):row[key]));
+      const comparison=metricStatus.compare(entry,history);
+      const goal=isWeight&&Number.isFinite(value)
+        ? metricStatus.compare({...entry,goal:{min:180,max:189}}) : null;
+      const status=goal?.tone==='green' ? {...goal,detail:[comparison.label,comparison.detail].join(' · ')}
+        : goal ? {...comparison,detail:[comparison.detail,goal.detail].filter(Boolean).join(' · ')} : comparison;
+      statusByKey.set(key,status);
+      if(Number.isFinite(value))compositionCards.push({...entry,label,status});
+
       const card=make('div');card.className='medical-command-metric';
-      card.append(dashboardIcon(symbol),make('span',label));
-      const readingValue=make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—');
-      card.append(readingValue);
-      const source=key==='weight'?weightRows[0]:metricsFor(key)[0];
+      card.append(dashboardIcon(symbol),make('span',label),
+        make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'),metricStatus.badge(status));
       if(source)card.title='Recorded '+(source.date||formatTime.format(measurementTime(source)));
       if(key==='bmi'&&!bmiPair.length&&Number.isFinite(value))card.title='Estimated from recorded weight and profile height';
-      const change=make('small');
-      const status=goalStatus(key,value,prior);
-      if(status){
-        const [label,color,detail]=status;
-        readingValue.style.color=color;
-        change.textContent=label;
-        change.style.cssText='color:'+color+';white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis';
-        change.title=detail;
-        card.title=[card.title,detail].filter(Boolean).join(' · ');
-      }else if(Number.isFinite(value)&&Number.isFinite(prior)){
-        const delta=rounded(rounded(value)-rounded(prior));
-        change.textContent=delta===0?'No change':(delta>0?'↑ +':'↓ ')+delta.toFixed(1)+unit;
-      }else change.textContent='—';
-      card.append(change);metrics.append(card);
+      metrics.append(card);
     }
     const stage=make('div');stage.className='medical-command-stage';
     const systems=make('aside');systems.className='medical-command-systems';
@@ -823,7 +801,7 @@
         const [lastX,lastY]=points.at(-1), labelX=lastX-59,labelY=Math.max(1,lastY-29);
         const tip=svg('text',{x:labelX+28,y:labelY+14,'text-anchor':'middle',class:'medical-chart-label'});
         tip.textContent=last.weight.toFixed(1)+' lb';
-        spark.append(svg('rect',{x:labelX,y:labelY,width:57,height:21,rx:5,fill:'#06451f',stroke:'#56cf67'}),tip);
+        spark.append(svg('rect',{x:labelX,y:labelY,width:57,height:21,rx:5,fill:'#172a40',stroke:'#6a8dac'}),tip);
       }
       const summary=make('div');summary.className='medical-chart-summary';
       const signed=value=>(value>0?'+':'')+value.toFixed(1);
@@ -889,18 +867,19 @@
     vitalsPanel.append(panelHeading('Vitals (Latest)','⌁'));
     const vitalGrid=make('div');vitalGrid.className='medical-vital-grid';
     const appleVitalTypes=['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'];
-    function renderLatestVitals(appleReadings=new Map()){
+    function renderLatestVitals(appleReadings=new Map(),compare=metricStatus.compare){
       const items=vitalCards.map(([key,label,symbol,unit],index)=>{
         const savedDate=profile[key+'Date'];
         const savedTime=Date.parse(savedDate);
         const apple=appleReadings.get(appleVitalTypes[index]);
-        const useApple=apple&&(!profile[key]||!Number.isFinite(savedTime)||apple.time>savedTime);
+        const useApple=apple&&(!profile[key]||!Number.isFinite(savedTime)||apple.time>=savedTime);
         const value=useApple?apple.value.toLocaleString('en-US',{maximumFractionDigits:2}):String(profile[key]??'').trim();
         const recorded=useApple?apple.date:savedDate;
         const timestamp=Date.parse(recorded);
         const item=make('div');
         item.append(dashboardIcon(symbol),make('span',label),make('strong',value||'—'),
-          make('small',value?unit:'Not recorded'));
+          make('small',value?unit:''),
+          metricStatus.badge(compare(useApple?apple:{type:appleVitalTypes[index],value,unit,date:savedDate,time:savedTime})));
         if(value&&Number.isFinite(timestamp)){
           const stamp=make('time',(useApple?formatTime:vitalDateLabel).format(timestamp));
           stamp.dateTime=recorded;
@@ -908,7 +887,7 @@
           dateLine.append(stamp);
           item.append(dateLine);
         }
-        if(useApple)item.append(make('small','Apple Health'));
+        if(useApple)item.append(make('small',apple.source||'Apple Health'));
         return item;
       });
       vitalGrid.replaceChildren(...items);
@@ -956,7 +935,7 @@
       const value=pairs[key][0];
       const row=make('div');row.className='medical-key-row';
       row.append(dashboardIcon(symbol),make('span',label),make('strong',Number.isFinite(value)?value.toFixed(1)+'%':'—'));
-      const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar);keyPanel.append(row);
+      const bar=make('div');bar.className='medical-key-track';const fill=make('span');fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+'%':'0%';bar.append(fill);row.append(bar,metricStatus.badge(statusByKey.get(key)));keyPanel.append(row);
     }
     panels.append(vitalsPanel,nextPanel);
     const hero=make('div');hero.className='medical-reference-layout';
@@ -989,10 +968,7 @@
       ...(Number.isFinite(height) && height > 0 ? [{
         type:'Height',value:Math.floor(height/12)+' ft '+height%12+' in',source:'TisZod'
       }] : []),
-      ...metricData.flatMap(([,label,value,unit],index) => Number.isFinite(value) ? [{
-        type:['BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'][index],
-        label,value,unit:unit.trim(),source:'TisZod'
-      }] : [])
+      ...compositionCards
     ],renderLatestVitals);
     const controls=make('div');
     controls.className='medical-medication-controls';
