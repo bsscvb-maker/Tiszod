@@ -862,9 +862,9 @@ dialog:has(#medical-medication-editor-title)::backdrop{background:#040b14b3}
   margin-block:3px;
 }
 .medical-status-badge {
-  --status-ink:#e2e8f0;
-  --status-fill:#334155;
-  --status-edge:#64748b;
+  --status-ink:#08233b;
+  --status-fill:#60a5fa;
+  --status-edge:#93c5fd;
   display:inline-block;
   max-width:100%;
   padding:3px 7px;
