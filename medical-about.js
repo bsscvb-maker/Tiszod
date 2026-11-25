@@ -54,7 +54,7 @@
   ];
   const vitalKeys = vitalCards.flatMap(([key])=>[key,key+'Date']);
   const vitalTag = "appProperties has { key='tiszodRecord' and value='medicalVitals' }";
-  let syncedVitals = {};
+  let syncedVitals = {}, savedVitalHistory = [];
   let driveComposition = [];
   const compositionRecord = 'medicalBodyComposition';
   const compositionFields = [['weight','Weight (lb)'],['bmi','BMI'],['bodyFat','Body fat (%)'],['muscle','Muscle (%)'],['water','Body water (%)']];
@@ -85,6 +85,7 @@
       if(!response.ok)throw Error('Private vitals could not be loaded.');
       return response.json();
     }));
+    savedVitalHistory=rows;
     const latest={};
     for(const row of rows.sort((a,b)=>String(a.savedAt).localeCompare(String(b.savedAt)))){
       for(const [key] of vitalCards){
@@ -686,11 +687,8 @@
       });
       const entry=makeReading(source,value);
       const history=(isWeight?weighIns:composition).map(row=>makeReading(row,isWeight?asPounds(row):row[key]));
-      const comparison=metricStatus.compare(entry,history);
-      const goal=isWeight&&Number.isFinite(value)
-        ? metricStatus.compare({...entry,goal:{min:180,max:189}}) : null;
-      const status=goal?.tone==='green' ? {...goal,detail:[comparison.label,comparison.detail].join(' · ')}
-        : goal ? {...comparison,detail:[comparison.detail,goal.detail].filter(Boolean).join(' · ')} : comparison;
+      if(isWeight)entry.goal={min:180,max:189};
+      const status=metricStatus.compare(entry,history);
       statusByKey.set(key,status);
       if(Number.isFinite(value))compositionCards.push({...entry,label,status});
 
@@ -959,17 +957,18 @@
     dashboard.append(hero,panels);
     const medicationPanel=make('section');medicationPanel.className='medical-concept-panel medical-reference-medications';medicationPanel.id='medical-current-medications';medicationPanel.append(panelHeading('Medications','pill'));panels.insertBefore(medicationPanel,nextPanel);target.replaceChildren(dashboard);
     const privateVitals=mergeVitals(savedProfile);
-    window.thMedicalAppleHealth?.attachScanner(scanner,stage,vitalCards.flatMap(([key,, ,unit],index)=>
-      privateVitals[key]&&privateVitals[key+'Date']?[{
-        type:appleVitalTypes[index], value:privateVitals[key], unit,date:privateVitals[key+'Date'],
+    const vitalEntries=row=>vitalCards.flatMap(([key,,,unit],index)=>
+      row[key]&&row[key+'Date']?[{
+        type:appleVitalTypes[index],value:row[key],unit,date:row[key+'Date'],
         kind:'Individual sample',source:'Saved TisZod vitals'
       }]:[]
-    ), [
+    );
+    window.thMedicalAppleHealth?.attachScanner(scanner,stage,vitalEntries(privateVitals), [
       ...(Number.isFinite(height) && height > 0 ? [{
         type:'Height',value:Math.floor(height/12)+' ft '+height%12+' in',source:'TisZod'
       }] : []),
       ...compositionCards
-    ],renderLatestVitals);
+    ],renderLatestVitals,savedVitalHistory.flatMap(vitalEntries));
     const controls=make('div');
     controls.className='medical-medication-controls';
     for(const [key,label] of [['currentList','Current'],['pastList','Past']]){
