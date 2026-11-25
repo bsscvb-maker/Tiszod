@@ -267,8 +267,19 @@
 
   function taskRow(item) {
     const row = make('article', '', 'work-row');
-    const title = make('button', item.title, 'work-title');
-    title.onclick = () => openDetails(item);
+    const { label, link } = destination(item);
+    const linked = /^https:\/\//i.test(link);
+    const title = make(linked ? 'a' : 'button', item.title, 'work-title');
+    if (linked) {
+      title.href = link;
+      title.target = '_blank';
+      title.rel = 'noopener noreferrer';
+      title.title = 'Open original · ' + label;
+      title.setAttribute('aria-label', item.title + ' — open original in a new tab');
+    } else {
+      title.type = 'button';
+      title.onclick = () => openDetails(item);
+    }
     const group = make('span', category(item), 'work-category');
     const owner = make('span', item.owner || 'Unassigned', 'work-owner');
 
@@ -284,8 +295,6 @@
     const more = make('button', 'Details', 'work-more');
     more.onclick = () => openDetails(item);
 
-    const { label, link } = destination(item);
-    const linked = /^https:\/\//i.test(link);
     const where = make(linked ? 'a' : 'span', label, 'work-destination');
     if (linked) {
       where.href = link;
