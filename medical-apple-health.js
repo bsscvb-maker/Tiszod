@@ -1,4 +1,5 @@
 (() => {
+  const metricStatus = window.thMedicalMetricStatus;
   const dashboard = document.getElementById('medical-dashboard');
   const panel = document.getElementById('medical-apple-health');
   const scannerSlot = panel.querySelector('.medical-apple-scanner');
@@ -37,6 +38,7 @@
   };
   let readPrivate, privateRead, scanner, scannerHome, savedVitals = [], scaleReadings = [];
   let imported = null, error = false, showLatestVitals;
+  const comparisonHistory = new Map();
   const make = (tag, text) => {
     const node = document.createElement(tag);
     if (text != null) node.textContent = text;
@@ -65,6 +67,7 @@
   const metricType = name => exportTypes[name] || name.split('_').map(word => word[0]?.toUpperCase() + word.slice(1)).join('');
   function summarize(exports) {
     const latest = new Map();
+    const history = new Map();
     for (const file of exports) {
       if (!Array.isArray(file?.data?.metrics)) throw Error('Unrecognized Health Auto Export metrics file.');
       for (const metric of file.data.metrics) {
@@ -73,7 +76,7 @@
         for (const sample of metric.data) {
           const date = sample?.date || sample?.start;
           const time = Date.parse(String(date).replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2})(\d{2})/, '$1T$2$3:$4'));
-          if (!Number.isFinite(time) || time <= (latest.get(type)?.time ?? -Infinity)) continue;
+          if (!Number.isFinite(time)) continue;
           const pressure = Number.isFinite(sample.systolic) && Number.isFinite(sample.diastolic);
           const amount = sample.qty ?? sample.Avg ?? sample.totalSleep;
           const value = pressure ? sample.systolic + '/' + sample.diastolic : sample.value ?? amount;
@@ -90,32 +93,48 @@
             }
             if (!details.length) continue;
           }
-          latest.set(type, {type, date, time, value, details, source: sample.source,
+          const entry = {type, date, time, value, details, source: sample.source || 'Apple Health',
             unit: sample.value == null ? metric.units : '',
-            kind: type === 'SleepAnalysis' && sample.value != null ? 'Sleep segment' : 'Latest sample'});
+            kind: type === 'SleepAnalysis' && sample.value != null ? 'Sleep segment' : 'Latest sample'};
+          if (Number.isFinite(metricStatus.valueOf(entry))) {
+            const {details, ...reading} = entry;
+            history.set(JSON.stringify([type,time,entry.source,entry.unit,entry.kind]), reading);
+          }
+          if (time > (latest.get(type)?.time ?? -Infinity)) latest.set(type, entry);
         }
       }
     }
-    return {metrics: [...latest.values()], exportCount: exports.length};
+    return {metrics: [...latest.values()], history: [...history.values()], exportCount: exports.length};
   }
-  const shortType = type => String(type || '').replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '');
+  const shortType = metricStatus.typeOf;
   function latestVitals(metrics) {
     const latest = new Map();
-    for (const entry of metrics || []) {
-      const rawType = shortType(entry.type);
-      const type = rawType === 'BloodOxygenSaturation' ? 'OxygenSaturation' : rawType;
-      if (!['RestingHeartRate','HeartRate','OxygenSaturation','HeartRateVariabilitySDNN'].includes(type)) continue;
+    for (const entry of [...savedVitals, ...(metrics || [])]) {
+      const type = shortType(entry.type);
+      if (!highlights[0].slice(0,4).includes(type)) continue;
       const time = parseDate(entry.date).getTime();
-      let value = Number(entry.value);
+      const value = metricStatus.valueOf(entry);
       if (!Number.isFinite(time) || !Number.isFinite(value) || value <= 0 ||
-          time <= (latest.get(type)?.time ?? -Infinity)) continue;
-      if (type === 'OxygenSaturation') {
-        if (value <= 1) value *= 100;
-        if (value > 100) continue;
-      }
-      latest.set(type, {value, time, date:new Date(time).toISOString()});
+          (type === 'OxygenSaturation' && value > 100) || time < (latest.get(type)?.time ?? -Infinity)) continue;
+      latest.set(type, {...entry, type, value, time, date:new Date(time).toISOString()});
     }
     return latest;
+  }
+  function indexHistory(result) {
+    comparisonHistory.clear();
+    for (const row of [...(result?.history || []), ...(result?.savedReadings || []), ...(result?.metrics || [])]) {
+      const type = shortType(row.type);
+      const time = row.time ?? +parseDate(row.date);
+      if (!Number.isFinite(time) || !Number.isFinite(metricStatus.valueOf(row))) continue;
+      if (!comparisonHistory.has(type)) comparisonHistory.set(type,new Map());
+      const entries = comparisonHistory.get(type);
+      const key = JSON.stringify([time,row.source,row.unit,row.kind]);
+      if (!entries.has(key)) entries.set(key,{...row,time});
+    }
+  }
+  function readingStatus(entry) {
+    const history = comparisonHistory.get(shortType(entry.type));
+    return metricStatus.compare({...entry,time:entry.time ?? +parseDate(entry.date)},history?.values());
   }
   const words = text => String(text ?? '').replace(/^HK(?:CategoryValue|WorkoutActivityType)/, '')
     .replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2');
@@ -140,8 +159,9 @@
     card.className = 'medical-apple-reading';
     const type = shortType(entry.type);
     const detail = compact && !hasValue(entry.value) ? metricDetail(entry) : null;
-    const value = words(detail?.value ?? entry.value).replace(/^Sleep Analysis /,'');
-    const unit = /^(Resting)?HeartRate$/.test(type) && entry.unit === 'count/min' ? 'bpm' : (detail?.unit ?? entry.unit);
+    const oxygen = type === 'OxygenSaturation';
+    const value = words(detail?.value ?? (oxygen ? metricStatus.valueOf(entry) : entry.value)).replace(/^Sleep Analysis /,'');
+    const unit = oxygen ? '%' : /^(Resting)?HeartRate$/.test(type) && entry.unit === 'count/min' ? 'bpm' : (detail?.unit ?? entry.unit);
     const number = Number(value);
     const display = compact && value && Number.isFinite(number)
       ? number.toLocaleString('en-US',{maximumFractionDigits:2}) : value;
@@ -150,6 +170,11 @@
     const context = entry.kind === 'Daily total' ? ' · Daily total'
       : type === 'StepCount' ? ' · Latest sample' : '';
     card.append(make('h4', label + (compact ? context : '')), make('strong', detail ? detail.label + ' · ' + amount : amount));
+    if (compact) {
+      card.append(metricStatus.badge(entry.status || readingStatus(entry)));
+      if (entry.date) card.append(make('time',displayDate(entry.date,true)));
+      if (entry.source) card.append(make('small',entry.source));
+    }
     if (!compact) card.append(make('time',displayDate(entry.date)),
       make('small', [entry.kind, entry.source].filter(Boolean).join(' · ')));
     if (!compact && Array.isArray(entry.details) && entry.details.length) {
@@ -239,7 +264,6 @@
       readings.className = 'medical-apple-summary-grid';
       for (const row of visibleReadings) {
         const card = tile(row,true);
-        card.append(make('time',displayDate(row.date,true)));
         readings.append(card);
       }
       workoutPanel.append(readings);
@@ -254,6 +278,7 @@
       const index = groups.findIndex(([,pattern]) => pattern.test(type));
       categories[index < 0 ? 5 : index].entries.push(row);
     }
+    const vitals = latestVitals(rows);
     function overview(index) {
       const section = make('section');
       section.className = 'medical-apple-overview';
@@ -263,7 +288,7 @@
       const entries = (highlights[index] || []).flatMap(type => {
         const matches = categories[index].entries.filter(entry => shortType(entry.type) === type ||
           (type === 'Electrocardiogram' && /electrocardiogram|\bECG\b/i.test(entry.label || entry.type)));
-        const row = scaleReadings.find(entry => entry.type === type)
+        const row = vitals.get(type) || scaleReadings.find(entry => entry.type === type)
           || matches.find(entry => entry.kind === 'Daily total')
           || matches[0] || savedVitals.find(entry => entry.type === type);
         return row && hasReading(row) ? [row] : [];
@@ -310,7 +335,8 @@
     privateRead = Promise.resolve().then(readPrivate).then(result => {
       loaded = true;
       imported = result;
-      showLatestVitals?.(latestVitals(imported?.metrics));
+      indexHistory(result);
+      showLatestVitals?.(latestVitals(imported?.metrics), readingStatus);
     }).catch(() => {error = true;}).finally(() => {
       lastChecked = new Date().toISOString();
       privateRead = null;
@@ -373,7 +399,7 @@
       savedVitals = vitals;
       scaleReadings = composition;
       showLatestVitals = updateVitals;
-      showLatestVitals?.(latestVitals(imported?.metrics));
+      showLatestVitals?.(latestVitals(imported?.metrics), readingStatus);
       route();
       if (!panel.hidden) render();
     }
