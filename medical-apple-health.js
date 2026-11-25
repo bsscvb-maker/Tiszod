@@ -36,7 +36,7 @@
     AppleSleepingWristTemperature:'Sleeping Wrist Temperature', BodyTemperature:'Body Temperature',
     BodyWaterPercentage:'Body-Water Percentage', BodyMass:'Weight', BodyMassIndex:'BMI'
   };
-  let readPrivate, privateRead, scanner, scannerHome, savedVitals = [], scaleReadings = [];
+  let readPrivate, privateRead, scanner, scannerHome, savedVitals = [], scaleReadings = [], savedVitalHistory = [];
   let imported = null, error = false, showLatestVitals;
   const comparisonHistory = new Map();
   const make = (tag, text) => {
@@ -122,7 +122,7 @@
   }
   function indexHistory(result) {
     comparisonHistory.clear();
-    for (const row of [...(result?.history || []), ...(result?.savedReadings || []), ...(result?.metrics || [])]) {
+    for (const row of [...(result?.history || []), ...(result?.savedReadings || []), ...(result?.metrics || []), ...savedVitalHistory]) {
       const type = shortType(row.type);
       const time = row.time ?? +parseDate(row.date);
       if (!Number.isFinite(time) || !Number.isFinite(metricStatus.valueOf(row))) continue;
@@ -392,11 +392,13 @@
   window.thMedicalAppleHealth = {
     summarize,
     connect(reader) {readPrivate = reader;loaded = false;route();sync();},
-    attachScanner(figure, home, vitals, composition = [], updateVitals) {
+    attachScanner(figure, home, vitals, composition = [], updateVitals, vitalHistory = []) {
       if (scanner && scanner !== figure && scanner.parentElement === scannerSlot) scanner.remove();
       scanner = figure;
       scannerHome = home;
       savedVitals = vitals;
+      savedVitalHistory = vitalHistory;
+      indexHistory(imported);
       scaleReadings = composition;
       showLatestVitals = updateVitals;
       showLatestVitals?.(latestVitals(imported?.metrics), readingStatus);
