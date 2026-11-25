@@ -478,6 +478,7 @@
         if(!response.ok)throw Error('Private source could not load.');
         return response.json();
       }
+      const cachedHealthExports = new Map();
       window.thMedicalAppleHealth?.connect(async () => {
         const sourceKey = 'tiszod-apple-health-drive-source';
         const page = new URL(location.href);
@@ -541,19 +542,31 @@
           if (!daily.has(file.name)) {
             daily.set(file.name, file);
           }
-          if (daily.size === 7) break;
         }
         if (!daily.size) return previous;
 
-        const exports = await Promise.all([...daily.values()].map(async file => {
-          const response = await thDriveFetch(file.id, {cache:'no-store'});
-          if (!response.ok) throw Error('Daily Apple Health export could not load.');
-          return response.json();
-        }));
+        const exportFiles = [...daily.values()];
+        const activeFiles = new Set(exportFiles.map(file => file.id));
+        for (const id of cachedHealthExports.keys()) {
+          if (!activeFiles.has(id)) cachedHealthExports.delete(id);
+        }
+        const exports = [];
+        for (let index = 0; index < exportFiles.length; index += 8) {
+          const batch = await Promise.all(exportFiles.slice(index,index + 8).map(async file => {
+            const cached = cachedHealthExports.get(file.id);
+            if (file.modifiedTime && cached?.modifiedTime === file.modifiedTime) return cached.data;
+            const response = await thDriveFetch(file.id, {cache:'no-store'});
+            if (!response.ok) throw Error('Daily Apple Health export could not load.');
+            const data = await response.json();
+            if (Array.isArray(data?.data?.metrics)) cachedHealthExports.set(file.id,{modifiedTime:file.modifiedTime,data});
+            return data;
+          }));
+          exports.push(...batch);
+        }
         const current = window.thMedicalAppleHealth.summarize(exports);
         const types = new Set(current.metrics.map(row => row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')));
         const exportModifiedTime = [...daily.values()].map(file => file.modifiedTime).filter(Boolean).sort().pop();
-        return {...current, exportModifiedTime, linkedFileOnly, metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
+        return {...current, exportModifiedTime, linkedFileOnly, savedReadings:previous?.metrics || [], metrics: [...current.metrics, ...(previous?.metrics || []).filter(row =>
           !types.has(row.type.replace(/^HK(?:Quantity|Category|Correlation|Characteristic|Data|Series)TypeIdentifier/, '')))]};
       });
       await thMedicalAbout.start({
