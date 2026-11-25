@@ -63,3 +63,5 @@ a.work-destination{color:#244f76;text-underline-offset:2px}
 #workDashboard .work-complete:disabled{opacity:.6;cursor:wait}
 #workFeedback[data-tone=success]{color:#205c3d;background:#e0eee6;border-bottom:1px solid #aac8b8}
 @media(max-width:900px){.work-status{grid-column:3;grid-row:3}.work-status .work-state{grid-column:auto;grid-row:auto}#workDashboard .work-complete{min-height:44px}}
+
+#workFeedback[data-tone=info]{color:#263c4a;background:#dce4e9}
