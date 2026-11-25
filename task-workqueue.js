@@ -123,7 +123,9 @@
 
   function statusChanged() {
     const message = get('message');
-    showError([message.classList.contains('error') ? message.textContent : '', intakeError].filter(Boolean).join(' '));
+    const error = [message.classList.contains('error') ? message.textContent : '', intakeError].filter(Boolean).join(' ');
+    if (error) showError(error);
+    else if (get('workFeedback').dataset.tone === 'error') showError('');
     renderWork();
   }
 
