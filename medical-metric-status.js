@@ -17,7 +17,7 @@
     if (!Number.isFinite(value)) return result('amber', entry.value ? 'Recorded' : 'No reading');
     if (type === 'RestingHeartRate') {
       return result(value >= 60 && value <= 100 ? 'green' : 'amber',
-        value < 60 ? 'Below range' : value > 100 ? 'Above range' : 'In range', 'Resting: 60–100 bpm');
+        value < 60 ? 'Below range' : value > 100 ? 'Above range' : 'Within range', 'Resting: 60–100 bpm');
     }
     if (type === 'OxygenSaturation') {
       if (value <= 0 || value > 100) return result('amber', 'Invalid reading');
@@ -28,7 +28,7 @@
         /apple|watch/i.test(entry.source || '') ? '95–100% · Wellness' : 'Typical: 95–100%');
     }
     if (type === 'BodyMassIndex') {
-      const category = value < 18.5 ? 'Underweight' : value < 25 ? 'In range' : value < 30 ? 'Overweight' : 'Obesity range';
+      const category = value < 18.5 ? 'Underweight' : value < 25 ? 'Within range' : value < 30 ? 'Overweight' : 'Obesity range';
       return result(value >= 18.5 && value < 25 ? 'green' : 'red', category, 'CDC healthy range: 18.5–24.9');
     }
     // Compare with a configured goal when one is available.
@@ -68,13 +68,13 @@
       }), {low:Infinity,high:-Infinity});
       const usual = value >= low && value <= high;
       return result(usual ? 'green' : 'amber',
-        usual ? 'Within your saved range' : value < low ? 'Below your saved range' : 'Above your saved range',
+        usual ? 'Within range' : value < low ? 'Below range' : 'Above range',
         'Saved: ' + (low === high ? display(low) : display(low) + '–' + display(high)) + ' bpm · Avg ' + display(average));
     }
     const roundedValue = Math.round(value * 100), roundedAverage = Math.round(average * 100);
     const favorable = (type === 'BodyFatPercentage' && roundedValue < roundedAverage) ||
       (type === 'Muscle' && roundedValue > roundedAverage);
-    return result(favorable || roundedValue === roundedAverage ? 'green' : 'amber', roundedValue === roundedAverage ? 'At your average' : roundedValue > roundedAverage ? 'Above your average' : 'Below your average',
+    return result(favorable || roundedValue === roundedAverage ? 'green' : 'amber', roundedValue === roundedAverage ? 'Average' : roundedValue > roundedAverage ? 'Above average' : 'Below average',
       'Saved avg: ' + display(average) + (entry.unit === '%' ? '%' : entry.unit ? ' ' + entry.unit : ''));
   }
 
