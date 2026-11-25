@@ -11,6 +11,7 @@
   let intake = [];
   let intakeError = '';
   let intakeLoading = false;
+  const savingTasks = new Set();
 
   function make(tag, text, className) {
     const node = document.createElement(tag);
@@ -47,14 +48,17 @@
   }
 
   function category(item) {
-    if (item.project) return item.project;
-    if (!item.task) {
-      if (/bill|payment|utility/i.test(item.title)) return 'Finance';
-      if (/appointment|doctor|medical/i.test(item.title)) return 'Appointments';
-      if (item.source === 'Board minutes') return 'Board business';
-      if (item.source === 'Portal check') return 'Portal maintenance';
-    }
-    return 'Uncategorized';
+    if (item.project && !/^uncategorized$/i.test(item.project)) return item.project;
+    if (/return|refund|return label/i.test(item.title)) return 'Returns';
+    if (/honey|millie|lilly|lily|vaccine|vaccinat|veterinar|\bpet\b/i.test(item.title)) return 'Pets';
+    if (/interview|recruiter|resume|job application|career|employment/i.test(item.title)) return 'Career';
+    if (/\bfapt\b|school|eligibility|release forms|iep/i.test(item.title)) return 'School paperwork';
+    if (/registration|vehicle|mustang|4runner|oil change|tire|wiper|motorcycle|\bram\b/i.test(item.title)) return 'Vehicles';
+    if (/appointment|doctor|medical|prescription/i.test(item.title)) return 'Appointments';
+    if (/bill|payment|utility|reconcil|transaction|ledger|budget/i.test(item.title)) return 'Finance';
+    if (item.source === 'Board minutes') return 'Board business';
+    if (item.source === 'Portal check') return 'Portal maintenance';
+    return 'Personal follow-up';
   }
 
   function compare(a, b) {
@@ -109,6 +113,7 @@
 
   function showError(message) {
     const feedback = get('workFeedback');
+    feedback.dataset.tone = 'error';
     feedback.textContent = message;
     feedback.hidden = !message;
   }
@@ -146,6 +151,12 @@
   async function saveIntake(item, status, adjustments = {}) {
     try {
       await service().update(item.id, { status, ...adjustments });
+      const saved = (await service().read()).find(row => row[0] === item.id);
+      if (!saved || saved[6] !== status
+        || (adjustments.due !== undefined && (saved[4] || '') !== adjustments.due)
+        || (adjustments.priority && saved[8] !== adjustments.priority)) {
+        throw new Error('The change could not be verified. Refresh and try again.');
+      }
       if (adjustments.due !== undefined) item.due = adjustments.due;
       if (adjustments.priority) item.priority = intakePriorities[adjustments.priority];
       item.status = status;
@@ -225,6 +236,30 @@
     get('workDetails').showModal();
   }
 
+  async function completeItem(item) {
+    const key = item.id || item.task.id;
+    const wasComplete = item.complete;
+    if (savingTasks.has(key)) return;
+    savingTasks.add(key);
+    renderWork();
+    try {
+      if (item.task) {
+        await updateStatus(item.task, wasComplete ? 'ready' : 'done');
+        const saved = tasks.find(task => task.id === item.task.id);
+        if (!saved || (statusOf(saved) === 'done') !== !wasComplete) return;
+      } else if (!await saveIntake(item, wasComplete ? 'Open' : 'Done')) return;
+      const feedback = get('workFeedback');
+      feedback.dataset.tone = 'success';
+      feedback.textContent = wasComplete ? 'Task reopened. Moved to All active.' : 'Task completed. Moved to Completed.';
+      feedback.hidden = false;
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      savingTasks.delete(key);
+      renderWork();
+    }
+  }
+
   function taskRow(item) {
     const row = make('article', '', 'work-row');
     const title = make('button', item.title, 'work-title');
@@ -253,7 +288,16 @@
       where.rel = 'noopener noreferrer';
       where.setAttribute('aria-label', label + ' for ' + item.title);
     }
-    row.append(title, group, owner, where, due, priority, status, more);
+    const statusCell = make('div', '', 'work-status');
+    const complete = make('button', item.complete ? 'Reopen' : 'Mark complete', 'work-complete');
+    complete.type = 'button';
+    complete.setAttribute('aria-label', (item.complete ? 'Reopen ' : 'Mark complete: ') + item.title);
+    const saving = savingTasks.has(item.id || item.task.id);
+    complete.disabled = saving || (item.task ? busy || !ready : !service() || intakeLoading);
+    if (saving) complete.textContent = 'Saving…';
+    complete.onclick = () => completeItem(item);
+    statusCell.append(status, complete);
+    row.append(title, group, owner, where, due, priority, statusCell, more);
     return row;
   }
 
