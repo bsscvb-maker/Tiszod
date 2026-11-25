@@ -125,7 +125,8 @@
       const link = meta(item.task).links?.find(value => /^https:\/\//i.test(value));
       return { label: link ? 'Task attachment' : 'Task Tracker', link };
     }
-    return { label: labels[item.source] || item.source || 'Task Tracker', link: item.link };
+    const source = (labels[item.source] || item.source || 'Task Tracker').replace(/@gmail\.com(?:\s+inbox)?$/i, '').replace(/\s+inbox$/i, '');
+    return { label: source, link: item.link };
   }
 
   function sourceDetails(item) {
