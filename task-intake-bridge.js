@@ -16,6 +16,13 @@
  }
  window.taskIntake={
   read,
+  async preview(id) {
+   if(!id)return null;
+   const rows=(await request('/values/'+encodeURIComponent("'Email Previews'!A2:C1000"))).values||[];
+   const row=rows.find(row=>row[0]===id);
+   if(!row?.[1])return null;
+   try{return JSON.parse(row[1]);}catch{throw Error('This saved email preview could not be read.');}
+  },
   async update(id,{status,due,priority}) {
    if(!['Needs review','Open','Done','Dismissed'].includes(status))throw Error('Choose a valid status.');
    if(due!==undefined&&due!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(due))throw Error('Choose a valid date.');

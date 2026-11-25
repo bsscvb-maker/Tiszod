@@ -70,3 +70,13 @@ a.work-destination{color:#244f76;text-underline-offset:2px}
 a.work-title{display:block;text-decoration:none;font:inherit;font-weight:750;color:var(--ink)}
 a.work-title:hover{text-decoration:underline}
 a.work-title:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:2px}
+
+button.work-destination{padding:0;border:0;background:transparent;text-align:left;text-decoration:underline;cursor:pointer}
+#workDetails{width:780px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);box-sizing:border-box;background:#edf0f2;color:#152133}
+.work-email-mailbox{font-weight:750;color:#4c5b70}.work-email-preview{margin:14px 0}
+.work-email-card{border:1px solid #cbd2d8;border-radius:8px;background:#e4e9ed;padding:18px;margin:12px 0}
+.work-email-card h3{font-size:18px;line-height:1.4;margin:0 0 8px;overflow-wrap:anywhere}
+.work-email-meta,.work-email-note{font-size:13px;line-height:1.5;color:#4c5b70;overflow-wrap:anywhere}
+.work-email-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:1.6;margin-top:16px}
+.work-email-original{display:inline-block;margin:12px;color:inherit;text-decoration:underline}
+@media(max-width:650px){.work-email-card{padding:12px}#workDetails{padding:14px}.work-email-original{display:block;margin:16px 0}}

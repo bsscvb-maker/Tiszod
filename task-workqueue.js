@@ -139,10 +139,60 @@
     return { label: source, link: item.link };
   }
 
+
+  let emailPreviewSequence = 0;
+  function isEmailSource(item) {
+    return /^https:\/\/mail\.google\.com\//i.test(destination(item).link || '');
+  }
+
+  async function openEmailPreview(item) {
+    const sequence = ++emailPreviewSequence;
+    const dialog = get('workDetails');
+    get('workDetailTitle').textContent = item.title;
+    const body = get('workDetailBody');
+    const mailbox = make('p', destination(item).label, 'work-email-mailbox');
+    const content = make('section', 'Loading email preview…', 'work-email-preview');
+    content.setAttribute('aria-live', 'polite');
+    const original = make('a', 'Open original in Gmail', 'work-email-original');
+    original.href = destination(item).link;
+    original.target = '_blank';
+    original.rel = 'noopener noreferrer';
+    const controls = make('button', 'Task details');
+    controls.type = 'button';
+    controls.onclick = () => { emailPreviewSequence++; openDetails(item); };
+    body.replaceChildren(mailbox, content, controls, original);
+    if (!dialog.open) dialog.showModal();
+    try {
+      const api = service();
+      if (!api?.preview) throw Error('Reload the portal to connect email previews.');
+      const snapshot = await api.preview(item.id);
+      if (sequence !== emailPreviewSequence || !dialog.open) return;
+      if (!snapshot?.messages?.length) throw Error('The email snapshot is not ready yet. It will appear after the next preview sync.');
+      mailbox.textContent = snapshot.mailbox || destination(item).label;
+      content.replaceChildren();
+      for (const message of snapshot.messages.slice(0, 5)) {
+        const card = make('article', '', 'work-email-card');
+        card.append(make('h3', message.subject || '(No subject)'));
+        card.append(make('p', [message.sender, message.date].filter(Boolean).join(' · '), 'work-email-meta'));
+        card.append(make('div', message.text || 'No readable message text.', 'work-email-text'));
+        content.append(card);
+      }
+      content.append(make('p', 'Saved email snapshot. Links and private identifiers are omitted. Open Gmail for attachments or newer messages.', 'work-email-note'));
+    } catch (error) {
+      if (sequence === emailPreviewSequence && dialog.open) content.textContent = error.message || 'Could not load this email preview. Try again after refreshing.';
+    }
+  }
+
   function sourceDetails(item) {
     const details = make('details', '', 'work-source');
     details.append(make('summary', 'Source details'));
     details.append(make('p', item.source || 'Added in Task Tracker'));
+    if (item.id && isEmailSource(item)) {
+      const preview = make('button', 'View email');
+      preview.type = 'button';
+      preview.onclick = () => openEmailPreview(item);
+      details.append(preview);
+    }
     if (/^https:\/\//i.test(item.link)) {
       const link = make('a', 'Open original');
       link.href = item.link;
@@ -269,8 +319,14 @@
     const row = make('article', '', 'work-row');
     const { label, link } = destination(item);
     const linked = /^https:\/\//i.test(link);
-    const title = make(linked ? 'a' : 'button', item.title, 'work-title');
-    if (linked) {
+    const email = isEmailSource(item);
+    const title = make(linked && !email ? 'a' : 'button', item.title, 'work-title');
+    if (email) {
+      title.type = 'button';
+      title.title = 'View email inside Task Tracker';
+      title.setAttribute('aria-label', 'View email: ' + item.title);
+      title.onclick = () => openEmailPreview(item);
+    } else if (linked) {
       title.href = link;
       title.target = '_blank';
       title.rel = 'noopener noreferrer';
@@ -295,8 +351,12 @@
     const more = make('button', 'Details', 'work-more');
     more.onclick = () => openDetails(item);
 
-    const where = make(linked ? 'a' : 'span', label, 'work-destination');
-    if (linked) {
+    const where = make(email ? 'button' : linked ? 'a' : 'span', label, 'work-destination');
+    if (email) {
+      where.type = 'button';
+      where.title = 'View email';
+      where.onclick = () => openEmailPreview(item);
+    } else if (linked) {
       where.href = link;
       where.target = '_blank';
       where.rel = 'noopener noreferrer';
