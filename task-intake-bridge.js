@@ -1,0 +1,31 @@
+'use strict';
+{
+ const book='1sZgS4EeY-pj_A-OVuAjShuKcOG5MMyCzQm1MmrlfLko';
+ const tab="'TisZod Task Intake'!";
+ async function request(path,options={}) {
+  if (!thToken) throw Error('Sign in to reconnect task intake.');
+  const response=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+book+path,{
+   ...options,headers:{Authorization:'Bearer '+thToken,'Content-Type':'application/json'}
+  });
+  const result=await response.json();
+  if(!response.ok) throw Error(result.error?.message||'Task intake is unavailable.');
+  return result;
+ }
+ async function read() {
+  return (await request('/values/'+encodeURIComponent(tab+'A2:K'))).values||[];
+ }
+ window.taskIntake={
+  read,
+  async update(id,{status,due,priority}) {
+   if(!['Needs review','Open','Done','Dismissed'].includes(status))throw Error('Choose a valid status.');
+   if(due!==undefined&&due!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(due))throw Error('Choose a valid date.');
+   if(priority!==undefined&&!['High','Medium','Low'].includes(priority))throw Error('Choose a priority.');
+   const rows=await read(),index=rows.findIndex(row=>row[0]===id);
+   if(index<0)throw Error('Task is no longer available. Refresh and try again.');
+   const row=index+2,data=[{range:tab+'G'+row,values:[[status]]}];
+   if(due!==undefined)data.push({range:tab+'E'+row,values:[[due]]});
+   if(priority!==undefined)data.push({range:tab+'I'+row,values:[[priority]]});
+   await request('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data})});
+  }
+ };
+}
