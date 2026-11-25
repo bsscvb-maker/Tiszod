@@ -14,14 +14,13 @@
   function compare(entry, history = []) {
     const type = typeOf(entry.type);
     const value = valueOf(entry);
-    if (!Number.isFinite(value)) return result('neutral', entry.value ? 'Recorded' : 'No reading');
+    if (!Number.isFinite(value)) return result('amber', entry.value ? 'Recorded' : 'No reading');
     if (type === 'RestingHeartRate') {
       return result(value >= 60 && value <= 100 ? 'green' : 'amber',
         value < 60 ? 'Below range' : value > 100 ? 'Above range' : 'In range', 'Resting: 60–100 bpm');
     }
-    if (type === 'HeartRate') return result('neutral', 'Activity unknown');
     if (type === 'OxygenSaturation') {
-      if (value <= 0 || value > 100) return result('neutral', 'Invalid reading');
+      if (value <= 0 || value > 100) return result('amber', 'Invalid reading');
       if (value <= 88 && /^(?:finger|fingertip) pulse oximeter$/i.test(entry.source || '')) {
         return result('red', 'Very low', 'Finger pulse oximeter');
       }
@@ -30,29 +29,52 @@
     }
     if (type === 'BodyMassIndex') {
       const category = value < 18.5 ? 'Underweight' : value < 25 ? 'In range' : value < 30 ? 'Overweight' : 'Obesity range';
-      return result(value >= 18.5 && value < 25 ? 'green' : 'amber', category, 'CDC healthy range: 18.5–24.9');
+      return result(value >= 18.5 && value < 25 ? 'green' : 'red', category, 'CDC healthy range: 18.5–24.9');
     }
     // Compare with a configured goal when one is available.
-    if (entry.goal && Number.isFinite(entry.goal.min)) {
+    if (type !== 'BodyMass' && entry.goal && Number.isFinite(entry.goal.min)) {
       const {min,max = Infinity} = entry.goal;
-      return result(value >= min && value <= max ? 'green' : 'neutral',
+      return result(value >= min && value <= max ? 'green' : 'amber',
         value >= min && value <= max ? 'Goal met' : max === Infinity ? 'In progress' : 'Outside goal',
         max === Infinity ? 'Goal: ' + display(min) : 'Goal: ' + min + '–' + max + (entry.unit ? ' ' + entry.unit : ''));
     }
 
+    const unitOf = row => /^(bpm|count\/min)$/i.test(row.unit) ? 'bpm' : row.unit;
     const prior = Array.from(history).filter(row => typeOf(row.type) === type && row.time < entry.time &&
-      row.unit === entry.unit && row.source === entry.source && row.kind === entry.kind &&
+      unitOf(row) === unitOf(entry) && row.source === entry.source && row.kind === entry.kind &&
       Number.isFinite(valueOf(row)) && (entry.kind !== 'Daily total' || easternDay.format(row.time) !== easternDay.format(entry.time)));
-    if (!prior.length) return result('neutral', 'Recorded', 'No earlier comparable reading');
     if (type === 'BodyMass') {
-      const first = prior.reduce((oldest,row) => row.time < oldest.time ? row : oldest);
-      const delta = value - valueOf(first);
-      return result('neutral', delta === 0 ? 'No change' : (delta < 0 ? '↓ ' : '↑ ') + display(Math.abs(delta)) + (entry.unit ? ' ' + entry.unit : ''),
-        'Since ' + easternDay.format(first.time));
+      const first = prior.reduce((oldest,row) => !oldest || row.time < oldest.time ? row : oldest, null);
+      const delta = first ? value - valueOf(first) : 0;
+      const change = first && delta !== 0
+        ? (delta < 0 ? '↓ ' : '↑ ') + display(Math.abs(delta)) + ' ' + entry.unit + ' since ' + (first.date?.length === 10 ? first.date : easternDay.format(first.time))
+        : '';
+      if (entry.goal) {
+        const {min,max} = entry.goal;
+        const distance = amount => Math.max(min - amount, amount - max, 0);
+        const within = distance(value) === 0;
+        const progress = first && distance(value) < distance(valueOf(first));
+        return result(within || progress ? 'green' : 'amber',
+          within ? 'Goal met' : progress ? 'Toward goal' : 'Outside goal',
+          [change, 'Goal: ' + min + '–' + max + ' ' + entry.unit].filter(Boolean).join(' · '));
+      }
+      return result('amber', delta < 0 ? 'Weight down' : delta > 0 ? 'Weight up' : 'Recorded', change);
     }
+    if (!prior.length) return result('amber', 'Recorded', 'No earlier comparable reading');
     const average = prior.reduce((sum,row) => sum + valueOf(row), 0) / prior.length;
+    if (type === 'HeartRate') {
+      const {low,high} = prior.reduce(({low,high},row) => ({
+        low:Math.min(low,valueOf(row)), high:Math.max(high,valueOf(row))
+      }), {low:Infinity,high:-Infinity});
+      const usual = value >= low && value <= high;
+      return result(usual ? 'green' : 'amber',
+        usual ? 'Within your saved range' : value < low ? 'Below your saved range' : 'Above your saved range',
+        'Saved: ' + (low === high ? display(low) : display(low) + '–' + display(high)) + ' bpm · Avg ' + display(average));
+    }
     const roundedValue = Math.round(value * 100), roundedAverage = Math.round(average * 100);
-    return result('neutral', roundedValue === roundedAverage ? 'At your average' : roundedValue > roundedAverage ? 'Above your average' : 'Below your average',
+    const favorable = (type === 'BodyFatPercentage' && roundedValue < roundedAverage) ||
+      (type === 'Muscle' && roundedValue > roundedAverage);
+    return result(favorable || roundedValue === roundedAverage ? 'green' : 'amber', roundedValue === roundedAverage ? 'At your average' : roundedValue > roundedAverage ? 'Above your average' : 'Below your average',
       'Saved avg: ' + display(average) + (entry.unit === '%' ? '%' : entry.unit ? ' ' + entry.unit : ''));
   }
 
