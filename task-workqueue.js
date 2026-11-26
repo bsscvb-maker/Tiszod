@@ -33,6 +33,16 @@
     return Number.isNaN(date.getTime()) ? 'Date unavailable' : noteStamp(date);
   }
 
+  const addedDate = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', month:'short', day:'numeric', year:'numeric'});
+  const addedTime = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', hour:'numeric', minute:'2-digit'});
+
+  function addedColumns(value) {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return ['—', '—'];
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return [addedDate.format(new Date(value + 'T12:00:00Z')), '—'];
+    return [addedDate.format(date), addedTime.format(date)];
+  }
+
   function sharedItems() {
     return tasks.map(task => {
       const details = meta(task);
@@ -117,7 +127,7 @@
       return;
     }
     const heading = make('div', '', 'work-column-head');
-    for (const label of ['Date and time added', 'Task description', 'Category', 'Due date', 'Priority']) {
+    for (const label of ['Date added', 'Time', 'Task description', 'Category', 'Due date', 'Priority', 'Review', 'Done']) {
       heading.append(make('span', label));
     }
     results.append(heading);
@@ -334,13 +344,10 @@
       }
     };
     task.append(title);
-    if (item.review && !item.complete) {
-      const review = make('span', 'Needs review', 'work-state');
-      review.dataset.state = 'review';
-      task.append(review);
-    }
     const group = make('span', category(item), 'work-category');
-    const added = make('span', addedLabel(item.added), 'work-added');
+    const [date, time] = addedColumns(item.added);
+    const added = make('span', date, 'work-added');
+    const clock = make('span', time, 'work-time');
 
     const due = make('span', item.due ? dateLabel(item.due) : '—', 'work-due');
     if (inScope(item, 'overdue')) {
@@ -349,7 +356,36 @@
     }
     const priority = make('span', priorityLabels[item.priority] || '—', 'work-priority');
     if (item.priority) priority.dataset.priority = item.priority;
-    row.append(added, task, group, due, priority);
+    const review = make('div', '', 'work-review');
+    if (item.review && !item.complete) {
+      const badge = make('span', 'Needs review', 'work-state');
+      badge.dataset.state = 'review';
+      review.append(badge);
+      if (!item.task) {
+        const keep = make('button', 'Accept', 'work-accept');
+        keep.type = 'button';
+        keep.setAttribute('aria-label', 'Accept task: ' + item.title);
+        keep.onclick = async () => {
+          keep.disabled = true;
+          if (!await saveIntake(item, 'Open')) keep.disabled = false;
+        };
+        review.append(keep);
+      }
+    }
+    const done = make('label', '', 'work-done');
+    const checkbox = make('input', '');
+    checkbox.type = 'checkbox';
+    checkbox.checked = item.complete;
+    checkbox.setAttribute('aria-label', (item.complete ? 'Reopen: ' : 'Mark complete: ') + item.title);
+    checkbox.onchange = async () => {
+      checkbox.disabled = true;
+      if (!await completeItem(item)) {
+        checkbox.checked = item.complete;
+        checkbox.disabled = false;
+      }
+    };
+    done.append(checkbox);
+    row.append(added, clock, task, group, due, priority, review, done);
     return row;
   }
 
@@ -415,18 +451,24 @@
     if (scanRunning) return;
     const mailbox = get('workMailboxCheck');
     const status = get('workMailboxStatus');
-    const report = message => { status.textContent = message; };
+    const report = (message, progress) => {
+      status.textContent = message;
+      if (progress?.total) mailbox.style.setProperty('--mail-progress', (100 * progress.finished / progress.total) + '%');
+    };
     scanRunning = true;
     mailbox.hidden = false;
+    mailbox.style.setProperty('--mail-progress', '0%');
     mailbox.dataset.checking = 'true';
     report('Checking email…');
     renderWork();
     try {
-      await Promise.all([load(), refreshIntake()]);
+      const savedTasks = Promise.allSettled([load(), refreshIntake()]);
       if (!window.requestTaskEmailCheck) throw Error('Email checking is unavailable. Reload the portal and try again.');
       const result = await window.requestTaskEmailCheck(report);
-      await refreshIntake();
+      if (result.complete) mailbox.style.setProperty('--mail-progress', '100%');
       report(result.message);
+      await savedTasks;
+      await refreshIntake();
     } catch (error) {
       report(error.message || 'Could not check email.');
     } finally {

@@ -27,7 +27,7 @@
    if(blocked.length)throw Error((blocked.every(a=>/authorization/i.test(a.error))?'Email checking needs Google authorization for ':'Email checking could not finish for ')+blocked.map(a=>a.label).join(', ')+'. Saved tasks have been refreshed.');
    const finished=state.accounts.filter(a=>a.complete&&a.request>=requestedAt&&a.checkedAt>=requestedAt);
    if(finished.length===state.accounts.length&&state.accounts.length)return {complete:true,message:'Email check complete. Tasks are up to date.'};
-   report('Checking email… '+finished.length+' of '+state.accounts.length+' mailboxes finished.');
+   report('Checking email… '+finished.length+' of '+state.accounts.length+' mailboxes finished.', {finished:finished.length,total:state.accounts.length});
    if(Date.now()-started>=150000)return {complete:false,message:'Email check is still running. New tasks will appear automatically.'};
    await new Promise(resolve=>setTimeout(resolve,3000));
    state=await post('scanStatus');
