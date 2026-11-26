@@ -66,7 +66,7 @@
   }
 
   function category(item) {
-    if (item.project && !/^uncategorized$/i.test(item.project)) return item.project;
+    if (item.project) return item.project;
     if (/return|refund|return label/i.test(item.title)) return 'Returns';
     if (/\bdog\b|honey|millie|lilly|lily|vaccine|vaccinat|veterinar|\bpet\b/i.test(item.title)) return 'Pets';
     if (/interview|recruiter|resume|job application|career|employment|\bAmazon\b.*\bpreparation call\b/i.test(item.title)) return 'Career';
@@ -117,7 +117,7 @@
     ).sort(compare);
 
     const results = get('workResults');
-    const rowsKey = JSON.stringify(visible.length ? visible : [busy || intakeLoading]);
+    const rowsKey = JSON.stringify(visible.length ? [visible, items.map(category)] : [busy || intakeLoading]);
     if (rowsKey === renderedRows) return;
     renderedRows = rowsKey;
     results.replaceChildren();
@@ -131,7 +131,12 @@
       heading.append(make('span', label));
     }
     results.append(heading);
-    for (const item of visible) results.append(taskRow(item));
+    const availableCategories = [...new Set([
+      'Appointments', 'Board business', 'Career', 'Finance', 'Personal follow-up', 'Pets',
+      'Portal maintenance', 'Returns', 'School paperwork', 'Travel', 'Uncategorized', 'Vehicles',
+      ...items.map(category)
+    ])].sort((a,b) => a.localeCompare(b));
+    for (const item of visible) results.append(taskRow(item, availableCategories));
   }
 
   function showError(message) {
@@ -214,11 +219,13 @@
       const saved = (await service().read()).find(row => row[0] === item.id);
       if (!saved || saved[6] !== status
         || (adjustments.due !== undefined && (saved[4] || '') !== adjustments.due)
-        || (adjustments.priority && saved[8] !== adjustments.priority)) {
+        || (adjustments.priority && saved[8] !== adjustments.priority)
+        || (adjustments.category !== undefined && (saved[11] || '') !== adjustments.category)) {
         throw new Error('The change could not be verified. Refresh and try again.');
       }
       if (adjustments.due !== undefined) item.due = adjustments.due;
       if (adjustments.priority) item.priority = intakePriorities[adjustments.priority];
+      if (adjustments.category !== undefined) item.project = adjustments.category;
       item.status = status;
       item.complete = status === 'Done';
       item.review = status === 'Needs review';
@@ -331,7 +338,33 @@
     }
   }
 
-  function taskRow(item) {
+  function rowSelect(item, label, value, options) {
+    const select = make('select', '', 'work-row-field work-' + label.toLowerCase());
+    select.setAttribute('aria-label', label + ' for ' + item.title);
+    for (const [key, name] of options) select.add(new Option(name, key));
+    select.value = value;
+    return select;
+  }
+
+  async function saveRowChanges(item, {category:group, due, priority, review}) {
+    if (!item.task) {
+      return saveIntake(item, review ?? item.status, {category:group, due, priority:priorityLabels[priority]});
+    }
+    const task = tasks.find(record => record.id === item.task.id);
+    if (!task) throw Error('This task is no longer available.');
+    const details = meta(task);
+    if (group !== undefined) details.project = group;
+    if (due !== undefined) details.due = due;
+    if (review !== undefined) details.needsReview = review === 'Needs review';
+    const tier = priority || tierOf(task);
+    if (priority) details.priority = priority;
+    return persist(tasks.map(record => record === task ? {
+      ...record, notes:pack(details), tier:statusOf(task) === 'done' ? 'parked' : tier,
+      previousTier:tier, updatedAt:new Date().toISOString()
+    } : record));
+  }
+
+  function taskRow(item, availableCategories) {
     const row = make('article', '', 'work-row');
     const task = make('div', '', 'work-task');
     const title = make('button', item.title, 'work-title');
@@ -344,34 +377,46 @@
       }
     };
     task.append(title);
-    const group = make('span', category(item), 'work-category');
     const [date, time] = addedColumns(item.added);
     const added = make('span', date, 'work-added');
     const clock = make('span', time, 'work-time');
+    const group = rowSelect(item, 'Category', category(item), availableCategories.map(name => [name, name]));
+    const due = make('input', '', 'work-row-field work-due');
+    due.type = 'date';
+    due.value = item.due || '';
+    due.setAttribute('aria-label', 'Due date for ' + item.title);
+    due.classList.toggle('work-late', inScope(item, 'overdue'));
+    const priorityOptions = Object.entries(priorityLabels);
+    if (item.task && item.priority && !priorityLabels[item.priority]) priorityOptions.push([item.priority, item.priority]);
+    if (!item.priority) priorityOptions.unshift(['', '—']);
+    const priority = rowSelect(item, 'Priority', item.priority || '', priorityOptions);
+    const review = rowSelect(item, 'Review', item.review ? 'Needs review' : 'Open', [
+      ['Needs review', 'Needs review'], ['Open', 'Accepted'],
+      ...(!item.task && !item.complete ? [['Dismissed', 'Dismiss']] : [])
+    ]);
+    review.dataset.state = item.review ? 'review' : 'accepted';
+    review.disabled = item.complete;
 
-    const due = make('span', item.due ? dateLabel(item.due) : '—', 'work-due');
-    if (inScope(item, 'overdue')) {
-      due.classList.add('work-late');
-      due.textContent = 'Overdue · ' + due.textContent;
-    }
-    const priority = make('span', priorityLabels[item.priority] || '—', 'work-priority');
-    if (item.priority) priority.dataset.priority = item.priority;
-    const review = make('div', '', 'work-review');
-    if (item.review && !item.complete) {
-      const badge = make('span', 'Needs review', 'work-state');
-      badge.dataset.state = 'review';
-      review.append(badge);
-      if (!item.task) {
-        const keep = make('button', 'Accept', 'work-accept');
-        keep.type = 'button';
-        keep.setAttribute('aria-label', 'Accept task: ' + item.title);
-        keep.onclick = async () => {
-          keep.disabled = true;
-          if (!await saveIntake(item, 'Open')) keep.disabled = false;
-        };
-        review.append(keep);
+    const fields = [group, due, priority, review];
+    async function apply(field, previous, changes) {
+      row.setAttribute('aria-busy', 'true');
+      fields.forEach(control => { control.disabled = true; });
+      checkbox.disabled = true;
+      try {
+        if (!await saveRowChanges(item, changes)) field.value = previous;
+      } catch (error) {
+        field.value = previous;
+        showError(error.message);
+      } finally {
+        fields.forEach(control => { control.disabled = control === review && item.complete; });
+        checkbox.disabled = false;
+        row.removeAttribute('aria-busy');
       }
     }
+    group.onchange = () => apply(group, category(item), {category:group.value});
+    due.onchange = () => apply(due, item.due || '', {due:due.value});
+    priority.onchange = () => apply(priority, item.priority || '', {priority:priority.value});
+    review.onchange = () => apply(review, item.review ? 'Needs review' : 'Open', {review:review.value});
     const done = make('label', '', 'work-done');
     const checkbox = make('input', '');
     checkbox.type = 'checkbox';
@@ -432,9 +477,9 @@
     try {
       const rows = await api.read();
       const unique = new Map();
-      for (const [id, source, title, , due, link, status, added, priority, evidence, evidenceLink] of rows) {
+      for (const [id, source, title, , due, link, status, added, priority, evidence, evidenceLink, project] of rows) {
         if (!id || !title || unique.has(id)) continue;
-        unique.set(id, { id, source, title, added, due, link, status, evidence, evidenceLink, priority: intakePriorities[priority], review: status === 'Needs review', complete: status === 'Done' });
+        unique.set(id, { id, source, title, added, due, link, status, project, evidence, evidenceLink, priority: intakePriorities[priority], review: status === 'Needs review', complete: status === 'Done' });
       }
       intake = [...unique.values()];
       intakeError = '';

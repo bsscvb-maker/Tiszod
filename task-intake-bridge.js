@@ -12,7 +12,7 @@
   return result;
  }
  async function read() {
-  return (await request('/values/'+encodeURIComponent(tab+'A2:K'))).values||[];
+  return (await request('/values/'+encodeURIComponent(tab+'A2:L'))).values||[];
  }
  window.taskIntake={
   read,
@@ -24,15 +24,17 @@
    if(!row?.[1])return null;
    try{return JSON.parse(row[1]);}catch{throw Error('This saved email preview could not be read.');}
   },
-  async update(id,{status,due,priority}) {
+  async update(id,{status,due,priority,category}) {
    if(!['Needs review','Open','Done','Dismissed'].includes(status))throw Error('Choose a valid status.');
    if(due!==undefined&&due!==''&&!/^\d{4}-\d{2}-\d{2}$/.test(due))throw Error('Choose a valid date.');
    if(priority!==undefined&&!['High','Medium','Low'].includes(priority))throw Error('Choose a priority.');
+   if(category!==undefined&&(typeof category!=='string'||category.length>200))throw Error('Choose a valid category.');
    const rows=await read(),index=rows.findIndex(row=>row[0]===id);
    if(index<0)throw Error('Task is no longer available. Refresh and try again.');
    const row=index+2,data=[{range:tab+'G'+row,values:[[status]]}];
    if(due!==undefined)data.push({range:tab+'E'+row,values:[[due]]});
    if(priority!==undefined)data.push({range:tab+'I'+row,values:[[priority]]});
+   if(category!==undefined)data.push({range:tab+'L'+row,values:[[category]]});
    await request('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data})});
   }
  };
