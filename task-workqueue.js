@@ -13,6 +13,8 @@
   let intakeLoading = false;
   let scanRunning = false;
   const savingTasks = new Set();
+  let intakeRevision = 0;
+  let intakeWrites = 0;
   let renderedRows = '';
 
   function make(tag, text, className) {
@@ -47,11 +49,12 @@
     return tasks.map(task => {
       const details = meta(task);
       const status = statusOf(task);
+      const reviewChoice = details.reviewChoice || (details.needsReview === false ? 'Accepted' : 'Needs review');
       return {
         title: task.text, notes: details.notes, added: task.createdAt, project: details.project,
         updates: details.updates || [],
         priority: tierOf(task), due: details.due, status: sharedStates[status],
-        complete: status === 'done', review: details.needsReview === true, task
+        complete: status === 'done', review: reviewChoice === 'Needs review', reviewChoice, company: details.company, task
       };
     });
   }
@@ -86,10 +89,8 @@
     if (sort === 'title') return a.title.localeCompare(b.title);
     const byDue = (a.due || '9999').localeCompare(b.due || '9999');
     if (sort === 'due') return byDue || a.title.localeCompare(b.title);
-    return Number(inScope(b, 'overdue')) - Number(inScope(a, 'overdue'))
-      || Number(b.review) - Number(a.review)
-      || (a.priority || 'tier4').localeCompare(b.priority || 'tier4')
-      || byDue || a.title.localeCompare(b.title);
+    const addedAt = item => new Date(item.added || 0).getTime() || 0;
+    return addedAt(b) - addedAt(a);
   }
 
   function renderWork() {
@@ -127,7 +128,7 @@
       return;
     }
     const heading = make('div', '', 'work-column-head');
-    for (const label of ['Date added', 'Time', 'Task description', 'Category', 'Due date', 'Priority', 'Review', 'Done']) {
+    for (const label of ['Date added', 'Time', 'Task description', 'Company', 'Category', 'Due date', 'Priority', 'Review', 'Done']) {
       heading.append(make('span', label));
     }
     results.append(heading);
@@ -214,26 +215,34 @@
   }
 
   async function saveIntake(item, status, adjustments = {}) {
+    intakeWrites++;
+    intakeRevision++;
     try {
       await service().update(item.id, { status, ...adjustments });
       const saved = (await service().read()).find(row => row[0] === item.id);
-      if (!saved || saved[6] !== status
+      if (!saved || (status !== undefined && saved[6] !== status)
         || (adjustments.due !== undefined && (saved[4] || '') !== adjustments.due)
         || (adjustments.priority && saved[8] !== adjustments.priority)
-        || (adjustments.category !== undefined && (saved[11] || '') !== adjustments.category)) {
+        || (adjustments.category !== undefined && (saved[11] || '') !== adjustments.category)
+        || (adjustments.reviewChoice !== undefined && saved[12] !== adjustments.reviewChoice)
+        || (adjustments.company !== undefined && saved[13] !== adjustments.company)) {
         throw new Error('The change could not be verified. Refresh and try again.');
       }
       if (adjustments.due !== undefined) item.due = adjustments.due;
       if (adjustments.priority) item.priority = intakePriorities[adjustments.priority];
       if (adjustments.category !== undefined) item.project = adjustments.category;
-      item.status = status;
-      item.complete = status === 'Done';
-      item.review = status === 'Needs review';
+      if (adjustments.company !== undefined) item.company = adjustments.company;
+      if (adjustments.reviewChoice !== undefined) item.reviewChoice = adjustments.reviewChoice;
+      item.status = saved[6];
+      item.complete = saved[6] === 'Done';
+      item.review = item.reviewChoice === 'Needs review';
       renderWork();
       return true;
     } catch (error) {
       showError(error.message);
       return false;
+    } finally {
+      intakeWrites--;
     }
   }
 
@@ -278,7 +287,7 @@
       feedback.setAttribute('role', 'status');
       save.onclick = async () => {
         save.disabled = true;
-        if (await saveIntake(item, select.value, { due: due.value, priority: priority.value })) {
+        if (await saveIntake(item, select.value, { due: due.value, priority: priority.value, reviewChoice: select.value === item.status ? undefined : select.value === 'Needs review' ? 'Needs review' : select.value === 'Open' ? 'Accepted' : undefined })) {
           get('workDetails').close();
         } else {
           feedback.textContent = get('workFeedback').textContent;
@@ -346,16 +355,17 @@
     return select;
   }
 
-  async function saveRowChanges(item, {category:group, due, priority, review}) {
+  async function saveRowChanges(item, {category:group, due, priority, review, company}) {
     if (!item.task) {
-      return saveIntake(item, review ?? item.status, {category:group, due, priority:priorityLabels[priority]});
+      return saveIntake(item, review === undefined ? undefined : review === 'Needs review' ? 'Needs review' : 'Open', {category:group, due, priority:priorityLabels[priority], reviewChoice:review, company});
     }
     const task = tasks.find(record => record.id === item.task.id);
     if (!task) throw Error('This task is no longer available.');
     const details = meta(task);
     if (group !== undefined) details.project = group;
     if (due !== undefined) details.due = due;
-    if (review !== undefined) details.needsReview = review === 'Needs review';
+    if (review !== undefined) { details.reviewChoice = review; details.needsReview = review === 'Needs review'; }
+    if (company !== undefined) details.company = company;
     const tier = priority || tierOf(task);
     if (priority) details.priority = priority;
     return persist(tasks.map(record => record === task ? {
@@ -390,14 +400,17 @@
     if (item.task && item.priority && !priorityLabels[item.priority]) priorityOptions.push([item.priority, item.priority]);
     if (!item.priority) priorityOptions.unshift(['', '—']);
     const priority = rowSelect(item, 'Priority', item.priority || '', priorityOptions);
-    const review = rowSelect(item, 'Review', item.review ? 'Needs review' : 'Open', [
-      ['Needs review', 'Needs review'], ['Open', 'Accepted'],
-      ...(!item.task && !item.complete ? [['Dismissed', 'Dismiss']] : [])
+    const review = rowSelect(item, 'Review', item.reviewChoice, [
+      ['Needs review', 'Needs review'], ['Accepted', 'Accepted'], ['Declined', 'Declined']
     ]);
-    review.dataset.state = item.review ? 'review' : 'accepted';
+    review.dataset.state = item.reviewChoice.toLowerCase().replace('needs ', '');
     review.disabled = item.complete;
-
-    const fields = [group, due, priority, review];
+    const companies = [...new Set(['AbbVie', 'Allergan', 'Amazon', 'BoneShakers Social Club', 'IQVIA', 'Life Protect 24/7', 'Triton Stone', 'Not applicable', item.company].filter(Boolean))];
+    const company = rowSelect(item, 'Company', item.company || '', [
+      ['', 'Pick company'], ...companies.map(name => [name, name]), ['__other', 'Other…']
+    ]);
+    company.dataset.unset = String(!item.company);
+    const fields = [group, due, priority, review, company];
     async function apply(field, previous, changes) {
       row.setAttribute('aria-busy', 'true');
       fields.forEach(control => { control.disabled = true; });
@@ -416,7 +429,16 @@
     group.onchange = () => apply(group, category(item), {category:group.value});
     due.onchange = () => apply(due, item.due || '', {due:due.value});
     priority.onchange = () => apply(priority, item.priority || '', {priority:priority.value});
-    review.onchange = () => apply(review, item.review ? 'Needs review' : 'Open', {review:review.value});
+    review.onchange = () => apply(review, item.reviewChoice, {review:review.value});
+    company.onchange = () => {
+      const previous = item.company || '';
+      const value = company.value === '__other' ? window.prompt('Company name')?.trim() : company.value;
+      if (value == null || (company.value === '__other' && !value)) {
+        company.value = previous;
+        return;
+      }
+      return apply(company, previous, {company:value});
+    };
     const done = make('label', '', 'work-done');
     const checkbox = make('input', '');
     checkbox.type = 'checkbox';
@@ -430,7 +452,7 @@
       }
     };
     done.append(checkbox);
-    row.append(added, clock, task, group, due, priority, review, done);
+    row.append(added, clock, task, company, group, due, priority, review, done);
     return row;
   }
 
@@ -471,15 +493,20 @@
 
   async function refreshIntake() {
     const api = service();
-    if (!api?.ready() || intakeLoading) return;
+    if (!api?.ready() || intakeLoading || intakeWrites) return;
+    const revision = intakeRevision;
     intakeLoading = true;
     renderWork();
     try {
       const rows = await api.read();
+      if (revision !== intakeRevision) return;
       const unique = new Map();
-      for (const [id, source, title, , due, link, status, added, priority, evidence, evidenceLink, project] of rows) {
+      for (const [id, source, title, , due, link, status, added, priority, evidence, evidenceLink, project, decision, company] of rows) {
         if (!id || !title || unique.has(id)) continue;
-        unique.set(id, { id, source, title, added, due, link, status, project, evidence, evidenceLink, priority: intakePriorities[priority], review: status === 'Needs review', complete: status === 'Done' });
+        const reviewChoice = decision || (status === 'Open' || status === 'Done' ? 'Accepted' : 'Needs review');
+        unique.set(id, {id, source, title, added, due, link, status, project, company, evidence, evidenceLink,
+          priority:intakePriorities[priority] || 'tier3', reviewChoice, review:reviewChoice === 'Needs review', complete:status === 'Done'});
+
       }
       intake = [...unique.values()];
       intakeError = '';
