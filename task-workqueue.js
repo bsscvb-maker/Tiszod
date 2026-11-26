@@ -176,42 +176,40 @@
       if (!content.isConnected) return;
       if (!snapshot?.messages?.length) throw Error('The email snapshot is not ready yet. It will appear after the next preview sync.');
       content.replaceChildren(make('p', snapshot.mailbox || destination(item).label, 'work-email-mailbox'));
-      for (const message of snapshot.messages.slice(0, 5)) {
+      for (const message of snapshot.messages) {
         const card = make('article', '', 'work-email-card');
         card.append(make('h3', message.subject || '(No subject)'));
         card.append(make('p', [message.sender, message.date].filter(Boolean).join(' · '), 'work-email-meta'));
         card.append(make('div', message.text || 'No readable message text.', 'work-email-text'));
         content.append(card);
       }
-      content.append(make('p', 'Saved email snapshot. Links and private identifiers are omitted. Open Gmail for attachments or newer messages.', 'work-email-note'));
+      content.append(make('p', 'Saved copy from the source mailbox. Attachments are available in the original email.', 'work-email-note'));
     } catch (error) {
       if (content.isConnected) content.textContent = error.message || 'Could not load this email preview. Try again after refreshing.';
     }
   }
 
+  function emailSource(item) {
+    return Boolean(item.id && /^https:\/\/mail\.google\.com\//i.test(item.link || ''));
+  }
+
   function sourceDetails(item) {
-    const details = make('details', '', 'work-source');
-    const hasSource = /^https:\/\//i.test(item.link || '');
-    const gmail = /^https:\/\/mail\.google\.com\//i.test(item.link || '');
-    const email = Boolean(item.id && gmail);
-    details.open = hasSource;
-    details.append(make('summary', email ? 'Email preview' : 'Source details'));
-    details.append(make('p', item.source || 'Added in Task Tracker'));
-    if (hasSource) {
-      const link = make('a', gmail ? 'Open original in Gmail' : 'Open original');
+    const email = emailSource(item);
+    const details = make('section', '', 'work-source');
+    details.append(make('h3', email ? 'Saved email' : 'Source details'));
+    if (email) {
+      const preview = make('div', 'Loading saved email…', 'work-email-preview');
+      details.append(preview);
+      void loadEmailPreview(item, preview);
+    } else {
+      details.append(make('p', item.source || 'Added in Task Tracker'));
+    }
+    if (/^https:\/\//i.test(item.link || '')) {
+      const link = make('a', email ? 'Open original in Gmail' : 'Open original', email ? 'work-email-original' : '');
       link.href = item.link;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       details.append(link);
-    }
-    if (email) {
-      const content = make('section', '', 'work-email-preview');
-      details.append(content);
-      details.ontoggle = () => {
-        if (!details.open) return;
-        details.ontoggle = null;
-        void loadEmailPreview(item, content);
-      };
     }
     return details;
   }
@@ -252,6 +250,7 @@
     get('workDetailTitle').textContent = item.title;
     const body = get('workDetailBody');
     body.replaceChildren(make('p', [item.status, addedLabel(item.added), item.due ? dateLabel(item.due) : 'No due date'].join(' · ')));
+    if (emailSource(item)) body.append(sourceDetails(item));
     body.append(make('p', 'Category: ' + category(item)));
     if (item.notes) body.append(make('p', item.notes));
     if (item.updates?.length) {
@@ -317,7 +316,7 @@
     if (item.task) {
       const links = meta(item.task).links;
       if (links?.length) body.append(...links.map(link => sourceDetails({ link, source: 'Task attachment' })));
-    } else {
+    } else if (!emailSource(item)) {
       body.append(sourceDetails(item));
     }
     const dialog = get('workDetails');
