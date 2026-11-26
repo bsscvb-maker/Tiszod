@@ -334,3 +334,63 @@ body[data-th-page="career"] {
   object-fit: cover;
   object-position: center top;
 }
+
+[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/triton-stone.png"]) {
+  background: #fff;
+}
+[data-th-page="career"] .legal-thumbnail img[src$="/triton-stone.png"] {
+  object-fit: contain;
+  padding: .75rem;
+}
+
+[data-th-page="career"] #legal-view .career-employer-tile[hidden] {
+  display: none;
+}
+.career-employer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .5rem .75rem;
+}
+[data-th-page="career"] .career-employer-heading .legal-thumbnail-label {
+  display: block;
+  position: static;
+  padding: 0;
+  background: transparent;
+  color: var(--career-ink);
+}
+.career-employer-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 1rem;
+  background: #64748b;
+  cursor: pointer;
+}
+.career-employer-switch[aria-checked="true"] {
+  background: #16804b;
+}
+.career-employer-switch::after {
+  position: absolute;
+  top: .125rem;
+  left: .125rem;
+  width: .875rem;
+  height: .875rem;
+  border-radius: 50%;
+  background: white;
+  content: "";
+}
+.career-employer-switch[aria-checked="true"]::after {
+  transform: translateX(.875rem);
+}
+.career-employer-switch:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.career-show-hidden {
+  margin-block: .5rem;
+}

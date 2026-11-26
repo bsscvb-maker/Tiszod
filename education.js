@@ -36,7 +36,7 @@ if(careerMode){
  $('education-category').closest('label').hidden=true;
  $('education-form').elements.person.closest('label').hidden=true;
 }
-const employerOrder = new Map(["Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Farm Fresh", "Western Auto", "Haley Toyota of Richmond", "Kimnach Ford", "Southern Volkswagen", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "Moms in Motion", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
+const employerOrder = new Map(["Triton Stone", "Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Farm Fresh", "Western Auto", "Haley Toyota of Richmond", "Kimnach Ford", "Southern Volkswagen", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "Moms in Motion", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
 const careerCovers = new Map([
  ['Employers/Farm Fresh', 'https://static.wixstatic.com/media/b7f17b_05212b8af1ca421e96590d2fa81a83b0~mv2.png'],
  ['Employers/Western Auto', 'https://upload.wikimedia.org/wikipedia/commons/0/01/Western_Auto_-_1986.svg'],
@@ -129,6 +129,7 @@ const careerCovers = new Map([
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/Yearbook', 'assets/career/folders/iqvia-archive-yearbook.jpg'],
  ['Employers/IQVIA/IQVIA-2007.06.11-2021.11.01/zzz-Archive', 'assets/career/folders/iqvia-boxed-archive.jpg'],
  ['Employers', 'assets/career/employers-cover.webp'],
+ ['Employers/Triton Stone', 'assets/career/employers/triton-stone.png'],
  ['Employers/Life Protect 24/7', 'assets/career/employers/life-protect.svg'],
  ['Employers/Amazon', 'assets/career/employers/amazon.svg'],
  ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],

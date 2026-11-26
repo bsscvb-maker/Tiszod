@@ -447,6 +447,55 @@ function legalFileCard(record,back){
  if(actions.childElementCount)card.append(actions);
  return card;
 }
+const employerVisibilityKey='tiszod.hiddenEmployerFolders';
+let hiddenEmployerIds=new Set();
+try{hiddenEmployerIds=new Set(JSON.parse(localStorage.getItem(employerVisibilityKey)||'[]'));}catch{}
+
+function employerVisibility(container,files){
+ const reveal=document.createElement('button');
+ reveal.type='button';
+ reveal.className='career-show-hidden';
+ container.insertBefore(reveal,files);
+ const entries=[];
+ let showHidden=false;
+ function refresh(){
+  const count=entries.filter(({id})=>hiddenEmployerIds.has(id)).length;
+  if(!count)showHidden=false;
+  reveal.hidden=!count;
+  reveal.textContent=showHidden?'Hide hidden employers':'Show hidden employers ('+count+')';
+  reveal.setAttribute('aria-pressed',String(showHidden));
+  for(const {id,card,toggle} of entries){
+   const visible=!hiddenEmployerIds.has(id);
+   toggle.setAttribute('aria-checked',String(visible));
+   card.hidden=!visible&&!showHidden;
+  }
+ }
+ reveal.onclick=()=>{showHidden=!showHidden;refresh();};
+ refresh();
+ return (file,card)=>{
+  if(!file.folder)return;
+  const header=document.createElement('div');
+  header.className='career-employer-heading';
+  const label=card.querySelector('.legal-thumbnail-label');
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='career-employer-switch';
+  toggle.setAttribute('role','switch');
+  toggle.setAttribute('aria-label','Show '+file.name);
+  toggle.onclick=()=>{
+   if(hiddenEmployerIds.has(file.id))hiddenEmployerIds.delete(file.id);
+   else hiddenEmployerIds.add(file.id);
+   try{localStorage.setItem(employerVisibilityKey,JSON.stringify([...hiddenEmployerIds]));}catch{}
+   refresh();
+   if(card.hidden)reveal.focus();
+  };
+  header.append(label,toggle);
+  card.prepend(header);
+  entries.push({id:file.id,card,toggle});
+  refresh();
+ };
+}
+
 async function showLegalRecord(record,back){
  legalViewRequest?.abort();
  const request=new AbortController();
@@ -589,6 +638,8 @@ async function showLegalRecord(record,back){
  if(record.recreationMemberships)files.classList.add('recreation-membership-grid');
  if(record.coverPath?.join('/')==='hobbies/Todd')files.classList.add('recreation-todd-grid');
  container.append(files);
+ const addEmployerSwitch=document.body.dataset.thPage==='career'&&record.coverPath?.join('/')==='Employers'
+  ?employerVisibility(container,files):null;
  const more=document.createElement('button');more.type='button';more.dataset.thDriveMore='';more.textContent='Load more';more.hidden=true;container.append(more);
  async function loadPage(pageToken){
   more.disabled=true;
@@ -618,7 +669,7 @@ async function showLegalRecord(record,back){
      record.tidewaterStriders?stridersCovers.get(file.name):
      record.stridersCollection?stridersSubfolderCovers.get(file.name):undefined;
     if(record.medicalCover&&/^archive - review|^verified duplicates|^recovered exports - needs review|^temporary office files|^~\$/i.test(file.name))continue;
-    files.append(legalFileCard({...file,
+    const card=legalFileCard({...file,
      cover,stridersCollection,medicalCover:record.medicalCover,
      displayName:file.displayName??(file.folder?record.childFolderLabel?.(file.name):undefined),
      childFolderLabel:record.childFolderLabel,driveAction:file.driveAction??record.driveAction,
@@ -630,7 +681,9 @@ async function showLegalRecord(record,back){
      stridersMaps:record.tidewaterStriders&&file.name==='Course Maps and Meeting Point',
      map:record.stridersMaps&&file.mime==='application/pdf',
      indianCoveBilling:record.indianCove&&file.name==='Billing and Payments'
-    },returnToFolder));
+    },returnToFolder);
+    addEmployerSwitch?.(file,card);
+    files.append(card);
    }
    status.textContent=files.children.length?'':'This folder is empty.';
    more.textContent='Load more';more.hidden=!result.nextPageToken;more.onclick=()=>loadPage(result.nextPageToken);
