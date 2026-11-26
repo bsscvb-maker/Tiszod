@@ -191,11 +191,14 @@
 
   function sourceDetails(item) {
     const details = make('details', '', 'work-source');
-    const email = Boolean(item.id && isEmailSource(item));
+    const hasSource = /^https:\/\//i.test(item.link || '');
+    const gmail = /^https:\/\/mail\.google\.com\//i.test(item.link || '');
+    const email = Boolean(item.id && gmail);
+    details.open = hasSource;
     details.append(make('summary', email ? 'Email preview' : 'Source details'));
     details.append(make('p', item.source || 'Added in Task Tracker'));
-    if (/^https:\/\//i.test(item.link)) {
-      const link = make('a', email ? 'Open original in Gmail' : 'Open original');
+    if (hasSource) {
+      const link = make('a', gmail ? 'Open original in Gmail' : 'Open original');
       link.href = item.link;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
@@ -209,7 +212,6 @@
         details.ontoggle = null;
         void loadEmailPreview(item, content);
       };
-      details.open = true;
     }
     return details;
   }
