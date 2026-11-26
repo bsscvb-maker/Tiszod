@@ -39,6 +39,7 @@ if(careerMode){
 const careerCovers = new Map([
  ...employerCovers,
  ['Employers/Triton Stone/Benefits', 'assets/career/folders/benefits.webp'],
+ ['Employers/Triton Stone/Onboarding Paperwork', 'assets/career/folders/onboarding.webp'],
  ['Employers/PC Mobile One/Advetising Ads', 'assets/career/folders/pc-advertising.webp'],
  ['Employers/PC Mobile One/Business Cards', 'assets/career/folders/pc-business-cards.webp'],
  ['Employers/PC Mobile One/Business Taxes', 'assets/career/folders/pc-tax.webp'],
