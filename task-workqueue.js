@@ -413,25 +413,25 @@
 
   async function refreshWork() {
     if (scanRunning) return;
+    const mailbox = get('workMailboxCheck');
+    const status = get('workMailboxStatus');
+    const report = message => { status.textContent = message; };
     scanRunning = true;
+    mailbox.hidden = false;
+    mailbox.dataset.checking = 'true';
+    report('Checking email…');
     renderWork();
     try {
       await Promise.all([load(), refreshIntake()]);
       if (!window.requestTaskEmailCheck) throw Error('Email checking is unavailable. Reload the portal and try again.');
-      const report = message => {
-        const feedback = get('workFeedback');
-        feedback.dataset.tone = 'info';
-        feedback.textContent = message;
-        feedback.hidden = false;
-      };
-      report('Requesting an email check…');
       const result = await window.requestTaskEmailCheck(report);
       await refreshIntake();
       report(result.message);
     } catch (error) {
-      showError(error.message);
+      report(error.message || 'Could not check email.');
     } finally {
       scanRunning = false;
+      mailbox.dataset.checking = 'false';
       renderWork();
     }
   }

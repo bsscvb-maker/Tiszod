@@ -77,3 +77,26 @@ button.work-destination{padding:0;border:0;background:transparent;text-align:lef
 .work-email-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:1.6;margin-top:16px}
 .work-email-original{display:inline-block;margin:12px;color:inherit;text-decoration:underline}
 @media(max-width:650px){.work-email-card{padding:12px}#workDetails{padding:14px}.work-email-original{display:block;margin:16px 0}}
+
+.work-mailbox-check {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 380px;
+  text-align: center;
+}
+.work-mail-route { position: relative; width: min(100%, 300px); height: 48px; margin-inline: auto; }
+.work-mail-route span { position: absolute; bottom: 0; line-height: 1; }
+.work-mail-start { left: 0; font-size: 30px; }
+.work-mail-end { right: 0; font-size: 30px; }
+.work-mail-letter { left: calc(100% - 34px); bottom: 16px !important; font-size: 21px; }
+.work-mailbox-check[data-checking="true"] .work-mail-letter {
+  animation: work-letter-flight 2.8s ease-in-out infinite alternate;
+}
+@keyframes work-letter-flight {
+  0% { left: 12px; transform: translateY(0) rotate(-10deg); }
+  50% { transform: translateY(-24px) rotate(0); }
+  100% { left: calc(100% - 34px); transform: translateY(0) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .work-mailbox-check[data-checking="true"] .work-mail-letter { animation: none; left: calc(50% - 10px); }
+}
