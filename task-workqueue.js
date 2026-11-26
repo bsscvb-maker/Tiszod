@@ -13,6 +13,7 @@
   let intakeLoading = false;
   let scanRunning = false;
   const savingTasks = new Set();
+  let renderedRows = '';
 
   function make(tag, text, className) {
     const node = document.createElement(tag);
@@ -106,6 +107,9 @@
     ).sort(compare);
 
     const results = get('workResults');
+    const rowsKey = JSON.stringify(visible.length ? visible : [busy || intakeLoading]);
+    if (rowsKey === renderedRows) return;
+    renderedRows = rowsKey;
     results.replaceChildren();
     if (!visible.length) {
       const message = busy || intakeLoading ? 'Loading tasks…' : 'No tasks match this view.';
@@ -288,7 +292,8 @@
     } else {
       body.append(sourceDetails(item));
     }
-    get('workDetails').showModal();
+    const dialog = get('workDetails');
+    if (!dialog.open) dialog.showModal();
   }
 
   async function completeItem(item) {
@@ -321,7 +326,13 @@
     const task = make('div', '', 'work-task');
     const title = make('button', item.title, 'work-title');
     title.type = 'button';
-    title.onclick = () => openDetails(item);
+    title.onclick = () => {
+      try {
+        openDetails(item);
+      } catch (error) {
+        showError('Could not open task details. ' + error.message);
+      }
+    };
     task.append(title);
     if (item.review && !item.complete) {
       const review = make('span', 'Needs review', 'work-state');
@@ -446,7 +457,6 @@
   refreshIntake();
   if (service()) {
     window.setInterval(() => { if (!document.hidden) refreshIntake(); }, 60000);
-    window.addEventListener('focus', refreshIntake);
     get('workDetails').addEventListener('close', offerCompletion);
   }
 }
