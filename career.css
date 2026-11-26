@@ -461,3 +461,25 @@ body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career
 [data-th-page="pay-stubs"] .th-module-search {
   display: none;
 }
+
+/* Keep Career cards on the same tracks as folders are opened or filtered. */
+[data-th-page="career"] :is(#career-drive, #legal-view) .legal-cards {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+[data-th-page="career"] #legal-view .legal-file:not(.career-folder-tile) .legal-thumbnail {
+  display: block;
+  height: auto;
+}
+
+[data-th-page="career"] #legal-view .legal-file:not(.career-folder-tile) .legal-thumbnail-art {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+[data-th-page="career"] #legal-view .legal-file:not(.career-folder-tile) .legal-thumbnail-label {
+  position: relative;
+  inset: auto;
+}
