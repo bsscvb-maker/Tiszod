@@ -14,9 +14,11 @@ window.thStart = async () => {
     const orderFor = name => employerOrder.get(nameFor(name)) ?? Infinity;
     const folders = entries.filter(entry => entry.folder);
     folders.sort((a,b) => orderFor(a.name) - orderFor(b.name) || a.name.localeCompare(b.name));
+    grid.parentElement.querySelector('.career-show-hidden')?.remove();
+    const addVisibility = thDriveRecords.employerVisibility(grid.parentElement, grid);
     const cards = folders.map(folder => {
       const name = nameFor(folder.name);
-      return thDriveRecords.card({
+      const record = {
         ...folder,
         name,
         driveAction:true,
@@ -25,7 +27,10 @@ window.thStart = async () => {
         virtualFiles:async () => (await thDriveRecords.children(folder))
           .filter(file => file.mime === 'application/pdf')
           .sort((a,b) => b.name.localeCompare(a.name))
-      });
+      };
+      const card = thDriveRecords.card(record);
+      addVisibility(record, card);
+      return card;
     });
     grid.replaceChildren(...cards);
     status.textContent = folders.length ? '' : 'No employer folders are available.';

@@ -257,7 +257,7 @@ body:is([data-th-page="career"], [data-th-page="pay-stubs"]) {
 }
 
 :is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/life-protect.svg"]) {
-  background: #80004d;
+  background: #82004b;
 }
 :is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/life-protect.svg"] {
   padding: 0;
@@ -343,7 +343,7 @@ body:is([data-th-page="career"], [data-th-page="pay-stubs"]) {
   padding: .75rem;
 }
 
-:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-employer-tile[hidden] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile[hidden] {
   display: none;
 }
 .career-employer-heading {
@@ -460,7 +460,4 @@ body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career
 
 [data-th-page="pay-stubs"] .th-module-search {
   display: none;
-}
-[data-th-page="pay-stubs"] #career-drive .career-employer-tile > strong {
-  display: block;
 }

@@ -723,5 +723,5 @@ async function renderDocumentPages(record,container,status,signal){
  }
 }
 
-window.thDriveRecords = { renderDocumentPages, card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, restoreNavigation, uniqueCover, cover: legalDocumentCover };
+window.thDriveRecords = { employerVisibility, renderDocumentPages, card: legalFileCard, open: showLegalRecord, children: driveChildren, findFolders: findDriveFolders, request: legalDriveRequest, close: closeLegalRecord, restoreNavigation, uniqueCover, cover: legalDocumentCover };
 })();
