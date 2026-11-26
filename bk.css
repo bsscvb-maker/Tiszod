@@ -151,4 +151,12 @@
 .bk-year-card .bk-case-date-filed { color: #00bfff; }
 .bk-year-card .bk-case-date-discharged { color: #73e7a3; }
 
-.bk-main-document-star { color: #f5c75b; }
+.bk-main-document-star {
+  display: inline-block;
+  margin-inline-end: .2em;
+  color: #ffd35c;
+  font-size: clamp(2.5rem, 4vw, 3.25rem);
+  line-height: 1;
+  vertical-align: middle;
+  text-shadow: 0 0 10px rgb(255 211 92 / 45%);
+}
