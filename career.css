@@ -1,5 +1,5 @@
 /* Career shares the Strider palette and card rhythm used by Library. */
-body[data-th-page="career"] {
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) {
   --career-ink: #edf3fb;
   --career-muted: #b8c6d7;
   --career-line: #3a506a;
@@ -7,12 +7,12 @@ body[data-th-page="career"] {
   --career-panel: #172437;
 }
 
-[data-th-page="career"] .education {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .education {
   width: min(100%, 1320px);
   color: var(--career-ink);
 }
 
-[data-th-page="career"] .education > .education-heading:first-child {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .education > .education-heading:first-child {
   padding: clamp(20px, 4vw, 44px);
   border: 1px solid var(--career-line);
   border-radius: 16px;
@@ -20,134 +20,134 @@ body[data-th-page="career"] {
     linear-gradient(125deg, #192e48, #121c2b);
 }
 
-[data-th-page="career"] .education-heading h1 {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .education-heading h1 {
   font-size: clamp(2rem, 5vw, 3.35rem);
   line-height: 1.08;
   letter-spacing: -.045em;
 }
 
-[data-th-page="career"] .education-heading > div:last-child {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .education-heading > div:last-child {
   display: flex;
   flex-wrap: wrap;
   gap: .5rem;
 }
 
-[data-th-page="career"] :is(.education, .legal-view, #education-dialog) :focus-visible {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(.education, .legal-view, #education-dialog) :focus-visible {
   outline: 2px solid var(--career-gold);
   outline-offset: 3px;
 }
 
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-cards {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-cards {
   gap: clamp(10px, 2vw, 18px);
 }
 
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file,
-[data-th-page="career"] .education-card {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-file,
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .education-card {
   background: var(--career-panel);
   border-color: var(--career-line);
   border-radius: 13px;
   box-shadow: 0 9px 24px #03081240;
 }
 
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-file {
   padding: 0;
   overflow: hidden;
   transition: background-color .15s, border-color .15s;
 }
 
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file:focus-within,
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-file:hover {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-file:focus-within,
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-file:hover {
   background: #1c2c41;
   border-color: var(--career-gold);
 }
 
-[data-th-page="career"] .legal-file > .legal-kind {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file > .legal-kind {
   margin: .85rem 1rem .2rem;
   color: var(--career-gold);
 }
 
-[data-th-page="career"] .legal-file > strong {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file > strong {
   margin: 0 1rem .85rem;
   font-size: 1.08rem;
 }
 
-[data-th-page="career"] .legal-file .legal-thumbnail {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file .legal-thumbnail {
   height: clamp(145px, 21vw, 205px);
   border: 0;
   border-top: 1px solid var(--career-line);
   border-radius: 0;
 }
 
-[data-th-page="career"] .legal-file .legal-thumbnail:focus-visible {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file .legal-thumbnail:focus-visible {
   outline-offset: -3px;
 }
 
-[data-th-page="career"] .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-label {
   color: var(--career-gold);
   background: #121c2b;
   border-color: var(--career-line);
 }
 
-[data-th-page="career"] .legal-file > .legal-actions {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file > .legal-actions {
   padding-inline: 1rem;
 }
 
-[data-th-page="career"] :is(.education-toolbar, #legal-view, #education-dialog) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(.education-toolbar, #legal-view, #education-dialog) {
   background: #14263c;
   border-color: var(--career-line);
   color: var(--career-ink);
 }
 
-[data-th-page="career"] :is(#education-status, #education-count, #legal-view-body [role="status"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#education-status, #education-count, #legal-view-body [role="status"]) {
   color: var(--career-muted);
 }
 
-[data-th-page="career"] :is(#education-add, #education-dialog button[type="submit"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#education-add, #education-dialog button[type="submit"]) {
   background: var(--career-gold);
   border-color: var(--career-gold);
   color: #152337;
 }
 
-[data-th-page="career"] #legal-view {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view {
   width: min(1120px, calc(100% - 20px));
 }
 
-[data-th-page="career"] #legal-view > .legal-actions:first-child {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view > .legal-actions:first-child {
   justify-content: space-between;
   gap: .5rem;
 }
 
-[data-th-page="career"] #legal-view-close {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view-close {
   margin-left: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-th-page="career"] .legal-file { transition: none; }
+  :is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-file { transition: none; }
 }
 
-[data-th-page="career"] #career-drive .legal-cards {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #career-drive .legal-cards {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
 }
 
-[data-th-page="career"] :is(#career-drive, #legal-view) .legal-thumbnail:has(img[data-photo]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#career-drive, #legal-view) .legal-thumbnail:has(img[data-photo]) {
   height: auto;
   display: block;
 }
 
-[data-th-page="career"] .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-art {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-art {
   position: relative;
   inset: auto;
   width: 100%;
   aspect-ratio: 16 / 9;
 }
 
-[data-th-page="career"] .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail:has(img[data-photo]) .legal-thumbnail-label {
   position: relative;
   inset: auto;
   gap: .5rem;
 }
 
-[data-th-page="career"] .legal-thumbnail img[data-photo] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[data-photo] {
   object-position: center;
 }
 
@@ -155,115 +155,115 @@ body[data-th-page="career"] {
   display: none;
 }
 
-[data-th-page="career"] #career-view-link {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #career-view-link {
   padding: 10px 14px;
   font: 600 13px system-ui;
 }
 
-[data-th-page="career"] .career-folder-tile > .legal-kind,
-[data-th-page="career"] .career-folder-tile .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-folder-tile > .legal-kind,
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-folder-tile .legal-thumbnail-label {
   display: none;
 }
 
-[data-th-page="career"] .career-folder-tile > strong {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-folder-tile > strong {
   margin: .85rem 1rem;
 }
 
-[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) > strong {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-folder-tile:not(.career-employer-tile) > strong {
   display: none;
 }
 
-[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail {
   border-top: 0;
 }
 
-[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label {
   display: flex;
   color: var(--career-ink);
   background: var(--career-panel);
   padding-inline: 1rem;
 }
 
-[data-th-page="career"] #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label::after {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-folder-tile:not(.career-employer-tile) .legal-thumbnail-label::after {
   color: var(--career-gold);
 }
 
-[data-th-page="career"] .career-folder-tile .legal-thumbnail {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-folder-tile .legal-thumbnail {
   height: auto;
   display: block;
 }
 
-[data-th-page="career"] .career-folder-tile .legal-thumbnail-art {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-folder-tile .legal-thumbnail-art {
   position: relative;
   inset: auto;
   width: 100%;
   aspect-ratio: 16 / 9;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src^="assets/career/machines/"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src^="assets/career/machines/"] {
   object-fit: contain;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src^="assets/career/employers/"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src^="assets/career/employers/"]) {
   background: #f5f7fb;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/iqvia.svg"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/iqvia.svg"]) {
   background: #111c2c;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src^="assets/career/employers/"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src^="assets/career/employers/"] {
   box-sizing: border-box;
   padding: clamp(16px, 3vw, 32px);
   object-fit: contain;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src^="assets/career/employers/full-tile/"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src^="assets/career/employers/full-tile/"] {
   padding: 0;
   object-fit: cover;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src="assets/career/development/insights-discovery.webp"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src="assets/career/development/insights-discovery.webp"]) {
   background: #fff;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src="assets/career/development/insights-discovery.webp"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src="assets/career/development/insights-discovery.webp"] {
   object-fit: contain;
 }
 
-[data-th-page="career"] .career-employer-tile > strong {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employer-tile > strong {
   display: none;
 }
 
-[data-th-page="career"] .career-employer-tile .legal-thumbnail {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employer-tile .legal-thumbnail {
   border-top: 0;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src$="/pc-mobile-one-ad.png"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/pc-mobile-one-ad.png"] {
   padding: 0;
   object-fit: fill;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/advance.svg"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/advance.svg"]) {
   background: #000;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src$="/advance.svg"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/advance.svg"] {
   padding: 0;
 }
 
-[data-th-page="career"] #legal-view-actions:empty {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view-actions:empty {
   display: none;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/life-protect.svg"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/life-protect.svg"]) {
   background: #80004d;
 }
-[data-th-page="career"] .legal-thumbnail img[src$="/life-protect.svg"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/life-protect.svg"] {
   padding: 0;
   object-fit: contain;
 }
-[data-th-page="career"] .career-employment-dates {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employment-dates {
   display: block;
   padding: .65rem .85rem;
   color: var(--career-ink);
@@ -272,35 +272,35 @@ body[data-th-page="career"] {
   font-size: .85rem;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src$="/iqvia.svg"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/iqvia.svg"] {
   padding: 0;
   object-fit: cover;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/moms-in-motion.webp"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/moms-in-motion.webp"]) {
   background: #fff;
 }
 
-[data-th-page="career"] .legal-thumbnail img[src$="/moms-in-motion.webp"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/moms-in-motion.webp"] {
   padding: clamp(10px, 1.3vw, 18px);
   object-fit: contain;
 }
 
-[data-th-page="career"] .career-logo-card .legal-thumbnail-art {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-logo-card .legal-thumbnail-art {
   background: #fff;
 }
-[data-th-page="career"] .career-logo-card .legal-thumbnail-art img {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-logo-card .legal-thumbnail-art img {
   box-sizing: border-box;
   padding: clamp(10px, 1.3vw, 18px);
   object-fit: contain;
 }
-[data-th-page="career"] .career-photo-name .legal-thumbnail-art {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-name .legal-thumbnail-art {
   overflow: hidden;
 }
-[data-th-page="career"] .career-photo-name .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-name .legal-thumbnail-label {
   display: none;
 }
-[data-th-page="career"] .career-photo-name .career-photo-title {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-name .career-photo-title {
   position: absolute;
   z-index: 1;
   inset: auto 0 0;
@@ -312,20 +312,20 @@ body[data-th-page="career"] {
   text-align: center;
   pointer-events: none;
 }
-[data-th-page="career"] .career-photo-crop .legal-thumbnail-art img {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-crop .legal-thumbnail-art img {
   height: 137%;
   object-position: center top;
 }
 
-[data-th-page="career"] .career-photo-name .legal-thumbnail-art {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-name .legal-thumbnail-art {
   display: block;
 }
-[data-th-page="career"] .career-photo-name .legal-thumbnail-art .career-photo-title {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-name .legal-thumbnail-art .career-photo-title {
   display: block;
   font-size: clamp(1.15rem, 2.3vw, 1.65rem);
   line-height: 1.1;
 }
-[data-th-page="career"] .career-photo-crop .legal-thumbnail-art img[data-photo] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-photo-crop .legal-thumbnail-art img[data-photo] {
   position: absolute;
   inset: 0 auto auto 0;
   width: 100%;
@@ -335,15 +335,15 @@ body[data-th-page="career"] {
   object-position: center top;
 }
 
-[data-th-page="career"] .legal-thumbnail-art:has(img[src$="/triton-stone.png"]) {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail-art:has(img[src$="/triton-stone.png"]) {
   background: #fff;
 }
-[data-th-page="career"] .legal-thumbnail img[src$="/triton-stone.png"] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .legal-thumbnail img[src$="/triton-stone.png"] {
   object-fit: contain;
   padding: .75rem;
 }
 
-[data-th-page="career"] #legal-view .career-employer-tile[hidden] {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-employer-tile[hidden] {
   display: none;
 }
 .career-employer-heading {
@@ -353,7 +353,7 @@ body[data-th-page="career"] {
   gap: .5rem;
   padding: .5rem .75rem;
 }
-[data-th-page="career"] .career-employer-heading .legal-thumbnail-label {
+:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employer-heading .legal-thumbnail-label {
   display: block;
   position: static;
   padding: 0;
@@ -393,4 +393,74 @@ body[data-th-page="career"] {
 }
 .career-show-hidden {
   margin-block: .5rem;
+}
+
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img:is([src*="Western_Auto"],[src*="b7f17b_05212"],[src*="moms-in-motion"])) { background: #fff; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art img:is([src*="Western_Auto"],[src*="b7f17b_05212"],[src*="moms-in-motion"]) { box-sizing: border-box; width: 100%; height: 100%; padding: 16px; object-fit: contain; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail:has(img:is([src*="superior-marble-and-stone"],[src*="hall-mazda"],[src*="haley-toyota-facade"],[src*="charles-barker-toyota"],[src*="checkered-flag-volkswagen"])) .legal-thumbnail-label { display: none; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img:is([src*="superior-marble-and-stone"],[src*="hall-mazda"],[src*="haley-toyota-facade"],[src*="charles-barker-toyota"],[src*="checkered-flag-volkswagen"])) { display: block; overflow: hidden; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art img:is([src*="superior-marble-and-stone"],[src*="hall-mazda"],[src*="haley-toyota-facade"],[src*="charles-barker-toyota"],[src*="checkered-flag-volkswagen"]):not([src*="haley-toyota-facade"]) { position: absolute; inset: 0 auto auto 0; width: 100%; height: 137%; max-height: none; object-fit: cover; object-position: center top; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img:is([src*="superior-marble-and-stone"],[src*="hall-mazda"],[src*="haley-toyota-facade"],[src*="charles-barker-toyota"],[src*="checkered-flag-volkswagen"])) .career-photo-title { display: block; font-size: clamp(1.15rem, 2.3vw, 1.65rem); }
+
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employer-tile .legal-thumbnail-art:has(img[src$="/kimnach-ford-street-view.png"]) { overflow: hidden; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) .career-employer-tile .legal-thumbnail-art img[src$="/kimnach-ford-street-view.png"] { transform: scale(1.75); transform-origin: 67% 51%; }
+
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img:is([src*="hall-mazda"],[src*="charles-barker-toyota"],[src*="haley-toyota-facade"],[src*="checkered-flag-volkswagen"])) .career-photo-title { display: none; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art img[src*="hall-mazda"] { transform: scale(2.4); transform-origin: 18% 26%; }
+
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img[src*="superior-marble-and-stone"]) .career-photo-title {
+  inset: 0 0 auto;
+  padding: .65rem .5rem 1.1rem;
+  background: linear-gradient(#10151aee, #10151ab0 64%, transparent);
+  font-family: Georgia, serif;
+  font-size: clamp(.92rem, 1.65vw, 1.35rem);
+  font-variant: small-caps;
+  letter-spacing: .035em;
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img[src*="charles-barker-toyota"]) {
+  background: #10151a;
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art img[data-photo][src*="charles-barker-toyota"] {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 80%;
+  object-fit: cover;
+  object-position: center top;
+  clip-path: inset(0 0 22% 0);
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img[src*="charles-barker-toyota"])::after {
+  content: "Charles Barker Toyota";
+  position: absolute;
+  inset: 57% 0 0;
+  display: grid;
+  place-items: center;
+  padding: 0 .5rem;
+  background: #10151a;
+  color: #fff;
+  text-align: center;
+  font-size: clamp(.95rem, 1.6vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: .035em;
+  pointer-events: none;
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art img[src*="hall-mazda"] {
+  transform: scale(2.05);
+  transform-origin: 20% 39%;
+  filter: contrast(1.1) saturate(1.06);
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) :is(#legal-view, #career-drive) .career-employer-tile .legal-thumbnail-art:has(img[src*="b7f17b_05212"]) {
+  background: #000;
+}
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view[open] { display: flex; flex-direction: column; overflow: hidden; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view > :not(#legal-view-body) { flex: 0 0 auto; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .legal-thumbnail-art:has(img:is([src$="/parker-career.webp"],[src$="/hall-career.webp"])) .career-photo-title { display: none; }
+body:is([data-th-page="career"], [data-th-page="pay-stubs"]) #legal-view .career-photo-crop .legal-thumbnail-art img:is([src$="/parker-career.webp"],[src$="/hall-career.webp"]) { height: 100%; object-position: center; }
+
+[data-th-page="pay-stubs"] .th-module-search {
+  display: none;
+}
+[data-th-page="pay-stubs"] #career-drive .career-employer-tile > strong {
+  display: block;
 }

@@ -1,202 +1,26 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TisZod · Pay Stubs</title><meta name="theme-color" content="#0b1019">
-<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><script src="card-titles.js?v=20261106" defer></script></head><body data-finance-navigation="finance.html" data-th-page="pay-stubs">
+<link rel="stylesheet" href="portal-dark.css?v=8"><link rel="stylesheet" href="finance.css?v=21"><link rel="stylesheet" href="auth.css?v=6"><link rel="stylesheet" href="finance-workspace.css?v=6"><link rel="stylesheet" href="portal-layout.css?v=20261028"><script src="card-titles.js?v=20261106" defer></script><link rel="stylesheet" href="family-collections.css?v=20261106-unique-covers"><link rel="stylesheet" href="drive-record-viewer.css?v=20261105-indian-cove"><link rel="stylesheet" href="portal-section.css?v=20261107-aligned"><link rel="stylesheet" href="career.css?v=20261126-pay-stubs"></head><body data-finance-navigation="finance.html" data-th-page="pay-stubs">
 
 <div id="th-auth" role="dialog" aria-labelledby="th-auth-title"><div class="th-auth-card"><div class="th-auth-brand"><img class="th-auth-logo" src="tiszod-crest.svg" alt=""><span class="th-auth-name" id="th-auth-title">TisZod</span></div><button type="button" id="th-sign-in"><svg class="th-google-icon" aria-hidden="true" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.77 7.18l7.73 6C44.41 38.03 46.98 31.87 46.98 24.55z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.2A23.9 23.9 0 0 0 0 24c0 3.87.93 7.51 2.56 10.78z"/><path fill="#34A853" d="M24 48c6.48 0 11.92-2.13 15.89-5.8l-7.73-6C30.01 37.65 27.25 38.5 24 38.5c-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Sign in with Google</span></button><p id="th-auth-message" role="status" aria-live="polite"></p></div></div>
 <style>#th-auth{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#101d24;color:#e9f5f6;font:16px/1.5 system-ui,sans-serif}#th-auth[hidden]{display:none}#th-auth .th-auth-card{width:min(100%,440px);padding:40px;border:1px solid #35656d;border-radius:14px;background:#173039;text-align:center}#th-auth h1{font-size:30px}#th-sign-in{padding:12px 22px;background:#24c5ce;border:0;border-radius:6px;font-weight:700;cursor:pointer}</style>
 
 <div class="th-app"><aside class="th-sidebar"><a class="th-brand" href="./"><span class="th-brand-mark" style="background:transparent;overflow:hidden"><img src="tiszod-crest.svg" alt="" style="width:100%;height:100%;object-fit:contain"></span><span>TisZod<small>Personal workspace</small></span></a><nav aria-label="TisZod pages"><div class="th-nav-label">Main</div><a class="th-nav-link" href="./"><span class="th-nav-icon">⌂</span>Home</a><div class="th-nav-label">Workspaces</div><a class="th-nav-link active" aria-current="page" href="finance.html"><span class="th-nav-icon" style="overflow:hidden"><img src="finance-mark.svg?v=1" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Finance</a><a class="th-nav-link" href="freebirds.html"><span class="th-nav-icon" style="overflow:hidden"><img src="freebirds-logo.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;object-fit:cover;object-position:50% 72%"></span>Freebirds</a><a class="th-nav-link" href="vehicles.html"><span class="th-nav-icon ram-nav-icon" style="overflow:hidden;position:relative"><img src="ram-nav.webp" alt="" style="position:absolute;display:block;width:128px;height:72px;max-width:none;left:-7px;top:-20px"></span>Vehicles</a><a class="th-nav-link" href="equipment.html"><span class="th-nav-icon" style="overflow:hidden"><img src="husqvarna-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Equipment</a><a class="th-nav-link" href="watercraft.html"><span class="th-nav-icon" style="overflow:hidden"><img src="yamaha-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px;background:#fff"></span>Watercraft</a><a class="th-nav-link" href="pets.html"><span class="th-nav-icon" style="overflow:hidden"><img src="pets-mark.svg" alt="" style="display:block;width:100%;height:100%;object-fit:contain;border-radius:4px"></span>Pets</a><div class="th-nav-label">System</div><a class="th-nav-link" href="admin.html"><span class="th-nav-icon">⚙</span>Administration</a></nav><div class="th-sidebar-foot">© 2026 TisZod<br>Private personal workspace</div></aside>
 <div class="th-app-main"><header class="th-app-topbar"><div><strong>Finance</strong><small>Document library</small></div><span class="th-connection" id="th-connection">Connecting…</span></header>
-<main class="th-page-content"><div class="finance-wrap finance-documents"><header class="fd-heading"><div><h1>Pay Stubs</h1><p>Save each PDF in its employer folder as Pay Date YYYY-MM-DD.pdf, then refresh this page.</p></div><a class="fd-source" href="https://drive.google.com/drive/folders/1lbiirIAvOS6K8e7IV9o8fPIauUNuUG4t" target="_blank" rel="noopener noreferrer">Manage pay stubs in Drive ↗</a></header>
-<div class="fd-tools"><label>Year<select id="pay-year"></select></label><label>Employer<select id="pay-employer"></select></label></div>
-<div class="fd-tools">
-<label>From<input type="date" id="pay-from"></label>
-<label>Through<input type="date" id="pay-through"></label>
-<button type="button" id="pay-download" disabled>Download matching PDFs (.zip)</button>
-</div><p id="pay-transfer" role="status"></p>
-<p id="pay-status" role="status">Loading pay stubs…</p><ol id="pay-list"></ol></div></main></div></div>
-<link rel="stylesheet" href="finance-documents.css?v=20261108-photo-folders">
-<style>
-#pay-list {list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
-#pay-list li {padding:1rem;background:#142033;border-radius:.65rem;display:grid;justify-items:start;gap:.55rem}
-#pay-list canvas {width:100%;max-width:180px;height:auto;background:white}
-</style>
-<script src="vendor/jszip.min.js"></script>
-<script>
-(() => {
-  const byId = id => document.getElementById(id);
-  const year = byId('pay-year');
-  const employer = byId('pay-employer');
-  const list = byId('pay-list');
-  const status = byId('pay-status');
-  let stubs = [];
-  let busy = false;
-  let pdfModule;
-  const previews = new Map();
-  const from = byId('pay-from');
-  const through = byId('pay-through');
-  const bulk = byId('pay-download');
-  const transfer = byId('pay-transfer');
-  const invalidRange = () => from.value && through.value && from.value > through.value;
-  const matching = () => invalidRange() ? [] : stubs.filter(stub =>
-    (!year.value || stub.date.startsWith(year.value)) &&
-    (!employer.value || stub.employer === employer.value) &&
-    (!from.value || stub.date >= from.value) && (!through.value || stub.date <= through.value));
-  async function getPdf(stub) {
-    const response = await fetch('https://www.googleapis.com/drive/v3/files/' +
-      encodeURIComponent(stub.id) + '?alt=media&supportsAllDrives=true', {
-      headers: {Authorization: 'Bearer ' + thToken}
-    });
-    if (!response.ok) throw new Error('Could not retrieve the PDF for ' + stub.date + '.');
-    return response.blob();
-  }
-  function save(blob, name) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  }
-  async function preview(stub) {
-    pdfModule ||= import('./vendor/pdfjs/pdf.min.mjs');
-    const pdfjs = await pdfModule;
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL('./vendor/pdfjs/pdf.worker.compat.mjs', location.href).href;
-    const data = new Uint8Array(await (await getPdf(stub)).arrayBuffer());
-    const pdf = await pdfjs.getDocument({data, wasmUrl: new URL('./vendor/pdfjs/wasm/', location.href).href}).promise;
-    try {
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({scale: 240 / page.getViewport({scale:1}).width});
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.ceil(viewport.width);
-      canvas.height = Math.ceil(viewport.height);
-      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-      return canvas;
-    } finally {
-      await pdf.destroy();
-    }
-  }
-  const observer = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const target = entry.target;
-      observer.unobserve(target);
-      const stub = stubs.find(item => item.id === target.dataset.id);
-      if (!stub) continue;
-      if (!previews.has(stub.id)) previews.set(stub.id, preview(stub).catch(error => {
-        previews.delete(stub.id);
-        throw error;
-      }));
-      previews.get(stub.id).then(source => {
-        const canvas = source.cloneNode();
-        canvas.getContext('2d').drawImage(source, 0, 0);
-        target.replaceChildren(canvas);
-      }).catch(() => {target.textContent = 'Preview unavailable';});
-    }
-  }, {rootMargin:'150px'});
-  bulk.onclick = async () => {
-    const selected = matching();
-    if (busy || !selected.length) return;
-    busy = true;
-    bulk.disabled = true;
-    try {
-      const zip = new JSZip();
-      for (const [index, stub] of selected.entries()) {
-        transfer.textContent = 'Preparing PDF ' + (index + 1) + ' of ' + selected.length + '…';
-        const folder = stub.employer.replace(/[^a-z0-9 ._-]/gi, '_');
-        zip.file(folder + '/' + (index + 1) + ' - ' + stub.name.replace(/[\\/]/g, '_'),
-          await (await getPdf(stub)).arrayBuffer());
-      }
-      save(await zip.generateAsync({type:'blob'}), 'TisZod-pay-stubs.zip');
-      transfer.textContent = selected.length + ' PDFs packaged for download.';
-    } catch (error) {
-      transfer.textContent = error.message;
-    } finally {
-      busy = false;
-      bulk.disabled = !matching().length;
-    }
-  };
-  async function listChildren(id) {
-    const files = [];
-    let token = '';
-    do {
-      const query = new URLSearchParams({q: "'" + id + "' in parents and trashed = false",
-        fields: 'nextPageToken,files(id,name,mimeType)', pageSize: '1000'});
-      if (token) query.set('pageToken', token);
-      const response = await fetch('https://www.googleapis.com/drive/v3/files?' + query, {
-        headers: {Authorization: 'Bearer ' + thToken}
-      });
-      if (!response.ok) throw new Error('Could not load pay stubs from Drive.');
-      const page = await response.json();
-      files.push(...page.files);
-      token = page.nextPageToken;
-    } while (token);
-    return files;
-  }
-  function render() {
-    const shown = matching();
-    observer.disconnect();
-    bulk.disabled = busy || !shown.length;
-    list.replaceChildren(...shown.map(stub => {
-      const item = document.createElement('li');
-      const link = document.createElement('a');
-      link.href = 'https://drive.google.com/file/d/' + encodeURIComponent(stub.id) + '/view';
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = stub.date + ' · ' + stub.employer + ' · View PDF';
-      const thumbnail = document.createElement('div');
-      thumbnail.dataset.id = stub.id;
-      thumbnail.style.minHeight = '7rem';
-      thumbnail.setAttribute('role','img');
-      thumbnail.setAttribute('aria-label','First page preview for ' + stub.date);
-      thumbnail.textContent = 'Loading preview…';
-      observer.observe(thumbnail);
-      const download = document.createElement('button');
-      download.type = 'button';
-      download.textContent = 'Download PDF';
-      download.onclick = async () => {
-        download.disabled = true;
-        transfer.textContent = '';
-        try {
-          save(await getPdf(stub), stub.name);
-        } catch (error) {
-          transfer.textContent = error.message;
-        } finally {
-          download.disabled = false;
-        }
-      };
-      item.append(thumbnail, link, download);
-      return item;
-    }));
-    status.textContent = invalidRange() ? 'Choose an end date on or after the start date.' : shown.length === 1 ? '1 pay stub' : shown.length + ' pay stubs';
-  }
-  year.addEventListener('change', render);
-  employer.addEventListener('change', render);
-  from.addEventListener('change', render);
-  through.addEventListener('change', render);
-  window.thStart = async () => {
-    try {
-      const folders = (await listChildren('1lbiirIAvOS6K8e7IV9o8fPIauUNuUG4t')).filter(file => file.mimeType === 'application/vnd.google-apps.folder');
-      const groups = await Promise.all(folders.map(async folder => {
-        const files = await listChildren(folder.id);
-        return files.flatMap(file => {
-          const date = file.name.match(/^Pay Date (\d{4}-\d{2}-\d{2})(?:\s.*)?\.pdf$/i)?.[1];
-          return date && file.mimeType === 'application/pdf' ? [{id: file.id, name: file.name, date, employer: folder.name}] : [];
-        });
-      }));
-      stubs = groups.flat().sort((a, b) => b.date.localeCompare(a.date) || a.employer.localeCompare(b.employer));
-      const years = [...new Set(stubs.map(stub => stub.date.slice(0, 4)))];
-      const employers = [...new Set(stubs.map(stub => stub.employer))].sort();
-      year.replaceChildren(new Option('All years', ''), ...years.map(value => new Option(value)));
-      employer.replaceChildren(new Option('All employers', ''), ...employers.map(value => new Option(value)));
-      render();
-    } catch (error) {
-      status.textContent = error.message;
-    }
-  };
-})();
-</script>
+<main class="th-page-content portal-section"><div class="education">
+<header class="education-heading portal-section-hero"><div><h1>Pay Stubs</h1></div>
+<div><a class="education-open" href="https://drive.google.com/drive/folders/1lbiirIAvOS6K8e7IV9o8fPIauUNuUG4t" target="_blank" rel="noopener noreferrer">Manage pay stubs in Drive ↗</a></div></header>
+<p id="pay-status" role="status">Loading employer folders…</p>
+<section id="career-drive" aria-label="Employer pay stub folders"><div class="legal-cards" id="pay-folders"></div></section>
+</div></main></div></div>
+<dialog id="legal-view" class="legal-view" aria-labelledby="legal-view-title">
+ <div class="legal-actions"><button type="button" id="legal-view-back" hidden>Back to folder</button><button type="button" id="legal-view-close">Close</button></div>
+ <h2 id="legal-view-title"></h2>
+ <div class="legal-actions" id="legal-view-actions"></div>
+ <div id="legal-view-body"></div>
+</dialog>
+<script src="drive-record-viewer.js?v=20261126-pay-stubs"></script>
+<script src="career-employers.js?v=1"></script>
+<script src="pay-stubs.js?v=1"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script><script src="portal.js?v=20261111-subpage5"></script><script src="sheets.js?v=20261029-shared-drive-1"></script></body></html>

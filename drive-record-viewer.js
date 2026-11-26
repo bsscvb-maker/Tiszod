@@ -309,7 +309,7 @@ const legalCoverObserver=new IntersectionObserver(entries=>{
 });
 function legalFileCard(record,back){
  const card=document.createElement('article'),caption=document.createElement('strong'),actions=document.createElement('div');
- const careerFolder=record.folder&&document.body.dataset.thPage==='career';
+ const careerFolder=record.folder&&['career','pay-stubs'].includes(document.body.dataset.thPage);
  const medicalStriders=document.body.dataset.thPage==='medical'&&Boolean(window.thMedicalCardCover);
  card.className='legal-file';
  if(careerFolder){
@@ -337,7 +337,7 @@ function legalFileCard(record,back){
    const dates=document.createElement('span');
    dates.className='career-employment-dates';
    dates.textContent=window.thCareerEmploymentDates?.get(record.name)||'Dates unverified';
-   button.append(dates);
+   if(document.body.dataset.thPage==='career'||window.thCareerEmploymentDates?.has(record.name))button.append(dates);
   }
   if(!record.directReader){
    const navigationId=record.id||(tracksFolders&&record.virtualFiles?JSON.stringify(record.coverPath||[record.name]):'');

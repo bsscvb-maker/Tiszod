@@ -1,0 +1,23 @@
+const employerOrder = new Map(["Triton Stone", "Life Protect 24/7", ...["Food Lion", "Sadler Foods", "Checkered Flag Volkswagen", "Farm Fresh", "Western Auto", "Haley Toyota of Richmond", "Kimnach Ford", "Southern Volkswagen", "Hall Mazda", "Charles Barker Toyota", "Superior Marble and Stone", "PC Mobile One", "Berkley", "IQVIA", "Moms in Motion", "HireGenics", "Advance", "AbbVie", "Amazon"].reverse()].map((name, index) => [name, index]));
+const employerCovers = new Map([
+ ['Employers/Farm Fresh', 'https://static.wixstatic.com/media/b7f17b_05212b8af1ca421e96590d2fa81a83b0~mv2.png'],
+ ['Employers/Western Auto', 'https://upload.wikimedia.org/wikipedia/commons/0/01/Western_Auto_-_1986.svg'],
+ ['Employers/Southern Volkswagen', 'assets/career/employers/full-tile/southern-volkswagen.webp'],
+ ['Employers/Moms in Motion', 'assets/career/employers/full-tile/moms-in-motion.webp'],
+ ['Employers/Food Lion', 'assets/career/employers/full-tile/food-lion.png'],
+ ['Employers/Sadler Foods', 'assets/career/employers/full-tile/sadler-foods-warehouse.png'],
+ ['Employers/Checkered Flag Volkswagen', 'assets/career/employers/full-tile/checkered-flag-volkswagen.jpg'],
+ ['Employers/Haley Toyota of Richmond', 'assets/career/employers/full-tile/haley-toyota-facade.png'],
+ ['Employers/Kimnach Ford', 'assets/career/employers/full-tile/kimnach-ford-street-view.png'],
+ ['Employers/Hall Mazda', 'assets/career/employers/full-tile/hall-career.webp'],
+ ['Employers/Charles Barker Toyota', 'assets/career/employers/full-tile/parker-career.webp'],
+ ['Employers/Superior Marble and Stone', 'assets/career/employers/full-tile/superior-marble-and-stone.webp'],
+ ['Employers/Triton Stone', 'assets/career/employers/triton-stone.png'],
+ ['Employers/Amazon', 'assets/career/employers/amazon.svg'],
+ ['Employers/AbbVie', 'assets/career/employers/abbvie.svg'],
+ ['Employers/Advance', 'assets/career/employers/advance.svg'],
+ ['Employers/Berkley', 'assets/career/berkley-machine-works.webp'],
+ ['Employers/HireGenics', 'assets/career/employers/hiregenics.svg'],
+ ['Employers/IQVIA', 'assets/career/employers/iqvia.svg'],
+ ['Employers/PC Mobile One', 'assets/career/employers/pc-mobile-one-ad.png'],
+]);
