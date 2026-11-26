@@ -16,6 +16,7 @@
  }
  window.taskIntake={
   read,
+  ready: thAuthorized,
   async preview(id) {
    if(!id)return null;
    const rows=(await request('/values/'+encodeURIComponent("'Email Previews'!A2:C1000"))).values||[];
@@ -35,4 +36,5 @@
    await request('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data})});
   }
  };
+ if (thAuthorized()) window.dispatchEvent(new Event('tiszod-task-intake-ready'));
 }

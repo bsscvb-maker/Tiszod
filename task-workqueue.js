@@ -426,7 +426,7 @@
 
   async function refreshIntake() {
     const api = service();
-    if (!api || intakeLoading) return;
+    if (!api?.ready() || intakeLoading) return;
     intakeLoading = true;
     renderWork();
     try {
@@ -497,7 +497,13 @@
   }
   renderWork();
   refreshIntake();
-  if (service()) {
+  if (window.parent !== window) {
+    window.parent.addEventListener('tiszod-task-intake-ready', refreshIntake);
+    window.parent.addEventListener('tiszod-drive-books-connected', refreshIntake);
+    window.addEventListener('pagehide', () => {
+      window.parent.removeEventListener('tiszod-task-intake-ready', refreshIntake);
+      window.parent.removeEventListener('tiszod-drive-books-connected', refreshIntake);
+    });
     window.setInterval(() => { if (!document.hidden) refreshIntake(); }, 60000);
     get('workDetails').addEventListener('close', offerCompletion);
   }
