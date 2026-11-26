@@ -58,7 +58,7 @@
     if (item.project && !/^uncategorized$/i.test(item.project)) return item.project;
     if (/return|refund|return label/i.test(item.title)) return 'Returns';
     if (/\bdog\b|honey|millie|lilly|lily|vaccine|vaccinat|veterinar|\bpet\b/i.test(item.title)) return 'Pets';
-    if (/interview|recruiter|resume|job application|career|employment/i.test(item.title)) return 'Career';
+    if (/interview|recruiter|resume|job application|career|employment|\bAmazon\b.*\bpreparation call\b/i.test(item.title)) return 'Career';
     if (/\bfapt\b|school|eligibility|release forms|iep/i.test(item.title)) return 'School paperwork';
     if (/registration|vehicle|mustang|4runner|oil change|tire|wiper|motorcycle|\bram\b/i.test(item.title)) return 'Vehicles';
     if (/hotel|travel|room|flight|reservation/i.test(item.title)) return 'Travel';
@@ -113,7 +113,7 @@
       return;
     }
     const heading = make('div', '', 'work-column-head');
-    for (const label of ['Status', 'Date and time added', 'Task description', 'Category', 'Where to go', 'Due date', 'Priority', '']) {
+    for (const label of ['Date and time added', 'Task description', 'Category', 'Due date', 'Priority']) {
       heading.append(make('span', label));
     }
     results.append(heading);
@@ -146,36 +146,16 @@
   }
 
 
-  let emailPreviewSequence = 0;
-  function isEmailSource(item) {
-    return /^https:\/\/mail\.google\.com\//i.test(destination(item).link || '');
-  }
-
-  async function openEmailPreview(item) {
-    const sequence = ++emailPreviewSequence;
-    const dialog = get('workDetails');
-    get('workDetailTitle').textContent = item.title;
-    const body = get('workDetailBody');
-    const mailbox = make('p', destination(item).label, 'work-email-mailbox');
-    const content = make('section', 'Loading email preview…', 'work-email-preview');
+  async function loadEmailPreview(item, content) {
+    content.textContent = 'Loading email preview…';
     content.setAttribute('aria-live', 'polite');
-    const original = make('a', 'Open original in Gmail', 'work-email-original');
-    original.href = destination(item).link;
-    original.target = '_blank';
-    original.rel = 'noopener noreferrer';
-    const controls = make('button', 'Task details');
-    controls.type = 'button';
-    controls.onclick = () => { emailPreviewSequence++; openDetails(item); };
-    body.replaceChildren(mailbox, content, controls, original);
-    if (!dialog.open) dialog.showModal();
     try {
       const api = service();
       if (!api?.preview) throw Error('Reload the portal to connect email previews.');
       const snapshot = await api.preview(item.id);
-      if (sequence !== emailPreviewSequence || !dialog.open) return;
+      if (!content.isConnected) return;
       if (!snapshot?.messages?.length) throw Error('The email snapshot is not ready yet. It will appear after the next preview sync.');
-      mailbox.textContent = snapshot.mailbox || destination(item).label;
-      content.replaceChildren();
+      content.replaceChildren(make('p', snapshot.mailbox || destination(item).label, 'work-email-mailbox'));
       for (const message of snapshot.messages.slice(0, 5)) {
         const card = make('article', '', 'work-email-card');
         card.append(make('h3', message.subject || '(No subject)'));
@@ -185,26 +165,31 @@
       }
       content.append(make('p', 'Saved email snapshot. Links and private identifiers are omitted. Open Gmail for attachments or newer messages.', 'work-email-note'));
     } catch (error) {
-      if (sequence === emailPreviewSequence && dialog.open) content.textContent = error.message || 'Could not load this email preview. Try again after refreshing.';
+      if (content.isConnected) content.textContent = error.message || 'Could not load this email preview. Try again after refreshing.';
     }
   }
 
   function sourceDetails(item) {
     const details = make('details', '', 'work-source');
-    details.append(make('summary', 'Source details'));
+    const email = Boolean(item.id && isEmailSource(item));
+    details.append(make('summary', email ? 'Email preview' : 'Source details'));
     details.append(make('p', item.source || 'Added in Task Tracker'));
-    if (item.id && isEmailSource(item)) {
-      const preview = make('button', 'View email');
-      preview.type = 'button';
-      preview.onclick = () => openEmailPreview(item);
-      details.append(preview);
-    }
     if (/^https:\/\//i.test(item.link)) {
-      const link = make('a', 'Open original');
+      const link = make('a', email ? 'Open original in Gmail' : 'Open original');
       link.href = item.link;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       details.append(link);
+    }
+    if (email) {
+      const content = make('section', '', 'work-email-preview');
+      details.append(content);
+      details.ontoggle = () => {
+        if (!details.open) return;
+        details.ontoggle = null;
+        void loadEmailPreview(item, content);
+      };
+      details.open = true;
     }
     return details;
   }
@@ -250,14 +235,7 @@
       edit.onclick = () => { get('workDetails').close(); open(item.task); };
       const addNote = make('button', 'Add note');
       addNote.onclick = () => { get('workDetails').close(); openNote(item.task); };
-      const complete = make('button', item.complete ? 'Reopen task' : 'Mark complete');
-      complete.disabled = busy || !ready;
-      complete.onclick = async () => {
-        complete.disabled = true;
-        await updateStatus(item.task, item.complete ? 'ready' : 'done');
-        get('workDetails').close();
-      };
-      body.append(edit, addNote, complete);
+      body.append(edit, addNote);
     } else {
       const label = make('label', 'Status ');
       const select = document.createElement('select');
@@ -288,6 +266,22 @@
       };
       body.append(label, dueLabel, priorityLabel, save, feedback);
     }
+    const complete = make('button', item.complete ? 'Reopen task' : 'Mark complete', 'work-complete');
+    complete.type = 'button';
+    complete.disabled = item.task ? busy || !ready : !service() || intakeLoading;
+    const actions = make('div', '', 'work-detail-actions');
+    const completionFeedback = make('p', '');
+    completionFeedback.setAttribute('role', 'status');
+    complete.onclick = async () => {
+      complete.disabled = true;
+      if (await completeItem(item)) get('workDetails').close();
+      else {
+        completionFeedback.textContent = get('workFeedback').textContent;
+        complete.disabled = false;
+      }
+    };
+    actions.append(complete, completionFeedback);
+    body.append(actions);
     if (item.task) {
       const links = meta(item.task).links;
       if (links?.length) body.append(...links.map(link => sourceDetails({ link, source: 'Task attachment' })));
@@ -313,6 +307,7 @@
       feedback.dataset.tone = 'success';
       feedback.textContent = wasComplete ? 'Task reopened. Moved to All active.' : 'Task completed. Moved to Completed.';
       feedback.hidden = false;
+      return true;
     } catch (error) {
       showError(error.message);
     } finally {
@@ -323,24 +318,15 @@
 
   function taskRow(item) {
     const row = make('article', '', 'work-row');
-    const { label, link } = destination(item);
-    const linked = /^https:\/\//i.test(link);
-    const email = isEmailSource(item);
-    const title = make(linked && !email ? 'a' : 'button', item.title, 'work-title');
-    if (email) {
-      title.type = 'button';
-      title.title = 'View email inside Task Tracker';
-      title.setAttribute('aria-label', 'View email: ' + item.title);
-      title.onclick = () => openEmailPreview(item);
-    } else if (linked) {
-      title.href = link;
-      title.target = '_blank';
-      title.rel = 'noopener noreferrer';
-      title.title = 'Open original · ' + label;
-      title.setAttribute('aria-label', item.title + ' — open original in a new tab');
-    } else {
-      title.type = 'button';
-      title.onclick = () => openDetails(item);
+    const task = make('div', '', 'work-task');
+    const title = make('button', item.title, 'work-title');
+    title.type = 'button';
+    title.onclick = () => openDetails(item);
+    task.append(title);
+    if (item.review && !item.complete) {
+      const review = make('span', 'Needs review', 'work-state');
+      review.dataset.state = 'review';
+      task.append(review);
     }
     const group = make('span', category(item), 'work-category');
     const added = make('span', addedLabel(item.added), 'work-added');
@@ -352,32 +338,7 @@
     }
     const priority = make('span', priorityLabels[item.priority] || '—', 'work-priority');
     if (item.priority) priority.dataset.priority = item.priority;
-    const status = make('span', item.review && !item.complete ? 'Needs review' : item.status, 'work-state');
-    status.dataset.state = item.complete ? 'complete' : item.review ? 'review' : 'active';
-    const more = make('button', 'Details', 'work-more');
-    more.onclick = () => openDetails(item);
-
-    const where = make(email ? 'button' : linked ? 'a' : 'span', label, 'work-destination');
-    if (email) {
-      where.type = 'button';
-      where.title = 'View email';
-      where.onclick = () => openEmailPreview(item);
-    } else if (linked) {
-      where.href = link;
-      where.target = '_blank';
-      where.rel = 'noopener noreferrer';
-      where.setAttribute('aria-label', label + ' for ' + item.title);
-    }
-    const statusCell = make('div', '', 'work-status');
-    const complete = make('button', item.complete ? 'Reopen' : 'Mark complete', 'work-complete');
-    complete.type = 'button';
-    complete.setAttribute('aria-label', (item.complete ? 'Reopen ' : 'Mark complete: ') + item.title);
-    const saving = savingTasks.has(item.id || item.task.id);
-    complete.disabled = saving || (item.task ? busy || !ready : !service() || intakeLoading);
-    if (saving) complete.textContent = 'Saving…';
-    complete.onclick = () => completeItem(item);
-    statusCell.append(complete, status);
-    row.append(statusCell, added, title, group, where, due, priority, more);
+    row.append(added, task, group, due, priority);
     return row;
   }
 
