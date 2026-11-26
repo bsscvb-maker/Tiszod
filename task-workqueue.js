@@ -26,12 +26,18 @@
     return window.parent.taskIntake;
   }
 
+  function addedLabel(value) {
+    if (!value) return 'Date unavailable';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Date unavailable' : noteStamp(date);
+  }
+
   function sharedItems() {
     return tasks.map(task => {
       const details = meta(task);
       const status = statusOf(task);
       return {
-        title: task.text, notes: details.notes, owner: details.owner, project: details.project,
+        title: task.text, notes: details.notes, added: task.createdAt, project: details.project,
         updates: details.updates || [],
         priority: tierOf(task), due: details.due, status: sharedStates[status],
         complete: status === 'done', review: details.needsReview === true, task
@@ -96,7 +102,7 @@
     const priority = get('workPriority').value;
     const visible = items.filter(item => inScope(item)
       && (!priority || item.priority === priority)
-      && [item.title, item.notes, item.owner, category(item)].filter(Boolean).join(' ').toLowerCase().includes(query)
+      && [item.title, item.notes, category(item)].filter(Boolean).join(' ').toLowerCase().includes(query)
     ).sort(compare);
 
     const results = get('workResults');
@@ -107,7 +113,7 @@
       return;
     }
     const heading = make('div', '', 'work-column-head');
-    for (const label of ['Task description', 'Category', 'Owner', 'Where to go', 'Due date', 'Priority', 'Status', '']) {
+    for (const label of ['Status', 'Date and time added', 'Task description', 'Category', 'Where to go', 'Due date', 'Priority', '']) {
       heading.append(make('span', label));
     }
     results.append(heading);
@@ -228,7 +234,7 @@
   function openDetails(item) {
     get('workDetailTitle').textContent = item.title;
     const body = get('workDetailBody');
-    body.replaceChildren(make('p', [item.status, item.owner || 'Unassigned', item.due ? dateLabel(item.due) : 'No due date'].join(' · ')));
+    body.replaceChildren(make('p', [item.status, addedLabel(item.added), item.due ? dateLabel(item.due) : 'No due date'].join(' · ')));
     body.append(make('p', 'Category: ' + category(item)));
     if (item.notes) body.append(make('p', item.notes));
     if (item.updates?.length) {
@@ -337,7 +343,7 @@
       title.onclick = () => openDetails(item);
     }
     const group = make('span', category(item), 'work-category');
-    const owner = make('span', item.owner || 'Unassigned', 'work-owner');
+    const added = make('span', addedLabel(item.added), 'work-added');
 
     const due = make('span', item.due ? dateLabel(item.due) : '—', 'work-due');
     if (inScope(item, 'overdue')) {
@@ -370,8 +376,8 @@
     complete.disabled = saving || (item.task ? busy || !ready : !service() || intakeLoading);
     if (saving) complete.textContent = 'Saving…';
     complete.onclick = () => completeItem(item);
-    statusCell.append(status, complete);
-    row.append(title, group, owner, where, due, priority, statusCell, more);
+    statusCell.append(complete, status);
+    row.append(statusCell, added, title, group, where, due, priority, more);
     return row;
   }
 
@@ -418,9 +424,9 @@
     try {
       const rows = await api.read();
       const unique = new Map();
-      for (const [id, source, title, owner, due, link, status, , priority, evidence, evidenceLink] of rows) {
+      for (const [id, source, title, , due, link, status, added, priority, evidence, evidenceLink] of rows) {
         if (!id || !title || unique.has(id)) continue;
-        unique.set(id, { id, source, title, owner, due, link, status, evidence, evidenceLink, priority: intakePriorities[priority], review: status === 'Needs review', complete: status === 'Done' });
+        unique.set(id, { id, source, title, added, due, link, status, evidence, evidenceLink, priority: intakePriorities[priority], review: status === 'Needs review', complete: status === 'Done' });
       }
       intake = [...unique.values()];
       intakeError = '';

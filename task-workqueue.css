@@ -16,9 +16,9 @@
 .work-toolbar input{flex:1;min-width:140px}
 .work-toolbar label{display:flex;align-items:center;gap:6px;font-size:13px;margin:0}
 #workResults{margin-top:10px;background:#dce4e9;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.work-row,.work-column-head{display:grid;grid-template-columns:minmax(0,1fr) clamp(106px,13%,174px) clamp(86px,9%,120px) minmax(105px,10%) 114px 73px 106px 60px;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.work-row,.work-column-head{display:grid;grid-template-columns:106px 122px minmax(0,1fr) clamp(88px,11%,154px) minmax(95px,10%) 100px 73px 60px;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
 .work-column-head{background:#dce1e5;color:#3c4a5b;font-size:12px;font-weight:750}
-.work-category,.work-owner,.work-destination{color:var(--soft);font-size:13px;overflow-wrap:anywhere}
+.work-category,.work-added,.work-destination{color:var(--soft);font-size:13px;overflow-wrap:anywhere}
 .work-row:last-child{border-bottom:0}
 .work-title{padding:0;background:transparent;border:0;color:var(--ink);font-weight:750;text-align:left;overflow-wrap:anywhere;min-height:0}
 .work-title:hover{text-decoration:underline}
@@ -48,12 +48,12 @@ a.work-destination{color:#244f76;text-underline-offset:2px}
   .tracker-embedded main{padding:8px}
   .work-column-head{display:none}
   .work-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px 8px}
-  .work-title{grid-column:1 / 3;grid-row:1}.work-more{grid-column:3;grid-row:1}
-  .work-category{grid-column:1;grid-row:2}.work-owner{grid-column:2;grid-row:2}
-  .work-category::before{content:"Category: "}.work-owner::before{content:"Owner: "}
+  .work-title{grid-column:1 / 3;grid-row:2}.work-more{grid-column:3;grid-row:2}
+  .work-category{grid-column:1;grid-row:3}.work-added{grid-column:2 / 4;grid-row:1}
+  .work-category::before{content:"Category: "}.work-added::before{content:"Added: "}
   .work-destination{grid-column:1 / 4;grid-row:4}
   .work-destination::before{content:"Where to go: "}
-  .work-due{grid-column:1;grid-row:3}.work-priority{grid-column:2;grid-row:3}.work-state{grid-column:3;grid-row:3}
+  .work-due{grid-column:2;grid-row:3}.work-priority{grid-column:3;grid-row:3}
 }
 
 /* Clear, reversible completion action in every row. */
@@ -62,7 +62,7 @@ a.work-destination{color:#244f76;text-underline-offset:2px}
 #workDashboard .work-complete:hover{background:#cde4d6}
 #workDashboard .work-complete:disabled{opacity:.6;cursor:wait}
 #workFeedback[data-tone=success]{color:#205c3d;background:#e0eee6;border-bottom:1px solid #aac8b8}
-@media(max-width:900px){.work-status{grid-column:3;grid-row:3}.work-status .work-state{grid-column:auto;grid-row:auto}#workDashboard .work-complete{min-height:44px}}
+@media(max-width:900px){.work-status{grid-column:1;grid-row:1}.work-status .work-state{grid-column:auto;grid-row:auto}#workDashboard .work-complete{min-height:44px}}
 
 #workFeedback[data-tone=info]{color:#263c4a;background:#dce4e9}
 
