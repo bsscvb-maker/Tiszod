@@ -545,7 +545,27 @@
     }
     group.onchange = () => apply(group, category(item), {category:group.value});
     due.onchange = () => apply(due, item.due || '', {due:due.value});
-    priority.onchange = () => apply(priority, item.priority || '', {priority:priority.value});
+    const priorityColors = {
+      tier1: ['#701e32', '#fff1f4', '#e56c84'],
+      tier2: ['#f3cb65', '#2e240d', '#ddb24a'],
+      tier3: ['#174c35', '#e0f8eb', '#54ad81']
+    };
+    function paintPriority() {
+      const colors = priorityColors[priority.value];
+      ['background-color', 'color', 'border-color'].forEach((property, index) => {
+        if (colors) priority.style.setProperty(property, colors[index], 'important');
+        else priority.style.removeProperty(property);
+      });
+    }
+    paintPriority();
+    priority.onchange = async () => {
+      paintPriority();
+      try {
+        await apply(priority, item.priority || '', {priority:priority.value});
+      } finally {
+        paintPriority();
+      }
+    };
     review.onchange = () => apply(review, item.reviewChoice, {review:review.value});
     company.onchange = () => {
       const previous = item.company || '';
