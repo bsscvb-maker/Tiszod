@@ -64,6 +64,7 @@
 .weight-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px;margin:12px 0}
 .weight-scorecard>div{display:grid;gap:5px;padding:12px;background:#152f3b;border:1px solid #315463;border-radius:10px}
 .weight-scorecard span{font-weight:700;color:#bdebe7}.weight-scorecard strong{font-size:clamp(1.25rem,3vw,2rem);color:#9cf0d9}.weight-scorecard small,.weight-note{color:#b6cad9}
+.medical-command-metric .medical-trend-arrow,.weight-scorecard .medical-trend-arrow{display:inline-block;margin-inline-start:.3em;color:#abcaff;font-size:.8em;line-height:1;vertical-align:.08em}
 .weight-plot{display:block;width:100%;max-height:345px;overflow:visible}
 .weight-plot text{fill:#b6cad9;font:11px system-ui,sans-serif}
 .weight-grid{stroke:#365262;stroke-dasharray:3 4}.weight-line{fill:none;stroke:#55e2be;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
