@@ -16,6 +16,115 @@
   let intakeRevision = 0;
   let intakeWrites = 0;
   let renderedRows = '';
+  const contextSection = 'Task Context Options';
+  const defaultContexts = ['AbbVie', 'Allergan', 'Amazon', 'BoneShakers Social Club', 'IQVIA',
+    'Life Protect 24/7', 'Triton Stone', 'Not applicable'];
+  const contextKey = name => name.trim().toLowerCase();
+  let savedContexts = new Map();
+  let contextReady = false;
+  let contextBusy = false;
+
+  function contextOptions(items) {
+    const options = new Map();
+    for (const name of [...defaultContexts, ...items.map(item => item.company)]) {
+      if (typeof name === 'string' && name.trim() && !options.has(contextKey(name))) {
+        options.set(contextKey(name), name.trim());
+      }
+    }
+    for (const [key, name] of savedContexts) {
+      if (name === null) options.delete(key);
+      else if (typeof name === 'string') options.set(key, name);
+    }
+    return [...options.values()].sort((a,b) => a.localeCompare(b));
+  }
+
+  async function loadContexts() {
+    const api = taskPreferences();
+    if (!api || contextBusy) return;
+    contextBusy = true;
+    try {
+      savedContexts = await api.recover(contextSection, []);
+      contextReady = true;
+    } catch (error) {
+      showError('Could not load context options. ' + error.message);
+    } finally {
+      contextBusy = false;
+      renderWork();
+    }
+  }
+
+  async function saveContexts(entries) {
+    const api = taskPreferences();
+    if (!api || !contextReady || contextBusy) throw Error('Connect the private workbook and try again.');
+    contextBusy = true;
+    try {
+      await api.save(contextSection, entries);
+      for (const [key, value] of entries) savedContexts.set(key, value);
+    } finally {
+      contextBusy = false;
+    }
+  }
+
+  async function editContexts() {
+    await loadContexts();
+    const dialog = get('workContexts');
+    const list = get('workContextList');
+    const input = get('workContextName');
+    const feedback = get('workContextFeedback');
+    const save = get('workContextSave');
+    const remove = get('workContextRemove');
+    const close = get('workContextClose');
+
+    function updateList(selected = '') {
+      list.replaceChildren(new Option('Add a new option', ''),
+        ...contextOptions([...sharedItems(), ...intake]).map(name => new Option(name, name)));
+      list.value = selected;
+      list.onchange();
+    }
+
+    list.onchange = () => {
+      input.value = list.value;
+      save.textContent = list.value ? 'Save name' : 'Add option';
+      remove.disabled = !list.value;
+      feedback.textContent = '';
+    };
+    async function changeOption(removing) {
+      const previous = list.value;
+      const name = input.value.trim();
+      const key = contextKey(name);
+      const oldKey = contextKey(previous);
+      if (!removing && (!name || key === '__other')) {
+        feedback.textContent = 'Enter a name for the option.';
+        return;
+      }
+      if (!removing && key !== oldKey && [...list.options].some(option => contextKey(option.value) === key)) {
+        feedback.textContent = 'This option already exists.';
+        return;
+      }
+      const changes = [];
+      if (previous && (removing || key !== oldKey)) changes.push([oldKey, null]);
+      if (!removing) changes.push([key, name]);
+      if (!changes.length) return;
+      for (const control of [list, input, save, remove, close]) control.disabled = true;
+      try {
+        await saveContexts(changes);
+        renderWork();
+        updateList(removing ? '' : name);
+        feedback.textContent = removing ? 'Option removed.' : 'Option saved.';
+      } catch (error) {
+        feedback.textContent = error.message;
+      } finally {
+        for (const control of [list, input, save, close]) control.disabled = false;
+        remove.disabled = !list.value;
+      }
+    }
+    get('workContextForm').onsubmit = event => { event.preventDefault(); void changeOption(false); };
+    remove.onclick = () => void changeOption(true);
+    close.onclick = () => dialog.close();
+    dialog.oncancel = event => { if (contextBusy) event.preventDefault(); };
+    updateList();
+    dialog.showModal();
+  }
 
   function make(tag, text, className) {
     const node = document.createElement(tag);
@@ -102,6 +211,7 @@
     get('workSummary').textContent = busy && !ready ? 'Loading tasks…'
       : counts.active + ' active · ' + counts.review + ' need review';
     get('workNew').disabled = busy || !ready;
+    get('workManageContexts').disabled = !contextReady || contextBusy || !taskPreferences();
     get('workRefresh').disabled = busy || intakeLoading || scanRunning;
     get('workRefresh').textContent = scanRunning ? 'Checking email…' : 'Refresh';
     for (const button of scopes) {
@@ -118,7 +228,8 @@
     ).sort(compare);
 
     const results = get('workResults');
-    const rowsKey = JSON.stringify(visible.length ? [visible, items.map(category)] : [busy || intakeLoading]);
+    const contexts = contextOptions(items);
+    const rowsKey = JSON.stringify(visible.length ? [visible, items.map(category), contexts] : [busy || intakeLoading]);
     if (rowsKey === renderedRows) return;
     renderedRows = rowsKey;
     results.replaceChildren();
@@ -128,7 +239,7 @@
       return;
     }
     const heading = make('div', '', 'work-column-head');
-    for (const label of ['Date added', 'Time', 'Task description', 'Company', 'Category', 'Due date', 'Priority', 'Review', 'Done']) {
+    for (const label of ['Date added', 'Time', 'Task description', 'Organization / Context', 'Category', 'Due date', 'Priority', 'Review', 'Done']) {
       heading.append(make('span', label));
     }
     results.append(heading);
@@ -137,7 +248,7 @@
       'Portal maintenance', 'Returns', 'School paperwork', 'Travel', 'Uncategorized', 'Vehicles',
       ...items.map(category)
     ])].sort((a,b) => a.localeCompare(b));
-    for (const item of visible) results.append(taskRow(item, availableCategories));
+    for (const item of visible) results.append(taskRow(item, availableCategories, contexts));
   }
 
   function showError(message) {
@@ -375,7 +486,7 @@
     } : record));
   }
 
-  function taskRow(item, availableCategories) {
+  function taskRow(item, availableCategories, contexts) {
     const row = make('article', '', 'work-row');
     const task = make('div', '', 'work-task');
     const title = make('button', item.title, 'work-title');
@@ -406,10 +517,12 @@
     ]);
     review.dataset.state = item.reviewChoice.toLowerCase().replace('needs ', '');
     review.disabled = item.complete;
-    const companies = [...new Set(['AbbVie', 'Allergan', 'Amazon', 'BoneShakers Social Club', 'IQVIA', 'Life Protect 24/7', 'Triton Stone', 'Not applicable', item.company].filter(Boolean))];
-    const company = rowSelect(item, 'Company', item.company || '', [
-      ['', 'Pick company'], ...companies.map(name => [name, name]), ['__other', 'Other…']
+    const options = contexts.map(name => [name, name]);
+    if (item.company && !contexts.includes(item.company)) options.unshift([item.company, item.company]);
+    const company = rowSelect(item, 'Organization / Context', item.company || '', [
+      ['', 'Pick a context'], ...options, ['__other', 'Other…']
     ]);
+    company.className = 'work-row-field work-company';
     company.dataset.unset = String(!item.company);
     const fields = [group, due, priority, review, company];
     async function apply(field, previous, changes) {
@@ -417,7 +530,9 @@
       fields.forEach(control => { control.disabled = true; });
       checkbox.disabled = true;
       try {
+        if (changes.newContext) await saveContexts([[contextKey(changes.company), changes.company]]);
         if (!await saveRowChanges(item, changes)) field.value = previous;
+        if (changes.newContext) { renderedRows = ''; renderWork(); }
       } catch (error) {
         field.value = previous;
         showError(error.message);
@@ -433,12 +548,20 @@
     review.onchange = () => apply(review, item.reviewChoice, {review:review.value});
     company.onchange = () => {
       const previous = item.company || '';
-      const value = company.value === '__other' ? window.prompt('Company name')?.trim() : company.value;
-      if (value == null || (company.value === '__other' && !value)) {
-        company.value = previous;
+      if (company.value !== '__other') return apply(company, previous, {company:company.value});
+      const name = window.prompt('Organization or context name')?.trim();
+      company.value = previous;
+      if (!name) return;
+      if (name.length > 120 || contextKey(name) === '__other') {
+        showError('Enter a context name of up to 120 characters.');
         return;
       }
-      return apply(company, previous, {company:value});
+      const existing = contexts.find(option => contextKey(option) === contextKey(name));
+      const value = existing || name;
+      const key = contextKey(value);
+      const saved = savedContexts.get(key);
+      const reusable = typeof saved === 'string' || (saved === undefined && defaultContexts.some(option => contextKey(option) === key));
+      return apply(company, previous, {company:value, newContext:!reusable});
     };
     const done = make('label', '', 'work-done');
     const checkbox = make('input', '');
@@ -535,7 +658,7 @@
     report('Checking email…');
     renderWork();
     try {
-      const savedTasks = Promise.allSettled([load(), refreshIntake()]);
+      const savedTasks = Promise.allSettled([load(), refreshIntake(), loadContexts()]);
       if (!window.requestTaskEmailCheck) throw Error('Email checking is unavailable. Reload the portal and try again.');
       const result = await window.requestTaskEmailCheck(report);
       if (result.complete) mailbox.style.setProperty('--mail-progress', '100%');
@@ -552,6 +675,7 @@
   }
   get('workRefresh').onclick = refreshWork;
   get('workNew').onclick = () => open();
+  get('workManageContexts').onclick = editContexts;
   get('workClose').onclick = () => get('workDetails').close();
   get('workSearch').oninput = renderWork;
   get('workPriority').onchange = renderWork;
@@ -570,12 +694,15 @@
   }
   renderWork();
   refreshIntake();
+  loadContexts();
   if (window.parent !== window) {
     window.parent.addEventListener('tiszod-task-intake-ready', refreshIntake);
     window.parent.addEventListener('tiszod-drive-books-connected', refreshIntake);
+    window.parent.addEventListener('tiszod-drive-books-connected', loadContexts);
     window.addEventListener('pagehide', () => {
       window.parent.removeEventListener('tiszod-task-intake-ready', refreshIntake);
       window.parent.removeEventListener('tiszod-drive-books-connected', refreshIntake);
+      window.parent.removeEventListener('tiszod-drive-books-connected', loadContexts);
     });
     window.setInterval(() => { if (!document.hidden) refreshIntake(); }, 60000);
     get('workDetails').addEventListener('close', offerCompletion);
