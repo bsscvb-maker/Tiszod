@@ -678,7 +678,7 @@
     const compositionTypes=['BodyMass','BodyMassIndex','BodyFatPercentage','Muscle','BodyWaterPercentage','BoneMass'];
     const statusByKey=new Map();
     const compositionCards=[];
-    for(const [index,[symbol,label,value,unit,,key]] of metricData.entries()){
+    for(const [index,[symbol,label,value,unit,previous,key]] of metricData.entries()){
       const isWeight=key==='weight';
       const source=isWeight?(weightRows[0]||metricsFor(key)[0]):(metricsFor(key)[0]||weightRows[0]);
       const makeReading=(row,amount)=>({
@@ -693,8 +693,10 @@
       if(Number.isFinite(value))compositionCards.push({...entry,label,status});
 
       const card=make('div');card.className='medical-command-metric';
-      card.append(dashboardIcon(symbol),make('span',label),
-        make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—'),metricStatus.badge(status));
+      const amount=make('strong',Number.isFinite(value)?value.toFixed(1)+unit:'—');
+      const arrow=metricStatus.trend?.(value,previous,'from the previous reading');
+      if(arrow)amount.append(arrow);
+      card.append(dashboardIcon(symbol),make('span',label),amount,metricStatus.badge(status));
       if(source)card.title='Recorded '+(source.date||formatTime.format(measurementTime(source)));
       if(key==='bmi'&&!bmiPair.length&&Number.isFinite(value))card.title='Estimated from recorded weight and profile height';
       metrics.append(card);
