@@ -546,9 +546,9 @@
     group.onchange = () => apply(group, category(item), {category:group.value});
     due.onchange = () => apply(due, item.due || '', {due:due.value});
     const priorityColors = {
-      tier1: ['#701e32', '#fff1f4', '#e56c84'],
-      tier2: ['#f3cb65', '#2e240d', '#ddb24a'],
-      tier3: ['#174c35', '#e0f8eb', '#54ad81']
+      tier1: ['#f8d7da', '#70202b', '#e6a3ac'],
+      tier2: ['#fff0b8', '#554000', '#e6cc72'],
+      tier3: ['#d3f0dc', '#205638', '#9ad2ac']
     };
     function paintPriority() {
       const colors = priorityColors[priority.value];
