@@ -85,8 +85,8 @@
     }
     const lowY = y(lowest.weight);
     svg.append(
-      svgNode('line',{x1:pad.left,x2:w-pad.right,y1:lowY,y2:lowY,stroke:'#91eb73','stroke-width':1.5}),
-      svgNode('text',{x:w-pad.right-4,y:lowY-7,'text-anchor':'end',stroke:'#132330','stroke-width':3,'paint-order':'stroke',style:'fill:#91eb73;font-weight:700'},lowLabel)
+      svgNode('line',{x1:pad.left,x2:w-pad.right,y1:lowY,y2:lowY,stroke:'#638fd0','stroke-width':1.5}),
+      svgNode('text',{x:pad.left+10,y:lowY-10,'text-anchor':'start',stroke:'#132330','stroke-width':3,'paint-order':'stroke',style:'fill:#abcaff;font-weight:700'},lowLabel)
     );
     target.append(svg);
     const note=document.createElement('p');note.className='weight-note';
