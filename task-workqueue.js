@@ -211,7 +211,8 @@
     get('workSummary').textContent = busy && !ready ? 'Loading tasks…'
       : counts.active + ' active · ' + counts.review + ' need review';
     get('workNew').disabled = busy || !ready;
-    get('workManageContexts').disabled = !contextReady || contextBusy || !taskPreferences();
+    const manageContexts = get('workManageContexts');
+    if (manageContexts) manageContexts.disabled = !contextReady || contextBusy || !taskPreferences();
     get('workRefresh').disabled = busy || intakeLoading || scanRunning;
     get('workRefresh').textContent = scanRunning ? 'Checking email…' : 'Refresh';
     for (const button of scopes) {
@@ -675,7 +676,7 @@
   }
   get('workRefresh').onclick = refreshWork;
   get('workNew').onclick = () => open();
-  get('workManageContexts').onclick = editContexts;
+  get('workManageContexts')?.addEventListener('click', editContexts);
   get('workClose').onclick = () => get('workDetails').close();
   get('workSearch').oninput = renderWork;
   get('workPriority').onchange = renderWork;
