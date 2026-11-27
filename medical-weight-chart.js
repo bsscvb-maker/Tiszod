@@ -40,13 +40,15 @@
     const g = geometry(points,w,h,pad,lowest.weight), {first,last,x,y} = g;
     const delta = last.weight-first.weight, known = first.unit && last.unit;
     const cards = document.createElement('div');cards.className='weight-scorecard';
-    for (const [label,value,detail] of [
-      ['Latest weigh-in',number(last.weight)+(last.unit?' '+last.unit:''),prettyDate(last.time,{dateStyle:'medium'})+(last.source?' · '+last.source:'')],
-      ['Change in range',points.length<2?'—':(delta>0?'+':'')+number(delta)+(known?' lb':''),known?'First to latest reading':'Workbook units unlisted'],
+    const previous = rows.at(-2);
+    const trend = window.thMedicalMetricStatus?.trend;
+    for (const [label,value,detail,arrow] of [
+      ['Latest weigh-in',number(last.weight)+(last.unit?' '+last.unit:''),prettyDate(last.time,{dateStyle:'medium'})+(last.source?' · '+last.source:''),trend?.(last.weight,previous?.weight,'from the previous weigh-in')],
+      ['Change in range',points.length<2?'—':(delta>0?'+':'')+number(delta)+(known?' lb':''),known?'First to latest reading':'Workbook units unlisted',trend?.(last.weight,points.length>1?first.weight:undefined,'over the selected range')],
       ['Recorded readings',String(points.length),prettyDate(first.time,{dateStyle:'medium'})+' to '+prettyDate(last.time,{dateStyle:'medium'})]
     ]) {
       const card=document.createElement('div'), caption=document.createElement('span'), amount=document.createElement('strong'), note=document.createElement('small');
-      caption.textContent=label; amount.textContent=value; note.textContent=detail; card.append(caption,amount,note);cards.append(card);
+      caption.textContent=label; amount.textContent=value; if(arrow)amount.append(arrow); note.textContent=detail; card.append(caption,amount,note);cards.append(card);
     }
     target.append(cards);
     const svgNode = (name,attrs={},label) => {
