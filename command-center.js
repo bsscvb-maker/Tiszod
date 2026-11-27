@@ -43,7 +43,18 @@
  else goalNote.textContent='Available checking balance unavailable. Open Finance to review it.';
  if(checking.value===null)throw Error('Available balance unavailable');
  }
- async function loadTasks(){try{const r=await fetch('https://script.google.com/macros/s/AKfycbx9nruVEhEGyygWwdAknNRRvDCC7vIVnTxtWUq44_NCqoV9t3sDhAVP3CMmEAsbYA2XTQ/exec?action=getAll',{signal:AbortSignal.timeout(18000),cache:'no-store'});let d=await r.json();d=d.data||d;if(!Array.isArray(d.tasks))throw Error();const active=d.tasks.filter(t=>t.status!=='done'&&t.tier!=='parked');values.tasks.value.textContent=active.length;values.tasks.value.dataset.tone=active.length>=6?'negative':active.length>=3?'warning':'positive';facts('tasks',[active.filter(t=>{let p;const notes=String(t.notes||''),at=notes.lastIndexOf('\n[TISZOD_TASKV2]');if(at>=0)try{p=JSON.parse(notes.slice(at+'\n[TISZOD_TASKV2]'.length)).priority}catch{}return (p||t.tier)==='tier1'}).length+' critical-priority tasks',active.filter(t=>t.status==='waiting').length+' tasks waiting on others']);values.tasks.note.textContent='Ready, working, and waiting tasks'}catch{values.tasks.value.textContent='—';values.tasks.value.dataset.tone='neutral';values.tasks.note.textContent='Task service unavailable · Open tracker';facts('tasks',['Open tracker to review priorities','Check waiting tasks for follow-up']);throw Error('Task service unavailable')}}
+ async function loadTasks(){try{const r=await fetch('https://script.google.com/macros/s/AKfycbx9nruVEhEGyygWwdAknNRRvDCC7vIVnTxtWUq44_NCqoV9t3sDhAVP3CMmEAsbYA2XTQ/exec?action=getAll',{signal:AbortSignal.timeout(18000),cache:'no-store'});let d=await r.json();d=d.data||d;if(!Array.isArray(d.tasks))throw Error();const active=d.tasks.filter(t=>t.status!=='done'&&t.tier!=='parked');values.tasks.value.textContent=active.length;values.tasks.value.dataset.tone=active.length>=6?'negative':active.length>=3?'warning':'positive';const counts={tier1:0,tier2:0,tier3:0};
+ for(const task of active){
+  const notes=String(task.notes||''),marker='\n[TISZOD_TASKV2]',at=notes.lastIndexOf(marker);
+  let priority;
+  if(at>=0){try{priority=JSON.parse(notes.slice(at+marker.length)).priority}catch{}}
+  if(!Object.hasOwn(counts,priority)){
+   priority=({tier1:'tier1',tier3:'tier2',tier4:'tier3',tier5:'tier3'})[task.tier]||'tier2';
+  }
+  counts[priority]++;
+ }
+ facts('tasks',[counts.tier1+' High (Critical)',counts.tier2+' Medium',counts.tier3+' Low']);
+ values.tasks.note.textContent='Ready, working, and waiting tasks'}catch{values.tasks.value.textContent='—';values.tasks.value.dataset.tone='neutral';values.tasks.note.textContent='Task service unavailable · Open tracker';facts('tasks',['Open tracker to review priorities','Check waiting tasks for follow-up']);throw Error('Task service unavailable')}}
 
  const stamp=value=>{const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'}):'date unavailable'};
  for(const id of Object.keys(values)){const n=el('small','pc-checked','Not checked yet');values[id].checked=n;}
