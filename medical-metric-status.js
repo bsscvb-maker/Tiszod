@@ -94,5 +94,19 @@
     }
     return group;
   }
-  window.thMedicalMetricStatus = {badge, compare, typeOf, valueOf};
+  function trend(current, previous, basis) {
+    if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
+    const rounded = value => Math.round(value * 10);
+    const change = rounded(current) - rounded(previous);
+    const [symbol, label] = change > 0 ? ['↗', 'Up'] : change < 0 ? ['↘', 'Down'] : ['→', 'Steady'];
+    const arrow = document.createElement('span');
+    arrow.className = 'medical-trend-arrow';
+    arrow.title = label + ' ' + basis;
+    arrow.setAttribute('role', 'img');
+    arrow.setAttribute('aria-label', arrow.title);
+    arrow.textContent = symbol;
+    return arrow;
+  }
+
+  window.thMedicalMetricStatus = {badge, compare, trend, typeOf, valueOf};
 })();
