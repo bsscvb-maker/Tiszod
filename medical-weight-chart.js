@@ -11,10 +11,10 @@
     }
     return [...rows.values()].sort((a,b)=>a.time-b.time).map(row=>row.unit==='kg'?{...row,weight:row.weight*2.2046226218,unit:'lb'}:row);
   }
-  function geometry(rows,width,height,padding) {
+  function geometry(rows,width,height,padding,referenceWeight = rows[0].weight) {
     const {left,right,top,bottom} = padding;
     const first = rows[0], last = rows.at(-1);
-    const min = Math.min(...rows.map(row=>row.weight)), max = Math.max(...rows.map(row=>row.weight));
+    const min = Math.min(referenceWeight,...rows.map(row=>row.weight)), max = Math.max(...rows.map(row=>row.weight));
     const step = [2,5,10,20,25,50,100].find(value=>value >= (max-min)/5) || Math.ceil((max-min)/500)*100;
     const floor = Math.floor((min-1)/step)*step, ceiling = Math.ceil((max+1)/step)*step;
     const x = row => first.time === last.time ? (left+width-right)/2 : left+(row.time-first.time)/(last.time-first.time)*(width-left-right);
@@ -35,7 +35,9 @@
     const points = days ? rows.filter(row=>row.time>=latest.time-days*day) : rows;
     const w = Math.max(300,Math.min(920,target.clientWidth||820)), h = w<480?250:320;
     const pad = {left:44,right:21,top:20,bottom:34};
-    const g = geometry(points,w,h,pad), {first,last,x,y} = g;
+    const lowest = rows.reduce((low,row)=>row.weight<low.weight?row:low);
+    const lowLabel = 'All-time low: '+number(lowest.weight)+(lowest.unit?' '+lowest.unit:'');
+    const g = geometry(points,w,h,pad,lowest.weight), {first,last,x,y} = g;
     const delta = last.weight-first.weight, known = first.unit && last.unit;
     const cards = document.createElement('div');cards.className='weight-scorecard';
     for (const [label,value,detail] of [
@@ -53,7 +55,7 @@
       if (label!=null) element.textContent=label;
       return element;
     };
-    const svg = svgNode('svg',{viewBox:`0 0 ${w} ${h}`,class:'weight-plot',role:'img','aria-label':'Recorded weight history. Latest '+number(last.weight)+' '+(last.unit||'unit unlisted')+'.'});
+    const svg = svgNode('svg',{viewBox:`0 0 ${w} ${h}`,class:'weight-plot',role:'img','aria-label':'Recorded weight history. Latest '+number(last.weight)+' '+(last.unit||'unit unlisted')+'. '+lowLabel+'.'});
     for (const tick of g.ticks) {
       svg.append(svgNode('line',{x1:pad.left,x2:w-pad.right,y1:y(tick),y2:y(tick),class:'weight-grid'}));
       svg.append(svgNode('text',{x:pad.left-7,y:y(tick)+4,'text-anchor':'end'},number(tick)));
@@ -81,6 +83,11 @@
         dot.append(svgNode('title',{},row.date+' · '+number(row.weight)+' '+(row.unit||'(unit unlisted)')));svg.append(dot);
       }
     }
+    const lowY = y(lowest.weight);
+    svg.append(
+      svgNode('line',{x1:pad.left,x2:w-pad.right,y1:lowY,y2:lowY,stroke:'#91eb73','stroke-width':1.5}),
+      svgNode('text',{x:w-pad.right-4,y:lowY-7,'text-anchor':'end',stroke:'#132330','stroke-width':3,'paint-order':'stroke',style:'fill:#91eb73;font-weight:700'},lowLabel)
+    );
     target.append(svg);
     const note=document.createElement('p');note.className='weight-note';
     note.textContent=(g.segments.length>1?'Dashed lines connect readings more than 45 days apart. ':'')+
