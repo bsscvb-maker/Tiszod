@@ -10,6 +10,7 @@
 <div class="row shipment-toolbar"><span id="message" role="status"></span><div class="actions"><small id="last-checked" hidden></small><button type="button" id="refresh">Refresh</button></div></div><p class="notice">Packages are stored in your private workbook. Tracking shows the latest update saved to your private workbook.</p>
 <section id="pendingOrders" hidden><h2>Awaiting tracking</h2><div class="list" id="pendingList"></div></section>
 <section><div class="row"><h2>Packages with tracking</h2></div><div class="list" id="list"></div></section>
+<details class="shipment-history" open><summary>Shipment history <span id="history-count"></span></summary><div class="list" id="history-list"></div></details>
 <details class="manual-entry"><summary>Add a package manually</summary><form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option><option>Amazon</option></select></label><button class="primary">Save package</button></form></details>
 
 <dialog id="rename" aria-labelledby="rename-title"><h2 id="rename-title">Edit package name</h2><form id="rename-form"><label>Package name<input id="new-name" maxlength="80" required></label><div class="actions"><button class="primary">Save name</button><button type="button" id="cancel-rename">Cancel</button></div></form></dialog></main><script>
@@ -24,6 +25,7 @@ const carrierSelect = document.querySelector('#carrier');
 const packageName = document.querySelector('#name');
 const message = document.querySelector('#message');
 const list = document.querySelector('#list');
+const historyList = document.querySelector('#history-list');
 const refresh = document.querySelector('#refresh');
 const lastChecked = document.querySelector('#last-checked');
 const rename = document.querySelector('#rename');
@@ -74,8 +76,9 @@ async function loadPackages() {
       Object.assign(byNumber.get(number), {status, location, eta, scanTime, scanDetail});
     } else if (action === 'carrier' && byNumber.has(number)) {
       byNumber.get(number).carrier = Object.hasOwn(carriers,carrier) ? carrier : '';
+    } else if (action === 'historical') {
+      byNumber.set(number, {number, carrier, name, historical:true, shipmentDate:scanTime, scanDetail});
     } else if (action === 'save' && !byNumber.has(number)) {
-      byNumber.delete(number);
       byNumber.set(number, {number, carrier: Object.hasOwn(carriers,carrier) ? carrier : '', name: name || ''});
     }
   }
@@ -153,6 +156,10 @@ function node(tag, content, className) {
 }
 function render() {
   list.replaceChildren();
+  historyList.replaceChildren();
+  const historyCount = packages.filter(item => item.historical || item.status === 'delivered').length;
+  document.querySelector('#history-count').textContent = historyCount ? '('+historyCount+')' : '';
+  if (!historyCount && ready) historyList.append(node('p','No historical shipments yet.'));
   const pendingList = document.querySelector('#pendingList');
   pendingList.replaceChildren();
   document.querySelector('#pendingOrders').hidden = !pendingOrders.length;
@@ -165,19 +172,21 @@ function render() {
     if (order.detail) card.append(node('p',order.detail,'meta'));
     pendingList.append(card);
   }
-  if (!packages.length && ready) list.append(node('p',pendingOrders.length ? 'No packages with carrier tracking yet.' : 'No packages with carrier tracking yet.'));
+  if (packages.length === historyCount && ready) list.append(node('p',pendingOrders.length ? 'No packages with carrier tracking yet.' : 'No packages with carrier tracking yet.'));
   for (const item of packages) {
     const card = node('article','');
     const row = node('div','','row');
     const title = node('div','');
     title.append(node('h3', item.name || (item.carrier ? item.carrier + ' package' : 'Package')),node('p',item.number,'meta'));
     const actions = node('div','','actions');
-    if (item.carrier) {
+    if (Object.hasOwn(carriers,item.carrier)) {
       const link = node('a', item.carrier + ' ↗');
       link.href = carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       actions.append(link);
+    } else if (item.historical) {
+      actions.append(node('small',item.carrier || 'Carrier unavailable'));
     } else {
       const select = carrierSelect.cloneNode(true);
       select.removeAttribute('id');
@@ -206,6 +215,13 @@ function render() {
     remove.addEventListener('click', () => save(item,'remove','Package removed from the portal.'));
     actions.append(remove);
     row.append(title,actions);
+    if (item.historical) {
+      card.append(row);
+      if (item.shipmentDate) card.append(node('p','Shipped · '+item.shipmentDate,'meta'));
+      if (item.scanDetail) card.append(node('p',item.scanDetail,'meta'));
+      historyList.append(card);
+      continue;
+    }
     const statusPanel = node('div','','shipment-status');
     const milestones = ['Label created','In transit','Out for delivery','Delivered'];
     const stages = {pre_transit:1,in_transit:2,out_for_delivery:3,delivered:4};
@@ -223,7 +239,7 @@ function render() {
     statusPanel.append(node('p','Estimated delivery · '+(item.eta || 'Unavailable'),'meta'));
     if (item.scanTime || item.scanDetail) statusPanel.append(node('p',[item.scanTime,item.scanDetail].filter(Boolean).join(' · '),'meta'));
     card.append(row,statusPanel);
-    list.append(card);
+    (item.status === 'delivered' ? historyList : list).append(card);
   }
 }
 form.addEventListener('submit', async event => {
