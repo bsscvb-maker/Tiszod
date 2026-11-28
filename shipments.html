@@ -17,7 +17,12 @@
   <iframe id="tiszodShipments" title="Personal shipments" style="display:block;width:100%;min-height:420px;border:0"></iframe>
 </main></div></div>
 <script>
+window.thShipmentWorkbook = async (path, body) => {
+  if (body) return thAppendRows('Shipments', body.values, 'RAW');
+  return {values: await thValues('Shipments!A2:J')};
+};
 window.thStart = async function () {
+  await thValues('Shipments!A2:J');
   const frame = document.getElementById('tiszodShipments');
   if (!frame.hasAttribute('src')) {
     frame.addEventListener('load', () => {
@@ -26,7 +31,7 @@ window.thStart = async function () {
         frame.style.height = Math.ceil(content.getBoundingClientRect().height) + 'px';
       }).observe(content);
     }, {once:true});
-    frame.src = 'shipments-panel.html?v=20261128-order-list';
+    frame.src = 'shipments-panel.html?v=20261128-workbook-auth';
   }
 };
 </script>
