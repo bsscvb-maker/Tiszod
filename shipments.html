@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shipments</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui;background:#101113;color:#f5f5f4;--accent:#ffc263;--muted:#b7bac3;--line:#373940}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:clamp(20px,5vw,64px)}a{color:var(--accent)}header{display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:clamp(2.7rem,8vw,5rem);letter-spacing:-.07em;margin:.2em 0 .12em}h2,h3,p{margin:0}p,small{color:var(--muted)}.brand{font-weight:750;letter-spacing:.14em;font-size:.75rem}.hero{margin:26px 0 18px;padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#654018 0%,transparent 65%),#1b1d22}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stats div,article,form{background:#1b1d22;border:1px solid var(--line);border-radius:16px;padding:16px}.stats strong{display:block;font-size:1.85rem}.stats div:nth-child(2) strong{color:#ff9d89}.stats div:nth-child(3) strong{color:#90e1be}form{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}label{display:grid;gap:6px;font-size:.85rem}input,select,button{font:inherit;border-radius:9px;border:1px solid #565963;min-height:44px;padding:8px 12px;background:#101113;color:#fff;width:100%}button{cursor:pointer;width:auto}button.primary{background:var(--accent);color:#1c1207;font-weight:750;border-color:transparent}section{margin-top:25px}.list{display:grid;gap:10px;margin-top:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.pill{border-radius:20px;background:#33363d;padding:5px 10px;font-size:.8rem}.delay{color:#ffc0b1;background:#5b312a}.ok{color:#a1edcf;background:#204439}.meta{margin-top:7px;overflow-wrap:anywhere}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}details{margin-top:20px}summary{cursor:pointer;color:var(--accent)}ol{padding-left:22px;color:var(--muted)}li{padding:6px 0}#message{min-height:1.4em;margin-top:8px}.notice{font-size:.88rem;margin-top:10px}html.personal{--accent:#a7c7ff;background:#0b111a}html.personal .hero{background:radial-gradient(ellipse at 100% 0%,#243f69,transparent 65%),#151d2b}@media(max-width:680px){form{grid-template-columns:1fr 1fr}form label:first-child{grid-column:1/-1}.stats div{padding:10px;font-size:.8rem}}
+</style></head><body><main>
+<header><span class="brand" id="brand">BONESHAKERS SOCIAL CLUB</span><a href="./">Portal home</a></header>
+<div class="hero"><p>UPS · FedEx · USPS</p><h1>Shipments</h1><p>Save a package in seconds and open its latest tracking at the carrier.</p></div>
+<div class="stats" aria-label="Shipment counts"><div><strong id="count">0</strong>Saved</div><div><strong id="needs">0</strong>Need a carrier</div><div><strong id="ready">0</strong>Carrier links ready</div></div>
+<form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option></select></label><button class="primary">Save package</button></form>
+<p id="message" role="status"></p><p class="notice">Saved in this browser. Open the carrier link for current scans. Background updates and alerts require a connected tracking service.</p>
+<section><h2>Saved packages</h2><div class="list" id="list"></div></section>
+<details><summary>Preview a delivery alert and timeline</summary><section aria-label="Example shipment"><article><div class="row"><div><small>EXAMPLE SHIPMENT</small><h3>Event supplies</h3></div><span class="pill delay">Delivery delayed</span></div><p class="meta">Estimated arrival changed from Tuesday to Wednesday.</p><ol><li><strong>Tuesday, 8:42 AM</strong> · Carrier reported a delay</li><li><strong>Tuesday, 5:18 AM</strong> · Arrived at local facility</li><li><strong>Monday, 6:14 PM</strong> · Package picked up</li></ol></article></section></details>
+</main><script>
+const personal = /\/tiszod\//i.test(location.pathname);
+if (personal) {
+  document.documentElement.classList.add('personal');
+  document.querySelector('#brand').textContent = 'TISZOD';
+}
+const storageKey = 'portal-shipments-v1-' + (personal ? 'personal' : 'club');
+const form = document.querySelector('#add');
+const tracking = document.querySelector('#tracking');
+const carrierSelect = document.querySelector('#carrier');
+const packageName = document.querySelector('#name');
+const message = document.querySelector('#message');
+const list = document.querySelector('#list');
+const carriers = {
+  UPS: 'https://www.ups.com/track?tracknum=',
+  FedEx: 'https://www.fedex.com/fedextrack/?trknbr=',
+  USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels='
+};
+let packages = [];
+try {
+  const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  if (Array.isArray(saved)) packages = saved.filter(item => item && /^[A-Z0-9]{8,40}$/.test(item.number) && typeof item.name === 'string' && (item.carrier === '' || Object.hasOwn(carriers,item.carrier)));
+} catch {
+  message.textContent = 'Browser storage could not be read.';
+}
+function parseTracking(value) {
+  let number = value.trim();
+  let carrier = '';
+  if (/^https?:\/\//i.test(number)) {
+    const url = new URL(number);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'ups.com') {carrier = 'UPS'; number = url.searchParams.get('tracknum');}
+    if (host === 'fedex.com') {carrier = 'FedEx'; number = url.searchParams.get('trknbr') || url.searchParams.get('tracknumbers');}
+    if (host === 'usps.com' || host === 'tools.usps.com') {carrier = 'USPS'; number = url.searchParams.get('tLabels');}
+    if (!carrier || !number) throw Error('Paste a supported carrier tracking link or the tracking number.');
+  }
+  number = number.replace(/[\s-]/g, '').toUpperCase();
+  if (!/^[A-Z0-9]{8,40}$/.test(number)) throw Error('Enter one tracking number at a time.');
+  if (!carrier && /^(1Z[A-Z0-9]{16}|T\d{10})$/.test(number)) carrier = 'UPS';
+  if (!carrier && /^[A-Z]{2}\d{9}US$/.test(number)) carrier = 'USPS';
+  return {number, carrier};
+}
+function node(tag, content, className) {
+  const element = document.createElement(tag);
+  element.textContent = content;
+  if (className) element.className = className;
+  return element;
+}
+function save(next, feedback) {
+  try {localStorage.setItem(storageKey, JSON.stringify(next));}
+  catch {message.textContent = 'Browser storage is unavailable. Your changes could not be saved.'; return false;}
+  packages = next;
+  render();
+  message.textContent = feedback;
+  return true;
+}
+function render() {
+  list.replaceChildren();
+  const ready = packages.filter(item => item.carrier).length;
+  document.querySelector('#count').textContent = packages.length;
+  document.querySelector('#needs').textContent = packages.length - ready;
+  document.querySelector('#ready').textContent = ready;
+  if (!packages.length) list.append(node('p','Paste your first tracking number or link above.'));
+  for (const item of packages) {
+    const card = node('article','');
+    const row = node('div','','row');
+    const title = node('div','');
+    title.append(node('h3', item.name || (item.carrier ? item.carrier + ' package' : 'Package')),node('p',item.number,'meta'));
+    const actions = node('div','','actions');
+    if (item.carrier) {
+      const link = node('a','Open ' + item.carrier + ' tracking');
+      link.href = carriers[item.carrier] + encodeURIComponent(item.number);
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      actions.append(link);
+    } else {
+      const select = carrierSelect.cloneNode(true);
+      select.removeAttribute('id');
+      select.options[0].textContent = 'Choose carrier';
+      select.setAttribute('aria-label','Carrier for ' + item.number);
+      select.addEventListener('change', () => {
+        if (select.value && !save(packages.map(entry => entry === item ? {...item,carrier:select.value} : entry), 'Carrier saved.')) select.value = '';
+      });
+      actions.append(select);
+    }
+    const remove = node('button','Remove');
+    remove.type = 'button';
+    remove.setAttribute('aria-label','Remove ' + item.number);
+    remove.addEventListener('click', () => save(packages.filter(entry => entry !== item),'Package removed.'));
+    actions.append(remove);
+    row.append(title,actions);
+    card.append(row);
+    list.append(card);
+  }
+}
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  try {
+    const item = parseTracking(tracking.value);
+    item.carrier = carrierSelect.value || item.carrier;
+    item.name = packageName.value.trim();
+    if (packages.some(entry => entry.number === item.number)) throw Error('That tracking number is already saved.');
+    if (save([item,...packages],'Package saved.')) {form.reset(); tracking.focus();}
+  } catch (error) {message.textContent = error.message;}
+});
+render();
+</script></body></html>
