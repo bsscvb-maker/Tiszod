@@ -17,12 +17,25 @@ function finMerchantDefaults(description,rows=finRows){
 }
 function finMissingDefaults(item,rows=finRows){
  const r=item.r,d=finMerchantDefaults(r[3],rows),updates=[];
- const category=r[4]||d?.category||'Other';
- if(!r[4])updates.push([4,category]);
- if(!r[5])updates.push([5,d?.category===category&&d?.subcategory?d.subcategory:'Needs review']);
+ const category=r[4]||d?.category||(FIN_SAVINGS?'Other':'');
+ if(!r[4]&&category)updates.push([4,category]);
+ if(!r[5]&&d?.category===category&&d?.subcategory&&d.subcategory!=='Needs review')updates.push([5,d.subcategory]);
+ else if(!r[5]&&FIN_SAVINGS)updates.push([5,'Needs review']);
  if(!r[11]&&(finInferMethod(r[3])||d?.method))updates.push([11,finInferMethod(r[3])||d.method]);
  if(!r[12])updates.push([12,finType(r)]);
  return updates;
+}
+const finClassificationPrompted=new Set();
+function finNeedsClassification(category,subcategory){
+ return !category.trim()||!subcategory.trim()||subcategory.trim().toLowerCase()==='needs review';
+}
+function finPromptForClassification(){
+ if(FIN_SAVINGS||$('editor').open)return;
+ const item=finRows.findLast(({r})=>!finClassificationPrompted.has(r[0])&&finNeedsClassification(String(r[4]||''),String(r[5]||'')));
+ if(!item)return;
+ finClassificationPrompted.add(item.r[0]);
+ finOpen(item.sheetRow);
+ finEditorStatus('Choose a category and subcategory for this transaction.');
 }
 let finAutoFields={};
 function finApplyMerchantDefaults(){
@@ -110,7 +123,7 @@ async function finInit(){
  // Vehicle suggestions are only needed by the editor; do not delay the dashboard.
  thValues("'Portal Asset Profiles'!B2:I135").then(assets=>{finVehicleNames=[...new Set(assets.filter(r=>r[0]&&String(r[7]||'').toLowerCase()!=='deleted').map(r=>String(r[0]).replace(/\s*-\s*\d+\s*PSI\s*$/i,'').trim()))];if($('editor').open)finVehicleOptions();}).catch(err=>console.warn('Vehicle choices could not load',err));
 }
-async function finLoad(data){if(!data)data=await finRequest(finRange('A2:O')+'?valueRenderOption=UNFORMATTED_VALUE');finRows=(data.values||[]).map((r,i)=>({r:r.concat(Array(13).fill('')).slice(0,13),sheetRow:i+2})).filter(x=>x.r[0]&&!['void','voided','deleted'].includes(String(x.r[9]).trim().toLowerCase()));const defaultUpdates=finRows.flatMap(x=>finMissingDefaults(x).map(([col,value])=>({item:x,col,value})));if(defaultUpdates.length){await finRequest('/values:batchUpdate','POST',{valueInputOption:'RAW',data:defaultUpdates.map(x=>({range:"'"+FIN_SHEET+"'!"+String.fromCharCode(65+x.col)+x.item.sheetRow,values:[[x.value]]}))});defaultUpdates.forEach(x=>{x.item.r[x.col]=x.value})}$('categories').innerHTML=[...new Set([...Object.keys(FIN_CATEGORY_OPTIONS),...finRows.map(x=>String(x.r[4]||'').trim()).filter(Boolean)])].sort().map(v=>'<option value="'+fe(v)+'"></option>').join('');finPopulateCategoryPicker();finCategoryOptions();finRender();}
+async function finLoad(data){if(!data)data=await finRequest(finRange('A2:O')+'?valueRenderOption=UNFORMATTED_VALUE');finRows=(data.values||[]).map((r,i)=>({r:r.concat(Array(13).fill('')).slice(0,13),sheetRow:i+2})).filter(x=>x.r[0]&&!['void','voided','deleted'].includes(String(x.r[9]).trim().toLowerCase()));const defaultUpdates=finRows.flatMap(x=>finMissingDefaults(x).map(([col,value])=>({item:x,col,value})));if(defaultUpdates.length){await finRequest('/values:batchUpdate','POST',{valueInputOption:'RAW',data:defaultUpdates.map(x=>({range:"'"+FIN_SHEET+"'!"+String.fromCharCode(65+x.col)+x.item.sheetRow,values:[[x.value]]}))});defaultUpdates.forEach(x=>{x.item.r[x.col]=x.value})}$('categories').innerHTML=[...new Set([...Object.keys(FIN_CATEGORY_OPTIONS),...finRows.map(x=>String(x.r[4]||'').trim()).filter(Boolean)])].sort().map(v=>'<option value="'+fe(v)+'"></option>').join('');finPopulateCategoryPicker();finCategoryOptions();finRender();finPromptForClassification();}
 // Cash receipts stay in the transaction register but are outside bank reconciliation.
 const finBankRows=()=>finRows.filter(x=>String(x.r[2]).trim().toLowerCase()!=='cash');
 const finBankPending=rows=>rows.filter(x=>String(x.r[9]).trim().toLowerCase()!=='cleared');
@@ -234,6 +247,12 @@ $('transaction-form').elements.payee.addEventListener('change',finApplyMerchantD
 $('add-category').addEventListener('click',()=>{const input=$('transaction-form').elements.category;input.focus();input.select()});$('add-subcategory').addEventListener('click',()=>{const input=$('transaction-form').elements.subcategory;input.focus();input.select()});
 $('vehicle-picker').addEventListener('change',e=>{$('transaction-form').elements.activity.value=e.target.value});$('transaction-form').elements.activity.addEventListener('input',e=>{$('vehicle-picker').value=e.target.value});
 $('add').addEventListener('click',()=>finOpen());$('cancel').addEventListener('click',()=>$('editor').close());
-$('transaction-form').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;const amount=Number(f.elements.amount.value),type=f.elements.type.value;if(!f.elements.amount.value||!Number.isFinite(amount)||amount===0||(type==='Income'&&amount<0)){finEditorStatus('Enter an amount. Income must be positive; adjustments can use either sign.',true);return}const income=type==='Income'||(type==='Adjustment'&&amount>0)?Math.abs(amount):0,expense=type==='Expense'||(type==='Adjustment'&&amount<0)?Math.abs(amount):0;const existing=finRows.find(x=>x.sheetRow===finEdit);const row=[existing?.r[0]||crypto.randomUUID(),...['date','account','payee','category','subcategory','activity'].map(k=>f.elements[k].value.trim()),income||'',expense||'',f.elements.cleared.value,f.elements.notes.value.trim(),f.elements.method.value||finInferMethod(f.elements.payee.value),type];const button=f.querySelector('[type=submit]');button.disabled=true;finEditorStatus('Saving…');try{if(existing)await finRequest(finRange('A'+finEdit+':M'+finEdit)+'?valueInputOption=RAW','PUT',{values:[row]});else {const meta=await finRequest('?fields=sheets.properties(title,sheetId)');const sheet=meta.sheets.find(s=>s.properties.title===FIN_SHEET);if(!sheet)throw new Error('Transaction sheet not found.');await finRequest(':batchUpdate','POST',{requests:[{appendCells:{sheetId:sheet.properties.sheetId,rows:[{values:row.map(value=>({userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value)}}))}],fields:'userEnteredValue'}}]});}$('editor').close();await finLoad();finTab='transactions2026';finFilter='';finFilters={};finSelected.clear();void thSaved.writePreference(FIN_FILTER_KEY,null);finRender();finStatus('Transaction saved.')}catch(err){finEditorStatus(err.message,true)}finally{button.disabled=false}});
+$('transaction-form').addEventListener('submit',async e=>{e.preventDefault();const f=e.target;
+ if(!FIN_SAVINGS&&finNeedsClassification(f.elements.category.value,f.elements.subcategory.value)){
+  finEditorStatus('Choose a category and subcategory before saving.',true);
+  f.elements.category.focus();
+  return;
+ }
+ const amount=Number(f.elements.amount.value),type=f.elements.type.value;if(!f.elements.amount.value||!Number.isFinite(amount)||amount===0||(type==='Income'&&amount<0)){finEditorStatus('Enter an amount. Income must be positive; adjustments can use either sign.',true);return}const income=type==='Income'||(type==='Adjustment'&&amount>0)?Math.abs(amount):0,expense=type==='Expense'||(type==='Adjustment'&&amount<0)?Math.abs(amount):0;const existing=finRows.find(x=>x.sheetRow===finEdit);const row=[existing?.r[0]||crypto.randomUUID(),...['date','account','payee','category','subcategory','activity'].map(k=>f.elements[k].value.trim()),income||'',expense||'',f.elements.cleared.value,f.elements.notes.value.trim(),f.elements.method.value||finInferMethod(f.elements.payee.value),type];const button=f.querySelector('[type=submit]');button.disabled=true;finEditorStatus('Saving…');try{if(existing)await finRequest(finRange('A'+finEdit+':M'+finEdit)+'?valueInputOption=RAW','PUT',{values:[row]});else {const meta=await finRequest('?fields=sheets.properties(title,sheetId)');const sheet=meta.sheets.find(s=>s.properties.title===FIN_SHEET);if(!sheet)throw new Error('Transaction sheet not found.');await finRequest(':batchUpdate','POST',{requests:[{appendCells:{sheetId:sheet.properties.sheetId,rows:[{values:row.map(value=>({userEnteredValue:typeof value==='number'?{numberValue:value}:{stringValue:String(value)}}))}],fields:'userEnteredValue'}}]});}$('editor').close();await finLoad();finTab='transactions2026';finFilter='';finFilters={};finSelected.clear();void thSaved.writePreference(FIN_FILTER_KEY,null);finRender();finStatus('Transaction saved.')}catch(err){finEditorStatus(err.message,true)}finally{button.disabled=false}});
 $('export').addEventListener('click',()=>{const rows=[FIN_STORAGE_HEADERS.slice(0,13),...finVisible().map(x=>x.r)];const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='TisZod-Finance-'+finTab+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
 window.thStart=finInit;
