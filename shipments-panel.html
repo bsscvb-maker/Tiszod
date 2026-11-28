@@ -85,7 +85,7 @@ async function loadPackages() {
     } else if (action === 'scan' && byNumber.has(number)) {
       Object.assign(byNumber.get(number), {status, location, eta, scanTime, scanDetail});
     } else if (action === 'carrier' && byNumber.has(number)) {
-      byNumber.get(number).carrier = Object.hasOwn(carriers,carrier) ? carrier : '';
+      byNumber.get(number).carrier = carrier || '';
     } else if (action === 'historical') {
       byNumber.set(number, {number, carrier, name, historical:true, shipmentDate:scanTime, scanDetail});
     } else if (action === 'save' && !byNumber.has(number)) {
@@ -133,9 +133,13 @@ async function save(item, action, feedback) {
       throw new DuplicatePackageError();
     }
     if (action !== 'add' && !packages.some(entry => entry.number === item.number)) throw Error('This package was removed. Refresh the list.');
-    await sheetRequest('Shipments!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {
-      values: [[item.number,item.carrier,item.name, action === 'add' ? 'save' : action,new Date().toISOString(),'', '', item.deliveryDate || '']]
-    });
+    const updatedAt = new Date().toISOString();
+    const rows = [[item.number,item.carrier,item.name, action === 'add' ? 'save' : action,updatedAt,'','',item.deliveryDate || '']];
+    const previous = packages.find(entry => entry.number === item.number);
+    if (action === 'edit' && previous && previous.carrier !== item.carrier) {
+      rows.push([item.number,item.carrier,'','carrier',updatedAt]);
+    }
+    await sheetRequest('Shipments!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {values:rows});
     await loadPackages();
   }, feedback);
 }
@@ -179,7 +183,7 @@ function formatShipmentDate(value) {
 function render() {
   list.replaceChildren();
   historyList.replaceChildren();
-  const historyCount = packages.filter(item => item.historical || item.status === 'delivered').length;
+  const historyCount = packages.filter(item => item.historical || item.deliveryDate || item.status === 'delivered').length;
   document.querySelector('#history-count').textContent = historyCount ? '('+historyCount+')' : '';
   if (!historyCount && ready) historyList.append(node('p','No historical shipments yet.'));
   const pendingList = document.querySelector('#pendingList');
@@ -249,7 +253,7 @@ function render() {
     }
     if (item.scanTime || item.scanDetail) statusPanel.append(node('p',[item.scanTime,item.scanDetail].filter(Boolean).join(' · '),'meta'));
     card.append(row,statusPanel);
-    (item.status === 'delivered' ? historyList : list).append(card);
+    (item.deliveryDate || item.status === 'delivered' ? historyList : list).append(card);
   }
 }
 form.addEventListener('submit', async event => {
