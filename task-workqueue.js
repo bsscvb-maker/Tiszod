@@ -11,6 +11,8 @@
   let intake = [];
   let intakeError = '';
   let intakeLoading = false;
+  let intakeLoaded = false;
+  let intakeRequest;
   let scanRunning = false;
   const savingTasks = new Set();
   let intakeRevision = 0;
@@ -202,12 +204,24 @@
     return addedAt(b) - addedAt(a);
   }
 
+  function activeSummary(items) {
+    const active = items.filter(item => inScope(item, 'active'));
+    return {
+      total: active.length,
+      counts: Object.keys(priorityLabels).map(priority =>
+        active.filter(item => item.priority === priority).length)
+    };
+  }
+
   function renderWork() {
     const items = [...sharedItems(), ...intake];
     const counts = Object.fromEntries(scopes.map(button => {
       const filter = button.dataset.workScope;
       return [filter, items.filter(item => inScope(item, filter)).length];
     }));
+    if (ready && intakeLoaded && !intakeError && window.parent !== window) {
+      window.parent.postMessage({type: 'tiszod-task-counts', ...activeSummary(items)}, location.origin);
+    }
     get('workSummary').textContent = busy && !ready ? 'Loading tasks…'
       : counts.active + ' active · ' + counts.review + ' need review';
     get('workNew').disabled = busy || !ready;
@@ -636,9 +650,15 @@
     dialog.showModal();
   }
 
-  async function refreshIntake() {
+  function refreshIntake() {
     const api = service();
-    if (!api?.ready() || intakeLoading || intakeWrites) return;
+    if (intakeRequest) return intakeRequest;
+    if (!api?.ready() || intakeWrites) return;
+    intakeRequest = readIntake(api).finally(() => { intakeRequest = undefined; });
+    return intakeRequest;
+  }
+
+  async function readIntake(api) {
     const revision = intakeRevision;
     intakeLoading = true;
     renderWork();
@@ -654,6 +674,7 @@
 
       }
       intake = [...unique.values()];
+      intakeLoaded = true;
       intakeError = '';
     } catch (error) {
       intakeError = 'Could not load incoming tasks. ' + error.message;
@@ -694,6 +715,15 @@
       renderWork();
     }
   }
+  window.refreshTaskQueueSummary = async () => {
+    await initialTaskLoad;
+    await Promise.all([load(), refreshIntake()]);
+    if (!ready || !service()?.ready() || !intakeLoaded || intakeError) {
+      throw new Error('Task queue unavailable');
+    }
+    return activeSummary([...sharedItems(), ...intake]);
+  };
+
   get('workRefresh').onclick = refreshWork;
   get('workNew').onclick = () => open();
   get('workManageContexts')?.addEventListener('click', editContexts);

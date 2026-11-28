@@ -43,30 +43,36 @@
  else goalNote.textContent='Available checking balance unavailable. Open Finance to review it.';
  if(checking.value===null)throw Error('Available balance unavailable');
  }
- let trackerSummaryReceived=false;
- window.addEventListener('message',event=>{
-  const frame=document.querySelector('iframe[title="Plan dashboard summary"]');
-  if(event.origin!==location.origin||event.source!==frame?.contentWindow||event.data?.type!=='tiszod-task-counts')return;
-  const {total,counts}=event.data;
-  trackerSummaryReceived=true;
+ const taskQueueFrame=document.querySelector('iframe[title="Plan dashboard summary"]');
+ function showTaskSummary({total,counts}){
   values.tasks.value.textContent=total;
   values.tasks.value.dataset.tone=total>=6?'negative':total>=3?'warning':'positive';
   facts('tasks',[counts[0]+' High (Critical)',counts[1]+' Medium',counts[2]+' Low']);
-  values.tasks.note.textContent='Ready, working, and waiting tasks';
+  values.tasks.note.textContent='All active tasks in the Task Tracker';
   values.tasks.checked.textContent='Checked '+stamp(new Date().toISOString());
- });
- async function loadTasks(){try{const r=await fetch('https://script.google.com/macros/s/AKfycbx9nruVEhEGyygWwdAknNRRvDCC7vIVnTxtWUq44_NCqoV9t3sDhAVP3CMmEAsbYA2XTQ/exec?action=getAll&_='+Date.now(),{signal:AbortSignal.timeout(18000),cache:'no-store'});let d=await r.json();d=d.data||d;if(!Array.isArray(d.tasks))throw Error();if(trackerSummaryReceived)return;const active=d.tasks.filter(t=>t.status!=='done'&&t.tier!=='parked');values.tasks.value.textContent=active.length;values.tasks.value.dataset.tone=active.length>=6?'negative':active.length>=3?'warning':'positive';const counts={tier1:0,tier2:0,tier3:0};
- for(const task of active){
-  const notes=String(task.notes||''),marker='\n[TISZOD_TASKV2]',at=notes.lastIndexOf(marker);
-  let priority;
-  if(at>=0){try{priority=JSON.parse(notes.slice(at+marker.length)).priority}catch{}}
-  if(!Object.hasOwn(counts,priority)){
-   priority=({tier1:'tier1',tier3:'tier2',tier4:'tier3',tier5:'tier3'})[task.tier]||'tier2';
-  }
-  counts[priority]++;
  }
- facts('tasks',[counts.tier1+' High (Critical)',counts.tier2+' Medium',counts.tier3+' Low']);
- values.tasks.note.textContent='Ready, working, and waiting tasks'}catch{if(trackerSummaryReceived)return;values.tasks.value.textContent='—';values.tasks.value.dataset.tone='neutral';values.tasks.note.textContent='Task service unavailable · Open tracker';facts('tasks',['Open tracker to review priorities','Check waiting tasks for follow-up']);throw Error('Task service unavailable')}}
+ window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.source!==taskQueueFrame?.contentWindow||event.data?.type!=='tiszod-task-counts')return;
+  showTaskSummary(event.data);
+ });
+ async function loadTasks(){
+  try{
+   const queue=taskQueueFrame?.contentWindow;
+   if(!queue)throw Error('Task queue unavailable');
+   if(!queue.refreshTaskQueueSummary){
+    await new Promise(resolve=>{
+     const timeout=AbortSignal.timeout(10000);
+     taskQueueFrame.addEventListener('load',resolve,{once:true,signal:timeout});
+     timeout.addEventListener('abort',resolve,{once:true});
+    });
+   }
+   showTaskSummary(await queue.refreshTaskQueueSummary());
+  }catch(error){
+   values.tasks.note.textContent='Task queue unavailable · Open Task Tracker';
+   facts('tasks',[]);
+   throw error;
+  }
+ }
 
  const stamp=value=>{const d=new Date(value);return value&&!Number.isNaN(d.getTime())?d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'}):'date unavailable'};
  for(const id of Object.keys(values)){const n=el('small','pc-checked','Not checked yet');values[id].checked=n;}
