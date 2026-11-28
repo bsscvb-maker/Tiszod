@@ -26,11 +26,24 @@ function finMissingDefaults(item,rows=finRows){
  return updates;
 }
 const finClassificationPrompted=new Set();
+let finCategoryTestShown=false;
 function finNeedsClassification(category,subcategory){
  return !category.trim()||!subcategory.trim()||subcategory.trim().toLowerCase()==='needs review';
 }
 function finPromptForClassification(){
  if(FIN_SAVINGS||$('editor').open)return;
+ if(new URL(location.href).searchParams.get('test-category-prompt')==='1'&&!finCategoryTestShown){
+  finCategoryTestShown=true;
+  finOpen();
+  const form=$('transaction-form');
+  form.elements.payee.value='Test purchase';
+  form.elements.amount.value='0';
+  const save=form.querySelector('[type=submit]');
+  save.disabled=true;
+  $('editor').addEventListener('close',()=>{save.disabled=false;},{once:true});
+  finEditorStatus('Choose a category and subcategory for this test purchase. Cancel to discard it.');
+  return;
+ }
  const item=finRows.findLast(({r})=>!finClassificationPrompted.has(r[0])&&finNeedsClassification(String(r[4]||''),String(r[5]||'')));
  if(!item)return;
  finClassificationPrompted.add(item.r[0]);
