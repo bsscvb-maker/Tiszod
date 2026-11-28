@@ -6,7 +6,7 @@
 
 
 <div class="stats" aria-label="Shipment counts"><div><strong id="count">0</strong>Saved</div><div><strong id="needs">0</strong>Need a carrier</div><div><strong id="ready">0</strong>Carrier links ready</div></div>
-<form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option></select></label><button class="primary">Save package</button></form>
+<form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option><option>Amazon</option></select></label><button class="primary">Save package</button></form>
 <p id="message" role="status"></p><p class="notice">Packages are stored in your private workbook. Tracking shows the latest update saved to your private workbook.</p>
 <section><div class="row"><h2>Saved packages</h2><button type="button" id="refresh">Refresh</button></div><div class="list" id="list"></div></section>
 
@@ -37,7 +37,8 @@ document.querySelector('#rename-form').onsubmit = async event => {
 const carriers = {
   UPS: 'https://www.ups.com/track?tracknum=',
   FedEx: 'https://www.fedex.com/fedextrack/?trknbr=',
-  USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels='
+  USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=',
+  Amazon: 'https://www.amazon.com/gp/css/order-history'
 };
 const sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1uC1tKyX4DnBKXH-4pIz8tm3zAvxdWr6ecrxrwUS9Hts/values/';
 let packages = [];
@@ -141,6 +142,7 @@ function parseTracking(value) {
   number = number.replace(/[\s-]/g, '').toUpperCase();
   if (!/^[A-Z0-9]{8,40}$/.test(number)) throw Error('Enter one tracking number at a time.');
   if (!carrier && /^(1Z[A-Z0-9]{16}|T\d{10})$/.test(number)) carrier = 'UPS';
+  if (!carrier && /^TBA\d{8,20}$/.test(number)) carrier = 'Amazon';
   if (!carrier && /^[A-Z]{2}\d{9}US$/.test(number)) carrier = 'USPS';
   return {number, carrier};
 }
@@ -165,7 +167,7 @@ function render() {
     const actions = node('div','','actions');
     if (item.carrier) {
       const link = node('a', item.carrier + ' ↗');
-      link.href = carriers[item.carrier] + encodeURIComponent(item.number);
+      link.href = carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       actions.append(link);
