@@ -43,33 +43,15 @@ const carriers = {
   USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=',
   Amazon: 'https://www.amazon.com/gp/css/order-history'
 };
-const sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1uC1tKyX4DnBKXH-4pIz8tm3zAvxdWr6ecrxrwUS9Hts/values/';
 let packages = [];
 let pendingOrders = [];
 let ready = false;
 let busy = false;
-function sessionToken() {
-  try {
-    for (const storage of [localStorage,sessionStorage]) {
-      const session = JSON.parse(storage.getItem('thbudget-session-photos-v1') || 'null');
-      if (session?.expiresAt > Date.now() && session.token) return session.token;
-    }
-  } catch {}
-}
 async function sheetRequest(path, body) {
-  const token = sessionToken();
-  if (!token) throw Error('Sign in to the portal to load shipments.');
-  const response = await fetch(sheetUrl + path, {
-    method: body ? 'POST' : 'GET',
-    headers: {Authorization: 'Bearer ' + token, ...(body && {'Content-Type':'application/json'})},
-    body: body && JSON.stringify(body),
-    cache: 'no-store',
-    signal: AbortSignal.timeout(20000)
-  });
-  if (response.status === 401) throw Error('Your Google session expired. Sign in from Portal home.');
-  if (response.status === 403) throw Error('This Google account needs access to the TisZod workbook.');
-  if (!response.ok) throw Error('The club workbook could not be reached. Try Refresh.');
-  return response.json();
+  if (window.parent === window || !window.parent.thShipmentWorkbook) {
+    throw Error('Open Shipments from the TisZod portal.');
+  }
+  return window.parent.thShipmentWorkbook(path, body);
 }
 async function loadPackages() {
   const result = await sheetRequest(encodeURIComponent('Shipments!A2:J'));
