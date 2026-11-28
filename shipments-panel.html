@@ -8,6 +8,7 @@
 <div class="stats" aria-label="Shipment counts"><div><strong id="count">0</strong>Saved</div><div><strong id="needs">0</strong>Need a carrier</div><div><strong id="ready">0</strong>Carrier links ready</div></div>
 <form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option><option>Amazon</option></select></label><button class="primary">Save package</button></form>
 <p id="message" role="status"></p><p class="notice">Packages are stored in your private workbook. Tracking shows the latest update saved to your private workbook.</p>
+<section id="pendingOrders" hidden><h2>Awaiting tracking</h2><div class="list" id="pendingList"></div></section>
 <section><div class="row"><h2>Saved packages</h2><button type="button" id="refresh">Refresh</button></div><div class="list" id="list"></div></section>
 
 <dialog id="rename" aria-labelledby="rename-title"><h2 id="rename-title">Edit package name</h2><form id="rename-form"><label>Package name<input id="new-name" maxlength="80" required></label><div class="actions"><button class="primary">Save name</button><button type="button" id="cancel-rename">Cancel</button></div></form></dialog></main><script>
@@ -42,6 +43,7 @@ const carriers = {
 };
 const sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1uC1tKyX4DnBKXH-4pIz8tm3zAvxdWr6ecrxrwUS9Hts/values/';
 let packages = [];
+let pendingOrders = [];
 let ready = false;
 let busy = false;
 function sessionToken() {
@@ -70,7 +72,16 @@ async function sheetRequest(path, body) {
 async function loadPackages() {
   const result = await sheetRequest(encodeURIComponent('Shipments!A2:J'));
   const byNumber = new Map();
+  const byOrder = new Map();
   for (const [number, carrier, name, action, , status, location, eta, scanTime, scanDetail] of result.values || []) {
+    if (action === 'pending_order' && number && name) {
+      byOrder.set(number, {carrier, name, eta, detail:scanDetail});
+      continue;
+    }
+    if (action === 'order_shipped' && number) {
+      byOrder.delete(number);
+      continue;
+    }
     if (!/^[A-Z0-9]{8,40}$/.test(number || '')) continue;
     if (action === 'remove') byNumber.delete(number);
     else if (action === 'rename' && byNumber.has(number)) {
@@ -85,6 +96,7 @@ async function loadPackages() {
     }
   }
   packages = [...byNumber.values()].reverse();
+  pendingOrders = [...byOrder.values()].reverse();
   ready = true;
 }
 function setControls() {
@@ -105,6 +117,7 @@ async function run(work, feedback) {
     if (error instanceof DuplicatePackageError) return false;
     ready = false;
     packages = [];
+    pendingOrders = [];
     message.textContent = error.message;
     return false;
   } finally {
@@ -154,11 +167,23 @@ function node(tag, content, className) {
 }
 function render() {
   list.replaceChildren();
+  const pendingList = document.querySelector('#pendingList');
+  pendingList.replaceChildren();
+  document.querySelector('#pendingOrders').hidden = !pendingOrders.length;
+  for (const order of pendingOrders) {
+    const card = node('article','');
+    const row = node('div','','row');
+    row.append(node('h3',order.name),node('span','Order confirmed','pill'));
+    card.append(row);
+    if (order.eta) card.append(node('p','Expected delivery · '+order.eta,'meta'));
+    if (order.detail) card.append(node('p',order.detail,'meta'));
+    pendingList.append(card);
+  }
   const carrierCount = packages.filter(item => item.carrier).length;
   document.querySelector('#count').textContent = packages.length;
   document.querySelector('#needs').textContent = packages.length - carrierCount;
   document.querySelector('#ready').textContent = carrierCount;
-  if (!packages.length && ready) list.append(node('p','Paste your first tracking number or link above.'));
+  if (!packages.length && ready) list.append(node('p',pendingOrders.length ? 'No packages with carrier tracking yet.' : 'Paste your first tracking number or link above.'));
   for (const item of packages) {
     const card = node('article','');
     const row = node('div','','row');
