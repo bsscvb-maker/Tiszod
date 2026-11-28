@@ -1,40 +1,132 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shipments</title>
 <style>
-:root{color-scheme:dark;font:16px system-ui;background:#101113;color:#f5f5f4;--accent:#ffc263;--muted:#b7bac3;--line:#373940}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:clamp(20px,5vw,64px)}a{color:var(--accent)}header{display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:clamp(2.7rem,8vw,5rem);letter-spacing:-.07em;margin:.2em 0 .12em}h2,h3,p{margin:0}p,small{color:var(--muted)}.brand{font-weight:750;letter-spacing:.14em;font-size:.75rem}.hero{margin:26px 0 18px;padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#654018 0%,transparent 65%),#1b1d22}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stats div,article,form{background:#1b1d22;border:1px solid var(--line);border-radius:16px;padding:16px}.stats strong{display:block;font-size:1.85rem}.stats div:nth-child(2) strong{color:#ff9d89}.stats div:nth-child(3) strong{color:#90e1be}form{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}label{display:grid;gap:6px;font-size:.85rem}input,select,button{font:inherit;border-radius:9px;border:1px solid #565963;min-height:44px;padding:8px 12px;background:#101113;color:#fff;width:100%}button{cursor:pointer;width:auto}button.primary{background:var(--accent);color:#1c1207;font-weight:750;border-color:transparent}section{margin-top:25px}.list{display:grid;gap:10px;margin-top:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.pill{border-radius:20px;background:#33363d;padding:5px 10px;font-size:.8rem}.delay{color:#ffc0b1;background:#5b312a}.ok{color:#a1edcf;background:#204439}.meta{margin-top:7px;overflow-wrap:anywhere}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}details{margin-top:20px}summary{cursor:pointer;color:var(--accent)}ol{padding-left:22px;color:var(--muted)}li{padding:6px 0}#message{min-height:1.4em;margin-top:8px}.notice{font-size:.88rem;margin-top:10px}html.personal{--accent:#a7c7ff;background:#0b111a}html.personal .hero{background:radial-gradient(ellipse at 100% 0%,#243f69,transparent 65%),#151d2b}@media(max-width:680px){form{grid-template-columns:1fr 1fr}form label:first-child{grid-column:1/-1}.stats div{padding:10px;font-size:.8rem}}
-</style></head><body><main>
+:root{color-scheme:dark;font:16px system-ui;background:#0c0c0c;color:#f5f5f4;--accent:#ff6268;--muted:#d0d0d0;--line:#393939}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:clamp(20px,5vw,64px)}a{color:var(--accent)}header{display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:clamp(2.7rem,8vw,5rem);letter-spacing:-.07em;margin:.2em 0 .12em}h2,h3,p{margin:0}p,small{color:var(--muted)}.brand{font-weight:750;letter-spacing:.14em;font-size:.75rem}.hero{margin:26px 0 18px;padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#591218 0%,transparent 65%),#181818}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stats div,article,form{background:#181818;border:1px solid var(--line);border-radius:16px;padding:16px}.stats strong{display:block;font-size:1.85rem}.stats div:nth-child(2) strong{color:#ff6268}.stats div:nth-child(3) strong{color:#fff}form{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}label{display:grid;gap:6px;font-size:.85rem}input,select,button{font:inherit;border-radius:9px;border:1px solid #595959;min-height:44px;padding:8px 12px;background:#0c0c0c;color:#fff;width:100%}button{cursor:pointer;width:auto}button.primary{background:#bf202d;color:#fff;font-weight:750;border-color:transparent}section{margin-top:25px}.list{display:grid;gap:10px;margin-top:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.pill{border-radius:20px;background:#303030;padding:5px 10px;font-size:.8rem}.delay{color:#ffd5d7;background:#651820}.ok{color:#a1edcf;background:#204439}.meta{margin-top:7px;overflow-wrap:anywhere}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}details{margin-top:20px}summary{cursor:pointer;color:var(--accent)}ol{padding-left:22px;color:var(--muted)}li{padding:6px 0}#message{min-height:1.4em;margin-top:8px}.notice{font-size:.88rem;margin-top:10px}html.personal{--accent:#a7c7ff;background:#0b111a}html.personal .hero{background:radial-gradient(ellipse at 100% 0%,#243f69,transparent 65%),#151d2b}@media(max-width:680px){form{grid-template-columns:1fr 1fr}form label:first-child{grid-column:1/-1}.stats div{padding:10px;font-size:.8rem}}
+.shipment-status{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.shipment-status progress{display:block;width:100%;margin:12px 0 6px;accent-color:var(--accent)}.milestones{display:flex;justify-content:space-between;gap:8px;font-size:clamp(.65rem,2vw,.85rem);color:var(--muted)}dialog{background:#181818;color:white;border:1px solid var(--line);border-radius:12px;width:min(90vw,420px);padding:20px}dialog::backdrop{background:#000b}dialog form{display:grid;grid-template-columns:1fr;border:0;padding:12px 0 0}</style></head><body><main>
 <header><span class="brand" id="brand">BONESHAKERS SOCIAL CLUB</span><a href="./">Portal home</a></header>
-<div class="hero"><p>UPS · FedEx · USPS</p><h1>Shipments</h1><p>Save a package in seconds and open its latest tracking at the carrier.</p></div>
+<div class="hero"><p>UPS · FedEx · USPS</p><h1>Shipments</h1><p>Save UPS, FedEx, and USPS packages to TisZod. Sign in with your TisZod Google account to see them on any device.</p></div>
 <div class="stats" aria-label="Shipment counts"><div><strong id="count">0</strong>Saved</div><div><strong id="needs">0</strong>Need a carrier</div><div><strong id="ready">0</strong>Carrier links ready</div></div>
 <form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option></select></label><button class="primary">Save package</button></form>
-<p id="message" role="status"></p><p class="notice">Saved in this browser. Open the carrier link for current scans. Background updates and alerts require a connected tracking service.</p>
-<section><h2>Saved packages</h2><div class="list" id="list"></div></section>
-<details><summary>Preview a delivery alert and timeline</summary><section aria-label="Example shipment"><article><div class="row"><div><small>EXAMPLE SHIPMENT</small><h3>Event supplies</h3></div><span class="pill delay">Delivery delayed</span></div><p class="meta">Estimated arrival changed from Tuesday to Wednesday.</p><ol><li><strong>Tuesday, 8:42 AM</strong> · Carrier reported a delay</li><li><strong>Tuesday, 5:18 AM</strong> · Arrived at local facility</li><li><strong>Monday, 6:14 PM</strong> · Package picked up</li></ol></article></section></details>
-</main><script>
-const personal = /\/tiszod\//i.test(location.pathname);
+<p id="message" role="status"></p><p class="notice">Packages are stored in your private workbook. Email import and automatic carrier alerts are currently off.</p>
+<section><div class="row"><h2>Saved packages</h2><button type="button" id="refresh">Refresh</button></div><div class="list" id="list"></div></section>
+<details><summary>See an example delivery alert and scan timeline</summary><section aria-label="Example shipment"><article><div class="row"><div><small>EXAMPLE SHIPMENT</small><h3>Event supplies</h3></div><span class="pill delay">Delivery delayed</span></div><p class="meta">Estimated arrival changed from Tuesday to Wednesday.</p><ol><li><strong>Tuesday, 8:42 AM</strong> · Carrier reported a delay</li><li><strong>Tuesday, 5:18 AM</strong> · Arrived at local facility</li><li><strong>Monday, 6:14 PM</strong> · Package picked up</li></ol></article></section></details>
+<dialog id="rename" aria-labelledby="rename-title"><h2 id="rename-title">Edit package name</h2><form id="rename-form"><label>Package name<input id="new-name" maxlength="80" required></label><div class="actions"><button class="primary">Save name</button><button type="button" id="cancel-rename">Cancel</button></div></form></dialog></main><script>
+const personal = true;
 if (personal) {
   document.documentElement.classList.add('personal');
   document.querySelector('#brand').textContent = 'TISZOD';
 }
-const storageKey = 'portal-shipments-v1-' + (personal ? 'personal' : 'club');
 const form = document.querySelector('#add');
 const tracking = document.querySelector('#tracking');
 const carrierSelect = document.querySelector('#carrier');
 const packageName = document.querySelector('#name');
 const message = document.querySelector('#message');
 const list = document.querySelector('#list');
+const refresh = document.querySelector('#refresh');
+const rename = document.querySelector('#rename');
+const newName = document.querySelector('#new-name');
+let selectedPackage;
+document.querySelector('#cancel-rename').onclick = () => rename.close();
+document.querySelector('#rename-form').onsubmit = async event => {
+  event.preventDefault();
+  const name = newName.value.trim();
+  if (!name) { newName.focus(); return; }
+  rename.close();
+  await save({...selectedPackage,name}, 'rename', 'Package name updated.');
+};
 const carriers = {
   UPS: 'https://www.ups.com/track?tracknum=',
   FedEx: 'https://www.fedex.com/fedextrack/?trknbr=',
   USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels='
 };
+const sheetUrl = 'https://sheets.googleapis.com/v4/spreadsheets/1uC1tKyX4DnBKXH-4pIz8tm3zAvxdWr6ecrxrwUS9Hts/values/';
 let packages = [];
-try {
-  const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  if (Array.isArray(saved)) packages = saved.filter(item => item && /^[A-Z0-9]{8,40}$/.test(item.number) && typeof item.name === 'string' && (item.carrier === '' || Object.hasOwn(carriers,item.carrier)));
-} catch {
-  message.textContent = 'Browser storage could not be read.';
+let ready = false;
+let busy = false;
+function sessionToken() {
+  try {
+    for (const storage of [localStorage,sessionStorage]) {
+      const session = JSON.parse(storage.getItem('thbudget-session-photos-v1') || 'null');
+      if (session?.expiresAt > Date.now() && session.token) return session.token;
+    }
+  } catch {}
 }
+async function sheetRequest(path, body) {
+  const token = sessionToken();
+  if (!token) throw Error('Sign in from Portal home, then reopen Shipments.');
+  const response = await fetch(sheetUrl + path, {
+    method: body ? 'POST' : 'GET',
+    headers: {Authorization: 'Bearer ' + token, ...(body && {'Content-Type':'application/json'})},
+    body: body && JSON.stringify(body),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(20000)
+  });
+  if (response.status === 401) throw Error('Your Google session expired. Sign in from Portal home.');
+  if (response.status === 403) throw Error('This Google account needs access to the TisZod workbook.');
+  if (!response.ok) throw Error('The club workbook could not be reached. Try Refresh.');
+  return response.json();
+}
+async function loadPackages() {
+  const result = await sheetRequest(encodeURIComponent('Shipments!A2:J'));
+  const byNumber = new Map();
+  for (const [number, carrier, name, action, , status, location, eta, scanTime, scanDetail] of result.values || []) {
+    if (!/^[A-Z0-9]{8,40}$/.test(number || '')) continue;
+    if (action === 'remove') byNumber.delete(number);
+    else if (action === 'rename' && byNumber.has(number)) {
+      byNumber.get(number).name = name;
+    } else if (action === 'scan' && byNumber.has(number)) {
+      Object.assign(byNumber.get(number), {status, location, eta, scanTime, scanDetail});
+    } else if (action === 'carrier' && byNumber.has(number)) {
+      byNumber.get(number).carrier = Object.hasOwn(carriers,carrier) ? carrier : '';
+    } else if (action === 'save' && !byNumber.has(number)) {
+      byNumber.delete(number);
+      byNumber.set(number, {number, carrier: Object.hasOwn(carriers,carrier) ? carrier : '', name: name || ''});
+    }
+  }
+  packages = [...byNumber.values()].reverse();
+  ready = true;
+}
+function setControls() {
+  for (const control of form.elements) control.disabled = busy || !ready;
+  refresh.disabled = busy;
+}
+async function run(work, feedback) {
+  if (busy) return false;
+  busy = true;
+  message.textContent = 'Connecting to your private workbook…';
+  setControls();
+  render();
+  try {
+    await work();
+    message.textContent = feedback;
+    return true;
+  } catch (error) {
+    if (error instanceof DuplicatePackageError) return false;
+    ready = false;
+    packages = [];
+    message.textContent = error.message;
+    return false;
+  } finally {
+    busy = false;
+    setControls();
+    render();
+  }
+}
+async function save(item, action, feedback) {
+  return run(async () => {
+    await loadPackages();
+    if (action === 'add' && packages.some(entry => entry.number === item.number)) {
+      message.textContent = 'That tracking number is already saved.';
+      throw new DuplicatePackageError();
+    }
+    if (action !== 'add' && !packages.some(entry => entry.number === item.number)) throw Error('This package was removed. Refresh the list.');
+    await sheetRequest('Shipments!A:E:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {
+      values: [[item.number,item.carrier,item.name, action === 'add' ? 'save' : action,new Date().toISOString()]]
+    });
+    await loadPackages();
+  }, feedback);
+}
+class DuplicatePackageError extends Error {}
 function parseTracking(value) {
   let number = value.trim();
   let carrier = '';
@@ -58,21 +150,13 @@ function node(tag, content, className) {
   if (className) element.className = className;
   return element;
 }
-function save(next, feedback) {
-  try {localStorage.setItem(storageKey, JSON.stringify(next));}
-  catch {message.textContent = 'Browser storage is unavailable. Your changes could not be saved.'; return false;}
-  packages = next;
-  render();
-  message.textContent = feedback;
-  return true;
-}
 function render() {
   list.replaceChildren();
-  const ready = packages.filter(item => item.carrier).length;
+  const carrierCount = packages.filter(item => item.carrier).length;
   document.querySelector('#count').textContent = packages.length;
-  document.querySelector('#needs').textContent = packages.length - ready;
-  document.querySelector('#ready').textContent = ready;
-  if (!packages.length) list.append(node('p','Paste your first tracking number or link above.'));
+  document.querySelector('#needs').textContent = packages.length - carrierCount;
+  document.querySelector('#ready').textContent = carrierCount;
+  if (!packages.length && ready) list.append(node('p','Paste your first tracking number or link above.'));
   for (const item of packages) {
     const card = node('article','');
     const row = node('div','','row');
@@ -80,7 +164,7 @@ function render() {
     title.append(node('h3', item.name || (item.carrier ? item.carrier + ' package' : 'Package')),node('p',item.number,'meta'));
     const actions = node('div','','actions');
     if (item.carrier) {
-      const link = node('a','Open ' + item.carrier + ' tracking');
+      const link = node('a', item.carrier + ' ↗');
       link.href = carriers[item.carrier] + encodeURIComponent(item.number);
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
@@ -91,29 +175,58 @@ function render() {
       select.options[0].textContent = 'Choose carrier';
       select.setAttribute('aria-label','Carrier for ' + item.number);
       select.addEventListener('change', () => {
-        if (select.value && !save(packages.map(entry => entry === item ? {...item,carrier:select.value} : entry), 'Carrier saved.')) select.value = '';
+        if (select.value) void save({...item,carrier:select.value}, 'carrier', 'Carrier saved to the portal.');
       });
+      select.disabled = busy;
       actions.append(select);
     }
+    const edit = node('button','Edit name');
+    edit.type = 'button';
+    edit.disabled = busy;
+    edit.onclick = () => {
+      selectedPackage = item;
+      newName.value = item.name;
+      rename.showModal();
+      newName.focus();
+    };
+    actions.prepend(edit);
     const remove = node('button','Remove');
     remove.type = 'button';
+    remove.disabled = busy;
     remove.setAttribute('aria-label','Remove ' + item.number);
-    remove.addEventListener('click', () => save(packages.filter(entry => entry !== item),'Package removed.'));
+    remove.addEventListener('click', () => save(item,'remove','Package removed from the portal.'));
     actions.append(remove);
     row.append(title,actions);
-    card.append(row);
+    const statusPanel = node('div','','shipment-status');
+    const milestones = ['Label created','In transit','Out for delivery','Delivered'];
+    const stages = {pre_transit:1,in_transit:2,out_for_delivery:3,delivered:4};
+    const stage = Object.hasOwn(stages,item.status) ? stages[item.status] : 0;
+    const statusText = stage ? milestones[stage - 1] : (item.status ? item.status.replaceAll('_',' ') : 'Waiting for a carrier update');
+    statusPanel.append(node('strong', statusText));
+    const progress = node('progress','');
+    progress.max = milestones.length;
+    progress.value = stage;
+    progress.setAttribute('aria-label','Shipment progress: '+statusText);
+    const labels = node('div','','milestones');
+    for (const label of milestones) labels.append(node('span',label));
+    statusPanel.append(progress, labels);
+    statusPanel.append(node('p','Last scan location · '+(item.location || 'Unavailable'),'meta'));
+    statusPanel.append(node('p','Estimated delivery · '+(item.eta || 'Unavailable'),'meta'));
+    if (item.scanTime || item.scanDetail) statusPanel.append(node('p',[item.scanTime,item.scanDetail].filter(Boolean).join(' · '),'meta'));
+    card.append(row,statusPanel);
     list.append(card);
   }
 }
-form.addEventListener('submit', event => {
+form.addEventListener('submit', async event => {
   event.preventDefault();
   try {
     const item = parseTracking(tracking.value);
     item.carrier = carrierSelect.value || item.carrier;
     item.name = packageName.value.trim();
     if (packages.some(entry => entry.number === item.number)) throw Error('That tracking number is already saved.');
-    if (save([item,...packages],'Package saved.')) {form.reset(); tracking.focus();}
+    if (await save(item,'add','Package saved to the portal.')) {form.reset(); tracking.focus();}
   } catch (error) {message.textContent = error.message;}
 });
-render();
+refresh.addEventListener('click', () => run(loadPackages, 'Shipments are up to date.'));
+void run(loadPackages, 'Shipments are up to date.');
 </script></body></html>
