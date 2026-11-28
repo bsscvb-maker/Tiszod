@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Shipments</title>
 <style>
 :root{color-scheme:dark;font:16px system-ui;background:#0c0c0c;color:#f5f5f4;--accent:#ff6268;--muted:#d0d0d0;--line:#393939}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:clamp(20px,5vw,64px)}a{color:var(--accent)}header{display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:clamp(2.7rem,8vw,5rem);letter-spacing:-.07em;margin:.2em 0 .12em}h2,h3,p{margin:0}p,small{color:var(--muted)}.brand{font-weight:750;letter-spacing:.14em;font-size:.75rem}.hero{margin:26px 0 18px;padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#591218 0%,transparent 65%),#181818}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.stats div,article,form{background:#181818;border:1px solid var(--line);border-radius:16px;padding:16px}.stats strong{display:block;font-size:1.85rem}.stats div:nth-child(2) strong{color:#ff6268}.stats div:nth-child(3) strong{color:#fff}form{display:grid;grid-template-columns:2fr 1.4fr 1fr auto;gap:10px;align-items:end}label{display:grid;gap:6px;font-size:.85rem}input,select,button{font:inherit;border-radius:9px;border:1px solid #595959;min-height:44px;padding:8px 12px;background:#0c0c0c;color:#fff;width:100%}button{cursor:pointer;width:auto}button.primary{background:#bf202d;color:#fff;font-weight:750;border-color:transparent}section{margin-top:25px}.list{display:grid;gap:10px;margin-top:10px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.pill{border-radius:20px;background:#303030;padding:5px 10px;font-size:.8rem}.delay{color:#ffd5d7;background:#651820}.ok{color:#a1edcf;background:#204439}.meta{margin-top:7px;overflow-wrap:anywhere}.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}details{margin-top:20px}summary{cursor:pointer;color:var(--accent)}ol{padding-left:22px;color:var(--muted)}li{padding:6px 0}#message{min-height:1.4em;margin-top:8px}.notice{font-size:.88rem;margin-top:10px}html.personal{--accent:#a7c7ff;background:#0b111a}html.personal .hero{background:radial-gradient(ellipse at 100% 0%,#243f69,transparent 65%),#151d2b}@media(max-width:680px){form{grid-template-columns:1fr 1fr}form label:first-child{grid-column:1/-1}.stats div{padding:10px;font-size:.8rem}}
-.shipment-status{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.shipment-status progress{display:block;width:100%;margin:12px 0 6px;accent-color:var(--accent)}.milestones{display:flex;justify-content:space-between;gap:8px;font-size:clamp(.65rem,2vw,.85rem);color:var(--muted)}dialog{background:#181818;color:white;border:1px solid var(--line);border-radius:12px;width:min(90vw,420px);padding:20px}dialog::backdrop{background:#000b}dialog form{display:grid;grid-template-columns:1fr;border:0;padding:12px 0 0}html.personal{background:transparent}main{max-width:none;padding:0 0 18px}.stats{margin-top:0}.shipment-toolbar{margin:4px 0 12px}.shipment-toolbar .actions{margin-left:auto}#last-checked{color:#a2e6b8;background:#153323;border:1px solid #326346;border-radius:20px;padding:6px 10px}.manual-entry form{margin-top:10px}.shipment-tabs{margin:12px 0}.shipment-tabs [aria-selected="true"]{border-color:var(--accent);font-weight:700}#current-view[hidden],#history-view[hidden]{display:none}</style></head><body><main>
+.shipment-status{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.shipment-status progress{display:block;width:100%;margin:12px 0 6px;accent-color:var(--accent)}.milestones{display:flex;justify-content:space-between;gap:8px;font-size:clamp(.65rem,2vw,.85rem);color:var(--muted)}dialog{background:#181818;color:white;border:1px solid var(--line);border-radius:12px;width:min(90vw,420px);padding:20px}dialog::backdrop{background:#000b}dialog form{display:grid;grid-template-columns:1fr;border:0;padding:12px 0 0}html.personal{background:transparent}main{max-width:none;padding:0 0 18px}.stats{margin-top:0}.shipment-toolbar{margin:4px 0 12px}.shipment-toolbar .actions{margin-left:auto}#last-checked{color:#a2e6b8;background:#153323;border:1px solid #326346;border-radius:20px;padding:6px 10px}.manual-entry form{margin-top:10px}.shipment-tabs{margin:12px 0}.shipment-tabs [aria-selected="true"]{border-color:var(--accent);font-weight:700}#current-view[hidden],#history-view[hidden]{display:none}.tracking-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:7px}.tracking-actions .meta{margin:0;cursor:copy}.tracking-actions button,.tracking-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:4px 8px;font-size:.8rem}.tracking-actions a{border:1px solid var(--line);border-radius:9px;text-decoration:none}</style></head><body><main>
 
 
 
@@ -77,7 +77,8 @@ const carriers = {
   UPS: 'https://www.ups.com/track?tracknum=',
   FedEx: 'https://www.fedex.com/fedextrack/?trknbr=',
   USPS: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=',
-  Amazon: 'https://www.amazon.com/gp/css/order-history'
+  Amazon: 'https://track.amazon.com/',
+  OnTrac: 'https://www.ontrac.com/tracking/?number='
 };
 let packages = [];
 let pendingOrders = [];
@@ -209,6 +210,18 @@ function formatShipmentDate(value) {
   }
   return value;
 }
+function carrierTrackingUrl(item) {
+  if (!Object.hasOwn(carriers, item.carrier)) return '';
+  return carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
+}
+async function copyTrackingNumber(number) {
+  try {
+    await navigator.clipboard.writeText(number);
+    message.textContent = 'Tracking number copied.';
+  } catch {
+    message.textContent = 'Clipboard unavailable. Select the tracking number and copy it.';
+  }
+}
 function render() {
   list.replaceChildren();
   historyList.replaceChildren();
@@ -232,7 +245,26 @@ function render() {
     const card = node('article','');
     const row = node('div','','row');
     const title = node('div','');
-    title.append(node('h3', item.name || (item.carrier ? item.carrier + ' package' : 'Package')),node('p',item.number,'meta'));
+    const trackingActions = node('div','','tracking-actions');
+    const trackingNumber = node('span',item.number,'meta');
+    trackingNumber.title = 'Double-click to copy';
+    trackingNumber.ondblclick = () => void copyTrackingNumber(item.number);
+    const copy = node('button','Copy');
+    copy.type = 'button';
+    copy.setAttribute('aria-label','Copy tracking number '+item.number);
+    copy.onclick = () => void copyTrackingNumber(item.number);
+    trackingActions.append(trackingNumber,copy);
+    const carrierUrl = carrierTrackingUrl(item);
+    if (carrierUrl) {
+      const web = node('a','🌐');
+      web.href = carrierUrl;
+      web.target = '_blank';
+      web.rel = 'noopener noreferrer';
+      web.title = 'Open '+item.carrier+' tracking';
+      web.setAttribute('aria-label',web.title+' for '+item.number);
+      trackingActions.append(web);
+    }
+    title.append(node('h3',item.name || (item.carrier ? item.carrier + ' package' : 'Package')),trackingActions);
     const actions = node('div','','actions');
     const edit = node('button','Edit');
     edit.type = 'button';
@@ -247,7 +279,7 @@ function render() {
       editCarrier.value = item.carrier || '';
       editDelivery.value = (item.deliveryDate || '').slice(0,10);
       editTrack.hidden = !Object.hasOwn(carriers,item.carrier);
-      if (!editTrack.hidden) editTrack.href = carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
+      if (!editTrack.hidden) editTrack.href = carrierUrl;
       else editTrack.removeAttribute('href');
       rename.showModal();
       newName.focus();
