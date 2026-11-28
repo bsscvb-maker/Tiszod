@@ -13,7 +13,7 @@
 <details class="shipment-history" open><summary>Shipment history <span id="history-count"></span></summary><div class="list" id="history-list"></div></details>
 <details class="manual-entry"><summary>Add a package manually</summary><form id="add"><label>Tracking number or carrier link<input id="tracking" required maxlength="512" placeholder="Paste a tracking number or link"></label><label>Package name<input id="name" maxlength="80" placeholder="Optional"></label><label>Carrier<select id="carrier"><option value="">Auto-detect</option><option>UPS</option><option>FedEx</option><option>USPS</option><option>Amazon</option></select></label><button class="primary">Save package</button></form></details>
 
-<dialog id="rename" aria-labelledby="rename-title"><h2 id="rename-title">Edit package name</h2><form id="rename-form"><label>Package name<input id="new-name" maxlength="80" required></label><div class="actions"><button class="primary">Save name</button><button type="button" id="cancel-rename">Cancel</button></div></form></dialog></main><script>
+<dialog id="rename" aria-labelledby="rename-title"><h2 id="rename-title">Edit shipment</h2><form id="rename-form"><label>Package name<input id="new-name" maxlength="80" required></label><label>Carrier<select id="edit-carrier"></select></label><label>Actual delivery date<input type="date" id="edit-delivery"></label><div class="actions"><button class="primary">Save changes</button><button type="button" id="cancel-rename">Cancel</button><a id="edit-track" target="_blank" rel="noopener noreferrer" hidden>Open carrier tracking ↗</a><button type="button" id="edit-remove">Remove shipment</button></div></form></dialog></main><script>
 const personal = true;
 if (personal) {
   document.documentElement.classList.add('personal');
@@ -30,14 +30,22 @@ const refresh = document.querySelector('#refresh');
 const lastChecked = document.querySelector('#last-checked');
 const rename = document.querySelector('#rename');
 const newName = document.querySelector('#new-name');
+const editCarrier = document.querySelector('#edit-carrier');
+const editDelivery = document.querySelector('#edit-delivery');
+const editTrack = document.querySelector('#edit-track');
 let selectedPackage;
+document.querySelector('#edit-remove').onclick = () => {
+  if (!window.confirm('Remove this shipment from the portal?')) return;
+  rename.close();
+  void save(selectedPackage,'remove','Package removed from the portal.');
+};
 document.querySelector('#cancel-rename').onclick = () => rename.close();
 document.querySelector('#rename-form').onsubmit = async event => {
   event.preventDefault();
   const name = newName.value.trim();
   if (!name) { newName.focus(); return; }
   rename.close();
-  await save({...selectedPackage,name}, 'rename', 'Package name updated.');
+  await save({...selectedPackage,name, carrier:editCarrier.value, deliveryDate:editDelivery.value}, 'edit', 'Shipment updated.');
 };
 const carriers = {
   UPS: 'https://www.ups.com/track?tracknum=',
@@ -70,7 +78,9 @@ async function loadPackages() {
     }
     if (!/^[A-Z0-9]{8,40}$/.test(number || '')) continue;
     if (action === 'remove') byNumber.delete(number);
-    else if (action === 'rename' && byNumber.has(number)) {
+    else if (action === 'edit' && byNumber.has(number)) {
+      Object.assign(byNumber.get(number), {name, carrier, deliveryDate:eta || ''});
+    } else if (action === 'rename' && byNumber.has(number)) {
       byNumber.get(number).name = name;
     } else if (action === 'scan' && byNumber.has(number)) {
       Object.assign(byNumber.get(number), {status, location, eta, scanTime, scanDetail});
@@ -123,8 +133,8 @@ async function save(item, action, feedback) {
       throw new DuplicatePackageError();
     }
     if (action !== 'add' && !packages.some(entry => entry.number === item.number)) throw Error('This package was removed. Refresh the list.');
-    await sheetRequest('Shipments!A:E:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {
-      values: [[item.number,item.carrier,item.name, action === 'add' ? 'save' : action,new Date().toISOString()]]
+    await sheetRequest('Shipments!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', {
+      values: [[item.number,item.carrier,item.name, action === 'add' ? 'save' : action,new Date().toISOString(),'', '', item.deliveryDate || '']]
     });
     await loadPackages();
   }, feedback);
@@ -154,6 +164,18 @@ function node(tag, content, className) {
   if (className) element.className = className;
   return element;
 }
+function formatShipmentDate(value) {
+  if (!value) return 'Not recorded';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(value+'T12:00:00Z');
+    if (!Number.isNaN(date.getTime())) return new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeZone:'UTC'}).format(date);
+  }
+  if (/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short',timeZone:'America/New_York'}).format(date)+' ET';
+  }
+  return value;
+}
 function render() {
   list.replaceChildren();
   historyList.replaceChildren();
@@ -179,44 +201,28 @@ function render() {
     const title = node('div','');
     title.append(node('h3', item.name || (item.carrier ? item.carrier + ' package' : 'Package')),node('p',item.number,'meta'));
     const actions = node('div','','actions');
-    if (Object.hasOwn(carriers,item.carrier)) {
-      const link = node('a', item.carrier + ' ↗');
-      link.href = carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      actions.append(link);
-    } else if (item.historical) {
-      actions.append(node('small',item.carrier || 'Carrier unavailable'));
-    } else {
-      const select = carrierSelect.cloneNode(true);
-      select.removeAttribute('id');
-      select.options[0].textContent = 'Choose carrier';
-      select.setAttribute('aria-label','Carrier for ' + item.number);
-      select.addEventListener('change', () => {
-        if (select.value) void save({...item,carrier:select.value}, 'carrier', 'Carrier saved to the portal.');
-      });
-      select.disabled = busy;
-      actions.append(select);
-    }
-    const edit = node('button','Edit name');
+    const edit = node('button','Edit');
     edit.type = 'button';
     edit.disabled = busy;
+    edit.setAttribute('aria-label','Edit '+(item.name || item.number));
     edit.onclick = () => {
       selectedPackage = item;
       newName.value = item.name;
+      const options = ['',...Object.keys(carriers)];
+      if (item.carrier && !options.includes(item.carrier)) options.push(item.carrier);
+      editCarrier.replaceChildren(...options.map(value => new Option(value || 'Unspecified',value)));
+      editCarrier.value = item.carrier || '';
+      editDelivery.value = item.deliveryDate || '';
+      editTrack.hidden = !Object.hasOwn(carriers,item.carrier);
+      if (!editTrack.hidden) editTrack.href = carriers[item.carrier] + (item.carrier === 'Amazon' ? '' : encodeURIComponent(item.number));
+      else editTrack.removeAttribute('href');
       rename.showModal();
       newName.focus();
     };
-    actions.prepend(edit);
-    const remove = node('button','Remove');
-    remove.type = 'button';
-    remove.disabled = busy;
-    remove.setAttribute('aria-label','Remove ' + item.number);
-    remove.addEventListener('click', () => save(item,'remove','Package removed from the portal.'));
-    actions.append(remove);
+    actions.append(edit);
     row.append(title,actions);
     if (item.historical) {
-      card.append(row);
+      card.append(row,node('p','Delivered · '+formatShipmentDate(item.deliveryDate),'meta'));
       if (item.shipmentDate) card.append(node('p','Shipped · '+item.shipmentDate,'meta'));
       if (item.scanDetail) card.append(node('p',item.scanDetail,'meta'));
       historyList.append(card);
@@ -236,7 +242,11 @@ function render() {
     for (const label of milestones) labels.append(node('span',label));
     statusPanel.append(progress, labels);
     statusPanel.append(node('p','Last scan location · '+(item.location || 'Unavailable'),'meta'));
-    statusPanel.append(node('p','Estimated delivery · '+(item.eta || 'Unavailable'),'meta'));
+    if (item.deliveryDate || item.status === 'delivered') {
+      statusPanel.append(node('p','Delivered · '+formatShipmentDate(item.deliveryDate || item.scanTime),'meta'));
+    } else {
+      statusPanel.append(node('p','Estimated delivery · '+formatShipmentDate(item.eta),'meta'));
+    }
     if (item.scanTime || item.scanDetail) statusPanel.append(node('p',[item.scanTime,item.scanDetail].filter(Boolean).join(' · '),'meta'));
     card.append(row,statusPanel);
     (item.status === 'delivered' ? historyList : list).append(card);
