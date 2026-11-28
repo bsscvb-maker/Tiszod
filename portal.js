@@ -83,6 +83,13 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
   }
   if(nav&&!nav.querySelector('[href="education.html"]')){const a=document.createElement('a');a.href='education.html';const active=location.pathname.endsWith('/education.html')&&document.body.dataset.thPage==='education';a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">▤</span><span>Education</span>';nav.append(a);}
   if(nav&&!nav.querySelector('[href="accounts.html"]')){const a=document.createElement('a');a.href='accounts.html';const active=location.pathname.endsWith('/accounts.html');a.className='th-nav-link'+(active?' active':'');if(active)a.setAttribute('aria-current','page');a.innerHTML='<span class="th-nav-icon" aria-hidden="true">🔑</span><span>Accounts</span>';nav.append(a);}
+  if (nav && !nav.querySelector('[href="shipments.html"]')) {
+    const link = document.createElement('a');
+    link.href = 'shipments.html';
+    link.className = 'th-nav-link';
+    link.innerHTML = '<span class="th-nav-icon" aria-hidden="true">▣</span><span>Shipments</span>';
+    nav.append(link);
+  }
   if (nav && !nav.querySelector('[href="career.html"]')) {
     const link = document.createElement('a');
     const current = document.body.dataset.thPage === 'career';
@@ -302,7 +309,7 @@ function portalNavBadge(color,glyph){return `<svg viewBox="0 0 32 32" width="100
  const nav=document.querySelector('.th-sidebar nav');
  if(nav){
   const links=new Map([...nav.querySelectorAll('a')].map(a=>[a.getAttribute('href'),a]));
-  const order=[['Main',['./']],['Modules',['accounts.html','career.html','education.html','equipment.html','family.html','finance.html','garage.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','personal-records.html','pets.html','plan-tracker.html','vehicles.html','watercraft.html']],['System',['admin.html']]];
+  const order=[['Main',['./']],['Modules',['accounts.html','career.html','education.html','equipment.html','family.html','finance.html','garage.html','hobbies.html','home-library.html','identification.html','legal.html','medical.html','personal-records.html','pets.html','plan-tracker.html','shipments.html','vehicles.html','watercraft.html']],['System',['admin.html']]];
   const known=new Set(order.flatMap(g=>g[1]));const extras=[...links].filter(([href])=>!known.has(href)).map(([,a])=>a);
   nav.replaceChildren();for(const [name,paths]of order){const items=paths.map(p=>links.get(p)).filter(Boolean);if(!items.length)continue;const label=document.createElement('div');label.className='th-nav-label'+(name==='System'?' th-system-label':'');label.textContent=name;nav.append(label);if(name==='System')nav.append(...extras);nav.append(...items)}
  }
